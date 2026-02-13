@@ -43,7 +43,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             throw new Error('Your account has been suspended. Contact support.');
           }
 
-          console.log('[auth] comparing password...');
+          console.log('[auth] comparing password, len:', password.length, 'first3:', password.substring(0, 3), 'hash:', user.password_hash.substring(0, 20));
           const passwordMatch = await compare(password, user.password_hash);
           console.log('[auth] password match:', passwordMatch);
 
