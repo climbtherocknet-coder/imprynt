@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
+import { validatePassword } from '@/lib/password-validation';
 import '@/styles/dashboard.css';
 
 interface AccountProps {
@@ -57,6 +59,13 @@ export default function AccountClient({ user, accessories }: AccountProps) {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
   const isPaid = user.plan !== 'free';
 
   async function handleUpgrade(plan: 'monthly' | 'annual', accessory?: 'ring' | 'band') {
@@ -94,6 +103,42 @@ export default function AccountClient({ user, accessories }: AccountProps) {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to open billing portal');
       setPortalLoading(false);
+    }
+  }
+
+  async function handleChangePassword() {
+    setPasswordError('');
+    setPasswordSuccess(false);
+
+    const pwCheck = validatePassword(newPassword);
+    if (!pwCheck.valid) {
+      setPasswordError(`Password requirements: ${pwCheck.errors.join(', ')}`);
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const res = await fetch('/api/account/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to change password');
+      }
+      setPasswordSuccess(true);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : 'Failed to change password');
+    } finally {
+      setPasswordLoading(false);
     }
   }
 
@@ -289,6 +334,157 @@ export default function AccountClient({ user, accessories }: AccountProps) {
                 >
                   Band + Annual — $79.99
                 </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Security */}
+        <div style={sectionStyle}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', color: '#eceef2' }}>Security</h3>
+
+          {!showPasswordForm ? (
+            <div>
+              <p style={{ fontSize: '0.875rem', color: '#5d6370', margin: '0 0 1rem' }}>
+                Keep your account secure by using a strong password.
+              </p>
+              <button
+                className="dash-btn-ghost"
+                onClick={() => { setShowPasswordForm(true); setPasswordSuccess(false); setPasswordError(''); }}
+                style={{ width: 'auto', padding: '0.625rem 1rem' }}
+              >
+                Change Password
+              </button>
+            </div>
+          ) : (
+            <div>
+              {passwordSuccess && (
+                <div style={{
+                  padding: '0.625rem 0.875rem',
+                  background: 'rgba(34, 197, 94, 0.08)',
+                  border: '1px solid rgba(34, 197, 94, 0.2)',
+                  color: '#22c55e',
+                  borderRadius: '0.5rem',
+                  marginBottom: '1rem',
+                  fontSize: '0.8125rem',
+                }}>
+                  Password changed successfully.
+                </div>
+              )}
+              {passwordError && (
+                <div style={{
+                  padding: '0.625rem 0.875rem',
+                  background: 'rgba(220, 38, 38, 0.08)',
+                  border: '1px solid rgba(220, 38, 38, 0.2)',
+                  color: '#f87171',
+                  borderRadius: '0.5rem',
+                  marginBottom: '1rem',
+                  fontSize: '0.8125rem',
+                }}>
+                  {passwordError}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: 360 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: '#a8adb8', marginBottom: '0.3125rem' }}>
+                    Current password
+                  </label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      background: '#0c1017',
+                      border: '1px solid #283042',
+                      borderRadius: '0.5rem',
+                      color: '#eceef2',
+                      fontSize: '0.875rem',
+                      fontFamily: 'inherit',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: '#a8adb8', marginBottom: '0.3125rem' }}>
+                    New password
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      background: '#0c1017',
+                      border: '1px solid #283042',
+                      borderRadius: '0.5rem',
+                      color: '#eceef2',
+                      fontSize: '0.875rem',
+                      fontFamily: 'inherit',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <PasswordStrengthMeter password={newPassword} />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: '#a8adb8', marginBottom: '0.3125rem' }}>
+                    Confirm new password
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      background: '#0c1017',
+                      border: '1px solid #283042',
+                      borderRadius: '0.5rem',
+                      color: '#eceef2',
+                      fontSize: '0.875rem',
+                      fontFamily: 'inherit',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleChangePassword(); }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                  <button
+                    className="dash-btn"
+                    onClick={handleChangePassword}
+                    disabled={passwordLoading || !currentPassword || !newPassword || !confirmNewPassword}
+                    style={{
+                      width: 'auto',
+                      padding: '0.625rem 1.25rem',
+                      opacity: passwordLoading || !currentPassword || !newPassword || !confirmNewPassword ? 0.5 : 1,
+                    }}
+                  >
+                    {passwordLoading ? 'Saving...' : 'Update Password'}
+                  </button>
+                  <button
+                    className="dash-btn-ghost"
+                    onClick={() => {
+                      setShowPasswordForm(false);
+                      setCurrentPassword('');
+                      setNewPassword('');
+                      setConfirmNewPassword('');
+                      setPasswordError('');
+                      setPasswordSuccess(false);
+                    }}
+                    style={{ width: 'auto', padding: '0.625rem 1rem' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           )}

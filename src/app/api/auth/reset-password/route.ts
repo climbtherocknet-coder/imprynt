@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
+import { sendPasswordResetEmail } from '@/lib/email';
 import crypto from 'crypto';
 
-// POST - Request a password reset (sends token)
-// For V1: logs the reset link to console. Replace with email service before launch.
+// POST - Request a password reset
 export async function POST(req: NextRequest) {
+  // Rate limit: 3 reset requests per IP per 15 minutes
+  const ip = getClientIp(req.headers);
+  const rl = rateLimit(`reset:${ip}`, 3, 15 * 60 * 1000);
+  if (!rl.allowed) {
+    // Still return success-like to prevent enumeration
+    return NextResponse.json({
+      success: true,
+      message: 'If an account with that email exists, a reset link has been sent.',
+    });
+  }
+
   const body = await req.json();
   const { email } = body;
 
@@ -54,16 +66,8 @@ export async function POST(req: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const resetUrl = `${baseUrl}/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
 
-    // V1: Log to console. Replace with email service (SendGrid, Resend, etc.)
-    console.log('========================================');
-    console.log('PASSWORD RESET LINK');
-    console.log(`User: ${user.email}`);
-    console.log(`URL: ${resetUrl}`);
-    console.log(`Expires: ${expiresAt.toISOString()}`);
-    console.log('========================================');
-
-    // TODO: Send email with resetUrl
-    // await sendEmail({ to: user.email, subject: 'Reset your Imprynt password', ... })
+    // Send password reset email (falls back to console.log if Resend not configured)
+    await sendPasswordResetEmail(user.email, resetUrl);
 
     return successResponse;
   } catch (error) {

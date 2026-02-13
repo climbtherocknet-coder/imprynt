@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
+import { validatePassword } from '@/lib/password-validation';
 import '@/styles/auth.css';
 
 export default function RegisterPage() {
@@ -32,8 +34,9 @@ export default function RegisterPage() {
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters');
+    const pwCheck = validatePassword(formData.password);
+    if (!pwCheck.valid) {
+      setError(`Password requirements: ${pwCheck.errors.join(', ')}`);
       return;
     }
 
@@ -150,6 +153,7 @@ export default function RegisterPage() {
               className="auth-input"
               placeholder="At least 8 characters"
             />
+            <PasswordStrengthMeter password={formData.password} />
           </div>
 
           <div className="auth-field">

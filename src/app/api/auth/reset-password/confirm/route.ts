@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { hash } from 'bcryptjs';
 import crypto from 'crypto';
+import { validatePassword } from '@/lib/password-validation';
 
 // POST - Confirm password reset with token
 export async function POST(req: NextRequest) {
@@ -12,8 +13,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Token, email, and new password are required' }, { status: 400 });
   }
 
-  if (newPassword.length < 8) {
-    return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
+  const pwCheck = validatePassword(newPassword);
+  if (!pwCheck.valid) {
+    return NextResponse.json({ error: `Password requirements: ${pwCheck.errors.join(', ')}` }, { status: 400 });
   }
 
   try {
@@ -46,7 +48,7 @@ export async function POST(req: NextRequest) {
     const passwordHash = await hash(newPassword, 12);
 
     await query(
-      'UPDATE users SET password_hash = $1 WHERE id = $2',
+      'UPDATE users SET password_hash = $1, password_changed_at = NOW() WHERE id = $2',
       [passwordHash, resetRecord.user_id]
     );
 

@@ -2,8 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { nanoid } from 'nanoid';
 import { query } from '@/lib/db';
+import { validatePassword } from '@/lib/password-validation';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
+import { sendWelcomeEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 5 registrations per IP per 15 minutes
+  const ip = getClientIp(req.headers);
+  const rl = rateLimit(`register:${ip}`, 5, 15 * 60 * 1000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many registration attempts. Please try again later.' },
+      { status: 429 }
+    );
+  }
+
   try {
     const { email, password, firstName, lastName, inviteCode } = await req.json();
 
@@ -15,9 +28,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (password.length < 8) {
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.valid) {
       return NextResponse.json(
-        { error: 'Password must be at least 8 characters' },
+        { error: `Password requirements: ${pwCheck.errors.join(', ')}` },
         { status: 400 }
       );
     }
@@ -94,6 +108,11 @@ export async function POST(req: NextRequest) {
       `INSERT INTO profiles (user_id, slug, redirect_id)
        VALUES ($1, $2, $3)`,
       [user.id, slug, redirectId]
+    );
+
+    // Send welcome email (non-blocking, don't fail registration if email fails)
+    sendWelcomeEmail(email.toLowerCase(), firstName || undefined).catch((err) =>
+      console.error('Welcome email failed:', err)
     );
 
     return NextResponse.json(

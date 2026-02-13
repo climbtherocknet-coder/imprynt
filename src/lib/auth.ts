@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { compare } from 'bcryptjs';
 import { query } from '@/lib/db';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -17,12 +18,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const email = (credentials.email as string).trim();
+        const email = (credentials.email as string).trim().toLowerCase();
         const password = credentials.password as string;
+
+        // Rate limit: 5 attempts per email per 15 minutes
+        const rl = rateLimit(`login:${email}`, 5, 15 * 60 * 1000);
+        if (!rl.allowed) {
+          const mins = Math.ceil(rl.retryAfterMs / 60000);
+          throw new Error(`Too many login attempts. Try again in ${mins} minute${mins === 1 ? '' : 's'}.`);
+        }
 
         const result = await query(
           'SELECT id, email, password_hash, first_name, last_name, plan, setup_completed, account_status FROM users WHERE email = $1',
-          [email.toLowerCase()]
+          [email]
         );
 
         if (result.rows.length === 0) {

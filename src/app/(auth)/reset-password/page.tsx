@@ -3,6 +3,8 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
+import { validatePassword } from '@/lib/password-validation';
 import '@/styles/auth.css';
 
 function ResetForm() {
@@ -20,8 +22,9 @@ function ResetForm() {
     e.preventDefault();
     setError('');
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.valid) {
+      setError(`Password requirements: ${pwCheck.errors.join(', ')}`);
       return;
     }
     if (password !== confirmPassword) {
@@ -98,6 +101,7 @@ function ResetForm() {
             className="auth-input"
             placeholder="At least 8 characters"
           />
+          <PasswordStrengthMeter password={password} />
         </div>
 
         <div className="auth-field">
