@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
+import crypto from 'crypto';
 import { query } from '@/lib/db';
 import { getTheme } from '@/lib/themes';
 import { auth } from '@/lib/auth';
+import { recordScore } from '@/lib/scoring';
 import { Metadata } from 'next';
 import ProfileTemplate from '@/components/templates/ProfileTemplate';
 import ProfileClient from './ProfileClient';
@@ -126,7 +128,7 @@ async function getImpressionSettings(profileId: string) {
   };
 }
 
-async function logPageView(profileId: string, userAgent: string | null, viewerUserId?: string | null) {
+async function logPageView(profileId: string, userAgent: string | null, viewerUserId?: string | null, ipHash?: string) {
   try {
     await query(
       `INSERT INTO analytics_events (profile_id, event_type, referral_source, user_agent)
@@ -146,6 +148,8 @@ async function logPageView(profileId: string, userAgent: string | null, viewerUs
   } catch {
     // connection logging shouldn't break the page
   }
+  // Score
+  recordScore(profileId, 'page_view', ipHash || undefined, viewerUserId || undefined).catch(() => {});
 }
 
 export default async function ProfilePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -214,6 +218,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
   if (profile.is_published) {
     const headersList = await headers();
     const userAgent = headersList.get('user-agent');
+    const forwarded = headersList.get('x-forwarded-for');
+    const ip = forwarded?.split(',')[0]?.trim() || 'unknown';
+    const ipHash = crypto.createHash('sha256').update(ip).digest('hex');
     // Check if viewer is an Imprynt user (for connection logging)
     let viewerUserId: string | null = null;
     try {
@@ -222,7 +229,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         viewerUserId = session.user.id;
       }
     } catch { /* not logged in */ }
-    logPageView(profile.profile_id, userAgent, viewerUserId);
+    logPageView(profile.profile_id, userAgent, viewerUserId, ipHash);
   }
 
   const theme = getTheme(profile.template);

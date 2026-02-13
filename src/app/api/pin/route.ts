@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { auth } from '@/lib/auth';
+import { recordScore } from '@/lib/scoring';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
@@ -76,8 +77,8 @@ export async function POST(req: NextRequest) {
       }
 
       // Log connection event
+      let viewerUserId: string | null = null;
       try {
-        let viewerUserId: string | null = null;
         try {
           const session = await auth();
           if (session?.user?.id) viewerUserId = session.user.id;
@@ -90,6 +91,11 @@ export async function POST(req: NextRequest) {
         );
       } catch {
         // don't break on connection logging failure
+      }
+
+      // Score impression unlock
+      if (page.visibility_mode === 'hidden') {
+        recordScore(profileId, 'impression_unlock', ipHash, viewerUserId || undefined).catch(() => {});
       }
 
       // For impression (hidden) pages, generate a short-lived download token for personal vCard

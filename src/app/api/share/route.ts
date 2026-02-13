@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { auth } from '@/lib/auth';
+import { recordScore } from '@/lib/scoring';
 import crypto from 'crypto';
 
 // POST - Log a share event
@@ -45,6 +46,9 @@ export async function POST(req: NextRequest) {
   } catch {
     // Don't break on connection logging failure
   }
+
+  // Score
+  recordScore(profileId, 'share', ipHash, viewerUserId || undefined).catch(() => {});
 
   return NextResponse.json({ success: true });
 }

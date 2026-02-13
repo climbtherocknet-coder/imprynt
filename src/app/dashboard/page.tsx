@@ -81,6 +81,34 @@ export default async function DashboardPage() {
   );
   contactFieldCount = parseInt(cfResult.rows[0]?.count || '0');
 
+  // Fetch score
+  let scoreTotal = 0;
+  if (profile) {
+    const profileIdResult = await query('SELECT id FROM profiles WHERE user_id = $1', [userId]);
+    const profileId = profileIdResult.rows[0]?.id;
+    if (profileId) {
+      const scoreResult = await query(
+        'SELECT score_total, score_30d, last_computed_at FROM user_scores WHERE user_id = $1',
+        [userId]
+      );
+      if (scoreResult.rows[0]) {
+        scoreTotal = parseInt(scoreResult.rows[0].score_total) || 0;
+        // Lazy recalculation of 30-day score if stale (> 1 hour)
+        const lastComputed = new Date(scoreResult.rows[0].last_computed_at);
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+        if (lastComputed < oneHourAgo) {
+          query(
+            `UPDATE user_scores SET score_30d = (
+              SELECT COALESCE(SUM(points), 0) FROM score_events
+              WHERE profile_id = $1 AND created_at > NOW() - INTERVAL '30 days'
+            ), last_computed_at = NOW() WHERE user_id = $2`,
+            [profileId, userId]
+          ).catch(() => {});
+        }
+      }
+    }
+  }
+
   const plan = (session.user as Record<string, unknown>).plan as string;
   const isPaid = plan !== 'free';
 
@@ -113,6 +141,10 @@ export default async function DashboardPage() {
           <div className="dash-stat-card">
             <p className="dash-stat-label">Links</p>
             <p className="dash-stat-value">{linkCount}</p>
+          </div>
+          <div className="dash-stat-card">
+            <p className="dash-stat-label">Score</p>
+            <p className="dash-stat-value">{scoreTotal}</p>
           </div>
           <div className="dash-stat-card">
             <p className="dash-stat-label">Status</p>

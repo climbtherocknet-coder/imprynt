@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { getTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, isDarkTemplate, LINK_ICONS } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
+import ReportButton from '@/components/ReportButton';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -939,6 +940,9 @@ export default function ProfileClient({ profileId, accent, theme, hasImpression,
           accent={accent}
         />
       )}
+
+      {/* Report link */}
+      <ReportButton profileId={profileId} />
     </>
   );
 }

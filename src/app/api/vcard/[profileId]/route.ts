@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { auth } from '@/lib/auth';
+import { recordScore } from '@/lib/scoring';
 import crypto from 'crypto';
 
 // GET - Generate and download a vCard for a profile
@@ -193,7 +194,7 @@ export async function GET(
 
   lines.push('END:VCARD');
 
-  // Log vcard_download connection event
+  // Log vcard_download connection event + scoring
   try {
     let viewerUserId: string | null = null;
     try {
@@ -208,6 +209,7 @@ export async function GET(
        VALUES ($1, $2, 'vcard_download', $3)`,
       [profileId, viewerUserId, ipHash]
     ).catch(() => {});
+    recordScore(profileId, 'vcard_download', ipHash, viewerUserId || undefined).catch(() => {});
   } catch {
     // connection logging shouldn't break vcard download
   }
