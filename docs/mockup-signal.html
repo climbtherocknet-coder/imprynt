@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imprynt — Signal Template</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #ffffff;
+    --bg-alt: #fafafa;
+    --surface: #f5f5f5;
+    --surface-2: #eeeeee;
+    --text: #0a0a0a;
+    --text-mid: #525252;
+    --text-muted: #a3a3a3;
+    --accent: #e8553d;
+    --accent-soft: rgba(232, 85, 61, 0.06);
+    --accent-border: rgba(232, 85, 61, 0.18);
+    --accent-hover: #d94a33;
+    --border: #e5e5e5;
+    --border-hover: #d4d4d4;
+    --radius: 0.75rem;
+    --radius-lg: 1rem;
+    --font: 'Instrument Sans', system-ui, sans-serif;
+    --max-w: 680px;
+    --pad: 1.5rem;
+  }
+
+  @media (min-width: 768px) { :root { --pad: 2.5rem; } }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ═══ HERO ═══ */
+  .hero { max-width: var(--max-w); margin: 0 auto; padding: 2.5rem var(--pad) 0; }
+
+  .hero-top { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.5rem; }
+
+  .photo {
+    width: 80px; height: 80px; border-radius: var(--radius-lg);
+    overflow: hidden; flex-shrink: 0;
+  }
+  @media (min-width: 768px) { .photo { width: 96px; height: 96px; } }
+  .photo-inner {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, var(--accent), #c7402c);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; font-weight: 700; color: white;
+  }
+
+  .hero-identity { flex: 1; min-width: 0; }
+  .hero-name { font-size: 2rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 0.25rem; }
+  @media (min-width: 768px) { .hero-name { font-size: 2.5rem; } }
+  .hero-title { font-size: 0.9375rem; color: var(--text-mid); font-weight: 500; }
+
+  .hero-bio { font-size: 1rem; line-height: 1.6; color: var(--text-mid); margin-bottom: 1.75rem; max-width: 520px; }
+  .hero-bio strong { color: var(--text); font-weight: 600; }
+
+  /* ── Links: full-width pill buttons ── */
+  .link-stack { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+  .link-btn {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.875rem 1.125rem; background: var(--bg);
+    border: 2px solid var(--border); border-radius: 9999px;
+    font-size: 0.875rem; font-weight: 600; color: var(--text);
+    transition: all 0.15s; letter-spacing: -0.01em;
+  }
+  .link-btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); transform: translateY(-1px); }
+  .link-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--accent-soft); display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; flex-shrink: 0; color: var(--accent); font-weight: 700;
+  }
+  .link-label { flex: 1; }
+  .link-arrow { color: var(--text-muted); font-weight: 500; }
+
+  .save-row { margin-bottom: 2.5rem; }
+  .save-btn {
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    width: 100%; padding: 0.875rem; background: var(--accent); color: white;
+    border: none; border-radius: 9999px; font-size: 0.9375rem; font-weight: 700;
+    font-family: var(--font); cursor: pointer; transition: all 0.15s;
+  }
+  .save-btn:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,85,61,0.2); }
+
+  /* ═══ DIVIDER ═══ */
+  .section-divider { max-width: var(--max-w); margin: 0 auto; padding: 0 var(--pad); }
+  .section-divider hr { border: none; height: 2px; background: var(--surface); }
+
+  /* ═══ PODS ═══ */
+  .pod { max-width: var(--max-w); margin: 0 auto; padding: 2rem var(--pad); }
+  .pod-label { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.625rem; }
+  .pod-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+  .pod-body { font-size: 0.9375rem; line-height: 1.7; color: var(--text-mid); max-width: 540px; }
+
+  /* Pod: Text + Image */
+  .pod-split { display: grid; grid-template-columns: 1fr; gap: 1.5rem; background: var(--bg-alt); border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; }
+  @media (min-width: 520px) { .pod-split { grid-template-columns: 1fr 1fr; } }
+  .pod-img { width: 100%; aspect-ratio: 16/10; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); }
+  .pod-split-body { display: flex; flex-direction: column; justify-content: center; }
+
+  /* Pod: Stats */
+  .pod-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  @media (max-width: 480px) { .pod-stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat { background: var(--bg-alt); border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; text-align: center; }
+  .stat-num { font-size: 2rem; font-weight: 700; color: var(--accent); line-height: 1.1; letter-spacing: -0.03em; }
+  .stat-label { font-size: 0.6875rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.25rem; }
+
+  /* Pod: CTA */
+  .pod-cta { background: var(--text); border-radius: var(--radius-lg); padding: 2rem; text-align: center; }
+  .pod-cta h3 { font-size: 1.25rem; font-weight: 700; color: white; margin-bottom: 0.375rem; letter-spacing: -0.02em; }
+  .pod-cta p { font-size: 0.9375rem; color: #a3a3a3; margin-bottom: 1.25rem; }
+  .pod-cta-btn {
+    display: inline-flex; align-items: center; gap: 0.375rem;
+    padding: 0.75rem 1.5rem; background: var(--accent); color: white;
+    border: none; border-radius: 9999px; font-size: 0.875rem; font-weight: 700;
+    font-family: var(--font); cursor: pointer; transition: all 0.15s;
+  }
+  .pod-cta-btn:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(232,85,61,0.3); }
+
+  /* ═══ SHOWCASE ═══ */
+  .showcase { max-width: var(--max-w); margin: 0 auto; padding: 0 var(--pad) 2.5rem; }
+  .showcase-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .showcase-title { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); }
+  .showcase-count { font-size: 0.6875rem; color: var(--text-muted); font-weight: 500; }
+
+  .showcase-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+  @media (min-width: 520px) { .showcase-grid { grid-template-columns: 1fr 1fr; } }
+
+  .showcase-card { background: var(--bg); border: 2px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: all 0.15s; cursor: pointer; }
+  .showcase-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+  .showcase-card-img { width: 100%; aspect-ratio: 16/10; background: linear-gradient(135deg, var(--surface), var(--surface-2)); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.75rem; font-weight: 600; }
+  .showcase-card-body { padding: 1rem 1.125rem 1.125rem; }
+  .showcase-card-type { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 0.25rem; }
+  .showcase-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: -0.02em; }
+  .showcase-card p { font-size: 0.8125rem; color: var(--text-muted); line-height: 1.5; }
+
+  .showcase-tags { display: flex; gap: 0.375rem; flex-wrap: wrap; margin-top: 0.625rem; }
+  .tag { font-size: 0.625rem; padding: 0.25rem 0.5rem; background: var(--surface); border-radius: 9999px; color: var(--text-mid); font-weight: 600; }
+  .tag-accent { background: var(--accent-soft); color: var(--accent); }
+
+  .showcase-gate { margin-top: 1rem; text-align: center; }
+  .gate-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.625rem 1.25rem; background: transparent;
+    border: 2px solid var(--border); border-radius: 9999px;
+    font-size: 0.8125rem; font-weight: 600; color: var(--text-mid);
+    font-family: var(--font); cursor: pointer; transition: all 0.15s;
+  }
+  .gate-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+  /* ═══ FOOTER ═══ */
+  .footer { max-width: var(--max-w); margin: 0 auto; padding: 2rem var(--pad) 2.5rem; text-align: center; }
+  .watermark { font-size: 0.6875rem; color: var(--text-muted); opacity: 0.3; text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+
+  /* ── Impression icon ── */
+  .impression-icon {
+    position: fixed; bottom: 20px; right: 20px; width: 26px; height: 26px;
+    border-radius: 50%; border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0.12; transition: opacity 0.3s;
+  }
+  .impression-icon::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .impression-icon:hover { opacity: 0.5; }
+
+  /* ── Animations ── */
+  .fade-in { animation: popIn 0.4s ease-out both; }
+  .d1 { animation-delay: 0.03s; } .d2 { animation-delay: 0.06s; }
+  .d3 { animation-delay: 0.09s; } .d4 { animation-delay: 0.12s; }
+  .d5 { animation-delay: 0.15s; } .d6 { animation-delay: 0.18s; }
+  .d7 { animation-delay: 0.21s; } .d8 { animation-delay: 0.24s; }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .img-placeholder {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); font-size: 0.75rem; font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════ HERO ═══════ -->
+<div class="hero">
+  <div class="hero-top fade-in d1">
+    <div class="photo">
+      <div class="photo-inner">M</div>
+    </div>
+    <div class="hero-identity">
+      <h1 class="hero-name">Marcus Cole</h1>
+      <p class="hero-title">Founder & CEO · Basecamp Ventures</p>
+    </div>
+  </div>
+
+  <p class="hero-bio fade-in d2">
+    I build companies that solve <strong>unglamorous problems</strong>. Three exits, two failures, and one fund. Currently investing in and advising early-stage B2B SaaS. Speaker, mentor, and recovering perfectionist.
+  </p>
+
+  <div class="link-stack fade-in d3">
+    <a href="#" class="link-btn">
+      <span class="link-icon">in</span>
+      <span class="link-label">LinkedIn</span>
+      <span class="link-arrow">→</span>
+    </a>
+    <a href="#" class="link-btn">
+      <span class="link-icon">𝕏</span>
+      <span class="link-label">@marcuscole</span>
+      <span class="link-arrow">→</span>
+    </a>
+    <a href="#" class="link-btn">
+      <span class="link-icon">◎</span>
+      <span class="link-label">basecampvc.com</span>
+      <span class="link-arrow">→</span>
+    </a>
+    <a href="#" class="link-btn">
+      <span class="link-icon">◷</span>
+      <span class="link-label">Book office hours</span>
+      <span class="link-arrow">→</span>
+    </a>
+  </div>
+
+  <div class="save-row fade-in d4">
+    <button class="save-btn">↓ Save Contact</button>
+  </div>
+</div>
+
+<div class="section-divider"><hr></div>
+
+<!-- ═══════ POD: Text ═══════ -->
+<div class="pod fade-in d5">
+  <p class="pod-label">Thesis</p>
+  <h2 class="pod-title">Boring problems, exceptional returns</h2>
+  <p class="pod-body">
+    Every successful company I've built or invested in solved a problem nobody wanted to talk about at dinner parties. Compliance software. Logistics routing. Payment reconciliation. The less exciting the problem, the less competition and the stickier the product.
+  </p>
+</div>
+
+<div class="section-divider"><hr></div>
+
+<!-- ═══════ POD: Stats ═══════ -->
+<div class="pod fade-in d5">
+  <p class="pod-label">Track Record</p>
+  <div class="pod-stats">
+    <div class="stat">
+      <div class="stat-num">3</div>
+      <div class="stat-label">Exits</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">$47M</div>
+      <div class="stat-label">Fund Size</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">18</div>
+      <div class="stat-label">Portfolio Cos</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"><hr></div>
+
+<!-- ═══════ POD: Text + Image ═══════ -->
+<div class="pod fade-in d6">
+  <div class="pod-split">
+    <div class="pod-img img-placeholder" style="min-height: 160px; background: linear-gradient(135deg, var(--surface), var(--surface-2));">SPEAKING PHOTO</div>
+    <div class="pod-split-body">
+      <p class="pod-label">Speaking</p>
+      <h3 class="pod-title">Available for keynotes</h3>
+      <p class="pod-body" style="max-width: none;">
+        Topics: founder mental health, B2B pricing strategy, the myth of product-market fit. 40+ talks at SaaStr, TechCrunch, and Founders Forum.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"><hr></div>
+
+<!-- ═══════ POD: CTA ═══════ -->
+<div class="pod fade-in d6">
+  <div class="pod-cta">
+    <h3>Pitching? Let's talk.</h3>
+    <p>We invest $250K-$1M in pre-seed B2B SaaS. 48-hour response, always.</p>
+    <button class="pod-cta-btn">Send your deck →</button>
+  </div>
+</div>
+
+<div class="section-divider"><hr></div>
+
+<!-- ═══════ SHOWCASE ═══════ -->
+<div class="showcase fade-in d7">
+  <div class="showcase-header">
+    <span class="showcase-title">Portfolio Highlights</span>
+    <span class="showcase-count">2 public · 6 total</span>
+  </div>
+
+  <div class="showcase-grid">
+    <div class="showcase-card">
+      <div class="showcase-card-img">LOGO</div>
+      <div class="showcase-card-body">
+        <div class="showcase-card-type">Project</div>
+        <h3>Ledgr — Accounting Automation</h3>
+        <p>Series A, $12M ARR. AI-powered reconciliation for mid-market accounting firms.</p>
+        <div class="showcase-tags">
+          <span class="tag tag-accent">Active</span>
+          <span class="tag">Fintech</span>
+          <span class="tag">AI</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="showcase-card">
+      <div class="showcase-card-img">LOGO</div>
+      <div class="showcase-card-body">
+        <div class="showcase-card-type">Project</div>
+        <h3>RouteStack — Logistics OS</h3>
+        <p>Acquired 2024. Last-mile optimization platform. 200+ enterprise clients at exit.</p>
+        <div class="showcase-tags">
+          <span class="tag tag-accent">Exited</span>
+          <span class="tag">Logistics</span>
+          <span class="tag">Enterprise</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="showcase-gate">
+    <button class="gate-btn">🔒 View full portfolio (6 companies)</button>
+  </div>
+</div>
+
+<!-- ═══════ FOOTER ═══════ -->
+<div class="footer fade-in d8">
+  <a href="#" class="watermark">Imprynt</a>
+</div>
+
+<!-- ═══════ IMPRESSION ICON ═══════ -->
+<div class="impression-icon"></div>
+
+</body>
+</html>

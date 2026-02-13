@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imprynt — Soft Template</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #f4f4f5;
+    --bg-alt: #ecedef;
+    --surface: #ffffff;
+    --surface-2: #e4e5e8;
+    --text: #1a1c20;
+    --text-mid: #55585f;
+    --text-muted: #8e9199;
+    --accent: #5b8a72;
+    --accent-soft: rgba(91, 138, 114, 0.06);
+    --accent-border: rgba(91, 138, 114, 0.16);
+    --accent-hover: #4d7862;
+    --border: #dcdee2;
+    --border-hover: #cdd0d4;
+    --radius: 0.875rem;
+    --radius-lg: 1.125rem;
+    --font: 'DM Sans', system-ui, sans-serif;
+    --max-w: 660px;
+    --pad: 1.5rem;
+  }
+
+  @media (min-width: 768px) { :root { --pad: 2.5rem; } }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ═══ HERO ═══ */
+  .hero { max-width: var(--max-w); margin: 0 auto; padding: 3rem var(--pad) 0; }
+
+  .hero-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  }
+
+  .hero-top { display: flex; align-items: center; gap: 1.125rem; margin-bottom: 1.25rem; }
+
+  .photo {
+    width: 72px; height: 72px; border-radius: 50%;
+    overflow: hidden; flex-shrink: 0;
+    border: 2px solid var(--bg);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  @media (min-width: 768px) { .photo { width: 84px; height: 84px; } }
+  .photo-inner {
+    width: 100%; height: 100%;
+    background: linear-gradient(145deg, #a8c5b5, #8fb5a0);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.75rem; font-weight: 300; color: white;
+  }
+
+  .hero-identity { flex: 1; min-width: 0; }
+  .hero-name { font-size: 1.625rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 0.125rem; }
+  @media (min-width: 768px) { .hero-name { font-size: 1.875rem; } }
+  .hero-title { font-size: 0.875rem; color: var(--text-mid); font-weight: 400; }
+
+  .hero-bio { font-size: 0.9375rem; line-height: 1.7; color: var(--text-mid); margin-bottom: 1.5rem; }
+
+  /* ── Links: gentle pills ── */
+  .link-row { display: flex; gap: 0.4375rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .link-pill {
+    display: flex; align-items: center; gap: 0.4375rem;
+    padding: 0.4375rem 0.8125rem; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 2rem;
+    font-size: 0.8125rem; font-weight: 500; color: var(--text);
+    transition: all 0.2s; cursor: pointer;
+  }
+  .link-pill:hover { border-color: var(--accent-border); background: var(--accent-soft); color: var(--accent); }
+  .link-pill .icon { font-size: 0.6875rem; color: var(--accent); font-weight: 600; width: 16px; text-align: center; }
+
+  .save-btn {
+    display: inline-flex; align-items: center; gap: 0.4375rem;
+    padding: 0.5625rem 1.25rem; background: var(--accent); color: #fff;
+    border: none; border-radius: 2rem; font-size: 0.8125rem; font-weight: 600;
+    font-family: var(--font); cursor: pointer; transition: all 0.2s;
+  }
+  .save-btn:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(91,138,114,0.2); }
+
+  /* ═══ DIVIDER ═══ */
+  .divider { max-width: var(--max-w); margin: 0 auto; padding: 0 var(--pad); }
+  .divider hr { border: none; height: 1px; background: var(--border); }
+
+  /* ═══ PODS ═══ */
+  .pod { max-width: var(--max-w); margin: 0 auto; padding: 2rem var(--pad); }
+  .pod-label { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 0.625rem; }
+  .pod-title { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; letter-spacing: -0.01em; }
+  .pod-body { font-size: 0.9375rem; line-height: 1.75; color: var(--text-mid); }
+
+  /* Pod: Text + Image */
+  .pod-split {
+    display: grid; grid-template-columns: 1fr; gap: 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  }
+  @media (min-width: 520px) { .pod-split { grid-template-columns: 1fr 1fr; gap: 1.5rem; } }
+  .pod-img { width: 100%; aspect-ratio: 4/3; border-radius: var(--radius); background: var(--bg-alt); border: 1px solid var(--border); }
+  .pod-split-body { display: flex; flex-direction: column; justify-content: center; }
+
+  /* Pod: Stats */
+  .pod-stats { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.125rem 1.25rem;
+    text-align: center; flex: 1; min-width: 90px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  }
+  .stat-num { font-size: 1.5rem; font-weight: 700; color: var(--accent); line-height: 1.15; }
+  .stat-label { font-size: 0.6875rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.125rem; }
+
+  /* Pod: CTA */
+  .pod-cta {
+    background: var(--surface); border: 1px solid var(--accent-border);
+    border-radius: var(--radius-lg); padding: 1.75rem; text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  }
+  .pod-cta h3 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.375rem; }
+  .pod-cta p { font-size: 0.9375rem; color: var(--text-mid); margin-bottom: 1.25rem; line-height: 1.6; }
+  .pod-cta-btn {
+    display: inline-flex; align-items: center; gap: 0.375rem;
+    padding: 0.625rem 1.25rem; background: var(--accent); color: #fff;
+    border: none; border-radius: 2rem; font-size: 0.8125rem; font-weight: 600;
+    font-family: var(--font); cursor: pointer; transition: all 0.2s;
+  }
+  .pod-cta-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+
+  /* ═══ SHOWCASE ═══ */
+  .showcase { max-width: var(--max-w); margin: 0 auto; padding: 0 var(--pad) 2.5rem; }
+  .showcase-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .showcase-title { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); }
+  .showcase-count { font-size: 0.6875rem; color: var(--text-muted); }
+
+  .showcase-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+  @media (min-width: 520px) { .showcase-grid { grid-template-columns: 1fr 1fr; } }
+
+  .showcase-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1.25rem;
+    transition: all 0.2s; cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  }
+  .showcase-card:hover { border-color: var(--accent-border); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
+  .showcase-card-type { font-size: 0.625rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 0.25rem; }
+  .showcase-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .showcase-card p { font-size: 0.8125rem; color: var(--text-muted); line-height: 1.55; }
+  .showcase-tags { display: flex; gap: 0.375rem; flex-wrap: wrap; margin-top: 0.625rem; }
+  .tag { font-size: 0.625rem; padding: 0.1875rem 0.5rem; background: var(--accent-soft); border-radius: 9999px; color: var(--accent); font-weight: 500; }
+
+  .showcase-gate { margin-top: 1rem; text-align: center; }
+  .gate-btn {
+    display: inline-flex; align-items: center; gap: 0.4375rem;
+    padding: 0.5rem 1rem; background: transparent;
+    border: 1px solid var(--border); border-radius: 2rem;
+    font-size: 0.8125rem; font-weight: 500; color: var(--text-mid);
+    font-family: var(--font); cursor: pointer; transition: all 0.2s;
+  }
+  .gate-btn:hover { border-color: var(--accent-border); color: var(--accent); background: var(--accent-soft); }
+
+  /* ═══ FOOTER ═══ */
+  .footer { max-width: var(--max-w); margin: 0 auto; padding: 2rem var(--pad) 2.5rem; text-align: center; }
+  .watermark { font-size: 0.625rem; color: var(--text-muted); opacity: 0.35; text-decoration: none; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; }
+
+  .impression-icon {
+    position: fixed; bottom: 20px; right: 20px; width: 26px; height: 26px;
+    border-radius: 50%; border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0.1; transition: opacity 0.3s;
+  }
+  .impression-icon::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .impression-icon:hover { opacity: 0.45; }
+
+  .fade-in { animation: fadeUp 0.45s ease-out both; }
+  .d1 { animation-delay: 0.04s; } .d2 { animation-delay: 0.08s; }
+  .d3 { animation-delay: 0.12s; } .d4 { animation-delay: 0.16s; }
+  .d5 { animation-delay: 0.20s; } .d6 { animation-delay: 0.24s; }
+  .d7 { animation-delay: 0.28s; } .d8 { animation-delay: 0.32s; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-card fade-in d1">
+    <div class="hero-top">
+      <div class="photo">
+        <div class="photo-inner">K</div>
+      </div>
+      <div class="hero-identity">
+        <h1 class="hero-name">Dr. Karen Liu</h1>
+        <p class="hero-title">Licensed Therapist, LMFT · San Francisco</p>
+      </div>
+    </div>
+
+    <p class="hero-bio">
+      I work with individuals and couples navigating anxiety, life transitions, and relationship patterns. My approach is warm, direct, and grounded in attachment theory and CBT. Therapy shouldn't feel like homework.
+    </p>
+
+    <div class="link-row">
+      <a href="#" class="link-pill"><span class="icon">◎</span> karenliutherapy.com</a>
+      <a href="#" class="link-pill"><span class="icon">◷</span> Book a Session</a>
+      <a href="#" class="link-pill"><span class="icon">✉</span> Email</a>
+      <a href="#" class="link-pill"><span class="icon">in</span> LinkedIn</a>
+      <a href="#" class="link-pill"><span class="icon">ig</span> Instagram</a>
+    </div>
+
+    <button class="save-btn">↓ Save Contact</button>
+  </div>
+</div>
+
+<div class="pod fade-in d4">
+  <p class="pod-label">Approach</p>
+  <h2 class="pod-title">Therapy that meets you where you are</h2>
+  <p class="pod-body">
+    I believe change happens in the context of a real relationship, not a textbook. I combine evidence-based methods with genuine human connection. My clients often say our sessions feel like talking to a very honest friend who also happens to know brain science.
+  </p>
+</div>
+
+<div class="divider"><hr></div>
+
+<div class="pod fade-in d5">
+  <p class="pod-label">Practice</p>
+  <div class="pod-stats">
+    <div class="stat">
+      <div class="stat-num">12</div>
+      <div class="stat-label">Years Licensed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">1,800+</div>
+      <div class="stat-label">Client Hours</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">4.9★</div>
+      <div class="stat-label">Rating</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"><hr></div>
+
+<div class="pod fade-in d6">
+  <div class="pod-split">
+    <div class="pod-img" style="min-height: 180px; background: linear-gradient(145deg, #c8d5cd, #b0c4b8); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.75rem;">PHOTO</div>
+    <div class="pod-split-body">
+      <p class="pod-label">Specialties</p>
+      <h3 class="pod-title">What I treat</h3>
+      <p class="pod-body" style="max-width: none;">
+        Anxiety and overthinking, relationship conflict, life transitions (career, relocation, identity shifts), attachment patterns, and burnout. I see individuals and couples ages 25-55, in person and via telehealth.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"><hr></div>
+
+<div class="pod fade-in d6">
+  <div class="pod-cta">
+    <h3>Taking new clients</h3>
+    <p>Free 15-minute consultation to see if we're a good fit. No commitment, just a conversation.</p>
+    <button class="pod-cta-btn">Book a free consultation →</button>
+  </div>
+</div>
+
+<div class="divider"><hr></div>
+
+<div class="showcase fade-in d7">
+  <div class="showcase-header">
+    <span class="showcase-title">Resources</span>
+    <span class="showcase-count">2 public · 3 total</span>
+  </div>
+  <div class="showcase-grid">
+    <div class="showcase-card">
+      <div class="showcase-card-type">Service</div>
+      <h3>Individual Therapy</h3>
+      <p>50-minute sessions, weekly or biweekly. Sliding scale available. In-network with Aetna, Blue Shield, and Cigna.</p>
+      <div class="showcase-tags">
+        <span class="tag">Anxiety</span>
+        <span class="tag">CBT</span>
+        <span class="tag">Attachment</span>
+      </div>
+    </div>
+    <div class="showcase-card">
+      <div class="showcase-card-type">Service</div>
+      <h3>Couples Therapy</h3>
+      <p>75-minute sessions for couples working through communication, conflict, or big decisions. Gottman and EFT informed.</p>
+      <div class="showcase-tags">
+        <span class="tag">Couples</span>
+        <span class="tag">Gottman</span>
+        <span class="tag">EFT</span>
+      </div>
+    </div>
+  </div>
+  <div class="showcase-gate">
+    <button class="gate-btn">🔒 View all services (3 items)</button>
+  </div>
+</div>
+
+<div class="footer fade-in d8">
+  <a href="#" class="watermark">Imprynt</a>
+</div>
+
+<div class="impression-icon"></div>
+
+</body>
+</html>

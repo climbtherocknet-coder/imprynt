@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imprynt — Studio Template</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0c0c0e; --bg-alt: #111114; --surface: #16161a; --surface-2: #1c1c22;
+    --surface-hover: #22222a; --text: #ececf0; --text-mid: #a0a0b0; --text-muted: #5a5a6e;
+    --accent: #8b9cf7; --accent-soft: rgba(139,156,247,0.07); --accent-border: rgba(139,156,247,0.15);
+    --accent-hover: #7b8ce7; --border: #1e1e28; --border-hover: #2a2a38;
+    --radius: 0.75rem; --radius-lg: 1rem;
+    --font: 'Space Grotesk', system-ui, sans-serif; --max-w: 700px; --pad: 1.5rem;
+  }
+  @media (min-width: 768px) { :root { --pad: 2.5rem; } }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); -webkit-font-smoothing: antialiased; line-height: 1.55; }
+  a { color: inherit; text-decoration: none; }
+
+  .hero { max-width: var(--max-w); margin: 0 auto; padding: 3rem var(--pad) 0; position: relative; }
+  .hero::before { content: ''; position: absolute; top: -80px; right: 15%; width: 350px; height: 350px; background: radial-gradient(circle, rgba(139,156,247,0.04) 0%, transparent 65%); pointer-events: none; }
+  .hero-top { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.5rem; }
+  .photo { width: 80px; height: 80px; border-radius: var(--radius); overflow: hidden; flex-shrink: 0; border: 2px solid var(--border); }
+  @media (min-width: 768px) { .photo { width: 96px; height: 96px; } }
+  .photo-inner { width: 100%; height: 100%; background: linear-gradient(135deg, #2a2a3a, #1a1a28); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 300; color: var(--accent); }
+  .hero-identity { flex: 1; min-width: 0; }
+  .hero-name { font-size: 2rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 0.25rem; }
+  @media (min-width: 768px) { .hero-name { font-size: 2.375rem; } }
+  .hero-title { font-size: 0.875rem; color: var(--text-mid); font-weight: 400; }
+  .hero-bio { font-size: 0.9375rem; line-height: 1.65; color: var(--text-mid); margin-bottom: 1.75rem; max-width: 520px; }
+
+  .link-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .link-pill { display: flex; align-items: center; gap: 0.4375rem; padding: 0.4375rem 0.8125rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.8125rem; font-weight: 500; color: var(--text); transition: all 0.15s; cursor: pointer; }
+  .link-pill:hover { border-color: var(--accent-border); background: var(--accent-soft); color: var(--accent); }
+  .link-pill .icon { font-size: 0.6875rem; color: var(--accent); font-weight: 600; width: 16px; text-align: center; }
+  .save-row { margin-bottom: 2.5rem; }
+  .save-btn { display: inline-flex; align-items: center; gap: 0.4375rem; padding: 0.5625rem 1.25rem; background: var(--accent); color: var(--bg); border: none; border-radius: var(--radius); font-size: 0.8125rem; font-weight: 600; font-family: var(--font); cursor: pointer; transition: all 0.15s; }
+  .save-btn:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(139,156,247,0.2); }
+
+  .divider { max-width: var(--max-w); margin: 0 auto; padding: 0 var(--pad); }
+  .divider hr { border: none; height: 1px; background: var(--border); }
+
+  .pod { max-width: var(--max-w); margin: 0 auto; padding: 2.5rem var(--pad); }
+  .pod-label { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.625rem; }
+  .pod-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+  .pod-body { font-size: 0.9375rem; line-height: 1.7; color: var(--text-mid); max-width: 540px; }
+
+  .pod-split { display: grid; grid-template-columns: 1fr; gap: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; }
+  @media (min-width: 520px) { .pod-split { grid-template-columns: 1fr 1fr; } }
+  .pod-img { width: 100%; aspect-ratio: 16/10; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.75rem; }
+  .pod-split-body { display: flex; flex-direction: column; justify-content: center; }
+
+  .pod-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+  @media (max-width: 480px) { .pod-stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; text-align: center; }
+  .stat-num { font-size: 1.75rem; font-weight: 700; color: var(--accent); line-height: 1.1; letter-spacing: -0.03em; }
+  .stat-label { font-size: 0.6875rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.25rem; }
+
+  .pod-cta { background: linear-gradient(135deg, rgba(139,156,247,0.08), rgba(139,156,247,0.02)); border: 1px solid var(--accent-border); border-radius: var(--radius-lg); padding: 2rem; text-align: center; }
+  .pod-cta h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.375rem; letter-spacing: -0.02em; }
+  .pod-cta p { font-size: 0.9375rem; color: var(--text-mid); margin-bottom: 1.25rem; }
+  .pod-cta-btn { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.625rem 1.25rem; background: var(--accent); color: var(--bg); border: none; border-radius: var(--radius); font-size: 0.8125rem; font-weight: 600; font-family: var(--font); cursor: pointer; transition: all 0.15s; }
+  .pod-cta-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+
+  .showcase { max-width: var(--max-w); margin: 0 auto; padding: 0 var(--pad) 2.5rem; }
+  .showcase-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+  .showcase-title { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); }
+  .showcase-count { font-size: 0.6875rem; color: var(--text-muted); }
+  .showcase-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+  @media (min-width: 520px) { .showcase-grid { grid-template-columns: 1fr 1fr; } }
+  .showcase-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: all 0.15s; cursor: pointer; }
+  .showcase-card:hover { border-color: var(--accent-border); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .showcase-card-img { width: 100%; aspect-ratio: 16/10; background: linear-gradient(135deg, var(--surface-2), #1a1a24); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.75rem; font-weight: 500; }
+  .showcase-card-body { padding: 1rem 1.125rem 1.125rem; }
+  .showcase-card-type { font-size: 0.625rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 0.25rem; }
+  .showcase-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; letter-spacing: -0.01em; }
+  .showcase-card p { font-size: 0.8125rem; color: var(--text-muted); line-height: 1.5; }
+  .showcase-tags { display: flex; gap: 0.375rem; flex-wrap: wrap; margin-top: 0.625rem; }
+  .tag { font-size: 0.625rem; padding: 0.1875rem 0.5rem; border: 1px solid var(--border); border-radius: 9999px; color: var(--text-muted); font-weight: 500; }
+  .tag-accent { background: var(--accent-soft); border-color: var(--accent-border); color: var(--accent); }
+
+  .showcase-gate { margin-top: 1.25rem; text-align: center; }
+  .gate-btn { display: inline-flex; align-items: center; gap: 0.4375rem; padding: 0.5rem 1rem; background: transparent; border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.8125rem; font-weight: 500; color: var(--text-mid); font-family: var(--font); cursor: pointer; transition: all 0.15s; }
+  .gate-btn:hover { border-color: var(--accent-border); color: var(--accent); background: var(--accent-soft); }
+
+  .footer { max-width: var(--max-w); margin: 0 auto; padding: 2rem var(--pad) 2.5rem; text-align: center; }
+  .watermark { font-size: 0.625rem; color: var(--text-muted); opacity: 0.3; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; text-decoration: none; }
+
+  .impression-icon { position: fixed; bottom: 20px; right: 20px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0.1; transition: opacity 0.3s; }
+  .impression-icon::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .impression-icon:hover { opacity: 0.45; }
+
+  .fade-in { animation: fadeUp 0.45s ease-out both; }
+  .d1 { animation-delay: 0.04s; } .d2 { animation-delay: 0.08s; } .d3 { animation-delay: 0.12s; }
+  .d4 { animation-delay: 0.16s; } .d5 { animation-delay: 0.20s; } .d6 { animation-delay: 0.24s; }
+  .d7 { animation-delay: 0.28s; } .d8 { animation-delay: 0.32s; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-top fade-in d1">
+    <div class="photo"><div class="photo-inner">P</div></div>
+    <div class="hero-identity">
+      <h1 class="hero-name">Priya Sharma</h1>
+      <p class="hero-title">Product Designer · Currently at Figma</p>
+    </div>
+  </div>
+  <p class="hero-bio fade-in d2">
+    I design tools that make creative work feel effortless. Ten years across product, interaction, and systems design. Previously Spotify and Notion. I think in components and ship in pixels.
+  </p>
+  <div class="link-row fade-in d3">
+    <a href="#" class="link-pill"><span class="icon">◎</span> priyasharma.design</a>
+    <a href="#" class="link-pill"><span class="icon">dr</span> Dribbble</a>
+    <a href="#" class="link-pill"><span class="icon">in</span> LinkedIn</a>
+    <a href="#" class="link-pill"><span class="icon">𝕏</span> Twitter</a>
+    <a href="#" class="link-pill"><span class="icon">✉</span> Email</a>
+  </div>
+  <div class="save-row fade-in d3"><button class="save-btn">↓ Save Contact</button></div>
+</div>
+
+<div class="divider"><hr></div>
+
+<div class="pod fade-in d4">
+  <p class="pod-label">Philosophy</p>
+  <h2 class="pod-title">Design is a systems problem</h2>
+  <p class="pod-body">
+    The best interfaces aren't the prettiest ones. They're the ones where every element knows its job and nothing competes for attention. I obsess over information architecture, interaction patterns, and the invisible logic that makes a product feel "right."
+  </p>
+</div>
+
+<div class="divider"><hr></div>
+
+<div class="pod fade-in d5">
+  <p class="pod-label">Impact</p>
+  <div class="pod-stats">
+    <div class="stat"><div class="stat-num">40+</div><div class="stat-label">Products Shipped</div></div>
+    <div class="stat"><div class="stat-num">3</div><div class="stat-label">Design Systems</div></div>
+    <div class="stat"><div class="stat-num">8M</div><div class="stat-label">Users Reached</div></div>
+  </div>
+</div>
+
+<div class="divider"><hr></div>
+
+<div class="pod fade-in d6">
+  <div class="pod-split">
+    <div class="pod-img" style="min-height: 160px;">SCREENSHOT</div>
+    <div class="pod-split-body">
+      <p class="pod-label">Side Projects</p>
+      <h3 class="pod-title">Design tokens library</h3>
+      <p class="pod-body" style="max-width: none;">Open-source token system for multi-brand design. Used by 200+ teams. Figma plugin + Style Dictionary integration.</p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"><hr></div>
+
+<div class="pod fade-in d6">
+  <div class="pod-cta">
+    <h3>Open to freelance projects</h3>
+    <p>I take on 1-2 design system engagements per quarter. Let's see if your challenge is interesting.</p>
+    <button class="pod-cta-btn">Get in touch →</button>
+  </div>
+</div>
+
+<div class="divider"><hr></div>
+
+<div class="showcase fade-in d7">
+  <div class="showcase-header">
+    <span class="showcase-title">Case Studies</span>
+    <span class="showcase-count">2 public · 7 total</span>
+  </div>
+  <div class="showcase-grid">
+    <div class="showcase-card">
+      <div class="showcase-card-img">MOCKUP</div>
+      <div class="showcase-card-body">
+        <div class="showcase-card-type">Project</div>
+        <h3>Figma — Branching UX</h3>
+        <p>Led the design of version branching for Figma files. From concept to ship in 4 months.</p>
+        <div class="showcase-tags"><span class="tag tag-accent">Featured</span><span class="tag">Product</span><span class="tag">2025</span></div>
+      </div>
+    </div>
+    <div class="showcase-card">
+      <div class="showcase-card-img">MOCKUP</div>
+      <div class="showcase-card-body">
+        <div class="showcase-card-type">Project</div>
+        <h3>Spotify — Podcast Studio</h3>
+        <p>Redesigned the creator dashboard for podcast analytics. 2x engagement with insights tools.</p>
+        <div class="showcase-tags"><span class="tag">Dashboard</span><span class="tag">Analytics</span><span class="tag">2023</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="showcase-gate"><button class="gate-btn">🔒 View all case studies (7)</button></div>
+</div>
+
+<div class="footer fade-in d8"><a href="#" class="watermark">Imprynt</a></div>
+<div class="impression-icon"></div>
+
+</body>
+</html>

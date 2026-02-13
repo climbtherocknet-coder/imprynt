@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /r/
+Disallow: /api/
+Disallow: /dashboard/
+
+# Profile pages are noindex/nofollow via meta tags
+# but we also discourage crawling at the robots.txt level
+User-agent: *
+Disallow: /
+Allow: /$

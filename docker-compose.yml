@@ -1,0 +1,63 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: imprynt-app
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./.env.local:/app/.env.local:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - imprynt-network
+
+  db:
+    image: postgres:16-alpine
+    container_name: imprynt-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: imprynt
+      POSTGRES_PASSWORD: imprynt_dev_password
+      POSTGRES_DB: imprynt
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U imprynt"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - imprynt-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: imprynt-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+    networks:
+      - imprynt-network
+
+volumes:
+  pgdata:
+
+networks:
+  imprynt-network:
+    driver: bridge

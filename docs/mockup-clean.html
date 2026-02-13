@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imprynt — Clean Template</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #ffffff;
+    --bg-alt: #f8f9fa;
+    --surface: #f1f3f5;
+    --surface-2: #e9ecef;
+    --text: #1a1a2e;
+    --text-mid: #495057;
+    --text-muted: #868e96;
+    --accent: #3B82F6;
+    --accent-soft: rgba(59, 130, 246, 0.07);
+    --accent-border: rgba(59, 130, 246, 0.18);
+    --accent-hover: #2563eb;
+    --border: #e9ecef;
+    --border-hover: #dee2e6;
+    --radius: 0.625rem;
+    --radius-lg: 0.875rem;
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --max-w: 680px;
+    --pad: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    :root { --pad: 2.5rem; }
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ═══════════════════════════════
+     HERO
+     ═══════════════════════════════ */
+  .hero {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 3rem var(--pad) 0;
+  }
+
+  .hero-top {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .photo {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 2px solid var(--border);
+  }
+
+  @media (min-width: 768px) {
+    .photo { width: 88px; height: 88px; }
+  }
+
+  .photo-inner {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    font-weight: 300;
+    color: var(--accent);
+  }
+
+  .hero-identity { flex: 1; min-width: 0; }
+
+  .hero-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin-bottom: 0.1875rem;
+  }
+
+  @media (min-width: 768px) {
+    .hero-name { font-size: 2rem; }
+  }
+
+  .hero-title {
+    font-size: 0.875rem;
+    color: var(--text-mid);
+    font-weight: 400;
+  }
+
+  .hero-bio {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--text-mid);
+    margin-bottom: 1.5rem;
+    max-width: 520px;
+  }
+
+  /* ── Links ── */
+  .link-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .link-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.4375rem;
+    padding: 0.4375rem 0.8125rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 2rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text);
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+
+  .link-pill:hover {
+    border-color: var(--accent-border);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .link-pill .icon {
+    font-size: 0.6875rem;
+    color: var(--accent);
+    font-weight: 700;
+    width: 16px;
+    text-align: center;
+  }
+
+  .save-row { margin-bottom: 2.5rem; }
+
+  .save-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    padding: 0.5625rem 1.125rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .save-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  }
+
+  /* ═══════════════════════════════
+     DIVIDER
+     ═══════════════════════════════ */
+  .divider {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 var(--pad);
+  }
+
+  .divider hr {
+    border: none;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ═══════════════════════════════
+     PODS — Content blocks
+     ═══════════════════════════════ */
+
+  /* ── Pod: Text ── */
+  .pod {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 2rem var(--pad);
+  }
+
+  .pod-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 0.625rem;
+  }
+
+  .pod-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .pod-body {
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--text-mid);
+    max-width: 580px;
+  }
+
+  /* ── Pod: Text + Image ── */
+  .pod-split {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+  }
+
+  @media (min-width: 520px) {
+    .pod-split {
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+  }
+
+  .pod-img {
+    width: 100%;
+    aspect-ratio: 16/10;
+    object-fit: cover;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .pod-split-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* ── Pod: Stats ── */
+  .pod-stats {
+    display: flex;
+    gap: 2rem;
+    padding: 1.5rem;
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    flex-wrap: wrap;
+  }
+
+  .stat { text-align: center; flex: 1; min-width: 80px; }
+
+  .stat-num {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .stat-label {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 0.25rem;
+  }
+
+  /* ── Pod: CTA ── */
+  .pod-cta {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .pod-cta h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.375rem;
+  }
+
+  .pod-cta p {
+    font-size: 0.875rem;
+    color: var(--text-mid);
+    margin-bottom: 1rem;
+  }
+
+  .pod-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 1.125rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .pod-cta-btn:hover {
+    background: var(--accent-hover);
+  }
+
+  /* ═══════════════════════════════
+     SHOWCASE
+     ═══════════════════════════════ */
+  .showcase {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 var(--pad) 2.5rem;
+  }
+
+  .showcase-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .showcase-title {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+  }
+
+  .showcase-count {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+  }
+
+  .showcase-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 520px) {
+    .showcase-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .showcase-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+
+  .showcase-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  }
+
+  .showcase-card-img {
+    width: 100%;
+    aspect-ratio: 16/10;
+    background: linear-gradient(135deg, var(--surface), var(--surface-2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .showcase-card-body {
+    padding: 1rem 1.125rem 1.125rem;
+  }
+
+  .showcase-card-type {
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 0.25rem;
+  }
+
+  .showcase-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.01em;
+  }
+
+  .showcase-card p {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .showcase-tags {
+    display: flex;
+    gap: 0.375rem;
+    flex-wrap: wrap;
+    margin-top: 0.625rem;
+  }
+
+  .tag {
+    font-size: 0.625rem;
+    padding: 0.1875rem 0.5rem;
+    background: var(--surface);
+    border-radius: 9999px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .tag-status {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .showcase-gate {
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  .gate-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 2rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-mid);
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .gate-btn:hover {
+    border-color: var(--accent-border);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  /* ═══════════════════════════════
+     FOOTER
+     ═══════════════════════════════ */
+  .footer {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 2rem var(--pad) 2.5rem;
+    text-align: center;
+  }
+
+  .watermark {
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    opacity: 0.35;
+    text-decoration: none;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  /* ── Impression icon ── */
+  .impression-icon {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.12;
+    transition: opacity 0.3s;
+  }
+
+  .impression-icon::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .impression-icon:hover { opacity: 0.5; }
+
+  /* ── Animations ── */
+  .fade-in { animation: fadeUp 0.45s ease-out both; }
+  .d1 { animation-delay: 0.04s; }
+  .d2 { animation-delay: 0.08s; }
+  .d3 { animation-delay: 0.12s; }
+  .d4 { animation-delay: 0.16s; }
+  .d5 { animation-delay: 0.20s; }
+  .d6 { animation-delay: 0.24s; }
+  .d7 { animation-delay: 0.28s; }
+  .d8 { animation-delay: 0.32s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .img-placeholder {
+    background: linear-gradient(135deg, var(--surface), var(--surface-2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════ HERO ═══════ -->
+<div class="hero">
+  <div class="hero-top fade-in d1">
+    <div class="photo">
+      <div class="photo-inner">A</div>
+    </div>
+    <div class="hero-identity">
+      <h1 class="hero-name">Alex Huang</h1>
+      <p class="hero-title">Freelance Developer · Portland, OR</p>
+    </div>
+  </div>
+
+  <p class="hero-bio fade-in d2">
+    Full-stack developer specializing in React, Node, and cloud infrastructure. I help startups go from idea to shipped product in weeks, not months.
+  </p>
+
+  <div class="link-row fade-in d3">
+    <a href="#" class="link-pill"><span class="icon">in</span> LinkedIn</a>
+    <a href="#" class="link-pill"><span class="icon">gh</span> GitHub</a>
+    <a href="#" class="link-pill"><span class="icon">◎</span> alexhuang.dev</a>
+    <a href="#" class="link-pill"><span class="icon">✉</span> Email</a>
+    <a href="#" class="link-pill"><span class="icon">◷</span> Book a Call</a>
+  </div>
+
+  <div class="save-row fade-in d4">
+    <button class="save-btn">↓ Save Contact</button>
+  </div>
+</div>
+
+<div class="divider"><hr></div>
+
+<!-- ═══════ POD: Text ═══════ -->
+<div class="pod fade-in d5">
+  <p class="pod-label">About</p>
+  <h2 class="pod-title">Building things that work</h2>
+  <p class="pod-body">
+    I've been writing code professionally for eight years, the last four as an independent consultant. I work best with early-stage teams who need someone who can own the full stack, from database design to deployment pipelines. My clients stay clients because I ship on time and communicate like a human.
+  </p>
+</div>
+
+<div class="divider"><hr></div>
+
+<!-- ═══════ POD: Stats ═══════ -->
+<div class="pod fade-in d5">
+  <p class="pod-label">By the Numbers</p>
+  <div class="pod-stats">
+    <div class="stat">
+      <div class="stat-num">42</div>
+      <div class="stat-label">Projects Shipped</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">8</div>
+      <div class="stat-label">Years Experience</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">100%</div>
+      <div class="stat-label">On-Time Delivery</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"><hr></div>
+
+<!-- ═══════ POD: Text + Image ═══════ -->
+<div class="pod fade-in d6">
+  <div class="pod-split">
+    <div class="pod-img img-placeholder" style="min-height: 160px;">PHOTO</div>
+    <div class="pod-split-body">
+      <h3 class="pod-title">How I Work</h3>
+      <p class="pod-body" style="max-width: none;">
+        Two-week sprints, async standups, and a shared Notion board. You'll always know what's happening. I bill weekly, no surprises, no scope creep without a conversation first.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"><hr></div>
+
+<!-- ═══════ POD: CTA ═══════ -->
+<div class="pod fade-in d6">
+  <div class="pod-cta">
+    <h3>Have a project in mind?</h3>
+    <p>Let's talk about what you're building and whether I'm the right fit.</p>
+    <button class="pod-cta-btn">Schedule a free intro call →</button>
+  </div>
+</div>
+
+<div class="divider"><hr></div>
+
+<!-- ═══════ SHOWCASE ═══════ -->
+<div class="showcase fade-in d7">
+  <div class="showcase-header">
+    <span class="showcase-title">Recent Projects</span>
+    <span class="showcase-count">2 public · 5 total</span>
+  </div>
+
+  <div class="showcase-grid">
+    <div class="showcase-card">
+      <div class="showcase-card-img">SCREENSHOT</div>
+      <div class="showcase-card-body">
+        <div class="showcase-card-type">Project</div>
+        <h3>Fern Health — Patient Portal</h3>
+        <p>Full rebuild of a healthcare startup's patient dashboard. React, Supabase, Stripe integration.</p>
+        <div class="showcase-tags">
+          <span class="tag tag-status">Case Study</span>
+          <span class="tag">React</span>
+          <span class="tag">Healthcare</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="showcase-card">
+      <div class="showcase-card-img">SCREENSHOT</div>
+      <div class="showcase-card-body">
+        <div class="showcase-card-type">Project</div>
+        <h3>Canopy — API Platform</h3>
+        <p>Designed and built a developer API with rate limiting, webhooks, and interactive docs.</p>
+        <div class="showcase-tags">
+          <span class="tag">Node.js</span>
+          <span class="tag">API Design</span>
+          <span class="tag">2025</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="showcase-gate">
+    <button class="gate-btn">🔒 View all projects (5 items)</button>
+  </div>
+</div>
+
+<!-- ═══════ FOOTER ═══════ -->
+<div class="footer fade-in d8">
+  <a href="#" class="watermark">Imprynt</a>
+</div>
+
+<!-- ═══════ IMPRESSION ICON ═══════ -->
+<div class="impression-icon"></div>
+
+</body>
+</html>
