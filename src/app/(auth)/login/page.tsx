@@ -29,7 +29,7 @@ export default function LoginPage() {
 
     if (result?.error) {
       // Auth.js v5 puts the thrown error message in `code` or `error`
-      const errStr = (result as Record<string, unknown>).code as string || result.error || '';
+      const errStr = (result as unknown as Record<string, unknown>).code as string || result.error || '';
       if (errStr.includes('RATE_LIMITED')) {
         const mins = errStr.match(/RATE_LIMITED:(\d+)/)?.[1] || '15';
         setError(`Too many login attempts. Please try again in ${mins} minute${mins === '1' ? '' : 's'}.`);
