@@ -24,6 +24,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    volumes:
+      - uploads:/app/public/uploads
     networks:
       - imprynt-network
 
@@ -68,6 +70,7 @@ services:
 
 volumes:
   pgdata:
+  uploads:
   caddy_data:
   caddy_config:
 
