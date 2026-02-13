@@ -12,13 +12,20 @@ function isAdminEmail(email: string | null | undefined): boolean {
 }
 
 export async function middleware(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+    secureCookie: req.nextUrl.protocol === 'https:' || process.env.NEXTAUTH_URL?.startsWith('https'),
+  });
   const { pathname } = req.nextUrl;
+
+  // Build public-facing URL from NEXTAUTH_URL or request
+  const publicOrigin = process.env.NEXTAUTH_URL || req.nextUrl.origin;
 
   // All protected routes require authentication
   if (!token) {
-    const loginUrl = new URL('/login', req.url);
-    loginUrl.searchParams.set('callbackUrl', req.url);
+    const loginUrl = new URL('/login', publicOrigin);
+    loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -29,7 +36,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/api/p-8k3x/');
 
   if (isAdminRoute && !isAdminEmail(token.email as string)) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+    return NextResponse.redirect(new URL('/dashboard', publicOrigin));
   }
 
   return NextResponse.next();
