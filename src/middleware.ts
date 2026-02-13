@@ -24,9 +24,9 @@ export async function middleware(req: NextRequest) {
 
   // Admin routes require both auth AND admin email
   const isAdminRoute =
-    pathname === '/admin' ||
-    pathname.startsWith('/admin/') ||
-    pathname.startsWith('/api/admin/');
+    pathname === '/p-8k3x' ||
+    pathname.startsWith('/p-8k3x/') ||
+    pathname.startsWith('/api/p-8k3x/');
 
   if (isAdminRoute && !isAdminEmail(token.email as string)) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
@@ -36,5 +36,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/api/admin/:path*'],
+  matcher: ['/dashboard/:path*', '/p-8k3x/:path*', '/api/p-8k3x/:path*'],
 };

@@ -143,7 +143,7 @@ function OverviewTab() {
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
-    fetch('/api/admin/stats')
+    fetch('/api/p-8k3x/stats')
       .then((r) => r.json())
       .then(setStats)
       .catch(() => {});
@@ -206,7 +206,7 @@ function UsersTab() {
     if (search) params.set('search', search);
     if (planFilter) params.set('plan', planFilter);
 
-    fetch(`/api/admin/users?${params}`)
+    fetch(`/api/p-8k3x/users?${params}`)
       .then((r) => r.json())
       .then((data) => {
         setUsers(data.users);
@@ -230,7 +230,7 @@ function UsersTab() {
     setDetail(null);
     setDetailAnalytics(null);
 
-    fetch(`/api/admin/users/${userId}`)
+    fetch(`/api/p-8k3x/users/${userId}`)
       .then((r) => r.json())
       .then((data) => {
         setDetail(data.user);
@@ -243,7 +243,7 @@ function UsersTab() {
   async function savePlan(userId: string) {
     setSaving(true);
     try {
-      const res = await fetch(`/api/admin/users/${userId}/plan`, {
+      const res = await fetch(`/api/p-8k3x/users/${userId}/plan`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: planEdit }),
@@ -262,7 +262,7 @@ function UsersTab() {
   async function handleSuspend(userId: string) {
     setActionLoading('suspend');
     try {
-      const res = await fetch(`/api/admin/users/${userId}/suspend`, { method: 'POST' });
+      const res = await fetch(`/api/p-8k3x/users/${userId}/suspend`, { method: 'POST' });
       if (res.ok) {
         loadUsers();
         if (detail) setDetail({ ...detail, accountStatus: 'suspended' });
@@ -277,7 +277,7 @@ function UsersTab() {
   async function handleReactivate(userId: string) {
     setActionLoading('reactivate');
     try {
-      const res = await fetch(`/api/admin/users/${userId}/reactivate`, { method: 'POST' });
+      const res = await fetch(`/api/p-8k3x/users/${userId}/reactivate`, { method: 'POST' });
       if (res.ok) {
         loadUsers();
         if (detail) setDetail({ ...detail, accountStatus: 'active' });
@@ -292,7 +292,7 @@ function UsersTab() {
   async function handleDelete(userId: string) {
     setActionLoading('delete');
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/p-8k3x/users/${userId}`, { method: 'DELETE' });
       if (res.ok) {
         setDeleteConfirmId(null);
         setDeleteConfirmText('');
@@ -592,7 +592,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
   const [count, setCount] = useState('1');
 
   const loadCodes = useCallback(() => {
-    fetch('/api/admin/invite-codes')
+    fetch('/api/p-8k3x/invite-codes')
       .then((r) => r.json())
       .then((data) => setCodes(data.codes))
       .catch(() => {})
@@ -609,7 +609,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
     setGeneratedCodes([]);
 
     try {
-      const res = await fetch('/api/admin/invite-codes', {
+      const res = await fetch('/api/p-8k3x/invite-codes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -792,7 +792,7 @@ function WaitlistTab() {
   const [marking, setMarking] = useState('');
 
   const loadEntries = useCallback(() => {
-    fetch('/api/admin/waitlist')
+    fetch('/api/p-8k3x/waitlist')
       .then((r) => r.json())
       .then((data) => setEntries(data.entries))
       .catch(() => {})
@@ -806,7 +806,7 @@ function WaitlistTab() {
   async function markInvited(id: string) {
     setMarking(id);
     try {
-      const res = await fetch('/api/admin/waitlist', {
+      const res = await fetch('/api/p-8k3x/waitlist', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
