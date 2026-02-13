@@ -591,6 +591,18 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
   const [note, setNote] = useState('');
   const [count, setCount] = useState('1');
 
+  // Edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editMaxUses, setEditMaxUses] = useState('');
+  const [editExpiresInDays, setEditExpiresInDays] = useState('');
+  const [editNote, setEditNote] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
+
+  // Delete state
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
   const loadCodes = useCallback(() => {
     fetch('/api/p-8k3x/invite-codes')
       .then((r) => r.json())
@@ -650,6 +662,66 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
     if (c.expiresAt && new Date(c.expiresAt) < new Date()) return 'expired';
     if (c.maxUses !== null && c.useCount >= c.maxUses) return 'used';
     return 'active';
+  }
+
+  function startEdit(c: InviteCode) {
+    setEditingId(c.id);
+    setEditMaxUses(c.maxUses !== null ? String(c.maxUses) : '0');
+    setEditExpiresInDays('');
+    setEditNote(c.note || '');
+    setDeleteId(null);
+    setDeleteError('');
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+  }
+
+  async function saveEdit(id: string) {
+    setEditSaving(true);
+    try {
+      const res = await fetch('/api/p-8k3x/invite-codes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          maxUses: parseInt(editMaxUses) || 0,
+          expiresInDays: editExpiresInDays ? parseInt(editExpiresInDays) : null,
+          note: editNote,
+        }),
+      });
+      if (res.ok) {
+        setEditingId(null);
+        loadCodes();
+      }
+    } catch {
+      // silent
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      const res = await fetch('/api/p-8k3x/invite-codes', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        setDeleteId(null);
+        loadCodes();
+      } else {
+        const data = await res.json();
+        setDeleteError(data.error || 'Failed to delete');
+      }
+    } catch {
+      setDeleteError('Failed to delete');
+    } finally {
+      setDeleting(false);
+    }
   }
 
   if (loading) return <p style={{ color: '#5d6370' }}>Loading...</p>;
@@ -748,6 +820,9 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
           <tbody>
             {codes.map((c) => {
               const status = codeStatus(c);
+              const isEditing = editingId === c.id;
+              const isDeleting = deleteId === c.id;
+
               return (
                 <tr key={c.id}>
                   <td><span className="admin-code">{c.code}</span></td>
@@ -756,16 +831,117 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
                       {status}
                     </span>
                   </td>
-                  <td>{c.useCount}{c.maxUses !== null ? ` / ${c.maxUses}` : ' / ∞'}</td>
-                  <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {c.note || '—'}
+                  <td>
+                    {isEditing ? (
+                      <input
+                        className="admin-input"
+                        type="number"
+                        min="0"
+                        value={editMaxUses}
+                        onChange={(e) => setEditMaxUses(e.target.value)}
+                        style={{ width: 60, fontSize: '0.75rem', padding: '0.2rem 0.4rem' }}
+                        title="0 = unlimited"
+                      />
+                    ) : (
+                      <>{c.useCount}{c.maxUses !== null ? ` / ${c.maxUses}` : ' / \u221e'}</>
+                    )}
+                  </td>
+                  <td style={{ maxWidth: 200 }}>
+                    {isEditing ? (
+                      <input
+                        className="admin-input"
+                        value={editNote}
+                        onChange={(e) => setEditNote(e.target.value)}
+                        placeholder="Note..."
+                        style={{ width: '100%', fontSize: '0.75rem', padding: '0.2rem 0.4rem' }}
+                      />
+                    ) : (
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                        {c.note || '\u2014'}
+                      </span>
+                    )}
                   </td>
                   <td>{fmtDate(c.createdAt)}</td>
-                  <td>{c.expiresAt ? fmtDate(c.expiresAt) : 'Never'}</td>
                   <td>
-                    <button className="admin-copy-btn" onClick={() => copyCode(c.code)}>
-                      {copied === c.code ? 'Copied' : 'Copy'}
-                    </button>
+                    {isEditing ? (
+                      <input
+                        className="admin-input"
+                        type="number"
+                        min="1"
+                        value={editExpiresInDays}
+                        onChange={(e) => setEditExpiresInDays(e.target.value)}
+                        placeholder={c.expiresAt ? 'Reset' : 'Never'}
+                        style={{ width: 70, fontSize: '0.75rem', padding: '0.2rem 0.4rem' }}
+                        title="Days from now (leave empty to keep current)"
+                      />
+                    ) : (
+                      c.expiresAt ? fmtDate(c.expiresAt) : 'Never'
+                    )}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', flexWrap: 'nowrap' }}>
+                      {isEditing ? (
+                        <>
+                          <button
+                            className="admin-btn admin-btn--primary admin-btn--small"
+                            onClick={() => saveEdit(c.id)}
+                            disabled={editSaving}
+                            style={{ fontSize: '0.6875rem', padding: '0.2rem 0.5rem' }}
+                          >
+                            {editSaving ? 'Saving...' : 'Save'}
+                          </button>
+                          <button
+                            className="admin-btn admin-btn--ghost admin-btn--small"
+                            onClick={cancelEdit}
+                            style={{ fontSize: '0.6875rem', padding: '0.2rem 0.5rem' }}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : isDeleting ? (
+                        <>
+                          <button
+                            className="admin-btn admin-btn--small"
+                            onClick={() => handleDelete(c.id)}
+                            disabled={deleting}
+                            style={{ fontSize: '0.6875rem', padding: '0.2rem 0.5rem', background: '#dc2626', color: '#fff' }}
+                          >
+                            {deleting ? '...' : 'Confirm'}
+                          </button>
+                          <button
+                            className="admin-btn admin-btn--ghost admin-btn--small"
+                            onClick={() => { setDeleteId(null); setDeleteError(''); }}
+                            style={{ fontSize: '0.6875rem', padding: '0.2rem 0.5rem' }}
+                          >
+                            Cancel
+                          </button>
+                          {deleteError && (
+                            <span style={{ fontSize: '0.6875rem', color: '#f87171' }}>{deleteError}</span>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <button className="admin-copy-btn" onClick={() => copyCode(c.code)}>
+                            {copied === c.code ? 'Copied' : 'Copy'}
+                          </button>
+                          <button
+                            className="admin-copy-btn"
+                            onClick={() => startEdit(c)}
+                            title="Edit"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="admin-copy-btn"
+                            onClick={() => { setDeleteId(c.id); setEditingId(null); setDeleteError(''); }}
+                            title="Delete"
+                            style={{ color: '#f87171' }}
+                          >
+                            Del
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

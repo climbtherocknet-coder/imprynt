@@ -62,3 +62,80 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ codes }, { status: 201 });
 }
+
+export async function PUT(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.email || !isAdmin(session.user.email)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const { id, maxUses, expiresInDays, note } = body;
+
+  if (!id) {
+    return NextResponse.json({ error: 'Missing invite code ID' }, { status: 400 });
+  }
+
+  // Build dynamic update
+  const sets: string[] = [];
+  const params: unknown[] = [];
+  let idx = 1;
+
+  if (maxUses !== undefined) {
+    sets.push(`max_uses = $${idx++}`);
+    params.push(maxUses === 0 ? null : maxUses);
+  }
+
+  if (expiresInDays !== undefined) {
+    sets.push(`expires_at = $${idx++}`);
+    params.push(
+      expiresInDays
+        ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
+        : null
+    );
+  }
+
+  if (note !== undefined) {
+    sets.push(`note = $${idx++}`);
+    params.push(note?.trim().slice(0, 255) || null);
+  }
+
+  if (sets.length === 0) {
+    return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
+  }
+
+  params.push(id);
+  await query(`UPDATE invite_codes SET ${sets.join(', ')} WHERE id = $${idx}`, params);
+
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.email || !isAdmin(session.user.email)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = await req.json();
+
+  if (!id) {
+    return NextResponse.json({ error: 'Missing invite code ID' }, { status: 400 });
+  }
+
+  // Don't delete codes that have been used (preserve audit trail)
+  const check = await query('SELECT use_count FROM invite_codes WHERE id = $1', [id]);
+  if (check.rows.length === 0) {
+    return NextResponse.json({ error: 'Code not found' }, { status: 404 });
+  }
+
+  if (check.rows[0].use_count > 0) {
+    return NextResponse.json(
+      { error: 'Cannot delete a code that has been used. Edit it instead.' },
+      { status: 400 }
+    );
+  }
+
+  await query('DELETE FROM invite_codes WHERE id = $1', [id]);
+
+  return NextResponse.json({ ok: true });
+}
