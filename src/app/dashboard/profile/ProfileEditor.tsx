@@ -35,6 +35,7 @@ interface ProfileData {
     fontPair: string;
     isPublished: boolean;
     statusTags: string[];
+    allowSharing: boolean;
   };
   links: LinkItem[];
 }
@@ -137,6 +138,7 @@ export default function ProfileEditor() {
   const [accentColor, setAccentColor] = useState('#3B82F6');
   const [fontPair, setFontPair] = useState('default');
   const [links, setLinks] = useState<LinkItem[]>([]);
+  const [allowSharing, setAllowSharing] = useState(true);
 
   // Photo upload
   const [uploading, setUploading] = useState(false);
@@ -168,6 +170,7 @@ export default function ProfileEditor() {
         setFontPair(d.profile.fontPair);
         setLinks(d.links);
         setPhotoUrl(d.profile.photoUrl);
+        setAllowSharing(d.profile.allowSharing !== false);
         setLoading(false);
       })
       .catch(() => {
@@ -759,6 +762,33 @@ export default function ProfileEditor() {
               style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid #283042', cursor: 'pointer', padding: 0 }}
             />
           </div>
+        </div>
+
+        {/* ─── Sharing Settings ──────────────────── */}
+        <div style={sectionStyle}>
+          <h3 style={sectionTitleStyle}>Sharing</h3>
+          <label style={{ ...labelStyle, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input
+              type="checkbox"
+              checked={allowSharing}
+              onChange={async (e) => {
+                const val = e.target.checked;
+                setAllowSharing(val);
+                try {
+                  await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ section: 'sharing', allowSharing: val }),
+                  });
+                } catch { /* silent */ }
+              }}
+              style={{ width: 16, height: 16, accentColor: '#e8a849' }}
+            />
+            Allow visitors to share your profile
+          </label>
+          <p style={{ fontSize: '0.75rem', color: '#5d6370', margin: '0.375rem 0 0 1.5rem' }}>
+            Shows a share button on your public profile page.
+          </p>
         </div>
 
         {/* ─── Profile URL Info ──────────────────── */}

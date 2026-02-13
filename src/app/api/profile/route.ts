@@ -23,7 +23,7 @@ export async function GET() {
 
   const profileResult = await query(
     `SELECT id, slug, redirect_id, title, company, tagline, bio_heading, bio,
-            photo_url, template, primary_color, accent_color, font_pair, is_published, status_tags
+            photo_url, template, primary_color, accent_color, font_pair, is_published, status_tags, allow_sharing
      FROM profiles WHERE user_id = $1`,
     [userId]
   );
@@ -62,6 +62,7 @@ export async function GET() {
       fontPair: profile.font_pair,
       isPublished: profile.is_published,
       statusTags: profile.status_tags || [],
+      allowSharing: profile.allow_sharing !== false,
     },
     links: linksResult.rows.map((l: Record<string, unknown>) => ({
       id: l.id,
@@ -153,6 +154,12 @@ export async function PUT(req: NextRequest) {
       await query(
         'UPDATE profiles SET status_tags = $1 WHERE user_id = $2',
         [filtered, userId]
+      );
+    } else if (section === 'sharing') {
+      const { allowSharing } = body;
+      await query(
+        'UPDATE profiles SET allow_sharing = $1 WHERE user_id = $2',
+        [!!allowSharing, userId]
       );
     } else {
       return NextResponse.json({ error: 'Invalid section' }, { status: 400 });

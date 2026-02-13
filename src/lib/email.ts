@@ -14,6 +14,8 @@ import {
   passwordResetText,
   welcomeHtml,
   welcomeText,
+  waitlistInviteHtml,
+  waitlistInviteText,
 } from '@/lib/email-templates';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
@@ -102,5 +104,17 @@ export async function sendWelcomeEmail(
     subject: 'Welcome to Imprynt',
     html: welcomeHtml(firstName),
     text: welcomeText(firstName),
+  });
+}
+
+export async function sendWaitlistInviteEmail(
+  to: string,
+  inviteCode: string
+): Promise<boolean> {
+  return sendEmail({
+    to,
+    subject: "You're invited to Imprynt!",
+    html: waitlistInviteHtml(inviteCode),
+    text: waitlistInviteText(inviteCode),
   });
 }

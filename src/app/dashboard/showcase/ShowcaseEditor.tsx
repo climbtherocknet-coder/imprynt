@@ -13,6 +13,7 @@ interface PageData {
   bioText: string;
   buttonLabel: string;
   isActive: boolean;
+  allowRemember: boolean;
 }
 
 // ── Styles ─────────────────────────────────────────────
@@ -66,6 +67,7 @@ export default function ShowcaseEditor() {
   const [pinConfirm, setPinConfirm] = useState('');
   const [resumeUrl, setResumeUrl] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [allowRemember, setAllowRemember] = useState(true);
   const [isNew, setIsNew] = useState(true);
 
   // Load existing showcase page + profile slug
@@ -82,6 +84,7 @@ export default function ShowcaseEditor() {
           setBioText(p.bioText);
           setResumeUrl(p.resumeUrl || '');
           setIsActive(p.isActive);
+          setAllowRemember(p.allowRemember !== false);
           setIsNew(false);
         }
       })
@@ -134,6 +137,7 @@ export default function ShowcaseEditor() {
           bioText,
           buttonLabel,
           isActive: true,
+          allowRemember: true,
         });
         setIsNew(false);
         setPin('');
@@ -146,6 +150,7 @@ export default function ShowcaseEditor() {
           buttonLabel: buttonLabel.trim() || pageTitle.trim() || 'Projects',
           resumeUrl: resumeUrl.trim(),
           isActive,
+          allowRemember,
         };
         if (pin) body.pin = pin;
 
@@ -169,7 +174,7 @@ export default function ShowcaseEditor() {
     } finally {
       setSaving(false);
     }
-  }, [isNew, page, pageTitle, buttonLabel, bioText, resumeUrl, pin, pinConfirm, isActive]);
+  }, [isNew, page, pageTitle, buttonLabel, bioText, resumeUrl, pin, pinConfirm, isActive, allowRemember]);
 
   // ── Render ───────────────────────────────────────────
 
@@ -287,10 +292,14 @@ export default function ShowcaseEditor() {
           </div>
 
           {!isNew && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
               <label style={{ ...labelStyle, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#e8a849' }} />
                 Showcase is active
+              </label>
+              <label style={{ ...labelStyle, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input type="checkbox" checked={allowRemember} onChange={e => setAllowRemember(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#e8a849' }} />
+                Allow visitors to remember access
               </label>
             </div>
           )}

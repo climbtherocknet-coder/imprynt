@@ -27,6 +27,7 @@ interface ProfileData {
   plan: string;
   status_tags: string[] | null;
   is_published: boolean;
+  allow_sharing: boolean;
 }
 
 interface LinkData {
@@ -51,7 +52,7 @@ async function getProfileAny(slug: string) {
   const result = await query(
     `SELECT p.id as profile_id, p.user_id, u.first_name, u.last_name, p.title, p.company,
             p.tagline, p.bio_heading, p.bio, p.photo_url, p.template,
-            p.primary_color, p.accent_color, p.font_pair, u.plan, p.status_tags, p.is_published
+            p.primary_color, p.accent_color, p.font_pair, u.plan, p.status_tags, p.is_published, p.allow_sharing
      FROM profiles p
      JOIN users u ON u.id = p.user_id
      WHERE p.slug = $1 AND u.account_status = 'active'`,
@@ -125,7 +126,7 @@ async function getImpressionSettings(profileId: string) {
   };
 }
 
-async function logPageView(profileId: string, userAgent: string | null) {
+async function logPageView(profileId: string, userAgent: string | null, viewerUserId?: string | null) {
   try {
     await query(
       `INSERT INTO analytics_events (profile_id, event_type, referral_source, user_agent)
@@ -134,6 +135,16 @@ async function logPageView(profileId: string, userAgent: string | null) {
     );
   } catch {
     // analytics errors shouldn't break the page
+  }
+  // Log connection
+  try {
+    await query(
+      `INSERT INTO connections (profile_id, viewer_user_id, connection_type, metadata)
+       VALUES ($1, $2, 'page_view', $3)`,
+      [profileId, viewerUserId || null, JSON.stringify({ userAgent: userAgent || '' })]
+    );
+  } catch {
+    // connection logging shouldn't break the page
   }
 }
 
@@ -203,7 +214,15 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
   if (profile.is_published) {
     const headersList = await headers();
     const userAgent = headersList.get('user-agent');
-    logPageView(profile.profile_id, userAgent);
+    // Check if viewer is an Imprynt user (for connection logging)
+    let viewerUserId: string | null = null;
+    try {
+      const session = await auth();
+      if (session?.user?.id && session.user.id !== profile.user_id) {
+        viewerUserId = session.user.id;
+      }
+    } catch { /* not logged in */ }
+    logPageView(profile.profile_id, userAgent, viewerUserId);
   }
 
   const theme = getTheme(profile.template);
@@ -238,6 +257,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         hasImpression={!!impressionSettings}
         impressionIcon={impressionSettings || undefined}
         showcasePages={visibleProtectedPages.map(p => ({ id: p.id, buttonLabel: p.button_label }))}
+        allowSharing={profile.allow_sharing !== false}
       />
     </>
   );

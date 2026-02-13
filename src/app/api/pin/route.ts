@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { auth } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
@@ -72,6 +73,23 @@ export async function POST(req: NextRequest) {
         );
       } catch {
         // don't break on analytics failure
+      }
+
+      // Log connection event
+      try {
+        let viewerUserId: string | null = null;
+        try {
+          const session = await auth();
+          if (session?.user?.id) viewerUserId = session.user.id;
+        } catch { /* not logged in */ }
+        const connectionType = page.visibility_mode === 'hidden' ? 'impressed' : 'pin_success';
+        await query(
+          `INSERT INTO connections (profile_id, viewer_user_id, connection_type, ip_hash)
+           VALUES ($1, $2, $3, $4)`,
+          [profileId, viewerUserId, connectionType, ipHash]
+        );
+      } catch {
+        // don't break on connection logging failure
       }
 
       // For impression (hidden) pages, generate a short-lived download token for personal vCard

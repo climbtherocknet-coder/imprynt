@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { getTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, isDarkTemplate, LINK_ICONS } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
 
@@ -46,6 +46,7 @@ interface ProfileClientProps {
   hasImpression: boolean;
   impressionIcon?: ImpressionIcon;
   showcasePages: ShowcasePage[];
+  allowSharing?: boolean;
 }
 
 // ── PIN Modal ──────────────────────────────────────────
@@ -87,7 +88,6 @@ function PinModal({
     // Auto-submit when 4+ digits filled
     const pin = newDigits.join('');
     if (pin.length >= 4 && value && (index >= 3)) {
-      // Check if we have a contiguous PIN from start
       const contiguous = newDigits.findIndex(d => d === '');
       if (contiguous === -1 || contiguous >= 4) {
         submitPin(pin.slice(0, contiguous === -1 ? 6 : contiguous));
@@ -133,7 +133,6 @@ function PinModal({
         setError(data.error || 'Invalid PIN');
       }
 
-      // Clear digits
       setDigits(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } catch {
@@ -187,7 +186,6 @@ function PinModal({
           This content is PIN-protected
         </p>
 
-        {/* PIN input */}
         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginBottom: '1rem' }}>
           {digits.map((digit, i) => (
             <input
@@ -248,6 +246,72 @@ function PinModal({
   );
 }
 
+// ── Remember Device Prompt ─────────────────────────────
+
+function RememberPrompt({
+  onYes,
+  onNo,
+  accent,
+}: {
+  onYes: () => void;
+  onNo: () => void;
+  accent: string;
+}) {
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: 950,
+      backgroundColor: 'rgba(255,255,255,0.97)',
+      borderTop: '1px solid #e5e7eb',
+      padding: '0.75rem 1rem',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.75rem',
+      backdropFilter: 'blur(8px)',
+    }}>
+      <span style={{ fontSize: '0.8125rem', color: '#374151', fontWeight: 500 }}>
+        Remember this device?
+      </span>
+      <button
+        onClick={onYes}
+        style={{
+          padding: '0.375rem 0.875rem',
+          borderRadius: '9999px',
+          border: 'none',
+          backgroundColor: accent,
+          color: '#fff',
+          fontSize: '0.8125rem',
+          fontWeight: 600,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+        }}
+      >
+        Yes
+      </button>
+      <button
+        onClick={onNo}
+        style={{
+          padding: '0.375rem 0.875rem',
+          borderRadius: '9999px',
+          border: '1px solid #d1d5db',
+          backgroundColor: 'transparent',
+          color: '#6b7280',
+          fontSize: '0.8125rem',
+          fontWeight: 500,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+        }}
+      >
+        No
+      </button>
+    </div>
+  );
+}
+
 // ── Protected Page View ────────────────────────────────
 
 function ProtectedPageView({
@@ -255,11 +319,15 @@ function ProtectedPageView({
   onBack,
   profileId,
   downloadToken,
+  isRemembered,
+  onForget,
 }: {
   content: ProtectedPageContent;
   onBack: () => void;
   profileId: string;
   downloadToken?: string;
+  isRemembered?: boolean;
+  onForget?: () => void;
 }) {
   const theme = getTheme(content.profile.template);
   const accent = content.profile.accentColor || theme.colors.accent;
@@ -268,7 +336,6 @@ function ProtectedPageView({
   const dataAttrs = getTemplateDataAttrs(theme);
   const googleFontsUrl = getGoogleFontsUrl(theme);
 
-  // Parse CSS vars string into style object (same pattern as ProfileTemplate)
   const cssVarStyle = Object.fromEntries(
     cssVars.split('; ').map(v => {
       const [key, ...rest] = v.split(': ');
@@ -546,18 +613,129 @@ function ProtectedPageView({
             </div>
           </>
         )}
+
+        {/* Forget this device link */}
+        {isRemembered && onForget && (
+          <div style={{ marginTop: '2rem' }}>
+            <button
+              onClick={onForget}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                textDecoration: 'underline',
+                opacity: 0.7,
+              }}
+            >
+              Forget this device
+            </button>
+          </div>
+        )}
       </div>
     </div>
     </>
   );
 }
 
+// ── Share Button ─────────────────────────────────────────
+
+function ShareButton({ profileId, isDark }: { profileId: string; isDark: boolean }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleShare() {
+    const url = window.location.href;
+    const title = document.title;
+
+    // Log share event
+    fetch('/api/share', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profileId }),
+    }).catch(() => {});
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return;
+      } catch {
+        // User cancelled or share failed — fall through to clipboard
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard failed silently
+    }
+  }
+
+  return (
+    <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 50 }}>
+      <button
+        onClick={handleShare}
+        aria-label="Share profile"
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: '50%',
+          border: 'none',
+          backgroundColor: 'transparent',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 0,
+          opacity: copied ? 1 : 0.5,
+          transition: 'opacity 0.2s',
+          color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
+          WebkitTapHighlightColor: 'transparent',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.opacity = '1'; }}
+        onMouseLeave={e => { if (!copied) e.currentTarget.style.opacity = '0.5'; }}
+      >
+        {/* Share icon (arrow up from box) */}
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+          <polyline points="16 6 12 2 8 6" />
+          <line x1="12" y1="2" x2="12" y2="15" />
+        </svg>
+      </button>
+      {copied && (
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          right: 0,
+          marginTop: '0.375rem',
+          padding: '0.375rem 0.75rem',
+          borderRadius: '9999px',
+          backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.8)',
+          color: isDark ? '#fff' : '#fff',
+          fontSize: '0.75rem',
+          fontWeight: 500,
+          whiteSpace: 'nowrap',
+          backdropFilter: 'blur(4px)',
+        }}>
+          Link copied!
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Client Component ──────────────────────────────
 
-export default function ProfileClient({ profileId, accent, theme, hasImpression, impressionIcon, showcasePages }: ProfileClientProps) {
+export default function ProfileClient({ profileId, accent, theme, hasImpression, impressionIcon, showcasePages, allowSharing }: ProfileClientProps) {
   const [showPinModal, setShowPinModal] = useState(false);
   const [protectedContent, setProtectedContent] = useState<ProtectedPageContent | null>(null);
   const [vcardToken, setVcardToken] = useState<string | undefined>(undefined);
+  const [showRememberPrompt, setShowRememberPrompt] = useState(false);
+  const [lastUnlockedPageId, setLastUnlockedPageId] = useState<string | null>(null);
+  const [isRemembered, setIsRemembered] = useState(false);
   const isDark = isDarkTemplate(theme);
 
   // Impression icon settings with defaults
@@ -582,34 +760,117 @@ export default function ProfileClient({ profileId, accent, theme, hasImpression,
     ...(iconCorner === 'bottom-left' ? { bottom: 16, right: 16 } : { bottom: 16, left: 16 }),
   };
 
+  // Check for remembered pages on mount
+  const loadPageContent = useCallback(async (pageId: string) => {
+    try {
+      const res = await fetch(`/api/protected-pages/${pageId}`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    async function checkRemembered() {
+      try {
+        const res = await fetch(`/api/pin/check?profileId=${profileId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.rememberedPages?.length > 0) {
+          // Auto-load the first remembered page
+          const remembered = data.rememberedPages[0];
+          const content = await loadPageContent(remembered.pageId);
+          if (content) {
+            setProtectedContent(content);
+            setLastUnlockedPageId(remembered.pageId);
+            setIsRemembered(true);
+          }
+        }
+      } catch {
+        // Silent — don't break the page
+      }
+    }
+    checkRemembered();
+  }, [profileId, loadPageContent]);
+
   async function handlePinSuccess(pageId: string, downloadToken?: string) {
     setShowPinModal(false);
     setVcardToken(downloadToken);
-    // Fetch the protected page content
+    setLastUnlockedPageId(pageId);
     try {
       const res = await fetch(`/api/protected-pages/${pageId}`);
       if (!res.ok) throw new Error('Failed to load');
       const data = await res.json();
       setProtectedContent(data);
+      // Show remember prompt after a short delay
+      setTimeout(() => setShowRememberPrompt(true), 500);
     } catch {
       alert('Failed to load protected content');
+    }
+  }
+
+  async function handleRememberYes() {
+    setShowRememberPrompt(false);
+    if (!lastUnlockedPageId) return;
+    try {
+      await fetch('/api/pin/remember', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId: lastUnlockedPageId, profileId }),
+      });
+      setIsRemembered(true);
+    } catch {
+      // Silent failure
+    }
+  }
+
+  async function handleForget() {
+    if (!lastUnlockedPageId) return;
+    try {
+      await fetch('/api/pin/forget', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId: lastUnlockedPageId }),
+      });
+      setIsRemembered(false);
+      setProtectedContent(null);
+      setLastUnlockedPageId(null);
+    } catch {
+      // Silent failure
     }
   }
 
   // If showing protected page content, render it
   if (protectedContent) {
     return (
-      <ProtectedPageView
-        content={protectedContent}
-        onBack={() => { setProtectedContent(null); setVcardToken(undefined); }}
-        profileId={profileId}
-        downloadToken={vcardToken}
-      />
+      <>
+        <ProtectedPageView
+          content={protectedContent}
+          onBack={() => { setProtectedContent(null); setVcardToken(undefined); setShowRememberPrompt(false); setIsRemembered(false); }}
+          profileId={profileId}
+          downloadToken={vcardToken}
+          isRemembered={isRemembered}
+          onForget={isRemembered ? handleForget : undefined}
+        />
+        {showRememberPrompt && !isRemembered && (
+          <RememberPrompt
+            onYes={handleRememberYes}
+            onNo={() => setShowRememberPrompt(false)}
+            accent={accent}
+          />
+        )}
+      </>
     );
   }
 
   return (
     <>
+      {/* Share button */}
+      {allowSharing && (
+        <ShareButton profileId={profileId} isDark={isDark} />
+      )}
+
       {/* Showcase button: subtle fixed lock icon */}
       {showcasePages.length > 0 && (
         <button
@@ -659,7 +920,6 @@ export default function ProfileClient({ profileId, accent, theme, hasImpression,
             transition: 'opacity 0.2s',
           }}
         >
-          {/* Inner dot */}
           <span style={{
             width: 6,
             height: 6,
@@ -670,7 +930,7 @@ export default function ProfileClient({ profileId, accent, theme, hasImpression,
         </button>
       )}
 
-      {/* PIN Modal — single entry, checks all PINs */}
+      {/* PIN Modal */}
       {showPinModal && (
         <PinModal
           profileId={profileId}
@@ -683,5 +943,4 @@ export default function ProfileClient({ profileId, accent, theme, hasImpression,
   );
 }
 
-// Export the PIN modal and openPinModal function for showcase buttons to use
 export { PinModal };

@@ -21,6 +21,7 @@ interface PageData {
   bioText: string;
   buttonLabel: string;
   isActive: boolean;
+  allowRemember: boolean;
   links: LinkItem[];
 }
 
@@ -91,6 +92,7 @@ export default function ImpressionEditor() {
   const [iconColor, setIconColor] = useState('');
   const [iconOpacity, setIconOpacity] = useState(0.35);
   const [iconCorner, setIconCorner] = useState('bottom-right');
+  const [allowRemember, setAllowRemember] = useState(true);
 
   // Creating vs editing
   const [isNew, setIsNew] = useState(true);
@@ -111,6 +113,7 @@ export default function ImpressionEditor() {
           setIconColor(p.iconColor || '');
           setIconOpacity(p.iconOpacity ?? 0.35);
           setIconCorner(p.iconCorner || 'bottom-right');
+          setAllowRemember(p.allowRemember !== false);
           setIsNew(false);
         }
         setLoading(false);
@@ -173,6 +176,7 @@ export default function ImpressionEditor() {
           iconColor: iconColor.trim(),
           iconOpacity,
           iconCorner,
+          allowRemember,
         };
         if (pin) body.pin = pin;
 
@@ -196,7 +200,7 @@ export default function ImpressionEditor() {
     } finally {
       setSaving(false);
     }
-  }, [isNew, page, pageTitle, bioText, pin, pinConfirm, isActive, iconColor, iconOpacity, iconCorner]);
+  }, [isNew, page, pageTitle, bioText, pin, pinConfirm, isActive, iconColor, iconOpacity, iconCorner, allowRemember]);
 
   // Link CRUD
   async function addLink(linkType: string) {
@@ -342,7 +346,7 @@ export default function ImpressionEditor() {
           </div>
 
           {!isNew && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
               <label style={{ ...labelStyle, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <input
                   type="checkbox"
@@ -351,6 +355,15 @@ export default function ImpressionEditor() {
                   style={{ width: 16, height: 16, accentColor: '#e8a849' }}
                 />
                 Impression is active
+              </label>
+              <label style={{ ...labelStyle, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  type="checkbox"
+                  checked={allowRemember}
+                  onChange={e => setAllowRemember(e.target.checked)}
+                  style={{ width: 16, height: 16, accentColor: '#e8a849' }}
+                />
+                Allow visitors to remember access
               </label>
             </div>
           )}

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { auth } from '@/lib/auth';
+import crypto from 'crypto';
 
 // GET - Generate and download a vCard for a profile
 // Public endpoint (no auth, this is for profile visitors)
@@ -190,6 +192,25 @@ export async function GET(
   lines.push(`REV:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`);
 
   lines.push('END:VCARD');
+
+  // Log vcard_download connection event
+  try {
+    let viewerUserId: string | null = null;
+    try {
+      const session = await auth();
+      if (session?.user?.id) viewerUserId = session.user.id;
+    } catch { /* not logged in */ }
+    const forwarded = req.headers.get('x-forwarded-for');
+    const ip = forwarded?.split(',')[0]?.trim() || 'unknown';
+    const ipHash = crypto.createHash('sha256').update(ip).digest('hex');
+    query(
+      `INSERT INTO connections (profile_id, viewer_user_id, connection_type, ip_hash)
+       VALUES ($1, $2, 'vcard_download', $3)`,
+      [profileId, viewerUserId, ipHash]
+    ).catch(() => {});
+  } catch {
+    // connection logging shouldn't break vcard download
+  }
 
   const vcard = lines.join('\r\n');
   const filename = [firstName, lastName].filter(Boolean).join('_') || 'contact';

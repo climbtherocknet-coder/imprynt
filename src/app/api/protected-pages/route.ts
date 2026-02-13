@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   let sql = `
     SELECT pp.id, pp.page_title, pp.visibility_mode, pp.bio_text,
            pp.button_label, pp.resume_url, pp.display_order, pp.is_active,
-           pp.icon_color, pp.icon_opacity, pp.icon_corner
+           pp.icon_color, pp.icon_opacity, pp.icon_corner, pp.allow_remember
     FROM protected_pages pp
     JOIN profiles p ON p.id = pp.profile_id
     WHERE pp.user_id = $1
@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
       iconColor: row.icon_color || '',
       iconOpacity: row.icon_opacity != null ? parseFloat(row.icon_opacity) : 0.35,
       iconCorner: row.icon_corner || 'bottom-right',
+      allowRemember: row.allow_remember !== false,
       displayOrder: row.display_order,
       isActive: row.is_active,
       links: linksResult.rows.map((l: Record<string, unknown>) => ({
@@ -143,7 +144,7 @@ export async function PUT(req: NextRequest) {
 
   const userId = session.user.id;
   const body = await req.json();
-  const { id, pageTitle, bioText, buttonLabel, resumeUrl, pin, isActive, iconColor, iconOpacity, iconCorner } = body;
+  const { id, pageTitle, bioText, buttonLabel, resumeUrl, pin, isActive, iconColor, iconOpacity, iconCorner, allowRemember } = body;
 
   if (!id) {
     return NextResponse.json({ error: 'Page ID required' }, { status: 400 });
@@ -196,6 +197,10 @@ export async function PUT(req: NextRequest) {
     updates.push(`icon_corner = $${paramIdx++}`);
     params.push(validCorners.includes(iconCorner) ? iconCorner : 'bottom-right');
   }
+  if (allowRemember !== undefined) {
+    updates.push(`allow_remember = $${paramIdx++}`);
+    params.push(!!allowRemember);
+  }
   if (pin) {
     if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
       return NextResponse.json({ error: 'PIN must be 4-6 digits' }, { status: 400 });
@@ -203,6 +208,8 @@ export async function PUT(req: NextRequest) {
     const pinHash = await bcrypt.hash(pin, 10);
     updates.push(`pin_hash = $${paramIdx++}`);
     params.push(pinHash);
+    // Increment pin_version to invalidate existing remember-device cookies
+    updates.push(`pin_version = pin_version + 1`);
   }
 
   if (updates.length === 0) {

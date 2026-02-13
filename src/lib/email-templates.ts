@@ -90,3 +90,35 @@ ${APP_URL}/dashboard
 
 If you have any questions, just reply to this email.`;
 }
+
+// ── Waitlist Invite ──────────────────────────────────
+
+export function waitlistInviteHtml(inviteCode: string): string {
+  const registerUrl = `${APP_URL}/register?code=${encodeURIComponent(inviteCode)}`;
+  return baseHtml(`
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:600;color:#eceef2;">You're in!</h1>
+    <p style="margin:0 0 16px;">Great news — a spot has opened up for you on ${APP_NAME}. Use the invite code below to create your account.</p>
+    <div style="text-align:center;margin:0 0 24px;padding:16px;background:#0c1017;border-radius:12px;border:1px solid #1e2535;">
+      <span style="font-size:28px;font-weight:700;letter-spacing:0.15em;color:#e8a849;font-family:monospace;">${inviteCode}</span>
+    </div>
+    <p style="text-align:center;margin:0 0 24px;">
+      <a href="${registerUrl}" style="display:inline-block;padding:12px 32px;background:#e8a849;color:#0c1017;font-size:15px;font-weight:600;text-decoration:none;border-radius:999px;">
+        Create Your Account
+      </a>
+    </p>
+    <p style="margin:0;font-size:13px;color:#5d6370;">This code is single-use. If you have any questions, just reply to this email.</p>
+  `);
+}
+
+export function waitlistInviteText(inviteCode: string): string {
+  const registerUrl = `${APP_URL}/register?code=${encodeURIComponent(inviteCode)}`;
+  return `You're in!
+
+Great news — a spot has opened up for you on ${APP_NAME}. Use the invite code below to create your account.
+
+Your invite code: ${inviteCode}
+
+Sign up here: ${registerUrl}
+
+This code is single-use. If you have any questions, just reply to this email.`;
+}
