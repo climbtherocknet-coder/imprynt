@@ -22,10 +22,6 @@ export async function POST(req: NextRequest) {
   if (!linkType || !VALID_LINK_TYPES.includes(linkType)) {
     return NextResponse.json({ error: 'Invalid link type' }, { status: 400 });
   }
-  if (!url?.trim()) {
-    return NextResponse.json({ error: 'URL is required' }, { status: 400 });
-  }
-
   const profileResult = await query(
     'SELECT id FROM profiles WHERE user_id = $1',
     [userId]
@@ -46,7 +42,7 @@ export async function POST(req: NextRequest) {
     `INSERT INTO links (user_id, profile_id, link_type, label, url, display_order)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id, link_type, label, url, display_order`,
-    [userId, profileId, linkType, label?.trim()?.slice(0, 100) || null, url.trim().slice(0, 500), nextOrder]
+    [userId, profileId, linkType, label?.trim()?.slice(0, 100) || null, (url || '').trim().slice(0, 500), nextOrder]
   );
 
   const link = result.rows[0];
