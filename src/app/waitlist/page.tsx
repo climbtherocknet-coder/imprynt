@@ -38,6 +38,7 @@ export default function WaitlistPage() {
   }
 
   return (
+    <>
     <div className="auth-page">
       <Link href="/" className="auth-logo">
         <span className="auth-logo-mark" />
@@ -91,5 +92,6 @@ export default function WaitlistPage() {
       </div>
     </div>
     <FeedbackButton />
+    </>
   );
 }
