@@ -87,6 +87,21 @@ export function rateLimit(
 }
 
 /**
+ * Check if a key is currently rate-limited (without consuming a token).
+ */
+export function isRateLimited(
+  key: string,
+  limit: number,
+  windowMs: number = 15 * 60 * 1000
+): boolean {
+  const entry = store.get(key);
+  if (!entry) return false;
+  const cutoff = Date.now() - windowMs;
+  const active = entry.timestamps.filter((t) => t > cutoff);
+  return active.length >= limit;
+}
+
+/**
  * Clear a rate limit entry for a given key.
  * Used by admin to unlock accounts.
  */

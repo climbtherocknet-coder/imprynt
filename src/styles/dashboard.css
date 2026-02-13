@@ -682,3 +682,89 @@
 .tiptap:focus-visible {
   outline: none;
 }
+
+/* ═══════════════════════════════════════════
+   PROFILE EDITOR — Split Layout + Phone Preview
+   ═══════════════════════════════════════════ */
+
+.editor-split {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.editor-panel {
+  flex: 1;
+  max-width: 640px;
+  overflow-y: auto;
+}
+
+.preview-panel {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .editor-split {
+    gap: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  .editor-panel {
+    flex: 0 0 55%;
+    max-width: none;
+  }
+  .preview-panel {
+    display: flex;
+    flex: 0 0 45%;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 1.5rem;
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+  }
+}
+
+/* Phone frame mockup */
+.preview-phone {
+  width: 375px;
+  height: 720px;
+  border: 3px solid #283042;
+  border-radius: 2.5rem;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(40, 48, 66, 0.3);
+  flex-shrink: 0;
+}
+
+.preview-phone-notch {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 6px;
+  border-radius: 3px;
+  background: #283042;
+  z-index: 10;
+}
+
+.preview-phone-screen {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Scope the profile preview to not interfere with dashboard styles */
+.preview-phone-screen .profile-page {
+  min-height: 100%;
+}
+
+/* Hide scrollbar in preview for cleaner look */
+.preview-phone-screen::-webkit-scrollbar {
+  width: 0;
+}
+.preview-phone-screen {
+  scrollbar-width: none;
+}

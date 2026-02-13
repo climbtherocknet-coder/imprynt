@@ -2,13 +2,16 @@ import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import { query } from '@/lib/db';
 import { getTheme } from '@/lib/themes';
+import { auth } from '@/lib/auth';
 import { Metadata } from 'next';
 import ProfileTemplate from '@/components/templates/ProfileTemplate';
 import ProfileClient from './ProfileClient';
+import OffAirBanner from './OffAirBanner';
 import type { PodData } from '@/components/pods/PodRenderer';
 
 interface ProfileData {
   profile_id: string;
+  user_id: string;
   first_name: string;
   last_name: string;
   title: string;
@@ -23,6 +26,7 @@ interface ProfileData {
   font_pair: string;
   plan: string;
   status_tags: string[] | null;
+  is_published: boolean;
 }
 
 interface LinkData {
@@ -42,14 +46,15 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-async function getProfile(slug: string) {
+// Fetch profile regardless of publish state (for owner preview)
+async function getProfileAny(slug: string) {
   const result = await query(
-    `SELECT p.id as profile_id, u.first_name, u.last_name, p.title, p.company,
+    `SELECT p.id as profile_id, p.user_id, u.first_name, u.last_name, p.title, p.company,
             p.tagline, p.bio_heading, p.bio, p.photo_url, p.template,
-            p.primary_color, p.accent_color, p.font_pair, u.plan, p.status_tags
+            p.primary_color, p.accent_color, p.font_pair, u.plan, p.status_tags, p.is_published
      FROM profiles p
      JOIN users u ON u.id = p.user_id
-     WHERE p.slug = $1 AND p.is_published = true AND u.account_status = 'active'`,
+     WHERE p.slug = $1 AND u.account_status = 'active'`,
     [slug]
   );
   return result.rows[0] as ProfileData | undefined;
@@ -134,10 +139,56 @@ async function logPageView(profileId: string, userAgent: string | null) {
 
 export default async function ProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const profile = await getProfile(slug);
+  const profile = await getProfileAny(slug);
 
   if (!profile) {
     notFound();
+  }
+
+  // If profile is off air, check if the viewer is the owner
+  if (!profile.is_published) {
+    const session = await auth();
+    const isOwner = session?.user?.id === profile.user_id;
+
+    if (!isOwner) {
+      // Show off-air page for visitors
+      return (
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#0c1017',
+          color: '#eceef2',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          padding: '2rem',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            backgroundColor: '#161c28',
+            border: '1px solid #1e2535',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '1.5rem',
+          }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#5d6370' }} />
+          </div>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 0.5rem', color: '#eceef2' }}>
+            This profile is currently unavailable
+          </h1>
+          <p style={{ fontSize: '0.875rem', color: '#5d6370', margin: 0, maxWidth: 320 }}>
+            The owner has taken this profile off air. Check back later.
+          </p>
+        </div>
+      );
+    }
+
+    // Owner viewing their off-air profile — show full profile with banner
   }
 
   const [links, pods, visibleProtectedPages] = await Promise.all([
@@ -148,10 +199,12 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
 
   const impressionSettings = profile.plan !== 'free' ? await getImpressionSettings(profile.profile_id) : null;
 
-  // Log page view (fire and forget)
-  const headersList = await headers();
-  const userAgent = headersList.get('user-agent');
-  logPageView(profile.profile_id, userAgent);
+  // Log page view only if published (don't count owner previews)
+  if (profile.is_published) {
+    const headersList = await headers();
+    const userAgent = headersList.get('user-agent');
+    logPageView(profile.profile_id, userAgent);
+  }
 
   const theme = getTheme(profile.template);
   const accent = profile.accent_color || theme.colors.accent;
@@ -159,6 +212,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
 
   return (
     <>
+      {/* Off-air banner for owner preview */}
+      {!profile.is_published && <OffAirBanner />}
+
       <ProfileTemplate
         profileId={profile.profile_id}
         template={profile.template}

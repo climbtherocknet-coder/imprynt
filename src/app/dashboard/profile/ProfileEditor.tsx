@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { THEMES } from '@/lib/themes';
 import PodEditor from '@/components/pods/PodEditor';
+import ProfileTemplate from '@/components/templates/ProfileTemplate';
 import '@/styles/dashboard.css';
+import '@/styles/profile.css';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -32,6 +34,7 @@ interface ProfileData {
     accentColor: string;
     fontPair: string;
     isPublished: boolean;
+    statusTags: string[];
   };
   links: LinkItem[];
 }
@@ -380,7 +383,8 @@ export default function ProfileEditor() {
         </div>
       )}
 
-      <main className="dash-main" style={{ maxWidth: 640, paddingBottom: '4rem' }}>
+      <div className="editor-split">
+      <main className="dash-main editor-panel" style={{ paddingBottom: '4rem' }}>
 
         {/* ─── Identity Section ──────────────────── */}
         <div style={sectionStyle}>
@@ -777,6 +781,35 @@ export default function ProfileEditor() {
         </div>
 
       </main>
+
+      {/* ─── Live Preview Panel (desktop only) ──────── */}
+      <aside className="preview-panel">
+        <div className="preview-phone">
+          <div className="preview-phone-notch" />
+          <div className="preview-phone-screen">
+            <ProfileTemplate
+              profileId={data.profile.id}
+              template={template}
+              firstName={firstName}
+              lastName={lastName}
+              title={title}
+              company={company}
+              tagline={tagline}
+              photoUrl={photoUrl}
+              links={links.map(l => ({
+                id: l.id || String(l.displayOrder),
+                link_type: l.linkType,
+                label: l.label,
+                url: l.url,
+              }))}
+              pods={[]}
+              isPaid={isPaid}
+              statusTags={data.profile.statusTags || []}
+            />
+          </div>
+        </div>
+      </aside>
+      </div>
     </div>
   );
 }

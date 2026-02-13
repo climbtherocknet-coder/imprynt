@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
 import { isAdmin } from '@/lib/admin';
+import { isRateLimited } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -57,6 +58,7 @@ export async function GET(req: NextRequest) {
       isPublished: u.is_published || false,
       createdAt: u.created_at,
       accountStatus: (u.account_status as string) || 'active',
+      isLocked: isRateLimited(`login:${u.email}`, 5, 15 * 60 * 1000),
     })),
     total,
     page,

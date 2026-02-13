@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
 import SignOutButton from './SignOutButton';
 import StatusTagPicker from './StatusTagPicker';
+import OnAirToggle from '@/components/OnAirToggle';
 import '@/styles/dashboard.css';
 
 interface ProfileRow {
@@ -115,9 +116,7 @@ export default async function DashboardPage() {
           </div>
           <div className="dash-stat-card">
             <p className="dash-stat-label">Status</p>
-            <p className={`dash-stat-status ${profile?.is_published ? 'dash-stat-status--live' : 'dash-stat-status--draft'}`}>
-              {profile?.is_published ? '● Live' : '○ Draft'}
-            </p>
+            <OnAirToggle initialPublished={profile?.is_published ?? false} />
           </div>
         </div>
 
@@ -223,7 +222,7 @@ export default async function DashboardPage() {
               rel="noopener noreferrer"
               className="dash-view-profile"
             >
-              View your live profile →
+              {profile.is_published ? 'View your live profile →' : 'Preview your profile → (off air)'}
             </a>
           )}
         </div>

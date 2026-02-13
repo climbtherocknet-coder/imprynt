@@ -30,6 +30,7 @@ interface UserRow {
   isPublished: boolean;
   createdAt: string;
   accountStatus: string;
+  isLocked: boolean;
 }
 
 interface UserDetail {
@@ -324,6 +325,7 @@ function UsersTab() {
       const res = await fetch(`/api/p-8k3x/users/${userId}/unlock`, { method: 'POST' });
       if (res.ok) {
         setUnlockMsg('Account unlocked');
+        loadUsers();
       } else {
         setUnlockMsg('Failed to unlock');
       }
@@ -419,6 +421,11 @@ function UsersTab() {
                 >
                   <td style={{ color: '#eceef2', fontWeight: 500 }}>
                     {u.firstName} {u.lastName}
+                    {u.isLocked && (
+                      <span title="Rate-limited (locked)" style={{ marginLeft: '0.375rem', color: '#f59e0b', fontSize: '0.75rem' }}>
+                        &#128274;
+                      </span>
+                    )}
                   </td>
                   <td>{u.email}</td>
                   <td><span className={planBadgeClass(u.plan)}>{planLabel(u.plan)}</span></td>
@@ -504,27 +511,34 @@ function UsersTab() {
                             </div>
 
                             {/* Plan Change */}
-                            <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <span style={{ fontSize: '0.75rem', color: '#5d6370', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                Plan:
-                              </span>
-                              <select
-                                className="admin-input"
-                                value={planEdit}
-                                onChange={(e) => setPlanEdit(e.target.value)}
-                                style={{ fontSize: '0.8125rem', padding: '0.3rem 0.5rem' }}
-                              >
-                                <option value="free">Free</option>
-                                <option value="premium_monthly">Premium Monthly</option>
-                                <option value="premium_annual">Premium Annual</option>
-                              </select>
-                              <button
-                                className="admin-btn admin-btn--primary admin-btn--small"
-                                onClick={() => savePlan(u.id)}
-                                disabled={saving || planEdit === detail.plan}
-                              >
-                                {saving ? 'Saving...' : 'Save'}
-                              </button>
+                            <div style={{ marginTop: '1rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#5d6370', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                  Plan:
+                                </span>
+                                <select
+                                  className="admin-input"
+                                  value={planEdit}
+                                  onChange={(e) => setPlanEdit(e.target.value)}
+                                  style={{ fontSize: '0.8125rem', padding: '0.3rem 0.5rem' }}
+                                >
+                                  <option value="free">Free</option>
+                                  <option value="premium_monthly">Premium Monthly</option>
+                                  <option value="premium_annual">Premium Annual</option>
+                                </select>
+                                <button
+                                  className="admin-btn admin-btn--primary admin-btn--small"
+                                  onClick={() => savePlan(u.id)}
+                                  disabled={saving || planEdit === detail.plan}
+                                >
+                                  {saving ? 'Saving...' : 'Save'}
+                                </button>
+                              </div>
+                              {planEdit !== detail.plan && (
+                                <p style={{ fontSize: '0.6875rem', color: '#f59e0b', marginTop: '0.375rem', opacity: 0.8 }}>
+                                  This overrides the Stripe subscription status. Use for gifting or testing only.
+                                </p>
+                              )}
                             </div>
 
                             {/* Account Actions */}
