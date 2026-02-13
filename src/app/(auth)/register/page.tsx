@@ -149,9 +149,9 @@ export default function RegisterPage() {
               value={formData.password}
               onChange={(e) => updateField('password', e.target.value)}
               required
-              minLength={8}
+              minLength={10}
               className="auth-input"
-              placeholder="At least 8 characters"
+              placeholder="At least 10 characters"
             />
             <PasswordStrengthMeter password={formData.password} />
           </div>

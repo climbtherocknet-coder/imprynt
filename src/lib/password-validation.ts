@@ -2,7 +2,7 @@
  * Password policy and strength evaluation.
  *
  * Policy (enforced server-side + reflected client-side):
- *  - Minimum 8 characters
+ *  - Minimum 10 characters
  *  - At least one uppercase letter
  *  - At least one lowercase letter
  *  - At least one digit
@@ -31,7 +31,7 @@ const SPECIAL_CHARS = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/;
 
 export function validatePassword(password: string): PasswordCheck {
   const rules = {
-    minLength: password.length >= 8,
+    minLength: password.length >= 10,
     uppercase: /[A-Z]/.test(password),
     lowercase: /[a-z]/.test(password),
     digit: /[0-9]/.test(password),
@@ -39,7 +39,7 @@ export function validatePassword(password: string): PasswordCheck {
   };
 
   const errors: string[] = [];
-  if (!rules.minLength) errors.push('At least 8 characters');
+  if (!rules.minLength) errors.push('At least 10 characters');
   if (!rules.uppercase) errors.push('At least one uppercase letter');
   if (!rules.lowercase) errors.push('At least one lowercase letter');
   if (!rules.digit) errors.push('At least one number');
@@ -54,14 +54,14 @@ export function validatePassword(password: string): PasswordCheck {
 
 /**
  * Returns a 0-4 strength score for the visual meter.
- * Each satisfied rule category adds 1 point (length counts double when >= 12).
+ * Each satisfied rule category adds 1 point (length counts double when >= 14).
  */
 export function passwordStrength(password: string): number {
   if (!password) return 0;
 
   let score = 0;
-  if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
+  if (password.length >= 10) score++;
+  if (password.length >= 14) score++;
   if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
   if (/[0-9]/.test(password)) score++;
   if (SPECIAL_CHARS.test(password)) score++;

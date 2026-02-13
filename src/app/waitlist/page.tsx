@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import FeedbackButton from '@/components/FeedbackButton';
 import '@/styles/auth.css';
 
 export default function WaitlistPage() {
@@ -89,5 +90,6 @@ export default function WaitlistPage() {
         )}
       </div>
     </div>
+    <FeedbackButton />
   );
 }

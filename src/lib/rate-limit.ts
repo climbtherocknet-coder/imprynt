@@ -87,6 +87,14 @@ export function rateLimit(
 }
 
 /**
+ * Clear a rate limit entry for a given key.
+ * Used by admin to unlock accounts.
+ */
+export function clearRateLimit(key: string): void {
+  store.delete(key);
+}
+
+/**
  * Extract client IP from request headers.
  * Works with Caddy (X-Forwarded-For) and direct connections.
  */

@@ -176,6 +176,9 @@ export default function AccountClient({ user, accessories }: AccountProps) {
           <span style={{ color: '#283042' }}>/</span>
           <span style={{ fontSize: '0.875rem', color: '#5d6370' }}>Account</span>
         </div>
+        <a href="/dashboard" style={{ fontSize: '0.8125rem', color: '#5d6370', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#e8a849')} onMouseLeave={(e) => (e.currentTarget.style.color = '#5d6370')}>
+          &#8592; Dashboard
+        </a>
       </header>
 
       {error && (

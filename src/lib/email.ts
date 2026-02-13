@@ -74,6 +74,25 @@ export async function sendPasswordResetEmail(
   });
 }
 
+export async function sendFeedbackEmail(
+  message: string,
+  senderEmail?: string,
+  page?: string
+): Promise<boolean> {
+  const feedbackTo = process.env.FEEDBACK_EMAIL || 'tim@imprynt.io';
+  return sendEmail({
+    to: feedbackTo,
+    subject: `Imprynt Feedback${senderEmail ? ` from ${senderEmail}` : ''}`,
+    html: `<div style="font-family:sans-serif;color:#333;">
+      <h2>New Feedback</h2>
+      ${senderEmail ? `<p><strong>From:</strong> ${senderEmail}</p>` : ''}
+      ${page ? `<p><strong>Page:</strong> ${page}</p>` : ''}
+      <p style="white-space:pre-wrap;">${message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+    </div>`,
+    text: `New Feedback\n${senderEmail ? `From: ${senderEmail}\n` : ''}${page ? `Page: ${page}\n` : ''}\n${message}`,
+  });
+}
+
 export async function sendWelcomeEmail(
   to: string,
   firstName?: string

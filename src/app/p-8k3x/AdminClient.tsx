@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
+import { validatePassword } from '@/lib/password-validation';
 import '@/styles/dashboard.css';
 import '@/styles/admin.css';
 
@@ -200,6 +202,10 @@ function UsersTab() {
   const [actionLoading, setActionLoading] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetNewPassword, setResetNewPassword] = useState('');
+  const [resetPasswordMsg, setResetPasswordMsg] = useState('');
+  const [unlockMsg, setUnlockMsg] = useState('');
 
   const loadUsers = useCallback(() => {
     const params = new URLSearchParams({ page: String(page), limit: '50' });
@@ -229,6 +235,10 @@ function UsersTab() {
     setExpandedId(userId);
     setDetail(null);
     setDetailAnalytics(null);
+    setShowResetPassword(false);
+    setResetNewPassword('');
+    setResetPasswordMsg('');
+    setUnlockMsg('');
 
     fetch(`/api/p-8k3x/users/${userId}`)
       .then((r) => r.json())
@@ -302,6 +312,52 @@ function UsersTab() {
       }
     } catch {
       // silent
+    } finally {
+      setActionLoading('');
+    }
+  }
+
+  async function handleUnlock(userId: string) {
+    setActionLoading('unlock');
+    setUnlockMsg('');
+    try {
+      const res = await fetch(`/api/p-8k3x/users/${userId}/unlock`, { method: 'POST' });
+      if (res.ok) {
+        setUnlockMsg('Account unlocked');
+      } else {
+        setUnlockMsg('Failed to unlock');
+      }
+    } catch {
+      setUnlockMsg('Failed to unlock');
+    } finally {
+      setActionLoading('');
+    }
+  }
+
+  async function handleResetPassword(userId: string) {
+    setResetPasswordMsg('');
+    const pwCheck = validatePassword(resetNewPassword);
+    if (!pwCheck.valid) {
+      setResetPasswordMsg(`Password requirements: ${pwCheck.errors.join(', ')}`);
+      return;
+    }
+    setActionLoading('resetpw');
+    try {
+      const res = await fetch(`/api/p-8k3x/users/${userId}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword: resetNewPassword }),
+      });
+      if (res.ok) {
+        setResetPasswordMsg('Password reset successfully');
+        setResetNewPassword('');
+        setShowResetPassword(false);
+      } else {
+        const data = await res.json();
+        setResetPasswordMsg(data.error || 'Failed to reset password');
+      }
+    } catch {
+      setResetPasswordMsg('Failed to reset password');
     } finally {
       setActionLoading('');
     }
@@ -497,6 +553,24 @@ function UsersTab() {
                                 </button>
                               )}
 
+                              <button
+                                className="admin-btn admin-btn--ghost admin-btn--small"
+                                onClick={() => handleUnlock(u.id)}
+                                disabled={!!actionLoading}
+                                style={{ color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }}
+                              >
+                                {actionLoading === 'unlock' ? 'Unlocking...' : 'Unlock Account'}
+                              </button>
+
+                              <button
+                                className="admin-btn admin-btn--ghost admin-btn--small"
+                                onClick={() => { setShowResetPassword(!showResetPassword); setResetPasswordMsg(''); }}
+                                disabled={!!actionLoading}
+                                style={{ color: '#a78bfa', borderColor: 'rgba(167, 139, 250, 0.3)' }}
+                              >
+                                Reset Password
+                              </button>
+
                               {deleteConfirmId === u.id ? (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', background: 'rgba(220, 38, 38, 0.08)', border: '1px solid rgba(220, 38, 38, 0.2)', borderRadius: '0.5rem' }}>
                                   <span style={{ fontSize: '0.75rem', color: '#f87171' }}>Type DELETE to confirm:</span>
@@ -538,6 +612,56 @@ function UsersTab() {
                                 </button>
                               )}
                             </div>
+
+                            {/* Unlock / Reset Password feedback */}
+                            {unlockMsg && (
+                              <p style={{ fontSize: '0.8125rem', marginTop: '0.5rem', color: unlockMsg.includes('unlocked') ? '#22c55e' : '#f87171' }}>
+                                {unlockMsg}
+                              </p>
+                            )}
+                            {resetPasswordMsg && !showResetPassword && (
+                              <p style={{ fontSize: '0.8125rem', marginTop: '0.5rem', color: resetPasswordMsg.includes('successfully') ? '#22c55e' : '#f87171' }}>
+                                {resetPasswordMsg}
+                              </p>
+                            )}
+
+                            {/* Reset Password form */}
+                            {showResetPassword && (
+                              <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(167, 139, 250, 0.06)', border: '1px solid rgba(167, 139, 250, 0.15)', borderRadius: '0.5rem', maxWidth: 340 }}>
+                                <p style={{ fontSize: '0.75rem', color: '#a78bfa', margin: '0 0 0.5rem', fontWeight: 500 }}>
+                                  Set new password for this user:
+                                </p>
+                                {resetPasswordMsg && (
+                                  <p style={{ fontSize: '0.75rem', color: resetPasswordMsg.includes('successfully') ? '#22c55e' : '#f87171', margin: '0 0 0.5rem' }}>
+                                    {resetPasswordMsg}
+                                  </p>
+                                )}
+                                <input
+                                  type="text"
+                                  className="admin-input"
+                                  value={resetNewPassword}
+                                  onChange={(e) => setResetNewPassword(e.target.value)}
+                                  placeholder="New password"
+                                  style={{ width: '100%', fontSize: '0.8125rem', marginBottom: '0.25rem' }}
+                                />
+                                <PasswordStrengthMeter password={resetNewPassword} showRules={true} />
+                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                  <button
+                                    className="admin-btn admin-btn--primary admin-btn--small"
+                                    onClick={() => handleResetPassword(u.id)}
+                                    disabled={!resetNewPassword || actionLoading === 'resetpw'}
+                                  >
+                                    {actionLoading === 'resetpw' ? 'Resetting...' : 'Set Password'}
+                                  </button>
+                                  <button
+                                    className="admin-btn admin-btn--ghost admin-btn--small"
+                                    onClick={() => { setShowResetPassword(false); setResetNewPassword(''); setResetPasswordMsg(''); }}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </>
                         )}
                       </div>

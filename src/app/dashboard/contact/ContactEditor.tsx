@@ -111,6 +111,9 @@ export default function ContactEditor({ contactFields: initialContactFields }: C
           <span style={{ color: '#5d6370', margin: '0 0.5rem' }}>/</span>
           <span style={{ color: '#a8adb8', fontSize: '0.875rem' }}>Contact Card</span>
         </div>
+        <a href="/dashboard" style={{ fontSize: '0.8125rem', color: '#5d6370', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#e8a849')} onMouseLeave={(e) => (e.currentTarget.style.color = '#5d6370')}>
+          &#8592; Dashboard
+        </a>
       </header>
 
       <main className="dash-main" style={{ maxWidth: 640 }}>

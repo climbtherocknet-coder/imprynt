@@ -48,7 +48,7 @@ export default function PasswordStrengthMeter({ password, showRules = true }: Pr
       {showRules && (
         <ul style={{ listStyle: 'none', padding: 0, margin: '0.5rem 0 0' }}>
           {([
-            ['minLength', '8+ characters'],
+            ['minLength', '10+ characters'],
             ['uppercase', 'Uppercase letter'],
             ['lowercase', 'Lowercase letter'],
             ['digit', 'Number'],

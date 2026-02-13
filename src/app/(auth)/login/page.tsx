@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [errorType, setErrorType] = useState<'error' | 'warning'>('error');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -27,7 +28,19 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result?.error) {
-      setError('Invalid email or password');
+      // Auth.js v5 puts the thrown error message in `code` or `error`
+      const errStr = (result as Record<string, unknown>).code as string || result.error || '';
+      if (errStr.includes('RATE_LIMITED')) {
+        const mins = errStr.match(/RATE_LIMITED:(\d+)/)?.[1] || '15';
+        setError(`Too many login attempts. Please try again in ${mins} minute${mins === '1' ? '' : 's'}.`);
+        setErrorType('warning');
+      } else if (errStr.includes('SUSPENDED')) {
+        setError('Your account has been suspended. Contact support.');
+        setErrorType('error');
+      } else {
+        setError('Invalid email or password');
+        setErrorType('error');
+      }
     } else {
       router.push('/dashboard');
     }
@@ -44,7 +57,18 @@ export default function LoginPage() {
         <h1 className="auth-title">Welcome back</h1>
         <p className="auth-subtitle">Sign in to your Imprynt account.</p>
 
-        {error && <div className="auth-error">{error}</div>}
+        {error && (
+          <div
+            className="auth-error"
+            style={errorType === 'warning' ? {
+              background: 'rgba(245, 158, 11, 0.08)',
+              borderColor: 'rgba(245, 158, 11, 0.2)',
+              color: '#f59e0b',
+            } : undefined}
+          >
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="auth-field">

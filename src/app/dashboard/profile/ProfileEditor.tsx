@@ -356,15 +356,20 @@ export default function ProfileEditor() {
           <span style={{ color: '#283042' }}>/</span>
           <span style={{ fontSize: '0.875rem', color: '#5d6370' }}>Edit Profile</span>
         </div>
-        <a
-          href={profileUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="dash-btn-ghost"
-          style={{ padding: '0.375rem 0.75rem' }}
-        >
-          View Profile →
-        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <a href="/dashboard" style={{ fontSize: '0.8125rem', color: '#5d6370', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#e8a849')} onMouseLeave={(e) => (e.currentTarget.style.color = '#5d6370')}>
+            &#8592; Dashboard
+          </a>
+          <a
+            href={profileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="dash-btn-ghost"
+            style={{ padding: '0.375rem 0.75rem' }}
+          >
+            View Profile →
+          </a>
+        </div>
       </header>
 
       {/* Error banner */}

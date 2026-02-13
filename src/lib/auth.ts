@@ -25,7 +25,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const rl = rateLimit(`login:${email}`, 5, 15 * 60 * 1000);
         if (!rl.allowed) {
           const mins = Math.ceil(rl.retryAfterMs / 60000);
-          throw new Error(`Too many login attempts. Try again in ${mins} minute${mins === 1 ? '' : 's'}.`);
+          throw new Error(`RATE_LIMITED:${mins}`);
         }
 
         const result = await query(
@@ -41,7 +41,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         // Block suspended accounts
         if (user.account_status === 'suspended') {
-          throw new Error('Your account has been suspended. Contact support.');
+          throw new Error('SUSPENDED');
         }
 
         const passwordMatch = await compare(password, user.password_hash);
