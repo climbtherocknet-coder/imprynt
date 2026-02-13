@@ -54,6 +54,8 @@ services:
     image: caddy:2-alpine
     container_name: imprynt-caddy
     restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
     ports:
       - "80:80"
       - "443:443"
