@@ -70,7 +70,7 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { id, maxUses, expiresInDays, note } = body;
+  const { id, code, maxUses, expiresInDays, note } = body;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing invite code ID' }, { status: 400 });
@@ -80,6 +80,15 @@ export async function PUT(req: NextRequest) {
   const sets: string[] = [];
   const params: unknown[] = [];
   let idx = 1;
+
+  if (code !== undefined) {
+    const clean = code.trim().toUpperCase().slice(0, 20);
+    if (!clean) {
+      return NextResponse.json({ error: 'Code cannot be empty' }, { status: 400 });
+    }
+    sets.push(`code = $${idx++}`);
+    params.push(clean);
+  }
 
   if (maxUses !== undefined) {
     sets.push(`max_uses = $${idx++}`);

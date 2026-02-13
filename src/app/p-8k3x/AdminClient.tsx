@@ -593,6 +593,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editCode, setEditCode] = useState('');
   const [editMaxUses, setEditMaxUses] = useState('');
   const [editExpiresInDays, setEditExpiresInDays] = useState('');
   const [editNote, setEditNote] = useState('');
@@ -666,6 +667,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
 
   function startEdit(c: InviteCode) {
     setEditingId(c.id);
+    setEditCode(c.code);
     setEditMaxUses(c.maxUses !== null ? String(c.maxUses) : '0');
     setEditExpiresInDays('');
     setEditNote(c.note || '');
@@ -685,6 +687,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id,
+          code: editCode.trim().toUpperCase(),
           maxUses: parseInt(editMaxUses) || 0,
           expiresInDays: editExpiresInDays ? parseInt(editExpiresInDays) : null,
           note: editNote,
@@ -825,7 +828,19 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
 
               return (
                 <tr key={c.id}>
-                  <td><span className="admin-code">{c.code}</span></td>
+                  <td>
+                    {isEditing ? (
+                      <input
+                        className="admin-input"
+                        value={editCode}
+                        onChange={(e) => setEditCode(e.target.value.toUpperCase())}
+                        maxLength={20}
+                        style={{ width: 100, fontSize: '0.75rem', padding: '0.2rem 0.4rem', fontFamily: 'monospace', letterSpacing: '0.05em' }}
+                      />
+                    ) : (
+                      <span className="admin-code">{c.code}</span>
+                    )}
+                  </td>
                   <td>
                     <span className={`admin-badge admin-badge--${status === 'active' ? 'active' : status === 'used' ? 'used' : 'free'}`}>
                       {status}
