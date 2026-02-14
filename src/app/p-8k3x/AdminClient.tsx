@@ -60,6 +60,7 @@ interface InviteCode {
   useCount: number;
   expiresAt: string | null;
   note: string;
+  grantedPlan: string;
   createdAt: string;
 }
 
@@ -765,6 +766,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
   const [expiresInDays, setExpiresInDays] = useState('');
   const [note, setNote] = useState('');
   const [count, setCount] = useState('1');
+  const [grantedPlan, setGrantedPlan] = useState('free');
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -772,6 +774,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
   const [editMaxUses, setEditMaxUses] = useState('');
   const [editExpiresInDays, setEditExpiresInDays] = useState('');
   const [editNote, setEditNote] = useState('');
+  const [editGrantedPlan, setEditGrantedPlan] = useState('free');
   const [editSaving, setEditSaving] = useState(false);
 
   // Delete state
@@ -805,6 +808,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
           expiresInDays: expiresInDays ? parseInt(expiresInDays) : null,
           note: note.trim() || null,
           count: parseInt(count) || 1,
+          grantedPlan,
         }),
       });
 
@@ -846,6 +850,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
     setEditMaxUses(c.maxUses !== null ? String(c.maxUses) : '0');
     setEditExpiresInDays('');
     setEditNote(c.note || '');
+    setEditGrantedPlan(c.grantedPlan || 'free');
     setDeleteId(null);
     setDeleteError('');
   }
@@ -866,6 +871,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
           maxUses: parseInt(editMaxUses) || 0,
           expiresInDays: editExpiresInDays ? parseInt(editExpiresInDays) : null,
           note: editNote,
+          grantedPlan: editGrantedPlan,
         }),
       });
       if (res.ok) {
@@ -946,6 +952,18 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
               style={{ width: 100 }}
             />
           </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: '#5d6370', marginBottom: '0.25rem' }}>Plan</label>
+            <select
+              className="admin-input"
+              value={grantedPlan}
+              onChange={(e) => setGrantedPlan(e.target.value)}
+              style={{ width: 120 }}
+            >
+              <option value="free">Free</option>
+              <option value="premium_monthly">Premium</option>
+            </select>
+          </div>
           <div style={{ flex: 1, minWidth: 150 }}>
             <label style={{ display: 'block', fontSize: '0.75rem', color: '#5d6370', marginBottom: '0.25rem' }}>Note</label>
             <input
@@ -987,6 +1005,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
           <thead>
             <tr>
               <th>Code</th>
+              <th>Plan</th>
               <th>Status</th>
               <th>Uses</th>
               <th>Note</th>
@@ -1014,6 +1033,23 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
                       />
                     ) : (
                       <span className="admin-code">{c.code}</span>
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <select
+                        className="admin-input"
+                        value={editGrantedPlan}
+                        onChange={(e) => setEditGrantedPlan(e.target.value)}
+                        style={{ width: 90, fontSize: '0.75rem', padding: '0.2rem 0.4rem' }}
+                      >
+                        <option value="free">Free</option>
+                        <option value="premium_monthly">Premium</option>
+                      </select>
+                    ) : (
+                      <span className={`admin-badge admin-badge--${c.grantedPlan === 'free' ? 'free' : 'active'}`}>
+                        {c.grantedPlan === 'free' ? 'Free' : 'Premium'}
+                      </span>
                     )}
                   </td>
                   <td>
@@ -1138,7 +1174,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
             })}
             {codes.length === 0 && (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', color: '#5d6370', padding: '2rem' }}>
+                <td colSpan={8} style={{ textAlign: 'center', color: '#5d6370', padding: '2rem' }}>
                   No invite codes yet. Generate some above.
                 </td>
               </tr>
@@ -1156,6 +1192,7 @@ function WaitlistTab() {
   const [entries, setEntries] = useState<WaitlistEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState('');
+  const [planChoices, setPlanChoices] = useState<Record<string, string>>({});
 
   const loadEntries = useCallback(() => {
     fetch('/api/p-8k3x/waitlist')
@@ -1175,7 +1212,7 @@ function WaitlistTab() {
       const res = await fetch('/api/p-8k3x/waitlist', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id, grantedPlan: planChoices[id] || 'free' }),
       });
       if (res.ok) loadEntries();
     } catch {
@@ -1204,6 +1241,7 @@ function WaitlistTab() {
                 <th>Email</th>
                 <th>Source</th>
                 <th>Signed Up</th>
+                <th>Plan</th>
                 <th></th>
               </tr>
             </thead>
@@ -1214,12 +1252,23 @@ function WaitlistTab() {
                   <td>{e.source}</td>
                   <td>{fmtDate(e.createdAt)}</td>
                   <td>
+                    <select
+                      className="admin-input"
+                      value={planChoices[e.id] || 'free'}
+                      onChange={(ev) => setPlanChoices(prev => ({ ...prev, [e.id]: ev.target.value }))}
+                      style={{ width: 90, fontSize: '0.75rem', padding: '0.2rem 0.4rem' }}
+                    >
+                      <option value="free">Free</option>
+                      <option value="premium_monthly">Premium</option>
+                    </select>
+                  </td>
+                  <td>
                     <button
                       className="admin-btn admin-btn--ghost admin-btn--small"
                       onClick={() => markInvited(e.id)}
                       disabled={marking === e.id}
                     >
-                      {marking === e.id ? 'Marking...' : 'Mark Invited'}
+                      {marking === e.id ? 'Sending...' : 'Invite'}
                     </button>
                   </td>
                 </tr>

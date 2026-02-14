@@ -35,20 +35,23 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = await req.json();
+  const { id, grantedPlan } = await req.json();
 
   if (!id) {
     return NextResponse.json({ error: 'Waitlist entry ID required' }, { status: 400 });
   }
 
-  // Generate a single-use invite code
+  const validPlans = ['free', 'premium_monthly', 'premium_annual'];
+  const plan = validPlans.includes(grantedPlan) ? grantedPlan : 'free';
+
+  // Generate a single-use invite code with the selected plan
   const inviteCode = nanoid(8).toUpperCase();
 
   const codeResult = await query(
-    `INSERT INTO invite_codes (code, created_by, max_uses, note)
-     VALUES ($1, $2, 1, $3)
+    `INSERT INTO invite_codes (code, created_by, max_uses, note, granted_plan)
+     VALUES ($1, $2, 1, $3, $4)
      RETURNING id`,
-    [inviteCode, session.user.email, 'Waitlist invite']
+    [inviteCode, session.user.email, 'Waitlist invite', plan]
   );
 
   const inviteCodeId = codeResult.rows[0].id;

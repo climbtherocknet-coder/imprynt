@@ -11,7 +11,7 @@ export async function GET() {
   }
 
   const result = await query(
-    `SELECT id, code, created_by, max_uses, use_count, expires_at, note, created_at
+    `SELECT id, code, created_by, max_uses, use_count, expires_at, note, granted_plan, created_at
      FROM invite_codes
      ORDER BY created_at DESC`
   );
@@ -25,6 +25,7 @@ export async function GET() {
       useCount: c.use_count,
       expiresAt: c.expires_at,
       note: c.note || '',
+      grantedPlan: c.granted_plan || 'free',
       createdAt: c.created_at,
     })),
   });
@@ -41,6 +42,8 @@ export async function POST(req: NextRequest) {
   const expiresInDays = body.expiresInDays ?? null;
   const note = body.note?.trim().slice(0, 255) || null;
   const count = Math.min(Math.max(1, body.count ?? 1), 20); // max 20 codes at once
+  const validPlans = ['free', 'premium_monthly', 'premium_annual'];
+  const grantedPlan = validPlans.includes(body.grantedPlan) ? body.grantedPlan : 'free';
 
   const expiresAt = expiresInDays
     ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
@@ -52,9 +55,9 @@ export async function POST(req: NextRequest) {
     const code = nanoid(8).toUpperCase();
 
     await query(
-      `INSERT INTO invite_codes (code, created_by, max_uses, expires_at, note)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [code, session.user.email, maxUses === 0 ? null : maxUses, expiresAt, note]
+      `INSERT INTO invite_codes (code, created_by, max_uses, expires_at, note, granted_plan)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [code, session.user.email, maxUses === 0 ? null : maxUses, expiresAt, note, grantedPlan]
     );
 
     codes.push(code);
@@ -70,7 +73,7 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { id, code, maxUses, expiresInDays, note } = body;
+  const { id, code, maxUses, expiresInDays, note, grantedPlan } = body;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing invite code ID' }, { status: 400 });
@@ -107,6 +110,12 @@ export async function PUT(req: NextRequest) {
   if (note !== undefined) {
     sets.push(`note = $${idx++}`);
     params.push(note?.trim().slice(0, 255) || null);
+  }
+
+  if (grantedPlan !== undefined) {
+    const vp = ['free', 'premium_monthly', 'premium_annual'];
+    sets.push(`granted_plan = $${idx++}`);
+    params.push(vp.includes(grantedPlan) ? grantedPlan : 'free');
   }
 
   if (sets.length === 0) {

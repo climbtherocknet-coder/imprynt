@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { getTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, isDarkTemplate, LINK_ICONS } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
-import ReportButton from '@/components/ReportButton';
+import ProfileFeedbackButton from '@/components/ReportButton';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -48,6 +48,7 @@ interface ProfileClientProps {
   impressionIcon?: ImpressionIcon;
   showcasePages: ShowcasePage[];
   allowSharing?: boolean;
+  allowFeedback?: boolean;
 }
 
 // ── PIN Modal ──────────────────────────────────────────
@@ -643,7 +644,7 @@ function ProtectedPageView({
 
 // ── Share Button ─────────────────────────────────────────
 
-function ShareButton({ profileId, isDark }: { profileId: string; isDark: boolean }) {
+function ShareButton({ profileId, isDark, corner }: { profileId: string; isDark: boolean; corner: 'top-left' | 'top-right' }) {
   const [copied, setCopied] = useState(false);
 
   async function handleShare() {
@@ -676,15 +677,15 @@ function ShareButton({ profileId, isDark }: { profileId: string; isDark: boolean
   }
 
   return (
-    <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 50 }}>
+    <div style={{ position: 'fixed', top: 16, [corner === 'top-left' ? 'left' : 'right']: 16, zIndex: 50 }}>
       <button
         onClick={handleShare}
         aria-label="Share profile"
         style={{
-          width: 36,
-          height: 36,
+          width: 40,
+          height: 40,
           borderRadius: '50%',
-          border: 'none',
+          border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)'}`,
           backgroundColor: 'transparent',
           cursor: 'pointer',
           display: 'flex',
@@ -710,7 +711,7 @@ function ShareButton({ profileId, isDark }: { profileId: string; isDark: boolean
         <div style={{
           position: 'absolute',
           top: '100%',
-          right: 0,
+          [corner === 'top-left' ? 'left' : 'right']: 0,
           marginTop: '0.375rem',
           padding: '0.375rem 0.75rem',
           borderRadius: '9999px',
@@ -730,7 +731,7 @@ function ShareButton({ profileId, isDark }: { profileId: string; isDark: boolean
 
 // ── Main Client Component ──────────────────────────────
 
-export default function ProfileClient({ profileId, accent, theme, hasImpression, impressionIcon, showcasePages, allowSharing }: ProfileClientProps) {
+export default function ProfileClient({ profileId, accent, theme, hasImpression, impressionIcon, showcasePages, allowSharing, allowFeedback }: ProfileClientProps) {
   const [showPinModal, setShowPinModal] = useState(false);
   const [protectedContent, setProtectedContent] = useState<ProtectedPageContent | null>(null);
   const [vcardToken, setVcardToken] = useState<string | undefined>(undefined);
@@ -754,12 +755,13 @@ export default function ProfileClient({ profileId, accent, theme, hasImpression,
       { top: 16, left: 16 }),
   };
 
-  // Showcase button position: opposite side from impression icon, or bottom-left by default
-  const showcasePosition: React.CSSProperties = {
-    position: 'fixed',
-    zIndex: 50,
-    ...(iconCorner === 'bottom-left' ? { bottom: 16, right: 16 } : { bottom: 16, left: 16 }),
-  };
+  // Share button: top edge, opposite horizontal side from impression
+  const shareCorner: 'top-left' | 'top-right' =
+    iconCorner.includes('left') ? 'top-right' : 'top-left';
+
+  // Feedback button: bottom edge, opposite horizontal side from impression
+  const feedbackCorner: 'bottom-left' | 'bottom-right' =
+    iconCorner.includes('left') ? 'bottom-right' : 'bottom-left';
 
   // Check for remembered pages on mount
   const loadPageContent = useCallback(async (pageId: string) => {
@@ -869,37 +871,10 @@ export default function ProfileClient({ profileId, accent, theme, hasImpression,
     <>
       {/* Share button */}
       {allowSharing && (
-        <ShareButton profileId={profileId} isDark={isDark} />
+        <ShareButton profileId={profileId} isDark={isDark} corner={shareCorner} />
       )}
 
-      {/* Showcase button: subtle fixed lock icon */}
-      {showcasePages.length > 0 && (
-        <button
-          onClick={() => setShowPinModal(true)}
-          aria-label={showcasePages[0]?.buttonLabel || 'Protected'}
-          style={{
-            ...showcasePosition,
-            width: 44,
-            height: 44,
-            borderRadius: '50%',
-            border: 'none',
-            backgroundColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.07)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '0.8rem',
-            color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.20)',
-            padding: 0,
-            opacity: 0.82,
-            WebkitTapHighlightColor: 'transparent',
-          }}
-        >
-          🔒
-        </button>
-      )}
-
-      {/* Impression: circle-dot logo mark */}
+      {/* Impression: circle-dot logo mark (also handles showcase/protected pages) */}
       {hasImpression && (
         <button
           onClick={() => setShowPinModal(true)}
@@ -941,8 +916,10 @@ export default function ProfileClient({ profileId, accent, theme, hasImpression,
         />
       )}
 
-      {/* Report link */}
-      <ReportButton profileId={profileId} />
+      {/* Feedback / Report button */}
+      {allowFeedback !== false && (
+        <ProfileFeedbackButton profileId={profileId} corner={feedbackCorner} isDark={isDark} />
+      )}
     </>
   );
 }

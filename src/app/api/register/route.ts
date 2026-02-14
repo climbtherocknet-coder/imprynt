@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     }
 
     const codeResult = await query(
-      'SELECT id, max_uses, use_count, expires_at FROM invite_codes WHERE code = $1',
+      'SELECT id, max_uses, use_count, expires_at, granted_plan FROM invite_codes WHERE code = $1',
       [inviteCode.trim().toUpperCase()]
     );
 
@@ -84,12 +84,13 @@ export async function POST(req: NextRequest) {
     // Hash password
     const passwordHash = await hash(password, 12);
 
-    // Create user with invite code reference
+    // Create user with invite code reference and granted plan
+    const plan = code.granted_plan || 'free';
     const result = await query(
-      `INSERT INTO users (email, password_hash, first_name, last_name, invite_code_id)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO users (email, password_hash, first_name, last_name, invite_code_id, plan)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, email`,
-      [email.toLowerCase(), passwordHash, firstName || null, lastName || null, code.id]
+      [email.toLowerCase(), passwordHash, firstName || null, lastName || null, code.id, plan]
     );
 
     const user = result.rows[0];

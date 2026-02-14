@@ -36,6 +36,7 @@ interface ProfileData {
     isPublished: boolean;
     statusTags: string[];
     allowSharing: boolean;
+    allowFeedback: boolean;
   };
   links: LinkItem[];
 }
@@ -139,6 +140,7 @@ export default function ProfileEditor() {
   const [fontPair, setFontPair] = useState('default');
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [allowSharing, setAllowSharing] = useState(true);
+  const [allowFeedback, setAllowFeedback] = useState(true);
 
   // Photo upload
   const [uploading, setUploading] = useState(false);
@@ -171,6 +173,7 @@ export default function ProfileEditor() {
         setLinks(d.links);
         setPhotoUrl(d.profile.photoUrl);
         setAllowSharing(d.profile.allowSharing !== false);
+        setAllowFeedback(d.profile.allowFeedback !== false);
         setLoading(false);
       })
       .catch(() => {
@@ -788,6 +791,28 @@ export default function ProfileEditor() {
           </label>
           <p style={{ fontSize: '0.75rem', color: '#5d6370', margin: '0.375rem 0 0 1.5rem' }}>
             Shows a share button on your public profile page.
+          </p>
+          <label style={{ ...labelStyle, margin: '0.75rem 0 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input
+              type="checkbox"
+              checked={allowFeedback}
+              onChange={async (e) => {
+                const val = e.target.checked;
+                setAllowFeedback(val);
+                try {
+                  await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ section: 'feedback', allowFeedback: val }),
+                  });
+                } catch { /* silent */ }
+              }}
+              style={{ width: 16, height: 16, accentColor: '#e8a849' }}
+            />
+            Show feedback button on your profile
+          </label>
+          <p style={{ fontSize: '0.75rem', color: '#5d6370', margin: '0.375rem 0 0 1.5rem' }}>
+            Allows visitors to send feedback or report your profile.
           </p>
         </div>
 

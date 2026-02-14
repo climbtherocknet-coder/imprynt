@@ -23,7 +23,7 @@ export async function GET() {
 
   const profileResult = await query(
     `SELECT id, slug, redirect_id, title, company, tagline, bio_heading, bio,
-            photo_url, template, primary_color, accent_color, font_pair, is_published, status_tags, allow_sharing
+            photo_url, template, primary_color, accent_color, font_pair, is_published, status_tags, allow_sharing, allow_feedback
      FROM profiles WHERE user_id = $1`,
     [userId]
   );
@@ -63,6 +63,7 @@ export async function GET() {
       isPublished: profile.is_published,
       statusTags: profile.status_tags || [],
       allowSharing: profile.allow_sharing !== false,
+      allowFeedback: profile.allow_feedback !== false,
     },
     links: linksResult.rows.map((l: Record<string, unknown>) => ({
       id: l.id,
@@ -160,6 +161,20 @@ export async function PUT(req: NextRequest) {
       await query(
         'UPDATE profiles SET allow_sharing = $1 WHERE user_id = $2',
         [!!allowSharing, userId]
+      );
+    } else if (section === 'feedback') {
+      const { allowFeedback } = body;
+      await query(
+        'UPDATE profiles SET allow_feedback = $1 WHERE user_id = $2',
+        [!!allowFeedback, userId]
+      );
+    } else if (section === 'statusTagColor') {
+      const { statusTagColor } = body;
+      const val = typeof statusTagColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(statusTagColor)
+        ? statusTagColor : null;
+      await query(
+        'UPDATE profiles SET status_tag_color = $1 WHERE user_id = $2',
+        [val, userId]
       );
     } else {
       return NextResponse.json({ error: 'Invalid section' }, { status: 400 });

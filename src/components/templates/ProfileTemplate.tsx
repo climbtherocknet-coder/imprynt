@@ -24,6 +24,7 @@ export interface ProfileTemplateProps {
   pods: PodData[];
   isPaid: boolean;
   statusTags?: string[];
+  statusTagColor?: string;
 }
 
 function getLinkHref(link: { link_type: string; url: string }) {
@@ -49,6 +50,7 @@ export default function ProfileTemplate({
   pods,
   isPaid,
   statusTags = [],
+  statusTagColor,
 }: ProfileTemplateProps) {
   const theme = getTheme(template);
   const cssVars = getThemeCSSVars(theme);
@@ -80,7 +82,13 @@ export default function ProfileTemplate({
         {/* ─── Status Tags ─── */}
         {statusTags.length > 0 && (
           <div className="hero" style={{ paddingBottom: 0 }}>
-            <div className="status-tags fade-in d1">
+            <div
+              className="status-tags fade-in d1"
+              style={statusTagColor ? {
+                '--accent': statusTagColor,
+                '--accent-soft': `${statusTagColor}0f`,
+              } as React.CSSProperties : undefined}
+            >
               {statusTags.map(slug => (
                 <span key={slug} className="status-tag">
                   <span className="status-tag-dot" />

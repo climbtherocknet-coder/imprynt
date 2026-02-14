@@ -9,26 +9,71 @@ const REASONS = [
   'Other',
 ];
 
-export default function ReportButton({ profileId }: { profileId: string }) {
+interface Props {
+  profileId: string;
+  corner: 'bottom-left' | 'bottom-right';
+  isDark: boolean;
+}
+
+type Mode = 'menu' | 'feedback' | 'report';
+
+export default function ProfileFeedbackButton({ profileId, corner, isDark }: Props) {
   const [open, setOpen] = useState(false);
-  const [reason, setReason] = useState(REASONS[0]);
-  const [details, setDetails] = useState('');
+  const [mode, setMode] = useState<Mode>('menu');
+
+  // Feedback state
+  const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
-  async function handleSubmit() {
-    if (!reason) return;
+  // Report state
+  const [reason, setReason] = useState(REASONS[0]);
+  const [details, setDetails] = useState('');
+
+  function reset() {
+    setMode('menu');
+    setMessage('');
+    setDetails('');
+    setReason(REASONS[0]);
+    setSent(false);
+  }
+
+  function handleClose() {
+    setOpen(false);
+    setTimeout(reset, 200);
+  }
+
+  async function submitFeedback() {
+    if (!message.trim()) return;
     setLoading(true);
     try {
-      const message = details.trim()
+      await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message.trim(),
+          email: email.trim() || undefined,
+          page: window.location.pathname,
+        }),
+      });
+      setSent(true);
+      setTimeout(handleClose, 2000);
+    } catch { /* silent */ }
+    finally { setLoading(false); }
+  }
+
+  async function submitReport() {
+    setLoading(true);
+    try {
+      const msg = details.trim()
         ? `[${reason}] ${details.trim()}`
         : `[${reason}]`;
       await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message,
+          message: msg,
           email: email.trim() || undefined,
           page: window.location.pathname,
           feedbackType: 'report',
@@ -36,175 +81,239 @@ export default function ReportButton({ profileId }: { profileId: string }) {
         }),
       });
       setSent(true);
-      setTimeout(() => {
-        setSent(false);
-        setOpen(false);
-        setReason(REASONS[0]);
-        setDetails('');
-      }, 2500);
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-    }
+      setTimeout(handleClose, 2000);
+    } catch { /* silent */ }
+    finally { setLoading(false); }
   }
+
+  const position: React.CSSProperties = {
+    position: 'fixed',
+    zIndex: 50,
+    [corner === 'bottom-left' ? 'left' : 'right']: 16,
+    bottom: 16,
+  };
+
+  const modalPosition: React.CSSProperties = {
+    position: 'fixed',
+    zIndex: 10000,
+    [corner === 'bottom-left' ? 'left' : 'right']: 16,
+    bottom: 60,
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '0.5rem 0.75rem',
+    background: '#0c1017',
+    border: '1px solid #283042',
+    borderRadius: '0.5rem',
+    color: '#eceef2',
+    fontSize: '0.8125rem',
+    fontFamily: 'inherit',
+    outline: 'none',
+    boxSizing: 'border-box' as const,
+  };
 
   return (
     <>
+      {/* Circular trigger */}
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => { if (open) handleClose(); else setOpen(true); }}
+        aria-label="Feedback"
         style={{
-          display: 'block',
-          margin: '2rem auto 0',
-          background: 'none',
-          border: 'none',
-          color: '#5d6370',
-          fontSize: '0.6875rem',
+          ...position,
+          width: 40,
+          height: 40,
+          borderRadius: '50%',
+          border: '1.5px solid #e8a849',
+          backgroundColor: 'transparent',
           cursor: 'pointer',
-          fontFamily: 'inherit',
-          opacity: 0.6,
-          padding: '0.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 0,
+          opacity: open ? 0.9 : 0.4,
+          transition: 'opacity 0.2s',
+          color: '#e8a849',
+          WebkitTapHighlightColor: 'transparent',
         }}
+        onMouseEnter={e => { e.currentTarget.style.opacity = '0.85'; }}
+        onMouseLeave={e => { if (!open) e.currentTarget.style.opacity = '0.4'; }}
       >
-        Report this profile
+        {/* Chat bubble icon (rotated 180°) */}
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'scale(-1, 1)' }}>
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+        </svg>
       </button>
 
+      {/* Modal */}
       {open && (
-        <div
-          onClick={() => setOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 10000,
-            backgroundColor: 'rgba(0,0,0,0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem',
-          }}
-        >
+        <>
+          {/* Backdrop (click to close) */}
           <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: '100%',
-              maxWidth: 360,
-              background: '#161c28',
-              border: '1px solid #1e2535',
-              borderRadius: '1rem',
-              padding: '1.5rem',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-            }}
-          >
-            {sent ? (
-              <p style={{ color: '#22c55e', fontSize: '0.9375rem', fontWeight: 600, textAlign: 'center', margin: '1rem 0' }}>
-                Thanks, we'll review this.
-              </p>
-            ) : (
-              <>
-                <p style={{ color: '#eceef2', fontSize: '0.9375rem', fontWeight: 600, margin: '0 0 0.75rem' }}>
-                  Report this profile
-                </p>
+            onClick={handleClose}
+            style={{ position: 'fixed', inset: 0, zIndex: 9999 }}
+          />
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', marginBottom: '0.75rem' }}>
+          <div style={{
+            ...modalPosition,
+            width: 300,
+            background: '#161c28',
+            border: '1px solid #1e2535',
+            borderRadius: '1rem',
+            padding: '1.25rem',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          }}>
+            {/* Success state */}
+            {sent ? (
+              <p style={{ color: '#22c55e', fontSize: '0.875rem', fontWeight: 600, textAlign: 'center', margin: '0.75rem 0' }}>
+                {mode === 'report' ? "Thanks, we'll review this." : 'Thanks for the feedback!'}
+              </p>
+            ) : mode === 'menu' ? (
+              /* Menu */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <button
+                  onClick={() => setMode('feedback')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.625rem',
+                    padding: '0.625rem 0.75rem', background: '#0c1017',
+                    border: '1px solid #1e2535', borderRadius: '0.5rem',
+                    color: '#eceef2', fontSize: '0.8125rem', fontFamily: 'inherit',
+                    cursor: 'pointer', textAlign: 'left',
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a8adb8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                  </svg>
+                  Send feedback
+                </button>
+                <button
+                  onClick={() => setMode('report')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.625rem',
+                    padding: '0.625rem 0.75rem', background: '#0c1017',
+                    border: '1px solid #1e2535', borderRadius: '0.5rem',
+                    color: '#a8adb8', fontSize: '0.8125rem', fontFamily: 'inherit',
+                    cursor: 'pointer', textAlign: 'left',
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5d6370" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                  Report this profile
+                </button>
+              </div>
+            ) : mode === 'feedback' ? (
+              /* Feedback form */
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <button onClick={() => setMode('menu')} style={{ background: 'none', border: 'none', color: '#5d6370', cursor: 'pointer', padding: 0, fontSize: '0.875rem', fontFamily: 'inherit' }}>&larr;</button>
+                  <p style={{ color: '#eceef2', fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>Send Feedback</p>
+                </div>
+                <p style={{ color: '#5d6370', fontSize: '0.6875rem', margin: '0 0 0.625rem', lineHeight: 1.4 }}>
+                  Bug reports, feature requests, or just say hi.
+                </p>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="What's on your mind?"
+                  rows={3}
+                  style={{ ...inputStyle, resize: 'vertical' as const }}
+                />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email (optional)"
+                  style={{ ...inputStyle, marginTop: '0.5rem' }}
+                />
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.625rem' }}>
+                  <button
+                    onClick={submitFeedback}
+                    disabled={loading || !message.trim()}
+                    style={{
+                      flex: 1, padding: '0.5rem', background: '#e8a849', color: '#0c1017',
+                      border: 'none', borderRadius: '2rem', fontSize: '0.8125rem', fontWeight: 600,
+                      fontFamily: 'inherit', cursor: loading || !message.trim() ? 'not-allowed' : 'pointer',
+                      opacity: loading || !message.trim() ? 0.5 : 1,
+                    }}
+                  >
+                    {loading ? 'Sending...' : 'Send'}
+                  </button>
+                  <button
+                    onClick={handleClose}
+                    style={{
+                      padding: '0.5rem 0.75rem', background: 'transparent', color: '#5d6370',
+                      border: '1px solid #283042', borderRadius: '2rem', fontSize: '0.8125rem',
+                      fontFamily: 'inherit', cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* Report form */
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.625rem' }}>
+                  <button onClick={() => setMode('menu')} style={{ background: 'none', border: 'none', color: '#5d6370', cursor: 'pointer', padding: 0, fontSize: '0.875rem', fontFamily: 'inherit' }}>&larr;</button>
+                  <p style={{ color: '#eceef2', fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>Report this profile</p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '0.625rem' }}>
                   {REASONS.map((r) => (
                     <label
                       key={r}
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        fontSize: '0.8125rem',
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        fontSize: '0.8125rem', cursor: 'pointer',
                         color: reason === r ? '#eceef2' : '#a8adb8',
-                        cursor: 'pointer',
-                        padding: '0.375rem 0.5rem',
-                        borderRadius: '0.5rem',
+                        padding: '0.3rem 0.5rem', borderRadius: '0.375rem',
                         background: reason === r ? 'rgba(232,168,73,0.08)' : 'transparent',
                       }}
                     >
                       <input
-                        type="radio"
-                        name="report-reason"
-                        value={r}
-                        checked={reason === r}
-                        onChange={() => setReason(r)}
+                        type="radio" name="report-reason" value={r}
+                        checked={reason === r} onChange={() => setReason(r)}
                         style={{ accentColor: '#e8a849' }}
                       />
                       {r}
                     </label>
                   ))}
                 </div>
-
                 <textarea
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
                   placeholder="Additional details (optional)"
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    background: '#0c1017',
-                    border: '1px solid #283042',
-                    borderRadius: '0.5rem',
-                    color: '#eceef2',
-                    fontSize: '0.8125rem',
-                    fontFamily: 'inherit',
-                    resize: 'vertical',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
+                  rows={2}
+                  style={{ ...inputStyle, resize: 'vertical' as const }}
                 />
-
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Your email (optional)"
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    background: '#0c1017',
-                    border: '1px solid #283042',
-                    borderRadius: '0.5rem',
-                    color: '#eceef2',
-                    fontSize: '0.8125rem',
-                    fontFamily: 'inherit',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    marginTop: '0.5rem',
-                  }}
+                  style={{ ...inputStyle, marginTop: '0.5rem' }}
                 />
-
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.625rem' }}>
                   <button
-                    onClick={handleSubmit}
+                    onClick={submitReport}
                     disabled={loading}
                     style={{
-                      flex: 1,
-                      padding: '0.5rem',
-                      background: '#e8a849',
-                      color: '#0c1017',
-                      border: 'none',
-                      borderRadius: '2rem',
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      fontFamily: 'inherit',
-                      cursor: loading ? 'not-allowed' : 'pointer',
+                      flex: 1, padding: '0.5rem', background: '#e8a849', color: '#0c1017',
+                      border: 'none', borderRadius: '2rem', fontSize: '0.8125rem', fontWeight: 600,
+                      fontFamily: 'inherit', cursor: loading ? 'not-allowed' : 'pointer',
                       opacity: loading ? 0.5 : 1,
                     }}
                   >
                     {loading ? 'Submitting...' : 'Submit Report'}
                   </button>
                   <button
-                    onClick={() => setOpen(false)}
+                    onClick={handleClose}
                     style={{
-                      padding: '0.5rem 1rem',
-                      background: 'transparent',
-                      color: '#5d6370',
-                      border: '1px solid #283042',
-                      borderRadius: '2rem',
-                      fontSize: '0.8125rem',
-                      fontFamily: 'inherit',
-                      cursor: 'pointer',
+                      padding: '0.5rem 0.75rem', background: 'transparent', color: '#5d6370',
+                      border: '1px solid #283042', borderRadius: '2rem', fontSize: '0.8125rem',
+                      fontFamily: 'inherit', cursor: 'pointer',
                     }}
                   >
                     Cancel
@@ -213,7 +322,7 @@ export default function ReportButton({ profileId }: { profileId: string }) {
               </>
             )}
           </div>
-        </div>
+        </>
       )}
     </>
   );
