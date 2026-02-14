@@ -154,11 +154,18 @@ export async function PUT(req: NextRequest) {
       );
     } else if (section === 'statusTags') {
       const { statusTags } = body;
-      const validSlugs = ['open_to_network', 'open_to_work', 'hiring', 'open_to_collaborate', 'consulting', 'mentoring'];
-      const filtered = Array.isArray(statusTags) ? statusTags.filter((t: string) => validSlugs.includes(t)) : [];
+      const presetSlugs = ['open_to_network', 'open_to_work', 'hiring', 'open_to_collaborate', 'consulting', 'mentoring'];
+      if (!Array.isArray(statusTags)) {
+        return NextResponse.json({ error: 'Invalid statusTags' }, { status: 400 });
+      }
+      // Allow preset slugs + custom strings (max 30 chars, sanitized)
+      const filtered = statusTags
+        .filter((t: string) => typeof t === 'string' && t.trim().length > 0)
+        .map((t: string) => t.trim().slice(0, 30))
+        .filter((t: string) => presetSlugs.includes(t) || !t.startsWith('__'));
       await query(
         'UPDATE profiles SET status_tags = $1 WHERE user_id = $2',
-        [filtered, userId]
+        [filtered.slice(0, 10), userId]
       );
     } else if (section === 'sharing') {
       const { allowSharing } = body;

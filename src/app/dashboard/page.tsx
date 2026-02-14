@@ -136,6 +136,22 @@ export default async function DashboardPage({
 
         {/* Navigation Cards */}
         <div className="dash-nav-list">
+          {/* Status Tags */}
+          <div className="dash-nav-card" style={{ cursor: 'default' }}>
+            <div style={{ width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <span style={{ fontSize: '1.5rem', flexShrink: 0, width: 32, textAlign: 'center' }}>🏷️</span>
+                <div>
+                  <h3 className="dash-nav-title">Status</h3>
+                  <p className="dash-nav-desc">
+                    Badges shown on your public profile
+                  </p>
+                </div>
+              </div>
+              <StatusTagPicker initialTags={profile?.status_tags || []} initialColor={profile?.status_tag_color} isPaid={isPaid} />
+            </div>
+          </div>
+
           {/* Public Profile (biz) */}
           <a href="/dashboard/profile" className="dash-nav-card">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -219,17 +235,6 @@ export default async function DashboardPage({
               <span className="dash-nav-arrow">🔒</span>
             </a>
           )}
-
-          {/* Status Tags */}
-          <div className="dash-nav-card" style={{ cursor: 'default' }}>
-            <div style={{ width: '100%' }}>
-              <h3 className="dash-nav-title">Status</h3>
-              <p className="dash-nav-desc" style={{ marginBottom: '0.75rem' }}>
-                Badges shown on your public profile
-              </p>
-              <StatusTagPicker initialTags={profile?.status_tags || []} initialColor={profile?.status_tag_color} />
-            </div>
-          </div>
 
           {/* Analytics */}
           {isPaid ? (
