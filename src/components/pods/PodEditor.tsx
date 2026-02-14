@@ -47,14 +47,14 @@ const POD_TYPE_DEFS = [
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.5625rem 0.75rem',
-  border: '1px solid #283042',
+  border: '1px solid var(--border-light, #283042)',
   borderRadius: '0.5rem',
   fontSize: '0.9375rem',
   boxSizing: 'border-box',
   outline: 'none',
   fontFamily: 'inherit',
-  backgroundColor: '#0c1017',
-  color: '#eceef2',
+  backgroundColor: 'var(--bg, #0c1017)',
+  color: 'var(--text, #eceef2)',
 };
 
 const labelStyle: React.CSSProperties = {
@@ -62,13 +62,13 @@ const labelStyle: React.CSSProperties = {
   fontSize: '0.8125rem',
   fontWeight: 500,
   marginBottom: '0.3125rem',
-  color: '#a8adb8',
+  color: 'var(--text-mid, #a8adb8)',
 };
 
 const saveBtnStyle: React.CSSProperties = {
   padding: '0.5rem 1.25rem',
-  backgroundColor: '#e8a849',
-  color: '#0c1017',
+  backgroundColor: 'var(--accent, #e8a849)',
+  color: 'var(--bg, #0c1017)',
   border: 'none',
   borderRadius: '2rem',
   fontSize: '0.8125rem',
@@ -80,10 +80,10 @@ const saveBtnStyle: React.CSSProperties = {
 const smallBtnStyle: React.CSSProperties = {
   padding: '0.25rem 0.5rem',
   backgroundColor: 'transparent',
-  border: '1px solid #283042',
+  border: '1px solid var(--border-light, #283042)',
   borderRadius: '0.375rem',
   fontSize: '0.75rem',
-  color: '#a8adb8',
+  color: 'var(--text-mid, #a8adb8)',
   cursor: 'pointer',
   fontFamily: 'inherit',
   lineHeight: 1,
@@ -295,12 +295,12 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 0, color: '#eceef2' }}>Content Blocks</h3>
-        <span style={{ fontSize: '0.75rem', color: '#5d6370' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 0, color: 'var(--text, #eceef2)' }}>Content Blocks</h3>
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)' }}>
           {pods.length} / {maxPods}
         </span>
       </div>
-      <p style={{ fontSize: '0.8125rem', color: '#5d6370', marginBottom: '1rem' }}>
+      <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
         Add sections to your page. Click a block to edit it.
       </p>
 
@@ -313,8 +313,8 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
             <div
               key={pod.id}
               style={{
-                backgroundColor: '#0c1017',
-                border: isEditing ? '1px solid #e8a849' : '1px solid #1e2535',
+                backgroundColor: 'var(--bg, #0c1017)',
+                border: isEditing ? '1px solid var(--accent, #e8a849)' : '1px solid var(--border, #1e2535)',
                 borderRadius: '0.625rem',
                 overflow: 'hidden',
                 transition: 'border-color 0.15s',
@@ -350,19 +350,19 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                 </div>
 
                 {/* Type icon + name */}
-                <span style={{ fontSize: '0.875rem', color: '#e8a849', fontWeight: 600, width: 20, textAlign: 'center' }}>
+                <span style={{ fontSize: '0.875rem', color: 'var(--accent, #e8a849)', fontWeight: 600, width: 20, textAlign: 'center' }}>
                   {typeDef?.icon || '?'}
                 </span>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#eceef2' }}>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text, #eceef2)' }}>
                   {typeDef?.label || pod.podType}
                 </span>
                 {pod.label && (
-                  <span style={{ fontSize: '0.75rem', color: '#5d6370' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)' }}>
                     — {pod.label}
                   </span>
                 )}
                 {isShowcase && pod.showOnProfile && (
-                  <span style={{ fontSize: '0.625rem', color: '#e8a849', backgroundColor: 'rgba(232, 168, 73, 0.1)', padding: '1px 6px', borderRadius: '9999px' }}>
+                  <span style={{ fontSize: '0.625rem', color: 'var(--accent, #e8a849)', backgroundColor: 'rgba(232, 168, 73, 0.1)', padding: '1px 6px', borderRadius: '9999px' }}>
                     on profile
                   </span>
                 )}
@@ -383,7 +383,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: '#5d6370',
+                      color: 'var(--text-muted, #5d6370)',
                       cursor: 'pointer',
                       fontSize: '1.1rem',
                       padding: '0.125rem 0.25rem',
@@ -398,7 +398,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
 
               {/* Expanded edit form */}
               {isEditing && (
-                <div style={{ padding: '0 0.75rem 0.75rem', borderTop: '1px solid #1e2535', paddingTop: '0.75rem' }}>
+                <div style={{ padding: '0 0.75rem 0.75rem', borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.75rem' }}>
                   {/* Common: label */}
                   <div style={{ marginBottom: '0.625rem' }}>
                     <label style={labelStyle}>Section label</label>
@@ -471,9 +471,9 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                                 padding: '0.375rem 0.75rem',
                                 borderRadius: '0.375rem',
                                 border: '1px solid',
-                                borderColor: pod.imagePosition === pos ? '#e8a849' : '#283042',
+                                borderColor: pod.imagePosition === pos ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
                                 backgroundColor: pod.imagePosition === pos ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
-                                color: pod.imagePosition === pos ? '#e8a849' : '#a8adb8',
+                                color: pod.imagePosition === pos ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
                                 fontSize: '0.8125rem',
                                 fontWeight: 500,
                                 cursor: 'pointer',
@@ -586,7 +586,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                       </div>
 
                       {/* Preview fields (auto-filled or manual entry) */}
-                      <p style={{ fontSize: '0.75rem', color: '#5d6370', margin: '0 0 0.625rem' }}>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.625rem' }}>
                         Tap "Fetch Preview" to auto-fill, or enter details manually.
                       </p>
                       {pod.imageUrl && (
@@ -599,7 +599,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                               aspectRatio: '1.91 / 1',
                               objectFit: 'cover',
                               borderRadius: '0.5rem',
-                              border: '1px solid #1e2535',
+                              border: '1px solid var(--border, #1e2535)',
                             }}
                           />
                         </div>
@@ -707,17 +707,17 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
 
                   {/* Show on profile checkbox (showcase only) */}
                   {isShowcase && (
-                    <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #1e2535' }}>
+                    <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border, #1e2535)' }}>
                       <label style={{ ...labelStyle, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <input
                           type="checkbox"
                           checked={pod.showOnProfile}
                           onChange={e => updatePodField(pod.id, 'showOnProfile', e.target.checked)}
-                          style={{ width: 16, height: 16, accentColor: '#e8a849' }}
+                          style={{ width: 16, height: 16, accentColor: 'var(--accent, #e8a849)' }}
                         />
                         Show on public profile
                       </label>
-                      <p style={{ fontSize: '0.75rem', color: '#5d6370', margin: '0.25rem 0 0 1.5rem' }}>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0.25rem 0 0 1.5rem' }}>
                         When checked, this block also appears on your main public page.
                       </p>
                     </div>
@@ -740,12 +740,12 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
           style={{
             width: '100%',
             padding: '0.625rem 0.75rem',
-            border: '2px dashed #283042',
+            border: '2px dashed var(--border-light, #283042)',
             borderRadius: '0.5rem',
             fontSize: '0.875rem',
             fontFamily: 'inherit',
             backgroundColor: 'transparent',
-            color: '#5d6370',
+            color: 'var(--text-muted, #5d6370)',
             cursor: 'pointer',
           }}
         >
@@ -762,7 +762,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
       )}
 
       {pods.length >= maxPods && !isPaid && parentType === 'profile' && (
-        <p style={{ fontSize: '0.75rem', color: '#5d6370', textAlign: 'center', marginTop: '0.5rem' }}>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', textAlign: 'center', marginTop: '0.5rem' }}>
           Upgrade to Pro for up to 6 content blocks.
         </p>
       )}

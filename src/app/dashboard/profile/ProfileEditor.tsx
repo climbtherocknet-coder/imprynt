@@ -361,7 +361,7 @@ export default function ProfileEditor() {
   if (loading) {
     return (
       <div className="dash-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#5d6370' }}>Loading...</p>
+        <p style={{ color: 'var(--text-muted, #5d6370)' }}>Loading...</p>
       </div>
     );
   }
@@ -387,11 +387,11 @@ export default function ProfileEditor() {
             <div className="dash-logo-mark" />
             <span className="dash-logo-text">Imprynt</span>
           </a>
-          <span style={{ color: '#283042' }}>/</span>
-          <span style={{ fontSize: '0.875rem', color: '#5d6370' }}>Edit Profile</span>
+          <span style={{ color: 'var(--border-light, #283042)' }}>/</span>
+          <span style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)' }}>Edit Profile</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <a href="/dashboard" style={{ fontSize: '0.8125rem', color: '#5d6370', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#e8a849')} onMouseLeave={(e) => (e.currentTarget.style.color = '#5d6370')}>
+          <a href="/dashboard" style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent, #e8a849)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted, #5d6370)')}>
             &#8592; Dashboard
           </a>
           <a
@@ -422,7 +422,7 @@ export default function ProfileEditor() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={sectionTitleStyle}>Identity</h3>
             <button
-              onClick={() => saveSection('identity', { firstName, lastName, title, company, tagline })}
+              onClick={() => saveSection('identity', { firstName, lastName, title, company, tagline, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null })}
               disabled={saving === 'identity'}
               style={{ ...saveBtnStyle, opacity: saving === 'identity' ? 0.6 : 1 }}
             >
@@ -437,16 +437,25 @@ export default function ProfileEditor() {
               style={{
                 width: 72,
                 height: 72,
-                borderRadius: '50%',
+                borderRadius: photoShape === 'circle' ? '50%'
+                  : photoShape === 'rounded' ? '16px'
+                  : photoShape === 'soft' ? '8px'
+                  : photoShape === 'square' ? '0'
+                  : photoShape === 'custom' ? `${photoRadius}%`
+                  : '50%',
+                clipPath: photoShape === 'hexagon' ? 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
+                  : photoShape === 'diamond' ? 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)'
+                  : undefined,
                 overflow: 'hidden',
                 cursor: 'pointer',
                 flexShrink: 0,
-                backgroundColor: '#1e2535',
+                backgroundColor: 'var(--border, #1e2535)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: '2px dashed #283042',
+                border: ['hexagon', 'diamond'].includes(photoShape) ? 'none' : '2px dashed var(--border-light, #283042)',
                 position: 'relative',
+                transition: 'border-radius 0.2s, clip-path 0.2s',
               }}
             >
               {photoUrl ? (
@@ -456,7 +465,7 @@ export default function ProfileEditor() {
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               ) : (
-                <span style={{ fontSize: '1.5rem', color: '#5d6370' }}>+</span>
+                <span style={{ fontSize: '1.5rem', color: 'var(--text-muted, #5d6370)' }}>+</span>
               )}
               {uploading && (
                 <div style={{
@@ -467,7 +476,7 @@ export default function ProfileEditor() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '0.6875rem',
-                  color: '#a8adb8',
+                  color: 'var(--text-mid, #a8adb8)',
                 }}>
                   ...
                 </div>
@@ -479,19 +488,19 @@ export default function ProfileEditor() {
                 disabled={uploading}
                 style={{
                   padding: '0.375rem 0.75rem',
-                  backgroundColor: '#1e2535',
-                  border: '1px solid #283042',
+                  backgroundColor: 'var(--border, #1e2535)',
+                  border: '1px solid var(--border-light, #283042)',
                   borderRadius: '0.375rem',
                   fontSize: '0.8125rem',
                   fontWeight: 500,
                   cursor: uploading ? 'not-allowed' : 'pointer',
                   fontFamily: 'inherit',
-                  color: '#eceef2',
+                  color: 'var(--text, #eceef2)',
                 }}
               >
                 {uploading ? 'Uploading...' : photoUrl ? 'Change photo' : 'Upload photo'}
               </button>
-              <p style={{ fontSize: '0.6875rem', color: '#5d6370', margin: '0.375rem 0 0' }}>
+              <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', margin: '0.375rem 0 0' }}>
                 JPEG, PNG, or WebP. Max 5MB.
               </p>
             </div>
@@ -502,6 +511,85 @@ export default function ProfileEditor() {
               onChange={handlePhotoUpload}
               style={{ display: 'none' }}
             />
+          </div>
+
+          {/* Photo shape picker — inline with photo */}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={labelStyle}>Photo shape</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
+              {([
+                { id: 'circle', label: 'Circle', render: <div style={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                { id: 'rounded', label: 'Rounded', render: <div style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                { id: 'soft', label: 'Soft', render: <div style={{ width: 22, height: 22, borderRadius: 3, backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                { id: 'square', label: 'Square', render: <div style={{ width: 22, height: 22, borderRadius: 0, backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                { id: 'hexagon', label: 'Hexagon', render: <div style={{ width: 22, height: 22, clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)', backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                { id: 'diamond', label: 'Diamond', render: <div style={{ width: 22, height: 22, clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', backgroundColor: 'var(--accent, #e8a849)' }} /> },
+              ] as const).map(shape => {
+                const isSelected = photoShape === shape.id;
+                return (
+                  <button
+                    key={shape.id}
+                    onClick={() => {
+                      setPhotoShape(shape.id);
+                      const map: Record<string, number> = { circle: 50, rounded: 32, soft: 16, square: 0 };
+                      if (map[shape.id] !== undefined) setPhotoRadius(map[shape.id]);
+                      if (shape.id === 'hexagon' || shape.id === 'diamond') setShowShapeSlider(false);
+                    }}
+                    title={shape.label}
+                    style={{
+                      width: 34,
+                      height: 34,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '0.375rem',
+                      border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                      backgroundColor: 'var(--surface-raised, #1e2535)',
+                      cursor: 'pointer',
+                      padding: 0,
+                      transition: 'border-color 0.15s',
+                    }}
+                  >
+                    {shape.render}
+                  </button>
+                );
+              })}
+              {!['hexagon', 'diamond'].includes(photoShape) && (
+                <button
+                  onClick={() => setShowShapeSlider(!showShapeSlider)}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                    fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', padding: '0 0.25rem',
+                    transition: 'color 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent, #e8a849)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted, #5d6370)')}
+                >
+                  {showShapeSlider ? 'Hide' : 'Custom'}
+                </button>
+              )}
+            </div>
+            {showShapeSlider && !['hexagon', 'diamond'].includes(photoShape) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <input
+                  type="range"
+                  min={0}
+                  max={50}
+                  value={photoRadius}
+                  onChange={e => {
+                    const val = parseInt(e.target.value);
+                    setPhotoRadius(val);
+                    if (val === 50) setPhotoShape('circle');
+                    else if (val === 32) setPhotoShape('rounded');
+                    else if (val === 16) setPhotoShape('soft');
+                    else if (val === 0) setPhotoShape('square');
+                    else setPhotoShape('custom');
+                  }}
+                  style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }}
+                />
+                <span style={{ fontSize: '0.6875rem', color: 'var(--text-mid, #a8adb8)', minWidth: 28, textAlign: 'right' }}>{photoRadius}%</span>
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
@@ -529,7 +617,7 @@ export default function ProfileEditor() {
           <div>
             <label style={labelStyle}>
               Tagline
-              <span style={{ fontWeight: 400, color: '#5d6370', marginLeft: '0.5rem' }}>{tagline.length}/100</span>
+              <span style={{ fontWeight: 400, color: 'var(--text-muted, #5d6370)', marginLeft: '0.5rem' }}>{tagline.length}/100</span>
             </label>
             <input
               type="text"
@@ -555,7 +643,7 @@ export default function ProfileEditor() {
         {/* ─── Links Section ─────────────────────── */}
         <div style={sectionStyle}>
           <h3 style={sectionTitleStyle}>Links</h3>
-          <p style={{ fontSize: '0.8125rem', color: '#5d6370', marginBottom: '1rem', marginTop: '-0.5rem' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem', marginTop: '-0.5rem' }}>
             Drag to reorder. Toggle where each link appears.
           </p>
 
@@ -569,8 +657,8 @@ export default function ProfileEditor() {
                 onDragEnd={handleDragEnd}
                 onDragOver={e => e.preventDefault()}
                 style={{
-                  backgroundColor: '#0c1017',
-                  border: '1px solid #1e2535',
+                  backgroundColor: 'var(--bg, #0c1017)',
+                  border: '1px solid var(--border, #1e2535)',
                   borderRadius: '0.5rem',
                   padding: '0.75rem',
                   display: 'flex',
@@ -581,7 +669,7 @@ export default function ProfileEditor() {
               >
                 {/* Row 1: drag handle, type, label, URL, delete */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ color: '#283042', fontSize: '1rem', cursor: 'grab', userSelect: 'none', lineHeight: 1 }}>
+                  <span style={{ color: 'var(--border-light, #283042)', fontSize: '1rem', cursor: 'grab', userSelect: 'none', lineHeight: 1 }}>
                     ⋮⋮
                   </span>
 
@@ -595,12 +683,12 @@ export default function ProfileEditor() {
                     }}
                     style={{
                       padding: '0.375rem 0.5rem',
-                      border: '1px solid #283042',
+                      border: '1px solid var(--border-light, #283042)',
                       borderRadius: '0.375rem',
                       fontSize: '0.8125rem',
                       fontFamily: 'inherit',
-                      backgroundColor: '#161c28',
-                      color: '#eceef2',
+                      backgroundColor: 'var(--surface, #161c28)',
+                      color: 'var(--text, #eceef2)',
                       width: 110,
                       flexShrink: 0,
                     }}
@@ -633,7 +721,7 @@ export default function ProfileEditor() {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: '#5d6370',
+                      color: 'var(--text-muted, #5d6370)',
                       cursor: 'pointer',
                       fontSize: '1.1rem',
                       padding: '0.25rem',
@@ -648,7 +736,7 @@ export default function ProfileEditor() {
 
                 {/* Row 2: visibility toggle pills */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', paddingLeft: '1.5rem' }}>
-                  <span style={{ fontSize: '0.6875rem', color: '#5d6370', marginRight: '0.25rem' }}>Show on:</span>
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', marginRight: '0.25rem' }}>Show on:</span>
                   <button
                     onClick={() => {
                       updateLink(link.id!, 'showBusiness', !link.showBusiness);
@@ -658,8 +746,8 @@ export default function ProfileEditor() {
                       fontSize: '0.625rem', fontWeight: 600, padding: '0.2rem 0.5rem',
                       borderRadius: '9999px', border: 'none', textTransform: 'uppercase',
                       letterSpacing: '0.03em', cursor: 'pointer', fontFamily: 'inherit',
-                      backgroundColor: link.showBusiness ? 'rgba(59, 130, 246, 0.15)' : '#1e2535',
-                      color: link.showBusiness ? '#60a5fa' : '#5d6370',
+                      backgroundColor: link.showBusiness ? 'rgba(59, 130, 246, 0.15)' : 'var(--border, #1e2535)',
+                      color: link.showBusiness ? '#60a5fa' : 'var(--text-muted, #5d6370)',
                       opacity: link.showBusiness ? 1 : 0.7,
                       transition: 'all 0.15s',
                     }}
@@ -676,8 +764,8 @@ export default function ProfileEditor() {
                       fontSize: '0.625rem', fontWeight: 600, padding: '0.2rem 0.5rem',
                       borderRadius: '9999px', border: 'none', textTransform: 'uppercase',
                       letterSpacing: '0.03em', cursor: 'pointer', fontFamily: 'inherit',
-                      backgroundColor: link.showPersonal ? 'rgba(236, 72, 153, 0.15)' : '#1e2535',
-                      color: link.showPersonal ? '#f472b6' : '#5d6370',
+                      backgroundColor: link.showPersonal ? 'rgba(236, 72, 153, 0.15)' : 'var(--border, #1e2535)',
+                      color: link.showPersonal ? '#f472b6' : 'var(--text-muted, #5d6370)',
                       opacity: link.showPersonal ? 1 : 0.7,
                       transition: 'all 0.15s',
                     }}
@@ -694,8 +782,8 @@ export default function ProfileEditor() {
                       fontSize: '0.625rem', fontWeight: 600, padding: '0.2rem 0.5rem',
                       borderRadius: '9999px', border: 'none', textTransform: 'uppercase',
                       letterSpacing: '0.03em', cursor: 'pointer', fontFamily: 'inherit',
-                      backgroundColor: link.showShowcase ? 'rgba(251, 191, 36, 0.15)' : '#1e2535',
-                      color: link.showShowcase ? '#fbbf24' : '#5d6370',
+                      backgroundColor: link.showShowcase ? 'rgba(251, 191, 36, 0.15)' : 'var(--border, #1e2535)',
+                      color: link.showShowcase ? '#fbbf24' : 'var(--text-muted, #5d6370)',
                       opacity: link.showShowcase ? 1 : 0.7,
                       transition: 'all 0.15s',
                     }}
@@ -719,12 +807,12 @@ export default function ProfileEditor() {
               style={{
                 width: '100%',
                 padding: '0.625rem 0.75rem',
-                border: '2px dashed #283042',
+                border: '2px dashed var(--border-light, #283042)',
                 borderRadius: '0.5rem',
                 fontSize: '0.875rem',
                 fontFamily: 'inherit',
                 backgroundColor: 'transparent',
-                color: '#5d6370',
+                color: 'var(--text-muted, #5d6370)',
                 cursor: 'pointer',
               }}
             >
@@ -741,7 +829,7 @@ export default function ProfileEditor() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={sectionTitleStyle}>Appearance</h3>
             <button
-              onClick={() => saveSection('appearance', { template, primaryColor, accentColor, fontPair, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null })}
+              onClick={() => saveSection('appearance', { template, primaryColor, accentColor, fontPair })}
               disabled={saving === 'appearance'}
               style={{ ...saveBtnStyle, opacity: saving === 'appearance' ? 0.6 : 1 }}
             >
@@ -764,7 +852,7 @@ export default function ProfileEditor() {
                   }}
                   style={{
                     padding: 0,
-                    border: isSelected ? '2px solid #e8a849' : '2px solid #283042',
+                    border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
                     borderRadius: '0.5rem',
                     cursor: isLocked ? 'not-allowed' : 'pointer',
                     overflow: 'hidden',
@@ -793,8 +881,8 @@ export default function ProfileEditor() {
                     <div style={{ width: '60%', height: 5, borderRadius: 3, backgroundColor: t.colors.text, opacity: 0.7 }} />
                     <div style={{ width: '70%', height: 14, borderRadius: 4, backgroundColor: t.colors.accent, marginTop: 2 }} />
                   </div>
-                  <div style={{ padding: '0.375rem', backgroundColor: '#161c28', borderTop: '1px solid #1e2535' }}>
-                    <p style={{ fontSize: '0.6875rem', fontWeight: 600, margin: 0, color: '#eceef2' }}>{t.name}</p>
+                  <div style={{ padding: '0.375rem', backgroundColor: 'var(--surface, #161c28)', borderTop: '1px solid var(--border, #1e2535)' }}>
+                    <p style={{ fontSize: '0.6875rem', fontWeight: 600, margin: 0, color: 'var(--text, #eceef2)' }}>{t.name}</p>
                   </div>
                   {/* Tier badge */}
                   {t.tier === 'premium' && (
@@ -805,8 +893,8 @@ export default function ProfileEditor() {
                       fontSize: '0.5rem',
                       fontWeight: 700,
                       letterSpacing: '0.05em',
-                      backgroundColor: isLocked ? '#283042' : '#e8a849',
-                      color: isLocked ? '#5d6370' : '#0c1017',
+                      backgroundColor: isLocked ? 'var(--border-light, #283042)' : 'var(--accent, #e8a849)',
+                      color: isLocked ? 'var(--text-muted, #5d6370)' : 'var(--bg, #0c1017)',
                       padding: '1px 4px',
                       borderRadius: '3px',
                       lineHeight: 1.4,
@@ -821,7 +909,7 @@ export default function ProfileEditor() {
 
           {/* Accent color */}
           <label style={labelStyle}>Accent color override</label>
-          <p style={{ fontSize: '0.75rem', color: '#5d6370', marginTop: '-0.125rem', marginBottom: '0.5rem' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', marginTop: '-0.125rem', marginBottom: '0.5rem' }}>
             Leave blank to use the template default.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
@@ -832,9 +920,9 @@ export default function ProfileEditor() {
                 style={{
                   width: 28, height: 28, borderRadius: '50%',
                   backgroundColor: c,
-                  border: accentColor === c ? '3px solid #e8a849' : '2px solid #283042',
+                  border: accentColor === c ? '3px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
                   cursor: 'pointer', padding: 0,
-                  outline: accentColor === c ? '2px solid #0c1017' : 'none',
+                  outline: accentColor === c ? '2px solid var(--bg, #0c1017)' : 'none',
                   outlineOffset: -3,
                   transform: accentColor === c ? 'scale(1.1)' : 'scale(1)',
                   transition: 'transform 0.1s',
@@ -845,86 +933,10 @@ export default function ProfileEditor() {
               type="color"
               value={accentColor}
               onChange={e => setAccentColor(e.target.value)}
-              style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid #283042', cursor: 'pointer', padding: 0 }}
+              style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-light, #283042)', cursor: 'pointer', padding: 0 }}
             />
           </div>
 
-          {/* Photo shape */}
-          <label style={{ ...labelStyle, marginTop: '1.25rem' }}>Photo Shape</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            {([
-              { id: 'circle', label: 'Circle', render: <div style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: '#e8a849' }} /> },
-              { id: 'rounded', label: 'Rounded', render: <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: '#e8a849' }} /> },
-              { id: 'soft', label: 'Soft', render: <div style={{ width: 28, height: 28, borderRadius: 4, backgroundColor: '#e8a849' }} /> },
-              { id: 'square', label: 'Square', render: <div style={{ width: 28, height: 28, borderRadius: 0, backgroundColor: '#e8a849' }} /> },
-              { id: 'hexagon', label: 'Hexagon', render: <div style={{ width: 28, height: 28, clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)', backgroundColor: '#e8a849' }} /> },
-              { id: 'diamond', label: 'Diamond', render: <div style={{ width: 28, height: 28, clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', backgroundColor: '#e8a849' }} /> },
-            ] as const).map(shape => {
-              const isSelected = photoShape === shape.id;
-              return (
-                <button
-                  key={shape.id}
-                  onClick={() => {
-                    setPhotoShape(shape.id);
-                    const map: Record<string, number> = { circle: 50, rounded: 32, soft: 16, square: 0 };
-                    if (map[shape.id] !== undefined) setPhotoRadius(map[shape.id]);
-                    if (shape.id === 'hexagon' || shape.id === 'diamond') setShowShapeSlider(false);
-                  }}
-                  title={shape.label}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '0.375rem',
-                    border: isSelected ? '2px solid #e8a849' : '2px solid #283042',
-                    backgroundColor: '#1e2535',
-                    cursor: 'pointer',
-                    padding: 0,
-                    transition: 'border-color 0.15s',
-                  }}
-                >
-                  {shape.render}
-                </button>
-              );
-            })}
-          </div>
-          {!['hexagon', 'diamond'].includes(photoShape) && (
-            <button
-              onClick={() => setShowShapeSlider(!showShapeSlider)}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                fontSize: '0.75rem', color: '#5d6370', padding: 0, marginBottom: '0.25rem',
-                transition: 'color 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#e8a849')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#5d6370')}
-            >
-              {showShapeSlider ? 'Hide' : 'Customize'} radius
-            </button>
-          )}
-          {showShapeSlider && !['hexagon', 'diamond'].includes(photoShape) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.25rem' }}>
-              <input
-                type="range"
-                min={0}
-                max={50}
-                value={photoRadius}
-                onChange={e => {
-                  const val = parseInt(e.target.value);
-                  setPhotoRadius(val);
-                  if (val === 50) setPhotoShape('circle');
-                  else if (val === 32) setPhotoShape('rounded');
-                  else if (val === 16) setPhotoShape('soft');
-                  else if (val === 0) setPhotoShape('square');
-                  else setPhotoShape('custom');
-                }}
-                style={{ flex: 1, accentColor: '#e8a849' }}
-              />
-              <span style={{ fontSize: '0.75rem', color: '#a8adb8', minWidth: 32, textAlign: 'right' }}>{photoRadius}%</span>
-            </div>
-          )}
         </div>
 
         {/* ─── Sharing Settings ──────────────────── */}
@@ -965,18 +977,18 @@ export default function ProfileEditor() {
         </div>
 
         {/* ─── Profile URL Info ──────────────────── */}
-        <div style={{ ...sectionStyle, backgroundColor: '#0c1017' }}>
+        <div style={{ ...sectionStyle, backgroundColor: 'var(--bg, #0c1017)' }}>
           <h3 style={{ ...sectionTitleStyle, fontSize: '0.875rem' }}>Profile URLs</h3>
-          <div style={{ fontSize: '0.8125rem', color: '#5d6370' }}>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>
             <p style={{ margin: '0 0 0.5rem' }}>
-              <span style={{ fontWeight: 600, color: '#a8adb8' }}>Public URL: </span>
-              <code style={{ backgroundColor: '#1e2535', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', color: '#eceef2' }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-mid, #a8adb8)' }}>Public URL: </span>
+              <code style={{ backgroundColor: 'var(--border, #1e2535)', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', color: 'var(--text, #eceef2)' }}>
                 {profileUrl}
               </code>
             </p>
             <p style={{ margin: 0 }}>
-              <span style={{ fontWeight: 600, color: '#a8adb8' }}>NFC Redirect: </span>
-              <code style={{ backgroundColor: '#1e2535', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', color: '#eceef2' }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-mid, #a8adb8)' }}>NFC Redirect: </span>
+              <code style={{ backgroundColor: 'var(--border, #1e2535)', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', color: 'var(--text, #eceef2)' }}>
                 /r/{data.profile.redirectId}
               </code>
             </p>

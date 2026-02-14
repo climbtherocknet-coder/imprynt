@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
   let sql = `
     SELECT pp.id, pp.page_title, pp.visibility_mode, pp.bio_text,
-           pp.button_label, pp.resume_url, pp.display_order, pp.is_active,
+           pp.button_label, pp.resume_url, pp.show_resume, pp.display_order, pp.is_active,
            pp.icon_color, pp.icon_opacity, pp.icon_corner, pp.allow_remember,
            pp.photo_url, pp.profile_id
     FROM protected_pages pp
@@ -53,6 +53,7 @@ export async function GET(req: NextRequest) {
       bioText: row.bio_text || '',
       buttonLabel: row.button_label || '',
       resumeUrl: row.resume_url || '',
+      showResume: row.show_resume !== false,
       iconColor: row.icon_color || '',
       iconOpacity: row.icon_opacity != null ? parseFloat(row.icon_opacity) : 0.35,
       iconCorner: row.icon_corner || 'bottom-right',
@@ -154,7 +155,7 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { id, pageTitle, bioText, buttonLabel, resumeUrl, pin, isActive, iconColor, iconOpacity, iconCorner, allowRemember, photoUrl } = body;
+  const { id, pageTitle, bioText, buttonLabel, resumeUrl, showResume, pin, isActive, iconColor, iconOpacity, iconCorner, allowRemember, photoUrl } = body;
 
   if (!id) {
     return NextResponse.json({ error: 'Page ID required' }, { status: 400 });
@@ -189,6 +190,10 @@ export async function PUT(req: NextRequest) {
   if (resumeUrl !== undefined) {
     updates.push(`resume_url = $${paramIdx++}`);
     params.push(resumeUrl.trim().slice(0, 500) || null);
+  }
+  if (showResume !== undefined) {
+    updates.push(`show_resume = $${paramIdx++}`);
+    params.push(!!showResume);
   }
   if (isActive !== undefined) {
     updates.push(`is_active = $${paramIdx++}`);

@@ -22,6 +22,7 @@ interface PageData {
   bioText: string;
   buttonLabel: string;
   resumeUrl: string;
+  showResume: boolean;
   isActive: boolean;
   allowRemember: boolean;
 }
@@ -37,14 +38,14 @@ const LINK_ICONS: Record<string, string> = {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.5625rem 0.75rem',
-  border: '1px solid #283042',
+  border: '1px solid var(--border-light, #283042)',
   borderRadius: '0.5rem',
   fontSize: '0.9375rem',
   boxSizing: 'border-box',
   outline: 'none',
   fontFamily: 'inherit',
-  backgroundColor: '#0c1017',
-  color: '#eceef2',
+  backgroundColor: 'var(--bg, #0c1017)',
+  color: 'var(--text, #eceef2)',
 };
 
 const labelStyle: React.CSSProperties = {
@@ -52,13 +53,13 @@ const labelStyle: React.CSSProperties = {
   fontSize: '0.8125rem',
   fontWeight: 500,
   marginBottom: '0.3125rem',
-  color: '#a8adb8',
+  color: 'var(--text-mid, #a8adb8)',
 };
 
 const sectionStyle: React.CSSProperties = {
-  backgroundColor: '#161c28',
+  backgroundColor: 'var(--surface, #161c28)',
   borderRadius: '1rem',
-  border: '1px solid #1e2535',
+  border: '1px solid var(--border, #1e2535)',
   padding: '1.5rem',
   marginBottom: '1.25rem',
 };
@@ -83,6 +84,7 @@ export default function ShowcaseEditor() {
   const [pin, setPin] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
   const [resumeUrl, setResumeUrl] = useState('');
+  const [showResume, setShowResume] = useState(true);
   const [isActive, setIsActive] = useState(true);
   const [allowRemember, setAllowRemember] = useState(true);
   const [isNew, setIsNew] = useState(true);
@@ -109,6 +111,7 @@ export default function ShowcaseEditor() {
           setButtonLabel(p.buttonLabel || p.pageTitle);
           setBioText(p.bioText);
           setResumeUrl(p.resumeUrl || '');
+          setShowResume(p.showResume !== false);
           setIsActive(p.isActive);
           setAllowRemember(p.allowRemember !== false);
           setIsNew(false);
@@ -149,6 +152,7 @@ export default function ShowcaseEditor() {
             bioText: bioText.trim(),
             buttonLabel: buttonLabel.trim() || pageTitle.trim() || 'Projects',
             resumeUrl: resumeUrl.trim(),
+            showResume,
           }),
         });
         if (!res.ok) {
@@ -163,6 +167,7 @@ export default function ShowcaseEditor() {
           bioText,
           buttonLabel,
           resumeUrl,
+          showResume,
           isActive: true,
           allowRemember: true,
         });
@@ -176,6 +181,7 @@ export default function ShowcaseEditor() {
           bioText: bioText.trim(),
           buttonLabel: buttonLabel.trim() || pageTitle.trim() || 'Projects',
           resumeUrl: resumeUrl.trim(),
+          showResume,
           isActive,
           allowRemember,
         };
@@ -201,7 +207,7 @@ export default function ShowcaseEditor() {
     } finally {
       setSaving(false);
     }
-  }, [isNew, page, pageTitle, buttonLabel, bioText, resumeUrl, pin, pinConfirm, isActive, allowRemember]);
+  }, [isNew, page, pageTitle, buttonLabel, bioText, resumeUrl, showResume, pin, pinConfirm, isActive, allowRemember]);
 
   // Resume upload
   async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -229,7 +235,7 @@ export default function ShowcaseEditor() {
   if (loading) {
     return (
       <div className="dash-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#5d6370' }}>Loading...</p>
+        <p style={{ color: 'var(--text-muted, #5d6370)' }}>Loading...</p>
       </div>
     );
   }
@@ -244,11 +250,11 @@ export default function ShowcaseEditor() {
             <div className="dash-logo-mark" />
             <span className="dash-logo-text">Imprynt</span>
           </a>
-          <span style={{ color: '#283042' }}>/</span>
-          <span style={{ fontSize: '0.875rem', color: '#5d6370' }}>Showcase</span>
+          <span style={{ color: 'var(--border-light, #283042)' }}>/</span>
+          <span style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)' }}>Showcase</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <a href="/dashboard" style={{ fontSize: '0.8125rem', color: '#5d6370', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#e8a849')} onMouseLeave={(e) => (e.currentTarget.style.color = '#5d6370')}>
+          <a href="/dashboard" style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent, #e8a849)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted, #5d6370)')}>
             &#8592; Dashboard
           </a>
           {slug && (
@@ -276,17 +282,17 @@ export default function ShowcaseEditor() {
 
         {/* Intro */}
         <div style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.375rem', fontWeight: 600, margin: '0 0 0.5rem', color: '#eceef2', fontFamily: 'var(--serif, Georgia, serif)' }}>
+          <h2 style={{ fontSize: '1.375rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text, #eceef2)', fontFamily: 'var(--serif, Georgia, serif)' }}>
             {isNew ? 'Create Your Showcase' : 'Showcase Settings'}
           </h2>
-          <p style={{ fontSize: '0.875rem', color: '#5d6370', margin: 0 }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
             Your Showcase appears as a labeled button on your public profile. Visitors who tap it and enter the PIN see your curated portfolio of projects, work, or listings.
           </p>
         </div>
 
         {/* Page Settings */}
         <div style={sectionStyle}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: '#eceef2' }}>Page Settings</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text, #eceef2)' }}>Page Settings</h3>
 
           <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
             <div style={{ flex: 1 }}>
@@ -314,7 +320,7 @@ export default function ShowcaseEditor() {
           <div style={{ marginBottom: '0.75rem' }}>
             <label style={labelStyle}>
               Page description
-              <span style={{ fontWeight: 400, color: '#5d6370', marginLeft: '0.5rem' }}>{bioText.length}/500</span>
+              <span style={{ fontWeight: 400, color: 'var(--text-muted, #5d6370)', marginLeft: '0.5rem' }}>{bioText.length}/500</span>
             </label>
             <textarea
               value={bioText}
@@ -339,26 +345,26 @@ export default function ShowcaseEditor() {
                 onClick={() => resumeRef.current?.click()}
                 disabled={resumeUploading}
                 style={{
-                  padding: '0.375rem 0.75rem', backgroundColor: '#1e2535', border: '1px solid #283042',
+                  padding: '0.375rem 0.75rem', backgroundColor: 'var(--border, #1e2535)', border: '1px solid var(--border-light, #283042)',
                   borderRadius: '0.375rem', fontSize: '0.8125rem', fontWeight: 500, whiteSpace: 'nowrap',
-                  cursor: resumeUploading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: '#eceef2',
+                  cursor: resumeUploading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: 'var(--text, #eceef2)',
                 }}
               >
                 {resumeUploading ? '...' : 'Upload PDF'}
               </button>
               <input ref={resumeRef} type="file" accept="application/pdf" onChange={handleResumeUpload} style={{ display: 'none' }} />
             </div>
-            <p style={{ fontSize: '0.75rem', color: '#5d6370', margin: '0.25rem 0 0' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0.25rem 0 0' }}>
               Displayed as a download button on your showcase page.
             </p>
             {resumeUrl && resumeUrl.startsWith('/uploads/') && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <span style={{ fontSize: '0.8125rem', color: '#a8adb8' }}>Uploaded: {resumeUrl.split('/').pop()}</span>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--text-mid, #a8adb8)' }}>Uploaded: {resumeUrl.split('/').pop()}</span>
                 <button
                   onClick={() => setResumeUrl('')}
                   style={{
-                    padding: '0.25rem 0.5rem', backgroundColor: 'transparent', border: '1px solid #283042',
-                    borderRadius: '0.375rem', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'inherit', color: '#5d6370',
+                    padding: '0.25rem 0.5rem', backgroundColor: 'transparent', border: '1px solid var(--border-light, #283042)',
+                    borderRadius: '0.375rem', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted, #5d6370)',
                   }}
                 >
                   Remove
@@ -369,6 +375,12 @@ export default function ShowcaseEditor() {
 
           {!isNew && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+              <ToggleSwitch
+                checked={showResume}
+                onChange={setShowResume}
+                label="Show resume on page"
+                description="Display a resume download button on your showcase page."
+              />
               <ToggleSwitch
                 checked={isActive}
                 onChange={setIsActive}
@@ -386,10 +398,10 @@ export default function ShowcaseEditor() {
 
         {/* PIN */}
         <div style={sectionStyle}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: '#eceef2' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>
             {isNew ? 'Set Your PIN' : 'Change PIN'}
           </h3>
-          <p style={{ fontSize: '0.8125rem', color: '#5d6370', marginBottom: '1rem' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
             {isNew
               ? 'Choose a 4-6 digit PIN. Share it with people you want to see your work.'
               : 'Leave blank to keep your current PIN.'}
@@ -441,10 +453,10 @@ export default function ShowcaseEditor() {
         {/* Showcase Links (read-only — managed in Profile editor) */}
         {!isNew && page && (
           <div style={sectionStyle}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: '#eceef2' }}>Showcase Links</h3>
-            <p style={{ fontSize: '0.8125rem', color: '#5d6370', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>Showcase Links</h3>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
               Links tagged as &ldquo;SHOWCASE&rdquo; appear on your showcase page.{' '}
-              <a href="/dashboard/profile" style={{ color: '#e8a849', textDecoration: 'none', fontWeight: 500 }}>
+              <a href="/dashboard/profile" style={{ color: 'var(--accent, #e8a849)', textDecoration: 'none', fontWeight: 500 }}>
                 Manage links in Profile &rarr;
               </a>
             </p>
@@ -453,13 +465,13 @@ export default function ShowcaseEditor() {
               <div style={{
                 padding: '1.5rem',
                 textAlign: 'center',
-                backgroundColor: '#0c1017',
+                backgroundColor: 'var(--bg, #0c1017)',
                 borderRadius: '0.5rem',
-                border: '1px dashed #283042',
+                border: '1px dashed var(--border-light, #283042)',
               }}>
-                <p style={{ fontSize: '0.875rem', color: '#5d6370', margin: 0 }}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
                   No showcase links yet. Go to{' '}
-                  <a href="/dashboard/profile" style={{ color: '#e8a849', textDecoration: 'none' }}>
+                  <a href="/dashboard/profile" style={{ color: 'var(--accent, #e8a849)', textDecoration: 'none' }}>
                     Profile &rarr; Links
                   </a>
                   {' '}and toggle links to &ldquo;SHOWCASE&rdquo;.
@@ -471,8 +483,8 @@ export default function ShowcaseEditor() {
                   <div
                     key={link.id || i}
                     style={{
-                      backgroundColor: '#0c1017',
-                      border: '1px solid #283042',
+                      backgroundColor: 'var(--bg, #0c1017)',
+                      border: '1px solid var(--border-light, #283042)',
                       borderRadius: '0.5rem',
                       padding: '0.75rem',
                       display: 'flex',
@@ -484,12 +496,12 @@ export default function ShowcaseEditor() {
                       {LINK_ICONS[link.linkType] || '🔗'}
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#eceef2', marginBottom: '0.125rem' }}>
+                      <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text, #eceef2)', marginBottom: '0.125rem' }}>
                         {link.label || link.linkType}
                       </div>
                       <div style={{
                         fontSize: '0.75rem',
-                        color: '#5d6370',
+                        color: 'var(--text-muted, #5d6370)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',

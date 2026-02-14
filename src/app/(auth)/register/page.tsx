@@ -189,7 +189,7 @@ export default function RegisterPage() {
         <span className="auth-logo-text">Imprynt</span>
       </Link>
 
-      <Suspense fallback={<div className="auth-card"><p style={{ color: '#5d6370' }}>Loading...</p></div>}>
+      <Suspense fallback={<div className="auth-card"><p style={{ color: 'var(--text-muted, #5d6370)' }}>Loading...</p></div>}>
         <RegisterForm />
       </Suspense>
     </div>

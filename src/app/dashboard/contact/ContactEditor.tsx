@@ -29,9 +29,9 @@ const CONTACT_FIELD_DEFS = [
 ];
 
 const sectionStyle: React.CSSProperties = {
-  backgroundColor: '#161c28',
+  backgroundColor: 'var(--surface, #161c28)',
   borderRadius: '1rem',
-  border: '1px solid #1e2535',
+  border: '1px solid var(--border, #1e2535)',
   padding: '1.5rem',
   marginBottom: '1.25rem',
 };
@@ -39,12 +39,12 @@ const sectionStyle: React.CSSProperties = {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.5rem 0.75rem',
-  border: '1px solid #283042',
+  border: '1px solid var(--border-light, #283042)',
   borderRadius: '0.5rem',
   fontSize: '0.875rem',
   fontFamily: 'inherit',
-  backgroundColor: '#0c1017',
-  color: '#eceef2',
+  backgroundColor: 'var(--bg, #0c1017)',
+  color: 'var(--text, #eceef2)',
   boxSizing: 'border-box',
   outline: 'none',
 };
@@ -108,18 +108,18 @@ export default function ContactEditor({ contactFields: initialContactFields }: C
             <div className="dash-logo-mark" />
             <span className="dash-logo-text">Imprynt</span>
           </a>
-          <span style={{ color: '#5d6370', margin: '0 0.5rem' }}>/</span>
-          <span style={{ color: '#a8adb8', fontSize: '0.875rem' }}>Contact Card</span>
+          <span style={{ color: 'var(--text-muted, #5d6370)', margin: '0 0.5rem' }}>/</span>
+          <span style={{ color: 'var(--text-mid, #a8adb8)', fontSize: '0.875rem' }}>Contact Card</span>
         </div>
-        <a href="/dashboard" style={{ fontSize: '0.8125rem', color: '#5d6370', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#e8a849')} onMouseLeave={(e) => (e.currentTarget.style.color = '#5d6370')}>
+        <a href="/dashboard" style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent, #e8a849)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted, #5d6370)')}>
           &#8592; Dashboard
         </a>
       </header>
 
       <main className="dash-main" style={{ maxWidth: 640 }}>
         <div style={sectionStyle}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: '#eceef2' }}>Contact Information</h3>
-          <p style={{ fontSize: '0.8125rem', color: '#5d6370', margin: '0 0 1rem' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>Contact Information</h3>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 1rem' }}>
             These fields are included in your vCards. Toggle each field on or off for Business and/or Personal.
           </p>
 
@@ -134,7 +134,7 @@ export default function ContactEditor({ contactFields: initialContactFields }: C
               return (
                 <div key={def.type}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
-                    <label style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#a8adb8' }}>
+                    <label style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-mid, #a8adb8)' }}>
                       {def.label}
                     </label>
                     {hasValue && (
@@ -157,8 +157,8 @@ export default function ContactEditor({ contactFields: initialContactFields }: C
                             fontFamily: 'inherit',
                             textTransform: 'uppercase',
                             letterSpacing: '0.03em',
-                            backgroundColor: field.showBusiness ? 'rgba(59, 130, 246, 0.15)' : '#1e2535',
-                            color: field.showBusiness ? '#60a5fa' : '#5d6370',
+                            backgroundColor: field.showBusiness ? 'rgba(59, 130, 246, 0.15)' : 'var(--border, #1e2535)',
+                            color: field.showBusiness ? '#60a5fa' : 'var(--text-muted, #5d6370)',
                             opacity: field.showBusiness ? 1 : 0.7,
                           }}
                         >
@@ -182,8 +182,8 @@ export default function ContactEditor({ contactFields: initialContactFields }: C
                             fontFamily: 'inherit',
                             textTransform: 'uppercase',
                             letterSpacing: '0.03em',
-                            backgroundColor: field.showPersonal ? 'rgba(236, 72, 153, 0.15)' : '#1e2535',
-                            color: field.showPersonal ? '#f472b6' : '#5d6370',
+                            backgroundColor: field.showPersonal ? 'rgba(236, 72, 153, 0.15)' : 'var(--border, #1e2535)',
+                            color: field.showPersonal ? '#f472b6' : 'var(--text-muted, #5d6370)',
                             opacity: field.showPersonal ? 1 : 0.7,
                           }}
                         >

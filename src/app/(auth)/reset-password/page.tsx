@@ -132,7 +132,7 @@ export default function ResetPasswordPage() {
       </Link>
 
       <div className="auth-card">
-        <Suspense fallback={<p style={{ color: '#5d6370' }}>Loading...</p>}>
+        <Suspense fallback={<p style={{ color: 'var(--text-muted, #5d6370)' }}>Loading...</p>}>
           <ResetForm />
         </Suspense>
       </div>

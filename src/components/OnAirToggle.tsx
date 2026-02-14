@@ -43,7 +43,7 @@ export default function OnAirToggle({ initialPublished, slug }: Props) {
             width: 8,
             height: 8,
             borderRadius: '50%',
-            backgroundColor: published ? '#22c55e' : '#5d6370',
+            backgroundColor: published ? '#22c55e' : 'var(--text-muted, #5d6370)',
             display: 'inline-block',
             flexShrink: 0,
             boxShadow: published ? '0 0 6px rgba(34, 197, 94, 0.5)' : 'none',
@@ -56,7 +56,7 @@ export default function OnAirToggle({ initialPublished, slug }: Props) {
           style={{
             fontSize: '0.9375rem',
             fontWeight: 600,
-            color: published ? '#22c55e' : '#5d6370',
+            color: published ? '#22c55e' : 'var(--text-muted, #5d6370)',
           }}
         >
           {published ? 'On Air' : 'Off Air'}
@@ -74,7 +74,7 @@ export default function OnAirToggle({ initialPublished, slug }: Props) {
             borderRadius: 10,
             border: 'none',
             cursor: loading ? 'wait' : 'pointer',
-            backgroundColor: published ? '#22c55e' : '#283042',
+            backgroundColor: published ? '#22c55e' : 'var(--border-light, #283042)',
             transition: 'background-color 0.2s',
             padding: 0,
             flexShrink: 0,
@@ -121,7 +121,7 @@ export default function OnAirToggle({ initialPublished, slug }: Props) {
         <p
           style={{
             fontSize: '0.6875rem',
-            color: published ? '#22c55e' : '#5d6370',
+            color: published ? '#22c55e' : 'var(--text-muted, #5d6370)',
             marginTop: '0.25rem',
             margin: '0.25rem 0 0',
           }}

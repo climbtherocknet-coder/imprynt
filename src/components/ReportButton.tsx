@@ -106,10 +106,10 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '0.5rem 0.75rem',
-    background: '#0c1017',
-    border: '1px solid #283042',
+    background: 'var(--bg, #0c1017)',
+    border: '1px solid var(--border-light, #283042)',
     borderRadius: '0.5rem',
-    color: '#eceef2',
+    color: 'var(--text, #eceef2)',
     fontSize: '0.8125rem',
     fontFamily: 'inherit',
     outline: 'none',
@@ -127,7 +127,7 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
           width: 30,
           height: 30,
           borderRadius: '50%',
-          border: '1.5px solid #e8a849',
+          border: '1.5px solid var(--accent, #e8a849)',
           backgroundColor: 'transparent',
           cursor: 'pointer',
           display: 'flex',
@@ -136,7 +136,7 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
           padding: 0,
           opacity: open ? 0.9 : 0.4,
           transition: 'opacity 0.2s',
-          color: '#e8a849',
+          color: 'var(--accent, #e8a849)',
           WebkitTapHighlightColor: 'transparent',
         }}
         onMouseEnter={e => { e.currentTarget.style.opacity = '0.85'; }}
@@ -160,8 +160,8 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
           <div style={{
             ...modalPosition,
             width: 300,
-            background: '#161c28',
-            border: '1px solid #1e2535',
+            background: 'var(--surface, #161c28)',
+            border: '1px solid var(--border, #1e2535)',
             borderRadius: '1rem',
             padding: '1.25rem',
             boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
@@ -178,13 +178,13 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
                   onClick={() => setMode('feedback')}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '0.625rem',
-                    padding: '0.625rem 0.75rem', background: '#0c1017',
-                    border: '1px solid #1e2535', borderRadius: '0.5rem',
-                    color: '#eceef2', fontSize: '0.8125rem', fontFamily: 'inherit',
+                    padding: '0.625rem 0.75rem', background: 'var(--bg, #0c1017)',
+                    border: '1px solid var(--border, #1e2535)', borderRadius: '0.5rem',
+                    color: 'var(--text, #eceef2)', fontSize: '0.8125rem', fontFamily: 'inherit',
                     cursor: 'pointer', textAlign: 'left',
                   }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a8adb8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-mid, #a8adb8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                   </svg>
                   Send feedback
@@ -193,13 +193,13 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
                   onClick={() => setMode('report')}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '0.625rem',
-                    padding: '0.625rem 0.75rem', background: '#0c1017',
-                    border: '1px solid #1e2535', borderRadius: '0.5rem',
-                    color: '#a8adb8', fontSize: '0.8125rem', fontFamily: 'inherit',
+                    padding: '0.625rem 0.75rem', background: 'var(--bg, #0c1017)',
+                    border: '1px solid var(--border, #1e2535)', borderRadius: '0.5rem',
+                    color: 'var(--text-mid, #a8adb8)', fontSize: '0.8125rem', fontFamily: 'inherit',
                     cursor: 'pointer', textAlign: 'left',
                   }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5d6370" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted, #5d6370)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                     <line x1="12" y1="9" x2="12" y2="13" />
                     <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -211,10 +211,10 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
               /* Feedback form */
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <button onClick={() => setMode('menu')} style={{ background: 'none', border: 'none', color: '#5d6370', cursor: 'pointer', padding: 0, fontSize: '0.875rem', fontFamily: 'inherit' }}>&larr;</button>
-                  <p style={{ color: '#eceef2', fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>Send Feedback</p>
+                  <button onClick={() => setMode('menu')} style={{ background: 'none', border: 'none', color: 'var(--text-muted, #5d6370)', cursor: 'pointer', padding: 0, fontSize: '0.875rem', fontFamily: 'inherit' }}>&larr;</button>
+                  <p style={{ color: 'var(--text, #eceef2)', fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>Send Feedback</p>
                 </div>
-                <p style={{ color: '#5d6370', fontSize: '0.6875rem', margin: '0 0 0.625rem', lineHeight: 1.4 }}>
+                <p style={{ color: 'var(--text-muted, #5d6370)', fontSize: '0.6875rem', margin: '0 0 0.625rem', lineHeight: 1.4 }}>
                   Bug reports, feature requests, or just say hi.
                 </p>
                 <textarea
@@ -236,7 +236,7 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
                     onClick={submitFeedback}
                     disabled={loading || !message.trim()}
                     style={{
-                      flex: 1, padding: '0.5rem', background: '#e8a849', color: '#0c1017',
+                      flex: 1, padding: '0.5rem', background: 'var(--accent, #e8a849)', color: 'var(--bg, #0c1017)',
                       border: 'none', borderRadius: '2rem', fontSize: '0.8125rem', fontWeight: 600,
                       fontFamily: 'inherit', cursor: loading || !message.trim() ? 'not-allowed' : 'pointer',
                       opacity: loading || !message.trim() ? 0.5 : 1,
@@ -247,8 +247,8 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
                   <button
                     onClick={handleClose}
                     style={{
-                      padding: '0.5rem 0.75rem', background: 'transparent', color: '#5d6370',
-                      border: '1px solid #283042', borderRadius: '2rem', fontSize: '0.8125rem',
+                      padding: '0.5rem 0.75rem', background: 'transparent', color: 'var(--text-muted, #5d6370)',
+                      border: '1px solid var(--border-light, #283042)', borderRadius: '2rem', fontSize: '0.8125rem',
                       fontFamily: 'inherit', cursor: 'pointer',
                     }}
                   >
@@ -260,8 +260,8 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
               /* Report form */
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.625rem' }}>
-                  <button onClick={() => setMode('menu')} style={{ background: 'none', border: 'none', color: '#5d6370', cursor: 'pointer', padding: 0, fontSize: '0.875rem', fontFamily: 'inherit' }}>&larr;</button>
-                  <p style={{ color: '#eceef2', fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>Report this profile</p>
+                  <button onClick={() => setMode('menu')} style={{ background: 'none', border: 'none', color: 'var(--text-muted, #5d6370)', cursor: 'pointer', padding: 0, fontSize: '0.875rem', fontFamily: 'inherit' }}>&larr;</button>
+                  <p style={{ color: 'var(--text, #eceef2)', fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>Report this profile</p>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '0.625rem' }}>
                   {REASONS.map((r) => (
@@ -270,7 +270,7 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
                       style={{
                         display: 'flex', alignItems: 'center', gap: '0.5rem',
                         fontSize: '0.8125rem', cursor: 'pointer',
-                        color: reason === r ? '#eceef2' : '#a8adb8',
+                        color: reason === r ? 'var(--text, #eceef2)' : 'var(--text-mid, #a8adb8)',
                         padding: '0.3rem 0.5rem', borderRadius: '0.375rem',
                         background: reason === r ? 'rgba(232,168,73,0.08)' : 'transparent',
                       }}
@@ -278,7 +278,7 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
                       <input
                         type="radio" name="report-reason" value={r}
                         checked={reason === r} onChange={() => setReason(r)}
-                        style={{ accentColor: '#e8a849' }}
+                        style={{ accentColor: 'var(--accent, #e8a849)' }}
                       />
                       {r}
                     </label>
@@ -303,7 +303,7 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
                     onClick={submitReport}
                     disabled={loading}
                     style={{
-                      flex: 1, padding: '0.5rem', background: '#e8a849', color: '#0c1017',
+                      flex: 1, padding: '0.5rem', background: 'var(--accent, #e8a849)', color: 'var(--bg, #0c1017)',
                       border: 'none', borderRadius: '2rem', fontSize: '0.8125rem', fontWeight: 600,
                       fontFamily: 'inherit', cursor: loading ? 'not-allowed' : 'pointer',
                       opacity: loading ? 0.5 : 1,
@@ -314,8 +314,8 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
                   <button
                     onClick={handleClose}
                     style={{
-                      padding: '0.5rem 0.75rem', background: 'transparent', color: '#5d6370',
-                      border: '1px solid #283042', borderRadius: '2rem', fontSize: '0.8125rem',
+                      padding: '0.5rem 0.75rem', background: 'transparent', color: 'var(--text-muted, #5d6370)',
+                      border: '1px solid var(--border-light, #283042)', borderRadius: '2rem', fontSize: '0.8125rem',
                       fontFamily: 'inherit', cursor: 'pointer',
                     }}
                   >

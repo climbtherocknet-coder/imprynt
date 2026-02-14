@@ -24,9 +24,9 @@ interface AccountProps {
 }
 
 const sectionStyle: React.CSSProperties = {
-  backgroundColor: '#161c28',
+  backgroundColor: 'var(--surface, #161c28)',
   borderRadius: '1rem',
-  border: '1px solid #1e2535',
+  border: '1px solid var(--border, #1e2535)',
   padding: '1.5rem',
   marginBottom: '1.25rem',
 };
@@ -176,10 +176,10 @@ export default function AccountClient({ user, accessories }: AccountProps) {
             <div className="dash-logo-mark" />
             <span className="dash-logo-text">Imprynt</span>
           </a>
-          <span style={{ color: '#283042' }}>/</span>
-          <span style={{ fontSize: '0.875rem', color: '#5d6370' }}>Account</span>
+          <span style={{ color: 'var(--border-light, #283042)' }}>/</span>
+          <span style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)' }}>Account</span>
         </div>
-        <a href="/dashboard" style={{ fontSize: '0.8125rem', color: '#5d6370', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#e8a849')} onMouseLeave={(e) => (e.currentTarget.style.color = '#5d6370')}>
+        <a href="/dashboard" style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent, #e8a849)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted, #5d6370)')}>
           &#8592; Dashboard
         </a>
       </header>
@@ -193,22 +193,22 @@ export default function AccountClient({ user, accessories }: AccountProps) {
 
       <main className="dash-main">
 
-        <h2 style={{ fontSize: '1.375rem', fontWeight: 600, margin: '0 0 1.5rem', color: '#eceef2', fontFamily: 'var(--serif, Georgia, serif)' }}>Account Settings</h2>
+        <h2 style={{ fontSize: '1.375rem', fontWeight: 600, margin: '0 0 1.5rem', color: 'var(--text, #eceef2)', fontFamily: 'var(--serif, Georgia, serif)' }}>Account Settings</h2>
 
         {/* Account Info */}
         <div style={sectionStyle}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', color: '#eceef2' }}>Account</h3>
-          <div style={{ fontSize: '0.9375rem', color: '#a8adb8' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--text, #eceef2)' }}>Account</h3>
+          <div style={{ fontSize: '0.9375rem', color: 'var(--text-mid, #a8adb8)' }}>
             <p style={{ margin: '0 0 0.375rem' }}>
-              <span style={{ fontWeight: 600, color: '#eceef2' }}>Name: </span>
+              <span style={{ fontWeight: 600, color: 'var(--text, #eceef2)' }}>Name: </span>
               {[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Not set'}
             </p>
             <p style={{ margin: '0 0 0.375rem' }}>
-              <span style={{ fontWeight: 600, color: '#eceef2' }}>Email: </span>
+              <span style={{ fontWeight: 600, color: 'var(--text, #eceef2)' }}>Email: </span>
               {user.email}
             </p>
             <p style={{ margin: 0 }}>
-              <span style={{ fontWeight: 600, color: '#eceef2' }}>Member since: </span>
+              <span style={{ fontWeight: 600, color: 'var(--text, #eceef2)' }}>Member since: </span>
               {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </p>
           </div>
@@ -216,7 +216,7 @@ export default function AccountClient({ user, accessories }: AccountProps) {
 
         {/* Plan & Billing */}
         <div id="upgrade" style={sectionStyle}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', color: '#eceef2' }}>Plan & Billing</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--text, #eceef2)' }}>Plan & Billing</h3>
 
           <div style={{
             display: 'flex',
@@ -228,8 +228,8 @@ export default function AccountClient({ user, accessories }: AccountProps) {
               fontSize: '0.75rem',
               padding: '0.25rem 0.625rem',
               borderRadius: '9999px',
-              backgroundColor: isPaid ? 'rgba(232, 168, 73, 0.15)' : '#1e2535',
-              color: isPaid ? '#e8a849' : '#5d6370',
+              backgroundColor: isPaid ? 'rgba(232, 168, 73, 0.15)' : 'var(--border, #1e2535)',
+              color: isPaid ? 'var(--accent, #e8a849)' : 'var(--text-muted, #5d6370)',
               fontWeight: 600,
               textTransform: 'uppercase',
             }}>
@@ -239,7 +239,7 @@ export default function AccountClient({ user, accessories }: AccountProps) {
 
           {isPaid ? (
             <div>
-              <p style={{ fontSize: '0.875rem', color: '#5d6370', margin: '0 0 1rem' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 1rem' }}>
                 You have full access to all themes, protected pages, and analytics.
               </p>
               {user.hasStripe && (
@@ -255,7 +255,7 @@ export default function AccountClient({ user, accessories }: AccountProps) {
             </div>
           ) : (
             <div>
-              <p style={{ fontSize: '0.875rem', color: '#5d6370', margin: '0 0 1.25rem' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 1.25rem' }}>
                 Upgrade to unlock protected pages, all themes, full customization, and analytics.
               </p>
 
@@ -264,13 +264,13 @@ export default function AccountClient({ user, accessories }: AccountProps) {
                 {/* Monthly */}
                 <div style={{
                   flex: 1,
-                  border: '1px solid #283042',
+                  border: '1px solid var(--border-light, #283042)',
                   borderRadius: '0.75rem',
                   padding: '1.25rem',
                   textAlign: 'center',
                 }}>
-                  <p style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: '#5d6370', margin: '0 0 0.5rem' }}>Monthly</p>
-                  <p style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 0.25rem', color: '#eceef2' }}>$5.99<span style={{ fontSize: '0.875rem', fontWeight: 400, color: '#5d6370' }}>/mo</span></p>
+                  <p style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.5rem' }}>Monthly</p>
+                  <p style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 0.25rem', color: 'var(--text, #eceef2)' }}>$5.99<span style={{ fontSize: '0.875rem', fontWeight: 400, color: 'var(--text-muted, #5d6370)' }}>/mo</span></p>
                   <button
                     onClick={() => handleUpgrade('monthly')}
                     disabled={upgrading}
@@ -284,7 +284,7 @@ export default function AccountClient({ user, accessories }: AccountProps) {
                 {/* Annual */}
                 <div style={{
                   flex: 1,
-                  border: '2px solid #e8a849',
+                  border: '2px solid var(--accent, #e8a849)',
                   borderRadius: '0.75rem',
                   padding: '1.25rem',
                   textAlign: 'center',
@@ -295,8 +295,8 @@ export default function AccountClient({ user, accessories }: AccountProps) {
                     top: -10,
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    backgroundColor: '#e8a849',
-                    color: '#0c1017',
+                    backgroundColor: 'var(--accent, #e8a849)',
+                    color: 'var(--bg, #0c1017)',
                     fontSize: '0.625rem',
                     fontWeight: 700,
                     padding: '0.2rem 0.5rem',
@@ -306,8 +306,8 @@ export default function AccountClient({ user, accessories }: AccountProps) {
                   }}>
                     Save 30%
                   </div>
-                  <p style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: '#5d6370', margin: '0 0 0.5rem' }}>Annual</p>
-                  <p style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 0.25rem', color: '#eceef2' }}>$49.99<span style={{ fontSize: '0.875rem', fontWeight: 400, color: '#5d6370' }}>/yr</span></p>
+                  <p style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.5rem' }}>Annual</p>
+                  <p style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 0.25rem', color: 'var(--text, #eceef2)' }}>$49.99<span style={{ fontSize: '0.875rem', fontWeight: 400, color: 'var(--text-muted, #5d6370)' }}>/yr</span></p>
                   <button
                     onClick={() => handleUpgrade('annual')}
                     disabled={upgrading}
@@ -320,7 +320,7 @@ export default function AccountClient({ user, accessories }: AccountProps) {
               </div>
 
               {/* Bundle options */}
-              <p style={{ fontSize: '0.8125rem', color: '#5d6370', textAlign: 'center', margin: '0 0 0.75rem' }}>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', textAlign: 'center', margin: '0 0 0.75rem' }}>
                 Or get started with a ring or band:
               </p>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -347,11 +347,11 @@ export default function AccountClient({ user, accessories }: AccountProps) {
 
         {/* Security */}
         <div style={sectionStyle}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', color: '#eceef2' }}>Security</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--text, #eceef2)' }}>Security</h3>
 
           {!showPasswordForm ? (
             <div>
-              <p style={{ fontSize: '0.875rem', color: '#5d6370', margin: '0 0 1rem' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 1rem' }}>
                 Keep your account secure by using a strong password.
               </p>
               <button
@@ -393,7 +393,7 @@ export default function AccountClient({ user, accessories }: AccountProps) {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: 360 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: '#a8adb8', marginBottom: '0.3125rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-mid, #a8adb8)', marginBottom: '0.3125rem' }}>
                     Current password
                   </label>
                   <input
@@ -403,10 +403,10 @@ export default function AccountClient({ user, accessories }: AccountProps) {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      background: '#0c1017',
-                      border: '1px solid #283042',
+                      background: 'var(--bg, #0c1017)',
+                      border: '1px solid var(--border-light, #283042)',
                       borderRadius: '0.5rem',
-                      color: '#eceef2',
+                      color: 'var(--text, #eceef2)',
                       fontSize: '0.875rem',
                       fontFamily: 'inherit',
                       outline: 'none',
@@ -416,7 +416,7 @@ export default function AccountClient({ user, accessories }: AccountProps) {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: '#a8adb8', marginBottom: '0.3125rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-mid, #a8adb8)', marginBottom: '0.3125rem' }}>
                     New password
                   </label>
                   <input
@@ -426,10 +426,10 @@ export default function AccountClient({ user, accessories }: AccountProps) {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      background: '#0c1017',
-                      border: '1px solid #283042',
+                      background: 'var(--bg, #0c1017)',
+                      border: '1px solid var(--border-light, #283042)',
                       borderRadius: '0.5rem',
-                      color: '#eceef2',
+                      color: 'var(--text, #eceef2)',
                       fontSize: '0.875rem',
                       fontFamily: 'inherit',
                       outline: 'none',
@@ -440,7 +440,7 @@ export default function AccountClient({ user, accessories }: AccountProps) {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: '#a8adb8', marginBottom: '0.3125rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-mid, #a8adb8)', marginBottom: '0.3125rem' }}>
                     Confirm new password
                   </label>
                   <input
@@ -450,10 +450,10 @@ export default function AccountClient({ user, accessories }: AccountProps) {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      background: '#0c1017',
-                      border: '1px solid #283042',
+                      background: 'var(--bg, #0c1017)',
+                      border: '1px solid var(--border-light, #283042)',
                       borderRadius: '0.5rem',
-                      color: '#eceef2',
+                      color: 'var(--text, #eceef2)',
                       fontSize: '0.875rem',
                       fontFamily: 'inherit',
                       outline: 'none',
@@ -499,7 +499,7 @@ export default function AccountClient({ user, accessories }: AccountProps) {
         {/* Accessories / Orders */}
         {accessories.length > 0 && (
           <div style={sectionStyle}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', color: '#eceef2' }}>Orders</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--text, #eceef2)' }}>Orders</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {accessories.map((a, i) => (
                 <div
@@ -509,25 +509,25 @@ export default function AccountClient({ user, accessories }: AccountProps) {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '0.75rem',
-                    backgroundColor: '#0c1017',
+                    backgroundColor: 'var(--bg, #0c1017)',
                     borderRadius: '0.5rem',
-                    border: '1px solid #283042',
+                    border: '1px solid var(--border-light, #283042)',
                   }}
                 >
                   <div>
-                    <p style={{ fontWeight: 600, fontSize: '0.875rem', margin: '0 0 0.125rem', color: '#eceef2' }}>
+                    <p style={{ fontWeight: 600, fontSize: '0.875rem', margin: '0 0 0.125rem', color: 'var(--text, #eceef2)' }}>
                       {PRODUCT_LABELS[a.productType] || a.productType}
                     </p>
-                    <p style={{ fontSize: '0.75rem', color: '#5d6370', margin: 0 }}>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
                       Ordered {new Date(a.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontSize: '0.8125rem', margin: 0, color: '#a8adb8' }}>
+                    <p style={{ fontSize: '0.8125rem', margin: 0, color: 'var(--text-mid, #a8adb8)' }}>
                       {STATUS_LABELS[a.orderStatus] || a.orderStatus}
                     </p>
                     {a.trackingNumber && (
-                      <p style={{ fontSize: '0.75rem', color: '#e8a849', margin: '0.125rem 0 0' }}>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--accent, #e8a849)', margin: '0.125rem 0 0' }}>
                         {a.trackingNumber}
                       </p>
                     )}
@@ -541,7 +541,7 @@ export default function AccountClient({ user, accessories }: AccountProps) {
         {/* Danger Zone */}
         <div style={{ ...sectionStyle, borderColor: 'rgba(220, 38, 38, 0.3)' }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem', color: '#f87171' }}>Danger Zone</h3>
-          <p style={{ fontSize: '0.8125rem', color: '#5d6370', margin: '0 0 1rem' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 1rem' }}>
             This will permanently delete your account, profile, and all associated data. This action cannot be undone.
           </p>
 
@@ -576,10 +576,10 @@ export default function AccountClient({ user, accessories }: AccountProps) {
                   style={{
                     flex: 1,
                     padding: '0.5rem 0.75rem',
-                    background: '#0c1017',
+                    background: 'var(--bg, #0c1017)',
                     border: '1px solid rgba(220, 38, 38, 0.3)',
                     borderRadius: '0.5rem',
-                    color: '#eceef2',
+                    color: 'var(--text, #eceef2)',
                     fontSize: '0.875rem',
                     fontFamily: 'inherit',
                     outline: 'none',

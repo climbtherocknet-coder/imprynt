@@ -23,10 +23,10 @@ export default async function AnalyticsPage() {
         </header>
         <main className="dash-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
           <div style={{ textAlign: 'center', maxWidth: 360 }}>
-            <p style={{ fontSize: '1.125rem', fontWeight: 600, color: '#eceef2', marginBottom: '0.5rem' }}>
+            <p style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text, #eceef2)', marginBottom: '0.5rem' }}>
               Upgrade to Premium
             </p>
-            <p style={{ fontSize: '0.875rem', color: '#5d6370', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
               See who&apos;s viewing your profile, track link clicks, and monitor your engagement score.
             </p>
             <a
@@ -34,8 +34,8 @@ export default async function AnalyticsPage() {
               style={{
                 display: 'inline-block',
                 padding: '0.625rem 1.5rem',
-                background: '#e8a849',
-                color: '#0c1017',
+                background: 'var(--accent, #e8a849)',
+                color: 'var(--bg, #0c1017)',
                 borderRadius: '9999px',
                 fontSize: '0.875rem',
                 fontWeight: 600,

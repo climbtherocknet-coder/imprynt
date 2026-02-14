@@ -99,7 +99,7 @@ export default function StatusTagPicker({ initialTags, initialColor, isPaid }: S
                 border: '1px solid',
                 ...(active
                   ? activeStyle
-                  : { borderColor: '#283042', backgroundColor: 'transparent', color: '#5d6370' }),
+                  : { borderColor: 'var(--border-light, #283042)', backgroundColor: 'transparent', color: 'var(--text-muted, #5d6370)' }),
                 cursor: saving ? 'wait' : 'pointer',
                 fontFamily: 'inherit',
                 transition: 'all 0.15s',
@@ -149,9 +149,9 @@ export default function StatusTagPicker({ initialTags, initialColor, isPaid }: S
               fontSize: '0.75rem',
               padding: '0.3rem 0.625rem',
               borderRadius: '9999px',
-              border: '1px solid #283042',
-              backgroundColor: '#161c28',
-              color: '#eceef2',
+              border: '1px solid var(--border-light, #283042)',
+              backgroundColor: 'var(--surface, #161c28)',
+              color: 'var(--text, #eceef2)',
               fontFamily: 'inherit',
               outline: 'none',
             }}
@@ -165,9 +165,9 @@ export default function StatusTagPicker({ initialTags, initialColor, isPaid }: S
               fontWeight: 500,
               padding: '0.3rem 0.75rem',
               borderRadius: '9999px',
-              border: '1px solid #283042',
+              border: '1px solid var(--border-light, #283042)',
               backgroundColor: customInput.trim() ? `${color}1f` : 'transparent',
-              color: customInput.trim() ? color : '#5d6370',
+              color: customInput.trim() ? color : 'var(--text-muted, #5d6370)',
               cursor: !customInput.trim() || saving ? 'not-allowed' : 'pointer',
               fontFamily: 'inherit',
               transition: 'all 0.15s',
@@ -187,7 +187,7 @@ export default function StatusTagPicker({ initialTags, initialColor, isPaid }: S
               width: 24,
               height: 24,
               borderRadius: '50%',
-              border: '2px solid #283042',
+              border: '2px solid var(--border-light, #283042)',
               overflow: 'hidden',
               cursor: 'pointer',
               flexShrink: 0,
@@ -210,7 +210,7 @@ export default function StatusTagPicker({ initialTags, initialColor, isPaid }: S
               }}
             />
           </label>
-          <span style={{ fontSize: '0.75rem', color: '#5d6370' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)' }}>
             Badge color
           </span>
         </div>

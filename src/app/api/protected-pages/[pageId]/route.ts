@@ -16,7 +16,7 @@ export async function GET(
 
   // Fetch page + profile info
   const pageResult = await query(
-    `SELECT pp.id, pp.page_title, pp.visibility_mode, pp.bio_text, pp.button_label, pp.resume_url,
+    `SELECT pp.id, pp.page_title, pp.visibility_mode, pp.bio_text, pp.button_label, pp.resume_url, pp.show_resume,
             pp.photo_url as personal_photo_url,
             p.template, p.primary_color, p.accent_color, p.font_pair,
             u.first_name, u.last_name, p.photo_url, p.title as profile_title,
@@ -74,6 +74,7 @@ export async function GET(
       visibilityMode: page.visibility_mode,
       bioText: page.bio_text || '',
       resumeUrl: page.resume_url || '',
+      showResume: page.show_resume !== false,
     },
     profile: {
       firstName: page.first_name,

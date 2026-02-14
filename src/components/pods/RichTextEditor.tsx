@@ -15,8 +15,8 @@ const toolbarStyle: React.CSSProperties = {
   display: 'flex',
   gap: '0.25rem',
   padding: '0.375rem 0.5rem',
-  backgroundColor: '#161c28',
-  border: '1px solid #283042',
+  backgroundColor: 'var(--surface, #161c28)',
+  border: '1px solid var(--border-light, #283042)',
   borderBottom: 'none',
   borderRadius: '0.5rem 0.5rem 0 0',
   flexWrap: 'wrap',
@@ -28,7 +28,7 @@ const btnBase: React.CSSProperties = {
   border: '1px solid transparent',
   borderRadius: '0.25rem',
   fontSize: '0.8125rem',
-  color: '#a8adb8',
+  color: 'var(--text-mid, #a8adb8)',
   cursor: 'pointer',
   fontFamily: 'inherit',
   lineHeight: 1,
@@ -36,9 +36,9 @@ const btnBase: React.CSSProperties = {
 };
 
 const btnActive: React.CSSProperties = {
-  borderColor: '#3a4560',
-  color: '#e8a849',
-  backgroundColor: '#1a2233',
+  borderColor: 'var(--border-light, #283042)',
+  color: 'var(--accent, #e8a849)',
+  backgroundColor: 'var(--surface, #161c28)',
 };
 
 function ToolbarButton({
@@ -148,7 +148,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
           onClick={() => editor.chain().focus().toggleItalic().run()}
           extraStyle={{ fontStyle: 'italic' }}
         />
-        <div style={{ width: 1, height: 16, backgroundColor: '#283042', alignSelf: 'center', margin: '0 0.125rem' }} />
+        <div style={{ width: 1, height: 16, backgroundColor: 'var(--border-light, #283042)', alignSelf: 'center', margin: '0 0.125rem' }} />
         <ToolbarButton
           label={'\u2022'}
           title="Bullet list"
@@ -162,7 +162,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           extraStyle={{ fontSize: '0.75rem' }}
         />
-        <div style={{ width: 1, height: 16, backgroundColor: '#283042', alignSelf: 'center', margin: '0 0.125rem' }} />
+        <div style={{ width: 1, height: 16, backgroundColor: 'var(--border-light, #283042)', alignSelf: 'center', margin: '0 0.125rem' }} />
         <ToolbarButton
           label={'\uD83D\uDD17'}
           title="Link"
@@ -173,9 +173,9 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
       </div>
       <div
         style={{
-          border: '1px solid #283042',
+          border: '1px solid var(--border-light, #283042)',
           borderRadius: '0 0 0.5rem 0.5rem',
-          backgroundColor: '#0c1017',
+          backgroundColor: 'var(--bg, #0c1017)',
           minHeight: 100,
         }}
       >

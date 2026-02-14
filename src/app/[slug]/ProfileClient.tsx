@@ -18,7 +18,7 @@ interface ShowcaseItemData {
 }
 
 interface ProtectedPageContent {
-  page: { id: string; pageTitle: string; bioText: string; visibilityMode: string; resumeUrl?: string };
+  page: { id: string; pageTitle: string; bioText: string; visibilityMode: string; resumeUrl?: string; showResume?: boolean };
   profile: {
     firstName: string; lastName: string; photoUrl: string;
     title: string; company: string; template: string;
@@ -501,8 +501,8 @@ function ProtectedPageView({
           </div>
         )}
 
-        {/* Resume link (showcase pages only) */}
-        {!isImpression && content.page.resumeUrl && (
+        {/* Resume link (showcase pages only, when enabled) */}
+        {!isImpression && content.page.resumeUrl && content.page.showResume !== false && (
           <div style={{ marginTop: content.links.length > 0 ? '1rem' : '0' }}>
             <a
               href={content.page.resumeUrl}
@@ -523,7 +523,7 @@ function ProtectedPageView({
           </div>
         )}
 
-        {content.links.length === 0 && !content.pods?.length && !content.showcaseItems?.length && !isImpression && !content.page.resumeUrl && (
+        {content.links.length === 0 && !content.pods?.length && !content.showcaseItems?.length && !isImpression && !(content.page.resumeUrl && content.page.showResume !== false) && (
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontStyle: 'italic' }}>
             No content added yet.
           </p>

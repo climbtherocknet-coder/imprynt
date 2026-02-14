@@ -60,7 +60,7 @@ export default function AnalyticsClient() {
           </a>
         </header>
         <main className="dash-main" style={{ textAlign: 'center', paddingTop: '4rem' }}>
-          <p style={{ color: '#5d6370' }}>Loading analytics...</p>
+          <p style={{ color: 'var(--text-muted, #5d6370)' }}>Loading analytics...</p>
         </main>
       </div>
     );
@@ -117,13 +117,13 @@ export default function AnalyticsClient() {
 
             {/* Views Chart */}
             <div style={{
-              background: '#161c28',
-              border: '1px solid #1e2535',
+              background: 'var(--surface, #161c28)',
+              border: '1px solid var(--border, #1e2535)',
               borderRadius: '0.75rem',
               padding: '1.25rem',
               marginBottom: '1.5rem',
             }}>
-              <h3 style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#eceef2', margin: '0 0 1rem' }}>
+              <h3 style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text, #eceef2)', margin: '0 0 1rem' }}>
                 Views — Last 30 Days
               </h3>
               <div style={{
@@ -140,7 +140,7 @@ export default function AnalyticsClient() {
                       flex: 1,
                       minWidth: 0,
                       height: `${Math.max((d.views / maxViews) * 100, d.views > 0 ? 4 : 0)}%`,
-                      background: d.views > 0 ? '#e8a849' : 'rgba(232, 168, 73, 0.08)',
+                      background: d.views > 0 ? 'var(--accent, #e8a849)' : 'rgba(232, 168, 73, 0.08)',
                       borderRadius: '2px 2px 0 0',
                       transition: 'height 0.3s ease',
                       cursor: 'default',
@@ -153,7 +153,7 @@ export default function AnalyticsClient() {
                 justifyContent: 'space-between',
                 marginTop: '0.5rem',
                 fontSize: '0.625rem',
-                color: '#5d6370',
+                color: 'var(--text-muted, #5d6370)',
               }}>
                 {chartData.filter((_, i) => i % 7 === 0 || i === chartData.length - 1).map(d => (
                   <span key={d.date}>{formatShortDate(d.date)}</span>
@@ -163,13 +163,13 @@ export default function AnalyticsClient() {
 
             {/* Event Breakdown */}
             <div style={{
-              background: '#161c28',
-              border: '1px solid #1e2535',
+              background: 'var(--surface, #161c28)',
+              border: '1px solid var(--border, #1e2535)',
               borderRadius: '0.75rem',
               padding: '1.25rem',
               marginBottom: '1.5rem',
             }}>
-              <h3 style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#eceef2', margin: '0 0 1rem' }}>
+              <h3 style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text, #eceef2)', margin: '0 0 1rem' }}>
                 Event Breakdown
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
@@ -179,17 +179,17 @@ export default function AnalyticsClient() {
                   const maxCount = Math.max(...Object.values(data.eventBreakdown), 1);
                   return (
                     <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span style={{ width: 100, fontSize: '0.75rem', color: '#a8adb8', flexShrink: 0 }}>{label}</span>
-                      <div style={{ flex: 1, height: 6, background: '#0c1017', borderRadius: 3, overflow: 'hidden' }}>
+                      <span style={{ width: 100, fontSize: '0.75rem', color: 'var(--text-mid, #a8adb8)', flexShrink: 0 }}>{label}</span>
+                      <div style={{ flex: 1, height: 6, background: 'var(--bg, #0c1017)', borderRadius: 3, overflow: 'hidden' }}>
                         <div style={{
                           width: `${Math.max((count / maxCount) * 100, count > 0 ? 2 : 0)}%`,
                           height: '100%',
-                          background: '#e8a849',
+                          background: 'var(--accent, #e8a849)',
                           borderRadius: 3,
                           transition: 'width 0.3s ease',
                         }} />
                       </div>
-                      <span style={{ width: 36, fontSize: '0.75rem', color: '#eceef2', fontWeight: 600, textAlign: 'right', flexShrink: 0 }}>
+                      <span style={{ width: 36, fontSize: '0.75rem', color: 'var(--text, #eceef2)', fontWeight: 600, textAlign: 'right', flexShrink: 0 }}>
                         {count}
                       </span>
                     </div>
@@ -200,16 +200,16 @@ export default function AnalyticsClient() {
 
             {/* Top Links */}
             <div style={{
-              background: '#161c28',
-              border: '1px solid #1e2535',
+              background: 'var(--surface, #161c28)',
+              border: '1px solid var(--border, #1e2535)',
               borderRadius: '0.75rem',
               padding: '1.25rem',
             }}>
-              <h3 style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#eceef2', margin: '0 0 1rem' }}>
+              <h3 style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text, #eceef2)', margin: '0 0 1rem' }}>
                 Top Links
               </h3>
               {data.topLinks.length === 0 ? (
-                <p style={{ fontSize: '0.8125rem', color: '#5d6370', margin: 0 }}>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
                   No link clicks recorded yet. Share your profile to start tracking.
                 </p>
               ) : (
@@ -220,7 +220,7 @@ export default function AnalyticsClient() {
                       alignItems: 'center',
                       gap: '0.75rem',
                       padding: '0.5rem 0.625rem',
-                      background: '#0c1017',
+                      background: 'var(--bg, #0c1017)',
                       borderRadius: '0.5rem',
                     }}>
                       <span style={{
@@ -228,7 +228,7 @@ export default function AnalyticsClient() {
                         height: 24,
                         borderRadius: '50%',
                         background: 'rgba(232, 168, 73, 0.15)',
-                        color: '#e8a849',
+                        color: 'var(--accent, #e8a849)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -238,10 +238,10 @@ export default function AnalyticsClient() {
                       }}>
                         {LINK_ICONS[link.linkType] || '\u2022'}
                       </span>
-                      <span style={{ flex: 1, fontSize: '0.8125rem', color: '#eceef2', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ flex: 1, fontSize: '0.8125rem', color: 'var(--text, #eceef2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {link.label || link.linkType}
                       </span>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#e8a849', flexShrink: 0 }}>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--accent, #e8a849)', flexShrink: 0 }}>
                         {link.clicks}
                       </span>
                     </div>
@@ -261,25 +261,25 @@ export default function AnalyticsClient() {
 function StatCard({ label, value, subtitle, accent }: { label: string; value: number; subtitle?: string; accent?: boolean }) {
   return (
     <div style={{
-      background: '#161c28',
-      border: '1px solid #1e2535',
+      background: 'var(--surface, #161c28)',
+      border: '1px solid var(--border, #1e2535)',
       borderRadius: '0.75rem',
       padding: '1rem',
     }}>
-      <p style={{ fontSize: '0.6875rem', color: '#5d6370', margin: '0 0 0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         {label}
       </p>
       <p style={{
         fontSize: '1.5rem',
         fontWeight: 700,
-        color: accent ? '#e8a849' : '#eceef2',
+        color: accent ? 'var(--accent, #e8a849)' : 'var(--text, #eceef2)',
         margin: 0,
         lineHeight: 1.2,
       }}>
         {value.toLocaleString()}
       </p>
       {subtitle && (
-        <p style={{ fontSize: '0.625rem', color: '#5d6370', margin: '0.25rem 0 0' }}>{subtitle}</p>
+        <p style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', margin: '0.25rem 0 0' }}>{subtitle}</p>
       )}
     </div>
   );
@@ -297,18 +297,18 @@ function EmptyState() {
 
   return (
     <div style={{ textAlign: 'center', paddingTop: '4rem' }}>
-      <p style={{ fontSize: '1.125rem', fontWeight: 600, color: '#eceef2', marginBottom: '0.5rem' }}>
+      <p style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text, #eceef2)', marginBottom: '0.5rem' }}>
         No views yet
       </p>
-      <p style={{ fontSize: '0.875rem', color: '#5d6370', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
         Share your profile link or tap your ring to start collecting data.
       </p>
       <button
         onClick={handleCopy}
         style={{
           padding: '0.625rem 1.5rem',
-          background: copied ? '#22c55e' : '#e8a849',
-          color: '#0c1017',
+          background: copied ? '#22c55e' : 'var(--accent, #e8a849)',
+          color: 'var(--bg, #0c1017)',
           border: 'none',
           borderRadius: '9999px',
           fontSize: '0.875rem',

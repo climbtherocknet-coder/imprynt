@@ -49,9 +49,10 @@ function IconContact() {
   );
 }
 
-function IconImpression() {
+function IconImpression({ color }: { color?: string }) {
+  const c = color || undefined;
   return (
-    <div style={iconWrap}>
+    <div style={{ ...iconWrap, color: c || iconWrap.color }}>
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
       </svg>
@@ -174,6 +175,19 @@ export default async function DashboardPage({
   );
   contactFieldCount = parseInt(cfResult.rows[0]?.count || '0');
 
+  // Impression icon color
+  let impressionIconColor: string | null = null;
+  if (profile) {
+    const impResult = await query(
+      `SELECT pp.icon_color FROM protected_pages pp
+       JOIN profiles p ON p.id = pp.profile_id
+       WHERE p.user_id = $1 AND pp.is_active = true AND pp.visibility_mode = 'hidden'
+       LIMIT 1`,
+      [userId]
+    );
+    impressionIconColor = impResult.rows[0]?.icon_color || null;
+  }
+
   const plan = (session.user as Record<string, unknown>).plan as string;
   const isPaid = plan !== 'free';
 
@@ -269,7 +283,7 @@ export default async function DashboardPage({
           {isPaid ? (
             <a href="/dashboard/impression" className="dash-nav-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <IconImpression />
+                <IconImpression color={impressionIconColor || undefined} />
                 <div>
                   <h3 className="dash-nav-title">Impression (personal)</h3>
                   <p className="dash-nav-desc">

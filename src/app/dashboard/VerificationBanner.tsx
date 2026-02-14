@@ -38,7 +38,7 @@ export default function VerificationBanner({ email }: { email: string }) {
       borderRadius: '0.75rem',
       marginBottom: '1rem',
       fontSize: '0.8125rem',
-      color: '#e8a849',
+      color: 'var(--accent, #e8a849)',
       lineHeight: 1.5,
     }}>
       {sent ? (
@@ -54,7 +54,7 @@ export default function VerificationBanner({ email }: { email: string }) {
             style={{
               background: 'none',
               border: 'none',
-              color: '#e8a849',
+              color: 'var(--accent, #e8a849)',
               textDecoration: 'underline',
               cursor: sending ? 'not-allowed' : 'pointer',
               padding: 0,

@@ -34,7 +34,7 @@ export default function PasswordStrengthMeter({ password, showRules = true }: Pr
               flex: 1,
               height: 4,
               borderRadius: 2,
-              background: i <= strength ? color : '#1e2535',
+              background: i <= strength ? color : 'var(--border, #1e2535)',
               transition: 'background 0.2s',
             }}
           />
@@ -58,7 +58,7 @@ export default function PasswordStrengthMeter({ password, showRules = true }: Pr
               key={key}
               style={{
                 fontSize: '0.75rem',
-                color: check.rules[key] ? '#22c55e' : '#5d6370',
+                color: check.rules[key] ? '#22c55e' : 'var(--text-muted, #5d6370)',
                 margin: '0.125rem 0',
                 display: 'flex',
                 alignItems: 'center',

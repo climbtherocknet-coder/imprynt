@@ -94,19 +94,30 @@ export async function PUT(req: NextRequest) {
 
   try {
     if (section === 'identity') {
-      // Name, title, company, tagline
-      const { firstName, lastName, title, company, tagline } = body;
+      // Name, title, company, tagline, photo shape
+      const { firstName, lastName, title, company, tagline, photoShape, photoRadius } = body;
       await query(
         'UPDATE users SET first_name = $1, last_name = $2 WHERE id = $3',
         [firstName?.trim() || null, lastName?.trim() || null, userId]
       );
+
+      const validShapes = ['circle', 'rounded', 'soft', 'square', 'hexagon', 'diamond', 'custom'];
+      const shapeVal = photoShape && validShapes.includes(photoShape) ? photoShape : null;
+      const radiusVal = shapeVal === 'custom' && typeof photoRadius === 'number'
+        ? Math.max(0, Math.min(50, photoRadius))
+        : null;
+
       await query(
-        `UPDATE profiles SET title = $1, company = $2, tagline = $3 WHERE user_id = $4`,
+        `UPDATE profiles SET title = $1, company = $2, tagline = $3,
+         photo_shape = COALESCE($5, photo_shape), photo_radius = $6
+         WHERE user_id = $4`,
         [
           title?.trim()?.slice(0, 100) || null,
           company?.trim()?.slice(0, 100) || null,
           tagline?.trim()?.slice(0, 100) || null,
           userId,
+          shapeVal,
+          radiusVal,
         ]
       );
     } else if (section === 'bio') {
@@ -120,11 +131,10 @@ export async function PUT(req: NextRequest) {
         ]
       );
     } else if (section === 'appearance') {
-      const { template, primaryColor, accentColor, fontPair, photoShape, photoRadius } = body;
+      const { template, primaryColor, accentColor, fontPair } = body;
 
       const validFonts = ['default', 'serif', 'mono'];
       const hexRegex = /^#[0-9a-fA-F]{6}$/;
-      const validShapes = ['circle', 'rounded', 'soft', 'square', 'hexagon', 'diamond', 'custom'];
 
       if (template && !isValidTemplate(template)) {
         return NextResponse.json({ error: 'Invalid template' }, { status: 400 });
@@ -145,24 +155,15 @@ export async function PUT(req: NextRequest) {
       if (fontPair && !validFonts.includes(fontPair)) {
         return NextResponse.json({ error: 'Invalid font pair' }, { status: 400 });
       }
-      if (photoShape && !validShapes.includes(photoShape)) {
-        return NextResponse.json({ error: 'Invalid photo shape' }, { status: 400 });
-      }
-
-      const radiusVal = photoShape === 'custom' && typeof photoRadius === 'number'
-        ? Math.max(0, Math.min(50, photoRadius))
-        : null;
 
       await query(
         `UPDATE profiles SET
           template = COALESCE($1, template),
           primary_color = COALESCE($2, primary_color),
           accent_color = COALESCE($3, accent_color),
-          font_pair = COALESCE($4, font_pair),
-          photo_shape = COALESCE($5, photo_shape),
-          photo_radius = $6
-         WHERE user_id = $7`,
-        [template, primaryColor, accentColor, fontPair, photoShape || null, radiusVal, userId]
+          font_pair = COALESCE($4, font_pair)
+         WHERE user_id = $5`,
+        [template, primaryColor, accentColor, fontPair, userId]
       );
     } else if (section === 'statusTags') {
       const { statusTags } = body;

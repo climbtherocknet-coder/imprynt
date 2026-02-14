@@ -37,14 +37,14 @@ const LINK_ICONS: Record<string, string> = {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.5625rem 0.75rem',
-  border: '1px solid #283042',
+  border: '1px solid var(--border-light, #283042)',
   borderRadius: '0.5rem',
   fontSize: '0.9375rem',
   boxSizing: 'border-box',
   outline: 'none',
   fontFamily: 'inherit',
-  backgroundColor: '#0c1017',
-  color: '#eceef2',
+  backgroundColor: 'var(--bg, #0c1017)',
+  color: 'var(--text, #eceef2)',
 };
 
 const labelStyle: React.CSSProperties = {
@@ -52,13 +52,13 @@ const labelStyle: React.CSSProperties = {
   fontSize: '0.8125rem',
   fontWeight: 500,
   marginBottom: '0.3125rem',
-  color: '#a8adb8',
+  color: 'var(--text-mid, #a8adb8)',
 };
 
 const sectionStyle: React.CSSProperties = {
-  backgroundColor: '#161c28',
+  backgroundColor: 'var(--surface, #161c28)',
   borderRadius: '1rem',
-  border: '1px solid #1e2535',
+  border: '1px solid var(--border, #1e2535)',
   padding: '1.5rem',
   marginBottom: '1.25rem',
 };
@@ -237,7 +237,7 @@ export default function ImpressionEditor() {
   if (loading) {
     return (
       <div className="dash-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#5d6370' }}>Loading...</p>
+        <p style={{ color: 'var(--text-muted, #5d6370)' }}>Loading...</p>
       </div>
     );
   }
@@ -252,11 +252,11 @@ export default function ImpressionEditor() {
             <div className="dash-logo-mark" />
             <span className="dash-logo-text">Imprynt</span>
           </a>
-          <span style={{ color: '#283042' }}>/</span>
-          <span style={{ fontSize: '0.875rem', color: '#5d6370' }}>Impression</span>
+          <span style={{ color: 'var(--border-light, #283042)' }}>/</span>
+          <span style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)' }}>Impression</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <a href="/dashboard" style={{ fontSize: '0.8125rem', color: '#5d6370', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#e8a849')} onMouseLeave={(e) => (e.currentTarget.style.color = '#5d6370')}>
+          <a href="/dashboard" style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent, #e8a849)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted, #5d6370)')}>
             &#8592; Dashboard
           </a>
           {slug && (
@@ -284,17 +284,17 @@ export default function ImpressionEditor() {
 
         {/* Intro */}
         <div style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.375rem', fontWeight: 600, margin: '0 0 0.5rem', color: '#eceef2', fontFamily: 'var(--serif, Georgia, serif)' }}>
+          <h2 style={{ fontSize: '1.375rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text, #eceef2)', fontFamily: 'var(--serif, Georgia, serif)' }}>
             {isNew ? 'Create Your Impression' : 'Impression Settings'}
           </h2>
-          <p style={{ fontSize: '0.875rem', color: '#5d6370', margin: 0 }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
             Your Impression is a hidden personal page on your profile. Only people you tell about it, and give the PIN to, can find and access it.
           </p>
         </div>
 
         {/* Page Settings */}
         <div style={sectionStyle}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: '#eceef2' }}>Page Settings</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text, #eceef2)' }}>Page Settings</h3>
 
           <div style={{ marginBottom: '0.75rem' }}>
             <label style={labelStyle}>Page title (only you see this)</label>
@@ -310,7 +310,7 @@ export default function ImpressionEditor() {
           <div style={{ marginBottom: '0.75rem' }}>
             <label style={labelStyle}>
               Personal message
-              <span style={{ fontWeight: 400, color: '#5d6370', marginLeft: '0.5rem' }}>{bioText.length}/500</span>
+              <span style={{ fontWeight: 400, color: 'var(--text-muted, #5d6370)', marginLeft: '0.5rem' }}>{bioText.length}/500</span>
             </label>
             <textarea
               value={bioText}
@@ -341,8 +341,8 @@ export default function ImpressionEditor() {
         {/* Personal Photo (only after created) */}
         {!isNew && (
           <div style={sectionStyle}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: '#eceef2' }}>Impression Photo</h3>
-            <p style={{ fontSize: '0.8125rem', color: '#5d6370', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>Impression Photo</h3>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
               Choose a different photo for your Impression page, or use your profile photo.
             </p>
 
@@ -351,9 +351,9 @@ export default function ImpressionEditor() {
                 onClick={() => setPhotoMode('profile')}
                 style={{
                   padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid',
-                  borderColor: photoMode === 'profile' ? '#e8a849' : '#283042',
+                  borderColor: photoMode === 'profile' ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
                   backgroundColor: photoMode === 'profile' ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
-                  color: photoMode === 'profile' ? '#e8a849' : '#a8adb8',
+                  color: photoMode === 'profile' ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
                   fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
                 }}
               >
@@ -363,9 +363,9 @@ export default function ImpressionEditor() {
                 onClick={() => setPhotoMode('custom')}
                 style={{
                   padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid',
-                  borderColor: photoMode === 'custom' ? '#e8a849' : '#283042',
+                  borderColor: photoMode === 'custom' ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
                   backgroundColor: photoMode === 'custom' ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
-                  color: photoMode === 'custom' ? '#e8a849' : '#a8adb8',
+                  color: photoMode === 'custom' ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
                   fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
                 }}
               >
@@ -376,15 +376,15 @@ export default function ImpressionEditor() {
             {photoMode === 'custom' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 {photoUrl && (
-                  <img src={photoUrl} alt="Personal" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #283042' }} />
+                  <img src={photoUrl} alt="Personal" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-light, #283042)' }} />
                 )}
                 <button
                   onClick={() => photoRef.current?.click()}
                   disabled={photoUploading}
                   style={{
-                    padding: '0.375rem 0.75rem', backgroundColor: '#1e2535', border: '1px solid #283042',
+                    padding: '0.375rem 0.75rem', backgroundColor: 'var(--border, #1e2535)', border: '1px solid var(--border-light, #283042)',
                     borderRadius: '0.375rem', fontSize: '0.8125rem', fontWeight: 500,
-                    cursor: photoUploading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: '#eceef2',
+                    cursor: photoUploading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: 'var(--text, #eceef2)',
                   }}
                 >
                   {photoUploading ? 'Uploading...' : photoUrl ? 'Change' : 'Upload photo'}
@@ -393,9 +393,9 @@ export default function ImpressionEditor() {
                   <button
                     onClick={() => { setPhotoUrl(''); setPhotoMode('profile'); }}
                     style={{
-                      padding: '0.375rem 0.75rem', backgroundColor: 'transparent', border: '1px solid #283042',
+                      padding: '0.375rem 0.75rem', backgroundColor: 'transparent', border: '1px solid var(--border-light, #283042)',
                       borderRadius: '0.375rem', fontSize: '0.8125rem', fontWeight: 500,
-                      cursor: 'pointer', fontFamily: 'inherit', color: '#5d6370',
+                      cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted, #5d6370)',
                     }}
                   >
                     Remove
@@ -410,19 +410,19 @@ export default function ImpressionEditor() {
         {/* Icon Settings (only show after page is created) */}
         {!isNew && (
           <div style={sectionStyle}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: '#eceef2' }}>Icon Appearance</h3>
-            <p style={{ fontSize: '0.8125rem', color: '#5d6370', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>Icon Appearance</h3>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
               Customize the circle-dot icon that appears on your public profile. It should be subtle — only those you tell will know to tap it.
             </p>
 
             {/* Preview */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', padding: '1rem', backgroundColor: '#0c1017', borderRadius: '0.75rem', border: '1px solid #283042' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border-light, #283042)' }}>
               <div
                 style={{
                   width: 36,
                   height: 36,
                   borderRadius: '50%',
-                  border: `1.5px solid ${iconColor || '#e8a849'}`,
+                  border: `1.5px solid ${iconColor || 'var(--accent, #e8a849)'}`,
                   backgroundColor: 'transparent',
                   display: 'flex',
                   alignItems: 'center',
@@ -431,9 +431,9 @@ export default function ImpressionEditor() {
                   flexShrink: 0,
                 }}
               >
-                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: iconColor || '#e8a849', display: 'block' }} />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: iconColor || 'var(--accent, #e8a849)', display: 'block' }} />
               </div>
-              <span style={{ fontSize: '0.8125rem', color: '#5d6370' }}>Preview at current opacity</span>
+              <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>Preview at current opacity</span>
             </div>
 
             {/* Color */}
@@ -444,7 +444,7 @@ export default function ImpressionEditor() {
                   type="color"
                   value={iconColor || '#e8a849'}
                   onChange={e => setIconColor(e.target.value)}
-                  style={{ width: 36, height: 36, padding: 0, border: '1px solid #283042', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: '#0c1017' }}
+                  style={{ width: 36, height: 36, padding: 0, border: '1px solid var(--border-light, #283042)', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--bg, #0c1017)' }}
                 />
                 <input
                   type="text"
@@ -475,9 +475,9 @@ export default function ImpressionEditor() {
                       padding: '0.375rem 0.75rem',
                       borderRadius: '2rem',
                       border: '1px solid',
-                      borderColor: iconOpacity === opt.value ? '#e8a849' : '#283042',
+                      borderColor: iconOpacity === opt.value ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
                       backgroundColor: iconOpacity === opt.value ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
-                      color: iconOpacity === opt.value ? '#e8a849' : '#a8adb8',
+                      color: iconOpacity === opt.value ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
                       fontSize: '0.8125rem',
                       fontWeight: 500,
                       cursor: 'pointer',
@@ -508,9 +508,9 @@ export default function ImpressionEditor() {
                       padding: '0.375rem 0.75rem',
                       borderRadius: '2rem',
                       border: '1px solid',
-                      borderColor: iconCorner === opt.value ? '#e8a849' : '#283042',
+                      borderColor: iconCorner === opt.value ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
                       backgroundColor: iconCorner === opt.value ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
-                      color: iconCorner === opt.value ? '#e8a849' : '#a8adb8',
+                      color: iconCorner === opt.value ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
                       fontSize: '0.8125rem',
                       fontWeight: 500,
                       cursor: 'pointer',
@@ -527,10 +527,10 @@ export default function ImpressionEditor() {
 
         {/* PIN */}
         <div style={sectionStyle}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: '#eceef2' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>
             {isNew ? 'Set Your PIN' : 'Change PIN'}
           </h3>
-          <p style={{ fontSize: '0.8125rem', color: '#5d6370', marginBottom: '1rem' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
             {isNew
               ? 'Choose a 4-6 digit PIN. This is what you share with people to unlock your personal page.'
               : 'Leave blank to keep your current PIN. Enter a new one to change it.'}
@@ -582,10 +582,10 @@ export default function ImpressionEditor() {
         {/* Personal Links (read-only — managed in Profile editor) */}
         {!isNew && page && (
           <div style={sectionStyle}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: '#eceef2' }}>Personal Links</h3>
-            <p style={{ fontSize: '0.8125rem', color: '#5d6370', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>Personal Links</h3>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
               Links tagged as &ldquo;PERSONAL&rdquo; appear when someone unlocks your Impression.{' '}
-              <a href="/dashboard/profile" style={{ color: '#e8a849', textDecoration: 'none', fontWeight: 500 }}>
+              <a href="/dashboard/profile" style={{ color: 'var(--accent, #e8a849)', textDecoration: 'none', fontWeight: 500 }}>
                 Manage links in Profile &rarr;
               </a>
             </p>
@@ -594,13 +594,13 @@ export default function ImpressionEditor() {
               <div style={{
                 padding: '1.5rem',
                 textAlign: 'center',
-                backgroundColor: '#0c1017',
+                backgroundColor: 'var(--bg, #0c1017)',
                 borderRadius: '0.5rem',
-                border: '1px dashed #283042',
+                border: '1px dashed var(--border-light, #283042)',
               }}>
-                <p style={{ fontSize: '0.875rem', color: '#5d6370', margin: 0 }}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
                   No personal links yet. Go to{' '}
-                  <a href="/dashboard/profile" style={{ color: '#e8a849', textDecoration: 'none' }}>
+                  <a href="/dashboard/profile" style={{ color: 'var(--accent, #e8a849)', textDecoration: 'none' }}>
                     Profile &rarr; Links
                   </a>
                   {' '}and toggle links to &ldquo;PERSONAL&rdquo;.
@@ -612,8 +612,8 @@ export default function ImpressionEditor() {
                   <div
                     key={link.id || i}
                     style={{
-                      backgroundColor: '#0c1017',
-                      border: '1px solid #283042',
+                      backgroundColor: 'var(--bg, #0c1017)',
+                      border: '1px solid var(--border-light, #283042)',
                       borderRadius: '0.5rem',
                       padding: '0.75rem',
                       display: 'flex',
@@ -625,12 +625,12 @@ export default function ImpressionEditor() {
                       {LINK_ICONS[link.linkType] || '🔗'}
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#eceef2', marginBottom: '0.125rem' }}>
+                      <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text, #eceef2)', marginBottom: '0.125rem' }}>
                         {link.label || link.linkType}
                       </div>
                       <div style={{
                         fontSize: '0.75rem',
-                        color: '#5d6370',
+                        color: 'var(--text-muted, #5d6370)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -659,9 +659,9 @@ export default function ImpressionEditor() {
         )}
 
         {/* How it works */}
-        <div style={{ ...sectionStyle, backgroundColor: '#0c1017' }}>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: '#a8adb8' }}>How your Impression works</h3>
-          <div style={{ fontSize: '0.8125rem', color: '#5d6370', lineHeight: 1.6 }}>
+        <div style={{ ...sectionStyle, backgroundColor: 'var(--bg, #0c1017)' }}>
+          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-mid, #a8adb8)' }}>How your Impression works</h3>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', lineHeight: 1.6 }}>
             <p style={{ margin: '0 0 0.5rem' }}>A small, subtle icon appears in the bottom corner of your public profile. It is intentionally hard to notice.</p>
             <p style={{ margin: '0 0 0.5rem' }}>When someone you trust taps it, they are prompted for a PIN. If they enter the correct PIN, your personal page loads with the links and message you configured above.</p>
             <p style={{ margin: 0 }}>To share it: tell someone &ldquo;tap the small icon in the bottom-right corner and enter [your PIN].&rdquo;</p>

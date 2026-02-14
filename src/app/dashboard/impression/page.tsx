@@ -21,16 +21,16 @@ export default async function ImpressionPage() {
             <div className="dash-logo-mark" />
             <span className="dash-logo-text">Imprynt</span>
           </a>
-          <a href="/dashboard" style={{ fontSize: '0.8125rem', color: '#5d6370', textDecoration: 'none' }}>
+          <a href="/dashboard" style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', textDecoration: 'none' }}>
             &#8592; Dashboard
           </a>
         </header>
         <main className="dash-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
           <div style={{ textAlign: 'center', maxWidth: 400 }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#eceef2', marginBottom: '0.75rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text, #eceef2)', marginBottom: '0.75rem' }}>
               Impression is a Premium feature
             </h2>
-            <p style={{ fontSize: '0.875rem', color: '#5d6370', marginBottom: '1.5rem' }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1.5rem' }}>
               Upgrade to Premium to create a hidden personal page on your profile, protected by a PIN.
             </p>
             <a href="/dashboard/account#upgrade" className="dash-btn" style={{ textDecoration: 'none' }}>
