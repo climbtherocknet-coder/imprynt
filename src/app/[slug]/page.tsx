@@ -8,6 +8,7 @@ import { recordScore } from '@/lib/scoring';
 import { Metadata } from 'next';
 import ProfileTemplate from '@/components/templates/ProfileTemplate';
 import ProfileClient from './ProfileClient';
+import LinkTracker from './LinkTracker';
 import OffAirBanner from './OffAirBanner';
 import type { PodData } from '@/components/pods/PodRenderer';
 
@@ -270,6 +271,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         allowSharing={profile.allow_sharing !== false}
         allowFeedback={profile.allow_feedback !== false}
       />
+
+      {/* Link click tracking */}
+      <LinkTracker profileId={profile.profile_id} links={links.map(l => ({ id: l.id, url: l.url }))} />
     </>
   );
 }

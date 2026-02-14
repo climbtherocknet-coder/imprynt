@@ -145,6 +145,7 @@ export default function ProfileEditor() {
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [allowSharing, setAllowSharing] = useState(true);
   const [allowFeedback, setAllowFeedback] = useState(true);
+  const [previewPods, setPreviewPods] = useState<{ id: string; podType: string; label: string; title: string; body: string; imageUrl: string; stats: { num: string; label: string }[]; ctaLabel: string; ctaUrl: string; tags?: string; imagePosition?: string }[]>([]);
 
   // Photo upload
   const [uploading, setUploading] = useState(false);
@@ -533,6 +534,9 @@ export default function ProfileEditor() {
             parentId={data.profile.id}
             isPaid={isPaid}
             onError={setError}
+            onPodsChange={useCallback((pods: { id: string; podType: string; label: string; title: string; body: string; imageUrl: string; stats: { num: string; label: string }[]; ctaLabel: string; ctaUrl: string; tags?: string; imagePosition?: string; showOnProfile: boolean }[]) => {
+              setPreviewPods(pods.filter(p => p.showOnProfile !== false));
+            }, [])}
           />
         </div>
 
@@ -924,7 +928,7 @@ export default function ProfileEditor() {
                 label: l.label,
                 url: l.url,
               }))}
-              pods={[]}
+              pods={previewPods}
               isPaid={isPaid}
               statusTags={data.profile.statusTags || []}
             />

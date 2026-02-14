@@ -91,6 +91,33 @@ ${APP_URL}/dashboard
 If you have any questions, just reply to this email.`;
 }
 
+// ── Email Verification ───────────────────────────────
+
+export function verifyEmailHtml(verifyUrl: string, firstName?: string): string {
+  const greeting = firstName ? `Hi ${firstName},` : 'Hi,';
+  return baseHtml(`
+    <p style="margin:0 0 16px;">${greeting}</p>
+    <p style="margin:0 0 24px;">Please verify your email address to complete your ${APP_NAME} account setup.</p>
+    <p style="margin:0 0 24px;text-align:center;">
+      <a href="${verifyUrl}" style="display:inline-block;padding:12px 32px;background:#e8a849;color:#0c1017;font-size:15px;font-weight:600;text-decoration:none;border-radius:999px;">
+        Verify Email
+      </a>
+    </p>
+    <p style="margin:0;font-size:13px;color:#888;">This link expires in 24 hours. If you didn't create an account, ignore this email.</p>
+  `);
+}
+
+export function verifyEmailText(verifyUrl: string, firstName?: string): string {
+  const greeting = firstName ? `Hi ${firstName},` : 'Hi,';
+  return `${greeting}
+
+Please verify your email address to complete your ${APP_NAME} account setup.
+
+Verify here: ${verifyUrl}
+
+This link expires in 24 hours. If you didn't create an account, ignore this email.`;
+}
+
 // ── Waitlist Invite ──────────────────────────────────
 
 export function waitlistInviteHtml(inviteCode: string): string {

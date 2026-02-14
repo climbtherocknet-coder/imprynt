@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { nanoid } from 'nanoid';
+import crypto from 'crypto';
 import { query } from '@/lib/db';
 import { validatePassword } from '@/lib/password-validation';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
-import { sendWelcomeEmail } from '@/lib/email';
+import { sendWelcomeEmail, sendVerificationEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   // Rate limit: 5 registrations per IP per 15 minutes
@@ -111,10 +112,24 @@ export async function POST(req: NextRequest) {
       [user.id, slug, redirectId]
     );
 
-    // Send welcome email (non-blocking, don't fail registration if email fails)
+    // Send welcome email (non-blocking)
     sendWelcomeEmail(email.toLowerCase(), firstName || undefined).catch((err) =>
       console.error('Welcome email failed:', err)
     );
+
+    // Send verification email (non-blocking)
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    query(
+      `INSERT INTO email_verification_tokens (user_id, token, expires_at)
+       VALUES ($1, $2, NOW() + INTERVAL '24 hours')`,
+      [user.id, verifyToken]
+    ).then(() => {
+      const verifyUrl = `${appUrl}/api/auth/verify-email?token=${verifyToken}`;
+      sendVerificationEmail(email.toLowerCase(), verifyUrl, firstName || undefined).catch((err) =>
+        console.error('Verification email failed:', err)
+      );
+    }).catch((err) => console.error('Verification token insert failed:', err));
 
     return NextResponse.json(
       { message: 'Account created successfully', userId: user.id },

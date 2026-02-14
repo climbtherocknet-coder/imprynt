@@ -14,6 +14,8 @@ import {
   passwordResetText,
   welcomeHtml,
   welcomeText,
+  verifyEmailHtml,
+  verifyEmailText,
   waitlistInviteHtml,
   waitlistInviteText,
 } from '@/lib/email-templates';
@@ -104,6 +106,19 @@ export async function sendWelcomeEmail(
     subject: 'Welcome to Imprynt',
     html: welcomeHtml(firstName),
     text: welcomeText(firstName),
+  });
+}
+
+export async function sendVerificationEmail(
+  to: string,
+  verifyUrl: string,
+  firstName?: string
+): Promise<boolean> {
+  return sendEmail({
+    to,
+    subject: 'Verify your Imprynt email',
+    html: verifyEmailHtml(verifyUrl, firstName),
+    text: verifyEmailText(verifyUrl, firstName),
   });
 }
 

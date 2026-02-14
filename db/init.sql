@@ -378,6 +378,21 @@ CREATE INDEX idx_password_resets_user ON password_resets(user_id);
 CREATE INDEX idx_password_resets_token ON password_resets(token_hash);
 
 -- ============================================================
+-- EMAIL VERIFICATION TOKENS
+-- One-time tokens for email address verification
+-- ============================================================
+CREATE TABLE email_verification_tokens (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token       VARCHAR(64) NOT NULL UNIQUE,
+    expires_at  TIMESTAMPTZ NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_evtoken_token ON email_verification_tokens(token);
+CREATE INDEX idx_evtoken_user ON email_verification_tokens(user_id);
+
+-- ============================================================
 -- UPDATED_AT TRIGGER
 -- Auto-update the updated_at timestamp on row changes
 -- ============================================================

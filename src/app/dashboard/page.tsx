@@ -5,6 +5,7 @@ import SignOutButton from './SignOutButton';
 import StatusTagPicker from './StatusTagPicker';
 import OnAirToggle from '@/components/OnAirToggle';
 import CheckoutToast from './CheckoutToast';
+import VerificationBanner from './VerificationBanner';
 import '@/styles/dashboard.css';
 
 interface ProfileRow {
@@ -40,13 +41,14 @@ export default async function DashboardPage({
   const userId = session.user.id;
 
   // Gate: redirect to setup if not completed
-  const setupCheck = await query(
-    'SELECT setup_completed FROM users WHERE id = $1',
+  const userCheck = await query(
+    'SELECT setup_completed, email_verified FROM users WHERE id = $1',
     [userId]
   );
-  if (!setupCheck.rows[0]?.setup_completed) {
+  if (!userCheck.rows[0]?.setup_completed) {
     redirect('/dashboard/setup');
   }
+  const emailVerified = !!userCheck.rows[0]?.email_verified;
 
   // Fetch profile
   const profileResult = await query(
@@ -115,6 +117,7 @@ export default async function DashboardPage({
       {checkoutStatus && <CheckoutToast status={checkoutStatus} />}
 
       <main className="dash-main">
+        {!emailVerified && <VerificationBanner email={session.user.email || ''} />}
         {/* Stats Row */}
         <div className="dash-stats">
           <div className="dash-stat-card">
@@ -206,6 +209,31 @@ export default async function DashboardPage({
             <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
               <div>
                 <h3 className="dash-nav-title">Showcase</h3>
+                <p className="dash-nav-desc">
+                  Upgrade to Premium to unlock
+                </p>
+              </div>
+              <span className="dash-nav-arrow">🔒</span>
+            </a>
+          )}
+
+          {/* Analytics */}
+          {isPaid ? (
+            <a href="/dashboard/analytics" className="dash-nav-card">
+              <div>
+                <h3 className="dash-nav-title">Analytics</h3>
+                <p className="dash-nav-desc">
+                  {parseInt(analytics.total_views) > 0
+                    ? `${analytics.total_views} total views · Engagement tracking`
+                    : 'View engagement data and link clicks'}
+                </p>
+              </div>
+              <span className="dash-nav-arrow">→</span>
+            </a>
+          ) : (
+            <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
+              <div>
+                <h3 className="dash-nav-title">Analytics</h3>
                 <p className="dash-nav-desc">
                   Upgrade to Premium to unlock
                 </p>

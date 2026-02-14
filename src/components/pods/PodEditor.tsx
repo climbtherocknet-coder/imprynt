@@ -28,6 +28,7 @@ interface PodEditorProps {
   isPaid: boolean;
   visibilityMode?: 'hidden' | 'visible';
   onError: (msg: string) => void;
+  onPodsChange?: (pods: PodItem[]) => void;
 }
 
 // ── Constants ──────────────────────────────────────────
@@ -90,7 +91,7 @@ const smallBtnStyle: React.CSSProperties = {
 
 // ── Component ──────────────────────────────────────────
 
-export default function PodEditor({ parentType, parentId, isPaid, visibilityMode, onError }: PodEditorProps) {
+export default function PodEditor({ parentType, parentId, isPaid, visibilityMode, onError, onPodsChange }: PodEditorProps) {
   const [pods, setPods] = useState<PodItem[]>([]);
   const [editingPodId, setEditingPodId] = useState<string | null>(null);
   const [podSaving, setPodSaving] = useState<string | null>(null);
@@ -100,6 +101,11 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
   const maxPods = parentType === 'profile' ? (isPaid ? 6 : 2) : 6;
   const apiBase = parentType === 'profile' ? '/api/pods' : '/api/protected-pages/pods';
   const isShowcase = visibilityMode === 'visible';
+
+  // Notify parent when pods change
+  useEffect(() => {
+    onPodsChange?.(pods);
+  }, [pods, onPodsChange]);
 
   // Load pods
   useEffect(() => {

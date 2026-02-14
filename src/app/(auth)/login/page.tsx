@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import '@/styles/auth.css';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const verified = searchParams.get('verified') === 'true';
+  const verifyError = searchParams.get('error') === 'invalid_verification';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -56,6 +59,22 @@ export default function LoginPage() {
       <div className="auth-card">
         <h1 className="auth-title">Welcome back</h1>
         <p className="auth-subtitle">Sign in to your Imprynt account.</p>
+
+        {verified && (
+          <div className="auth-error" style={{
+            background: 'rgba(34, 197, 94, 0.08)',
+            borderColor: 'rgba(34, 197, 94, 0.2)',
+            color: '#22c55e',
+          }}>
+            Email verified! You can now log in.
+          </div>
+        )}
+
+        {verifyError && (
+          <div className="auth-error">
+            Verification link is invalid or expired.
+          </div>
+        )}
 
         {error && (
           <div
