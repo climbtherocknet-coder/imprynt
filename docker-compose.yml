@@ -32,6 +32,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./db/init-umami.sh:/docker-entrypoint-initdb.d/02-umami.sh
     ports:
       - "5432:5432"
     healthcheck:
@@ -52,6 +53,21 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - app
+    networks:
+      - imprynt-network
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: imprynt-umami
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://imprynt:imprynt_dev_password@db:5432/umami
+      APP_SECRET: dev-umami-secret-replace-in-production
+    ports:
+      - "3001:3000"
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - imprynt-network
 

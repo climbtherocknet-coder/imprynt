@@ -29,6 +29,36 @@ export async function GET() {
   });
 }
 
+export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.email || !isAdmin(session.user.email)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { email } = await req.json();
+  if (!email || typeof email !== 'string') {
+    return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+  }
+
+  const normalized = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+    return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
+  }
+
+  // Check if already on waitlist
+  const existing = await query('SELECT id FROM waitlist WHERE email = $1', [normalized]);
+  if (existing.rows.length > 0) {
+    return NextResponse.json({ error: 'Already on waitlist' }, { status: 409 });
+  }
+
+  await query(
+    "INSERT INTO waitlist (email, source) VALUES ($1, 'admin')",
+    [normalized]
+  );
+
+  return NextResponse.json({ ok: true }, { status: 201 });
+}
+
 export async function PUT(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.email || !isAdmin(session.user.email)) {
