@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import PodEditor from '@/components/pods/PodEditor';
 import '@/styles/dashboard.css';
 
@@ -22,6 +22,7 @@ interface PageData {
   buttonLabel: string;
   isActive: boolean;
   allowRemember: boolean;
+  photoUrl: string;
 }
 
 const LINK_ICONS: Record<string, string> = {
@@ -87,6 +88,12 @@ export default function ImpressionEditor() {
   const [iconCorner, setIconCorner] = useState('bottom-right');
   const [allowRemember, setAllowRemember] = useState(true);
 
+  // Personal photo
+  const [photoMode, setPhotoMode] = useState<'profile' | 'custom'>('profile');
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const photoRef = useRef<HTMLInputElement>(null);
+
   // Creating vs editing
   const [isNew, setIsNew] = useState(true);
 
@@ -111,6 +118,8 @@ export default function ImpressionEditor() {
           setIconOpacity(p.iconOpacity ?? 0.35);
           setIconCorner(p.iconCorner || 'bottom-right');
           setAllowRemember(p.allowRemember !== false);
+          setPhotoUrl(p.photoUrl || '');
+          setPhotoMode(p.photoUrl ? 'custom' : 'profile');
           setIsNew(false);
         }
         setLoading(false);
@@ -159,7 +168,7 @@ export default function ImpressionEditor() {
           throw new Error(d.error || 'Failed to create');
         }
         const result = await res.json();
-        setPage({ ...page!, id: result.id, pageTitle, bioText, visibilityMode: 'hidden', buttonLabel: '', isActive: true, allowRemember: true });
+        setPage({ id: result.id, pageTitle, bioText, visibilityMode: 'hidden', buttonLabel: '', isActive: true, allowRemember: true, photoUrl: '' });
         setIsNew(false);
         setPin('');
         setPinConfirm('');
@@ -174,6 +183,7 @@ export default function ImpressionEditor() {
           iconOpacity,
           iconCorner,
           allowRemember,
+          photoUrl: photoMode === 'custom' ? photoUrl : '',
         };
         if (pin) body.pin = pin;
 
@@ -197,7 +207,29 @@ export default function ImpressionEditor() {
     } finally {
       setSaving(false);
     }
-  }, [isNew, page, pageTitle, bioText, pin, pinConfirm, isActive, iconColor, iconOpacity, iconCorner, allowRemember]);
+  }, [isNew, page, pageTitle, bioText, pin, pinConfirm, isActive, iconColor, iconOpacity, iconCorner, allowRemember, photoMode, photoUrl]);
+
+  // Photo upload
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoUploading(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload/file', { method: 'POST', body: formData });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Upload failed'); }
+      const { url } = await res.json();
+      setPhotoUrl(url);
+      setPhotoMode('custom');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setPhotoUploading(false);
+      if (photoRef.current) photoRef.current.value = '';
+    }
+  }
 
   // ── Render ───────────────────────────────────────────
 
@@ -311,6 +343,75 @@ export default function ImpressionEditor() {
             </div>
           )}
         </div>
+
+        {/* Personal Photo (only after created) */}
+        {!isNew && (
+          <div style={sectionStyle}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: '#eceef2' }}>Impression Photo</h3>
+            <p style={{ fontSize: '0.8125rem', color: '#5d6370', marginBottom: '1rem' }}>
+              Choose a different photo for your Impression page, or use your profile photo.
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <button
+                onClick={() => setPhotoMode('profile')}
+                style={{
+                  padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid',
+                  borderColor: photoMode === 'profile' ? '#e8a849' : '#283042',
+                  backgroundColor: photoMode === 'profile' ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
+                  color: photoMode === 'profile' ? '#e8a849' : '#a8adb8',
+                  fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Use profile photo
+              </button>
+              <button
+                onClick={() => setPhotoMode('custom')}
+                style={{
+                  padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid',
+                  borderColor: photoMode === 'custom' ? '#e8a849' : '#283042',
+                  backgroundColor: photoMode === 'custom' ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
+                  color: photoMode === 'custom' ? '#e8a849' : '#a8adb8',
+                  fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Different photo
+              </button>
+            </div>
+
+            {photoMode === 'custom' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                {photoUrl && (
+                  <img src={photoUrl} alt="Personal" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #283042' }} />
+                )}
+                <button
+                  onClick={() => photoRef.current?.click()}
+                  disabled={photoUploading}
+                  style={{
+                    padding: '0.375rem 0.75rem', backgroundColor: '#1e2535', border: '1px solid #283042',
+                    borderRadius: '0.375rem', fontSize: '0.8125rem', fontWeight: 500,
+                    cursor: photoUploading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: '#eceef2',
+                  }}
+                >
+                  {photoUploading ? 'Uploading...' : photoUrl ? 'Change' : 'Upload photo'}
+                </button>
+                {photoUrl && (
+                  <button
+                    onClick={() => { setPhotoUrl(''); setPhotoMode('profile'); }}
+                    style={{
+                      padding: '0.375rem 0.75rem', backgroundColor: 'transparent', border: '1px solid #283042',
+                      borderRadius: '0.375rem', fontSize: '0.8125rem', fontWeight: 500,
+                      cursor: 'pointer', fontFamily: 'inherit', color: '#5d6370',
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
+                <input ref={photoRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoUpload} style={{ display: 'none' }} />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Icon Settings (only show after page is created) */}
         {!isNew && (

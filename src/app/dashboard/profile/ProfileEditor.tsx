@@ -45,21 +45,6 @@ interface ProfileData {
   links: LinkItem[];
 }
 
-interface ProtectedPageData {
-  id: string;
-  pageTitle: string;
-  visibilityMode: string;
-  bioText: string;
-  buttonLabel: string;
-  resumeUrl: string;
-  iconColor: string;
-  iconOpacity: number;
-  iconCorner: string;
-  allowRemember: boolean;
-  photoUrl: string;
-  isActive: boolean;
-}
-
 // ── Constants ──────────────────────────────────────────
 
 const LINK_TYPES = [
@@ -142,8 +127,8 @@ const saveBtnStyle: React.CSSProperties = {
 export default function ProfileEditor() {
   const [data, setData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState<string | null>(null); // which section is saving
-  const [saved, setSaved] = useState<string | null>(null); // which section just saved
+  const [saving, setSaving] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   // Form state
@@ -172,47 +157,13 @@ export default function ProfileEditor() {
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
 
-  // ── Impression state ───────────────────────────────────
-  const [impPage, setImpPage] = useState<ProtectedPageData | null>(null);
-  const [impIsNew, setImpIsNew] = useState(true);
-  const [impBioText, setImpBioText] = useState('');
-  const [impPin, setImpPin] = useState('');
-  const [impPinConfirm, setImpPinConfirm] = useState('');
-  const [impIsActive, setImpIsActive] = useState(true);
-  const [impAllowRemember, setImpAllowRemember] = useState(true);
-  const [impIconColor, setImpIconColor] = useState('');
-  const [impIconOpacity, setImpIconOpacity] = useState(0.35);
-  const [impIconCorner, setImpIconCorner] = useState('bottom-right');
-  const [impPhotoMode, setImpPhotoMode] = useState<'profile' | 'custom'>('profile');
-  const [impPhotoUrl, setImpPhotoUrl] = useState('');
-  const [impPhotoUploading, setImpPhotoUploading] = useState(false);
-  const impPhotoRef = useRef<HTMLInputElement>(null);
-
-  // ── Showcase state ─────────────────────────────────────
-  const [scPage, setScPage] = useState<ProtectedPageData | null>(null);
-  const [scIsNew, setScIsNew] = useState(true);
-  const [scPageTitle, setScPageTitle] = useState('Projects');
-  const [scButtonLabel, setScButtonLabel] = useState('Projects');
-  const [scBioText, setScBioText] = useState('');
-  const [scPin, setScPin] = useState('');
-  const [scPinConfirm, setScPinConfirm] = useState('');
-  const [scResumeUrl, setScResumeUrl] = useState('');
-  const [scIsActive, setScIsActive] = useState(true);
-  const [scAllowRemember, setScAllowRemember] = useState(true);
-  const [scResumeUploading, setScResumeUploading] = useState(false);
-  const scResumeRef = useRef<HTMLInputElement>(null);
-
   const isPaid = data?.user.plan !== 'free';
 
-  // Load profile data + protected pages
+  // Load profile data
   useEffect(() => {
-    Promise.all([
-      fetch('/api/profile').then(r => r.json()),
-      fetch('/api/protected-pages?mode=hidden').then(r => r.json()).catch(() => ({ pages: [] })),
-      fetch('/api/protected-pages?mode=visible').then(r => r.json()).catch(() => ({ pages: [] })),
-    ])
-      .then(([d, impData, scData]: [ProfileData, { pages: ProtectedPageData[] }, { pages: ProtectedPageData[] }]) => {
-        // Profile
+    fetch('/api/profile')
+      .then(r => r.json())
+      .then((d: ProfileData) => {
         setData(d);
         setFirstName(d.user.firstName);
         setLastName(d.user.lastName);
@@ -229,35 +180,6 @@ export default function ProfileEditor() {
         setPhotoUrl(d.profile.photoUrl);
         setAllowSharing(d.profile.allowSharing !== false);
         setAllowFeedback(d.profile.allowFeedback !== false);
-
-        // Impression
-        if (impData.pages?.length > 0) {
-          const p = impData.pages[0];
-          setImpPage(p);
-          setImpBioText(p.bioText || '');
-          setImpIsActive(p.isActive);
-          setImpIconColor(p.iconColor || '');
-          setImpIconOpacity(p.iconOpacity ?? 0.35);
-          setImpIconCorner(p.iconCorner || 'bottom-right');
-          setImpAllowRemember(p.allowRemember !== false);
-          setImpPhotoUrl(p.photoUrl || '');
-          setImpPhotoMode(p.photoUrl ? 'custom' : 'profile');
-          setImpIsNew(false);
-        }
-
-        // Showcase
-        if (scData.pages?.length > 0) {
-          const p = scData.pages[0];
-          setScPage(p);
-          setScPageTitle(p.pageTitle || 'Projects');
-          setScButtonLabel(p.buttonLabel || p.pageTitle || 'Projects');
-          setScBioText(p.bioText || '');
-          setScResumeUrl(p.resumeUrl || '');
-          setScIsActive(p.isActive);
-          setScAllowRemember(p.allowRemember !== false);
-          setScIsNew(false);
-        }
-
         setLoading(false);
       })
       .catch(() => {
@@ -265,14 +187,6 @@ export default function ProfileEditor() {
         setLoading(false);
       });
   }, []);
-
-  // Scroll to hash on load (for #impression / #showcase anchors)
-  useEffect(() => {
-    if (!loading && typeof window !== 'undefined' && window.location.hash) {
-      const el = document.getElementById(window.location.hash.slice(1));
-      if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-    }
-  }, [loading]);
 
   // Save helpers
   const saveSection = useCallback(async (section: string, body: Record<string, unknown>) => {
@@ -324,7 +238,6 @@ export default function ProfileEditor() {
   }
 
   function updateLink(id: string, field: string, value: string | boolean) {
-    // Update locally immediately
     setLinks(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
   }
 
@@ -375,14 +288,12 @@ export default function ProfileEditor() {
     const [removed] = reordered.splice(dragItem.current, 1);
     reordered.splice(dragOverItem.current, 0, removed);
 
-    // Update display orders
     const updated = reordered.map((l, i) => ({ ...l, displayOrder: i }));
     setLinks(updated);
 
     dragItem.current = null;
     dragOverItem.current = null;
 
-    // Save new order
     try {
       await fetch('/api/links', {
         method: 'PUT',
@@ -429,176 +340,9 @@ export default function ProfileEditor() {
     }
   }
 
-  // ── Impression save ─────────────────────────────────
-  const saveImpression = useCallback(async () => {
-    setSaving('impression');
-    setSaved(null);
-    setError('');
-
-    if (impIsNew || impPin) {
-      if (impPin.length < 4 || impPin.length > 6 || !/^\d+$/.test(impPin)) {
-        setError('PIN must be 4-6 digits');
-        setSaving(null);
-        return;
-      }
-      if (impPin !== impPinConfirm) {
-        setError('PINs do not match');
-        setSaving(null);
-        return;
-      }
-    }
-
-    try {
-      if (impIsNew) {
-        const res = await fetch('/api/protected-pages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            pageTitle: 'Personal',
-            visibilityMode: 'hidden',
-            pin: impPin,
-            bioText: impBioText.trim(),
-          }),
-        });
-        if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to create'); }
-        const result = await res.json();
-        setImpPage({ id: result.id, pageTitle: 'Personal', visibilityMode: 'hidden', bioText: impBioText, buttonLabel: '', resumeUrl: '', iconColor: '', iconOpacity: 0.35, iconCorner: 'bottom-right', allowRemember: true, photoUrl: '', isActive: true });
-        setImpIsNew(false);
-        setImpPin('');
-        setImpPinConfirm('');
-      } else {
-        const body: Record<string, unknown> = {
-          id: impPage!.id,
-          pageTitle: 'Personal',
-          bioText: impBioText.trim(),
-          isActive: impIsActive,
-          iconColor: impIconColor.trim(),
-          iconOpacity: impIconOpacity,
-          iconCorner: impIconCorner,
-          allowRemember: impAllowRemember,
-          photoUrl: impPhotoMode === 'custom' ? impPhotoUrl : '',
-        };
-        if (impPin) body.pin = impPin;
-        const res = await fetch('/api/protected-pages', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to update'); }
-        setImpPin('');
-        setImpPinConfirm('');
-      }
-      setSaved('impression');
-      setTimeout(() => setSaved(null), 2000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
-    } finally {
-      setSaving(null);
-    }
-  }, [impIsNew, impPage, impBioText, impPin, impPinConfirm, impIsActive, impIconColor, impIconOpacity, impIconCorner, impAllowRemember, impPhotoMode, impPhotoUrl]);
-
-  // ── Impression photo upload ────────────────────────
-  async function handleImpPhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImpPhotoUploading(true);
-    setError('');
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch('/api/upload/file', { method: 'POST', body: formData });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Upload failed'); }
-      const { url } = await res.json();
-      setImpPhotoUrl(url);
-      setImpPhotoMode('custom');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
-    } finally {
-      setImpPhotoUploading(false);
-      if (impPhotoRef.current) impPhotoRef.current.value = '';
-    }
-  }
-
-  // ── Showcase save ──────────────────────────────────
-  const saveShowcase = useCallback(async () => {
-    setSaving('showcase');
-    setSaved(null);
-    setError('');
-
-    if (scIsNew || scPin) {
-      if (scPin.length < 4 || scPin.length > 6 || !/^\d+$/.test(scPin)) {
-        setError('PIN must be 4-6 digits');
-        setSaving(null);
-        return;
-      }
-      if (scPin !== scPinConfirm) {
-        setError('PINs do not match');
-        setSaving(null);
-        return;
-      }
-    }
-
-    try {
-      if (scIsNew) {
-        const res = await fetch('/api/protected-pages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            pageTitle: scPageTitle.trim() || 'Projects',
-            visibilityMode: 'visible',
-            pin: scPin,
-            bioText: scBioText.trim(),
-            buttonLabel: scButtonLabel.trim() || scPageTitle.trim() || 'Projects',
-            resumeUrl: scResumeUrl.trim(),
-          }),
-        });
-        if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to create'); }
-        const result = await res.json();
-        setScPage({ id: result.id, pageTitle: scPageTitle, visibilityMode: 'visible', bioText: scBioText, buttonLabel: scButtonLabel, resumeUrl: scResumeUrl, iconColor: '', iconOpacity: 0.35, iconCorner: 'bottom-right', allowRemember: true, photoUrl: '', isActive: true });
-        setScIsNew(false);
-        setScPin('');
-        setScPinConfirm('');
-      } else {
-        const body: Record<string, unknown> = {
-          id: scPage!.id,
-          pageTitle: scPageTitle.trim() || 'Projects',
-          bioText: scBioText.trim(),
-          buttonLabel: scButtonLabel.trim() || scPageTitle.trim() || 'Projects',
-          resumeUrl: scResumeUrl.trim(),
-          isActive: scIsActive,
-          allowRemember: scAllowRemember,
-        };
-        if (scPin) body.pin = scPin;
-        const res = await fetch('/api/protected-pages', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to update'); }
-        setScPin('');
-        setScPinConfirm('');
-      }
-      setSaved('showcase');
-      setTimeout(() => setSaved(null), 2000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
-    } finally {
-      setSaving(null);
-    }
-  }, [scIsNew, scPage, scPageTitle, scButtonLabel, scBioText, scResumeUrl, scPin, scPinConfirm, scIsActive, scAllowRemember]);
-
-  // ── Resume upload ──────────────────────────────────
-  async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setScResumeUploading(true);
-    setError('');
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch('/api/upload/file', { method: 'POST', body: formData });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Upload failed'); }
-      const { url } = await res.json();
-      setScResumeUrl(url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
-    } finally {
-      setScResumeUploading(false);
-      if (scResumeRef.current) scResumeRef.current.value = '';
-    }
-  }
+  const handlePodsChange = useCallback((pods: { id: string; podType: string; label: string; title: string; body: string; imageUrl: string; stats: { num: string; label: string }[]; ctaLabel: string; ctaUrl: string; tags?: string; imagePosition?: string; showOnProfile: boolean }[]) => {
+    setPreviewPods(pods.filter(p => p.showOnProfile !== false));
+  }, []);
 
   // ── Render ───────────────────────────────────────────
 
@@ -792,9 +536,7 @@ export default function ProfileEditor() {
             parentId={data.profile.id}
             isPaid={isPaid}
             onError={setError}
-            onPodsChange={useCallback((pods: { id: string; podType: string; label: string; title: string; body: string; imageUrl: string; stats: { num: string; label: string }[]; ctaLabel: string; ctaUrl: string; tags?: string; imagePosition?: string; showOnProfile: boolean }[]) => {
-              setPreviewPods(pods.filter(p => p.showOnProfile !== false));
-            }, [])}
+            onPodsChange={handlePodsChange}
           />
         </div>
 
@@ -1144,277 +886,6 @@ export default function ProfileEditor() {
             Allows visitors to send feedback or report your profile.
           </p>
         </div>
-
-        {/* ─── Impression Section (Premium) ────────── */}
-        {isPaid && (
-          <div id="impression" style={sectionStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={sectionTitleStyle}>Impression</h3>
-              <button
-                onClick={saveImpression}
-                disabled={saving === 'impression'}
-                style={{ ...saveBtnStyle, opacity: saving === 'impression' ? 0.6 : 1 }}
-              >
-                {saving === 'impression' ? 'Saving...' : saved === 'impression' ? '\u2713 Saved' : impIsNew ? 'Create' : 'Save'}
-              </button>
-            </div>
-            <p style={{ fontSize: '0.8125rem', color: '#5d6370', marginTop: '-0.5rem', marginBottom: '1rem' }}>
-              A hidden personal page on your profile. Only people you tell about it, and give the PIN to, can access it.
-            </p>
-
-            {/* Bio text */}
-            <div style={{ marginBottom: '0.75rem' }}>
-              <label style={labelStyle}>
-                Personal message
-                <span style={{ fontWeight: 400, color: '#5d6370', marginLeft: '0.5rem' }}>{impBioText.length}/500</span>
-              </label>
-              <textarea
-                value={impBioText}
-                onChange={e => setImpBioText(e.target.value.slice(0, 500))}
-                placeholder="Hey, glad we connected! Here's my personal info..."
-                rows={3}
-                style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }}
-              />
-            </div>
-
-            {/* Personal photo */}
-            {!impIsNew && (
-              <div style={{ marginBottom: '0.75rem' }}>
-                <label style={labelStyle}>Impression photo</label>
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <button
-                    onClick={() => setImpPhotoMode('profile')}
-                    style={{
-                      padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid',
-                      borderColor: impPhotoMode === 'profile' ? '#e8a849' : '#283042',
-                      backgroundColor: impPhotoMode === 'profile' ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
-                      color: impPhotoMode === 'profile' ? '#e8a849' : '#a8adb8',
-                      fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
-                    }}
-                  >
-                    Use profile photo
-                  </button>
-                  <button
-                    onClick={() => setImpPhotoMode('custom')}
-                    style={{
-                      padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid',
-                      borderColor: impPhotoMode === 'custom' ? '#e8a849' : '#283042',
-                      backgroundColor: impPhotoMode === 'custom' ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
-                      color: impPhotoMode === 'custom' ? '#e8a849' : '#a8adb8',
-                      fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
-                    }}
-                  >
-                    Different photo
-                  </button>
-                </div>
-                {impPhotoMode === 'custom' && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {impPhotoUrl && (
-                      <img src={impPhotoUrl} alt="Personal" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #283042' }} />
-                    )}
-                    <button
-                      onClick={() => impPhotoRef.current?.click()}
-                      disabled={impPhotoUploading}
-                      style={{
-                        padding: '0.375rem 0.75rem', backgroundColor: '#1e2535', border: '1px solid #283042',
-                        borderRadius: '0.375rem', fontSize: '0.8125rem', fontWeight: 500,
-                        cursor: impPhotoUploading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: '#eceef2',
-                      }}
-                    >
-                      {impPhotoUploading ? 'Uploading...' : impPhotoUrl ? 'Change' : 'Upload photo'}
-                    </button>
-                    <input ref={impPhotoRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImpPhotoUpload} style={{ display: 'none' }} />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* PIN */}
-            <div style={{ marginBottom: '0.75rem' }}>
-              <label style={labelStyle}>{impIsNew ? 'Set PIN (4-6 digits)' : 'Change PIN (leave blank to keep)'}</label>
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <input type="password" inputMode="numeric" maxLength={6} value={impPin} onChange={e => setImpPin(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder={impIsNew ? '••••' : 'Leave blank'} style={{ ...inputStyle, flex: 1, letterSpacing: '0.25em', textAlign: 'center' }} />
-                <input type="password" inputMode="numeric" maxLength={6} value={impPinConfirm} onChange={e => setImpPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Confirm" style={{ ...inputStyle, flex: 1, letterSpacing: '0.25em', textAlign: 'center' }} />
-              </div>
-            </div>
-
-            {/* Settings (only after created) */}
-            {!impIsNew && (
-              <>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', marginBottom: '1rem' }}>
-                  <label style={{ ...labelStyle, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input type="checkbox" checked={impIsActive} onChange={e => setImpIsActive(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#e8a849' }} />
-                    Impression is active
-                  </label>
-                  <label style={{ ...labelStyle, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input type="checkbox" checked={impAllowRemember} onChange={e => setImpAllowRemember(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#e8a849' }} />
-                    Allow visitors to remember access
-                  </label>
-                </div>
-
-                {/* Icon settings */}
-                <div style={{ padding: '1rem', backgroundColor: '#0c1017', borderRadius: '0.75rem', border: '1px solid #283042', marginBottom: '0.75rem' }}>
-                  <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#a8adb8', marginBottom: '0.75rem' }}>Icon Appearance</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', border: `1.5px solid ${impIconColor || '#e8a849'}`, backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: impIconOpacity, flexShrink: 0 }}>
-                      <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: impIconColor || '#e8a849', display: 'block' }} />
-                    </div>
-                    <span style={{ fontSize: '0.75rem', color: '#5d6370' }}>Preview</span>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
-                    <input type="color" value={impIconColor || '#e8a849'} onChange={e => setImpIconColor(e.target.value)} style={{ width: 28, height: 28, padding: 0, border: '1px solid #283042', borderRadius: '0.25rem', cursor: 'pointer', backgroundColor: '#0c1017' }} />
-                    <input type="text" value={impIconColor} onChange={e => setImpIconColor(e.target.value)} placeholder="Default: accent" style={{ ...inputStyle, flex: 1, fontSize: '0.8125rem', padding: '0.375rem 0.5rem' }} />
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-                    {[{ label: 'Subtle', v: 0.15 }, { label: 'Low', v: 0.25 }, { label: 'Med', v: 0.35 }, { label: 'Visible', v: 0.55 }, { label: 'Bold', v: 0.80 }].map(o => (
-                      <button key={o.label} onClick={() => setImpIconOpacity(o.v)} style={{ padding: '0.25rem 0.5rem', borderRadius: '2rem', border: '1px solid', borderColor: impIconOpacity === o.v ? '#e8a849' : '#283042', backgroundColor: impIconOpacity === o.v ? 'rgba(232, 168, 73, 0.1)' : 'transparent', color: impIconOpacity === o.v ? '#e8a849' : '#a8adb8', fontSize: '0.6875rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-                        {o.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
-                    {[{ label: 'Bottom Right', v: 'bottom-right' }, { label: 'Bottom Left', v: 'bottom-left' }, { label: 'Top Right', v: 'top-right' }, { label: 'Top Left', v: 'top-left' }].map(o => (
-                      <button key={o.v} onClick={() => setImpIconCorner(o.v)} style={{ padding: '0.25rem 0.5rem', borderRadius: '2rem', border: '1px solid', borderColor: impIconCorner === o.v ? '#e8a849' : '#283042', backgroundColor: impIconCorner === o.v ? 'rgba(232, 168, 73, 0.1)' : 'transparent', color: impIconCorner === o.v ? '#e8a849' : '#a8adb8', fontSize: '0.6875rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-                        {o.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Personal links summary */}
-                <div style={{ padding: '0.75rem', backgroundColor: '#0c1017', borderRadius: '0.5rem', border: '1px solid #283042' }}>
-                  <p style={{ fontSize: '0.8125rem', color: '#5d6370', margin: 0 }}>
-                    {links.filter(l => l.showPersonal).length} link{links.filter(l => l.showPersonal).length !== 1 ? 's' : ''} tagged PERSONAL — toggle links above in the Links section.
-                  </p>
-                </div>
-              </>
-            )}
-
-            {/* Pods (only after created) */}
-            {!impIsNew && impPage && (
-              <div style={{ marginTop: '1.25rem' }}>
-                <PodEditor parentType="protected_page" parentId={impPage.id} isPaid={true} visibilityMode="hidden" onError={setError} />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ─── Showcase Section (Premium) ─────────── */}
-        {isPaid && (
-          <div id="showcase" style={sectionStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={sectionTitleStyle}>Showcase</h3>
-              <button
-                onClick={saveShowcase}
-                disabled={saving === 'showcase'}
-                style={{ ...saveBtnStyle, opacity: saving === 'showcase' ? 0.6 : 1 }}
-              >
-                {saving === 'showcase' ? 'Saving...' : saved === 'showcase' ? '\u2713 Saved' : scIsNew ? 'Create' : 'Save'}
-              </button>
-            </div>
-            <p style={{ fontSize: '0.8125rem', color: '#5d6370', marginTop: '-0.5rem', marginBottom: '1rem' }}>
-              A visible portfolio page with a labeled button on your profile. Visitors enter a PIN to view your curated work.
-            </p>
-
-            {/* Page title + button label */}
-            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Page title</label>
-                <input type="text" value={scPageTitle} onChange={e => setScPageTitle(e.target.value.slice(0, 100))} placeholder="Projects" style={inputStyle} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Button label (on profile)</label>
-                <input type="text" value={scButtonLabel} onChange={e => setScButtonLabel(e.target.value.slice(0, 50))} placeholder="Projects" style={inputStyle} />
-              </div>
-            </div>
-
-            {/* Bio text */}
-            <div style={{ marginBottom: '0.75rem' }}>
-              <label style={labelStyle}>
-                Page description
-                <span style={{ fontWeight: 400, color: '#5d6370', marginLeft: '0.5rem' }}>{scBioText.length}/500</span>
-              </label>
-              <textarea
-                value={scBioText}
-                onChange={e => setScBioText(e.target.value.slice(0, 500))}
-                placeholder="A brief intro that appears at the top of your showcase page..."
-                rows={3}
-                style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }}
-              />
-            </div>
-
-            {/* Resume */}
-            <div style={{ marginBottom: '0.75rem' }}>
-              <label style={labelStyle}>Resume / CV</label>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <input
-                  type="url"
-                  value={scResumeUrl}
-                  onChange={e => setScResumeUrl(e.target.value.slice(0, 500))}
-                  placeholder="https://... or upload a PDF"
-                  style={{ ...inputStyle, flex: 1 }}
-                />
-                <button
-                  onClick={() => scResumeRef.current?.click()}
-                  disabled={scResumeUploading}
-                  style={{
-                    padding: '0.375rem 0.75rem', backgroundColor: '#1e2535', border: '1px solid #283042',
-                    borderRadius: '0.375rem', fontSize: '0.8125rem', fontWeight: 500, whiteSpace: 'nowrap',
-                    cursor: scResumeUploading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: '#eceef2',
-                  }}
-                >
-                  {scResumeUploading ? '...' : 'Upload PDF'}
-                </button>
-                <input ref={scResumeRef} type="file" accept="application/pdf" onChange={handleResumeUpload} style={{ display: 'none' }} />
-              </div>
-              <p style={{ fontSize: '0.75rem', color: '#5d6370', margin: '0.25rem 0 0' }}>
-                Displayed as a button on your showcase page.
-              </p>
-            </div>
-
-            {/* PIN */}
-            <div style={{ marginBottom: '0.75rem' }}>
-              <label style={labelStyle}>{scIsNew ? 'Set PIN (4-6 digits)' : 'Change PIN (leave blank to keep)'}</label>
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <input type="password" inputMode="numeric" maxLength={6} value={scPin} onChange={e => setScPin(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder={scIsNew ? '••••' : 'Leave blank'} style={{ ...inputStyle, flex: 1, letterSpacing: '0.25em', textAlign: 'center' }} />
-                <input type="password" inputMode="numeric" maxLength={6} value={scPinConfirm} onChange={e => setScPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Confirm" style={{ ...inputStyle, flex: 1, letterSpacing: '0.25em', textAlign: 'center' }} />
-              </div>
-            </div>
-
-            {/* Settings (only after created) */}
-            {!scIsNew && (
-              <>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', marginBottom: '0.75rem' }}>
-                  <label style={{ ...labelStyle, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input type="checkbox" checked={scIsActive} onChange={e => setScIsActive(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#e8a849' }} />
-                    Showcase is active
-                  </label>
-                  <label style={{ ...labelStyle, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input type="checkbox" checked={scAllowRemember} onChange={e => setScAllowRemember(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#e8a849' }} />
-                    Allow visitors to remember access
-                  </label>
-                </div>
-
-                {/* Showcase links summary */}
-                <div style={{ padding: '0.75rem', backgroundColor: '#0c1017', borderRadius: '0.5rem', border: '1px solid #283042', marginBottom: '0.75rem' }}>
-                  <p style={{ fontSize: '0.8125rem', color: '#5d6370', margin: 0 }}>
-                    {links.filter(l => l.showShowcase).length} link{links.filter(l => l.showShowcase).length !== 1 ? 's' : ''} tagged SHOWCASE — toggle links above in the Links section.
-                  </p>
-                </div>
-              </>
-            )}
-
-            {/* Pods (only after created) */}
-            {!scIsNew && scPage && (
-              <div style={{ marginTop: '0.25rem' }}>
-                <PodEditor parentType="protected_page" parentId={scPage.id} isPaid={true} visibilityMode="visible" onError={setError} />
-              </div>
-            )}
-          </div>
-        )}
 
         {/* ─── Profile URL Info ──────────────────── */}
         <div style={{ ...sectionStyle, backgroundColor: '#0c1017' }}>

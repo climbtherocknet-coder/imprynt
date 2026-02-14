@@ -142,11 +142,52 @@ export default async function DashboardPage({
               <h3 className="dash-nav-title">Edit Profile</h3>
               <p className="dash-nav-desc">
                 {profile?.title || 'No title'} {profile?.company ? `at ${profile.company}` : ''} · {profile?.template} template · {linkCount} links
-                {isPaid ? ' · Impression · Showcase' : ''}
               </p>
             </div>
             <span className="dash-nav-arrow">→</span>
           </a>
+
+          {/* Impression */}
+          {isPaid ? (
+            <a href="/dashboard/impression" className="dash-nav-card">
+              <div>
+                <h3 className="dash-nav-title">Impression</h3>
+                <p className="dash-nav-desc">
+                  Hidden personal page · PIN-protected · Personal links & photo
+                </p>
+              </div>
+              <span className="dash-nav-arrow">→</span>
+            </a>
+          ) : (
+            <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
+              <div>
+                <h3 className="dash-nav-title">Impression</h3>
+                <p className="dash-nav-desc">Upgrade to Premium to unlock</p>
+              </div>
+              <span className="dash-nav-arrow">🔒</span>
+            </a>
+          )}
+
+          {/* Showcase */}
+          {isPaid ? (
+            <a href="/dashboard/showcase" className="dash-nav-card">
+              <div>
+                <h3 className="dash-nav-title">Showcase</h3>
+                <p className="dash-nav-desc">
+                  Portfolio page · PIN-protected · Projects, resume & showcase links
+                </p>
+              </div>
+              <span className="dash-nav-arrow">→</span>
+            </a>
+          ) : (
+            <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
+              <div>
+                <h3 className="dash-nav-title">Showcase</h3>
+                <p className="dash-nav-desc">Upgrade to Premium to unlock</p>
+              </div>
+              <span className="dash-nav-arrow">🔒</span>
+            </a>
+          )}
 
           {/* Contact Card */}
           <a href="/dashboard/contact" className="dash-nav-card">
@@ -189,9 +230,7 @@ export default async function DashboardPage({
             <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
               <div>
                 <h3 className="dash-nav-title">Analytics</h3>
-                <p className="dash-nav-desc">
-                  Upgrade to Premium to unlock
-                </p>
+                <p className="dash-nav-desc">Upgrade to Premium to unlock</p>
               </div>
               <span className="dash-nav-arrow">🔒</span>
             </a>

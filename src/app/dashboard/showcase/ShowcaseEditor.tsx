@@ -1,10 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import PodEditor from '@/components/pods/PodEditor';
 import '@/styles/dashboard.css';
 
 // ── Types ──────────────────────────────────────────────
+
+interface LinkItem {
+  id?: string;
+  linkType: string;
+  label: string;
+  url: string;
+  displayOrder: number;
+}
 
 interface PageData {
   id: string;
@@ -12,9 +20,16 @@ interface PageData {
   visibilityMode: string;
   bioText: string;
   buttonLabel: string;
+  resumeUrl: string;
   isActive: boolean;
   allowRemember: boolean;
 }
+
+const LINK_ICONS: Record<string, string> = {
+  linkedin: '💼', website: '🌐', email: '✉️', phone: '📱', booking: '📅',
+  instagram: '📷', twitter: '𝕏', github: '⌨️', facebook: 'f', tiktok: '🎵',
+  youtube: '▶️', spotify: '🎧', custom: '🔗', vcard: '📇',
+};
 
 // ── Styles ─────────────────────────────────────────────
 
@@ -57,6 +72,7 @@ export default function ShowcaseEditor() {
 
   // Profile slug for preview
   const [slug, setSlug] = useState('');
+  const [links, setLinks] = useState<LinkItem[]>([]);
 
   // Page state
   const [page, setPage] = useState<PageData | null>(null);
@@ -70,9 +86,18 @@ export default function ShowcaseEditor() {
   const [allowRemember, setAllowRemember] = useState(true);
   const [isNew, setIsNew] = useState(true);
 
-  // Load existing showcase page + profile slug
+  // Resume upload
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const resumeRef = useRef<HTMLInputElement>(null);
+
+  // Load existing showcase page + profile slug + showcase links
   useEffect(() => {
-    fetch('/api/profile').then(r => r.json()).then(d => { if (d.profile?.slug) setSlug(d.profile.slug); }).catch(() => {});
+    fetch('/api/profile').then(r => r.json()).then(d => {
+      if (d.profile?.slug) setSlug(d.profile.slug);
+      if (d.links) {
+        setLinks(d.links.filter((l: LinkItem & { showShowcase?: boolean }) => l.showShowcase));
+      }
+    }).catch(() => {});
     fetch('/api/protected-pages?mode=visible')
       .then(res => res.json())
       .then(data => {
@@ -136,6 +161,7 @@ export default function ShowcaseEditor() {
           visibilityMode: 'visible',
           bioText,
           buttonLabel,
+          resumeUrl,
           isActive: true,
           allowRemember: true,
         });
@@ -175,6 +201,27 @@ export default function ShowcaseEditor() {
       setSaving(false);
     }
   }, [isNew, page, pageTitle, buttonLabel, bioText, resumeUrl, pin, pinConfirm, isActive, allowRemember]);
+
+  // Resume upload
+  async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setResumeUploading(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload/file', { method: 'POST', body: formData });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Upload failed'); }
+      const { url } = await res.json();
+      setResumeUrl(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setResumeUploading(false);
+      if (resumeRef.current) resumeRef.current.value = '';
+    }
+  }
 
   // ── Render ───────────────────────────────────────────
 
@@ -278,17 +325,45 @@ export default function ShowcaseEditor() {
           </div>
 
           <div style={{ marginBottom: '0.75rem' }}>
-            <label style={labelStyle}>Resume / CV link</label>
-            <input
-              type="url"
-              value={resumeUrl}
-              onChange={e => setResumeUrl(e.target.value.slice(0, 500))}
-              placeholder="https://drive.google.com/file/d/..."
-              style={inputStyle}
-            />
+            <label style={labelStyle}>Resume / CV</label>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <input
+                type="url"
+                value={resumeUrl}
+                onChange={e => setResumeUrl(e.target.value.slice(0, 500))}
+                placeholder="https://... or upload a PDF"
+                style={{ ...inputStyle, flex: 1 }}
+              />
+              <button
+                onClick={() => resumeRef.current?.click()}
+                disabled={resumeUploading}
+                style={{
+                  padding: '0.375rem 0.75rem', backgroundColor: '#1e2535', border: '1px solid #283042',
+                  borderRadius: '0.375rem', fontSize: '0.8125rem', fontWeight: 500, whiteSpace: 'nowrap',
+                  cursor: resumeUploading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: '#eceef2',
+                }}
+              >
+                {resumeUploading ? '...' : 'Upload PDF'}
+              </button>
+              <input ref={resumeRef} type="file" accept="application/pdf" onChange={handleResumeUpload} style={{ display: 'none' }} />
+            </div>
             <p style={{ fontSize: '0.75rem', color: '#5d6370', margin: '0.25rem 0 0' }}>
-              Link to your resume or CV. Displayed as a button on your showcase page.
+              Displayed as a download button on your showcase page.
             </p>
+            {resumeUrl && resumeUrl.startsWith('/uploads/') && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <span style={{ fontSize: '0.8125rem', color: '#a8adb8' }}>Uploaded: {resumeUrl.split('/').pop()}</span>
+                <button
+                  onClick={() => setResumeUrl('')}
+                  style={{
+                    padding: '0.25rem 0.5rem', backgroundColor: 'transparent', border: '1px solid #283042',
+                    borderRadius: '0.375rem', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'inherit', color: '#5d6370',
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            )}
           </div>
 
           {!isNew && (
@@ -358,6 +433,72 @@ export default function ShowcaseEditor() {
         >
           {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Showcase' : 'Save Settings'}
         </button>
+
+        {/* Showcase Links (read-only — managed in Profile editor) */}
+        {!isNew && page && (
+          <div style={sectionStyle}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: '#eceef2' }}>Showcase Links</h3>
+            <p style={{ fontSize: '0.8125rem', color: '#5d6370', marginBottom: '1rem' }}>
+              Links tagged as &ldquo;SHOWCASE&rdquo; appear on your showcase page.{' '}
+              <a href="/dashboard/profile" style={{ color: '#e8a849', textDecoration: 'none', fontWeight: 500 }}>
+                Manage links in Profile &rarr;
+              </a>
+            </p>
+
+            {links.length === 0 ? (
+              <div style={{
+                padding: '1.5rem',
+                textAlign: 'center',
+                backgroundColor: '#0c1017',
+                borderRadius: '0.5rem',
+                border: '1px dashed #283042',
+              }}>
+                <p style={{ fontSize: '0.875rem', color: '#5d6370', margin: 0 }}>
+                  No showcase links yet. Go to{' '}
+                  <a href="/dashboard/profile" style={{ color: '#e8a849', textDecoration: 'none' }}>
+                    Profile &rarr; Links
+                  </a>
+                  {' '}and toggle links to &ldquo;SHOWCASE&rdquo;.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {links.map((link, i) => (
+                  <div
+                    key={link.id || i}
+                    style={{
+                      backgroundColor: '#0c1017',
+                      border: '1px solid #283042',
+                      borderRadius: '0.5rem',
+                      padding: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>
+                      {LINK_ICONS[link.linkType] || '🔗'}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#eceef2', marginBottom: '0.125rem' }}>
+                        {link.label || link.linkType}
+                      </div>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        color: '#5d6370',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {link.url}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Content Blocks (only after page is created) */}
         {!isNew && page && (
