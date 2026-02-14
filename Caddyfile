@@ -2,6 +2,10 @@ www.{$DOMAIN:localhost} {
     redir https://{$DOMAIN:localhost}{uri} permanent
 }
 
+analytics.{$DOMAIN:localhost} {
+    reverse_proxy umami:3000
+}
+
 {$DOMAIN:localhost} {
     handle /uploads/* {
         root * /srv
