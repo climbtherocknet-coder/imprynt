@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import PodEditor from '@/components/pods/PodEditor';
+import ToggleSwitch from '@/components/ToggleSwitch';
 import '@/styles/dashboard.css';
 
 // ── Types ──────────────────────────────────────────────
@@ -367,15 +368,18 @@ export default function ShowcaseEditor() {
           </div>
 
           {!isNew && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-              <label style={{ ...labelStyle, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#e8a849' }} />
-                Showcase is active
-              </label>
-              <label style={{ ...labelStyle, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input type="checkbox" checked={allowRemember} onChange={e => setAllowRemember(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#e8a849' }} />
-                Allow visitors to remember access
-              </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+              <ToggleSwitch
+                checked={isActive}
+                onChange={setIsActive}
+                label="Showcase is active"
+              />
+              <ToggleSwitch
+                checked={allowRemember}
+                onChange={setAllowRemember}
+                label="Allow visitors to remember access"
+                description="Lets visitors skip the PIN on return visits."
+              />
             </div>
           )}
         </div>

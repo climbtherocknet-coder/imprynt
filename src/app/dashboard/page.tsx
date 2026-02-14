@@ -136,33 +136,58 @@ export default async function DashboardPage({
 
         {/* Navigation Cards */}
         <div className="dash-nav-list">
-          {/* Edit Profile */}
+          {/* Public Profile (biz) */}
           <a href="/dashboard/profile" className="dash-nav-card">
-            <div>
-              <h3 className="dash-nav-title">Edit Profile</h3>
-              <p className="dash-nav-desc">
-                {profile?.title || 'No title'} {profile?.company ? `at ${profile.company}` : ''} · {profile?.template} template · {linkCount} links
-              </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontSize: '1.5rem', flexShrink: 0, width: 32, textAlign: 'center' }}>💼</span>
+              <div>
+                <h3 className="dash-nav-title">Public Profile (biz)</h3>
+                <p className="dash-nav-desc">
+                  {profile?.title || 'No title'} {profile?.company ? `at ${profile.company}` : ''} · {profile?.template} template · {linkCount} links
+                </p>
+              </div>
             </div>
             <span className="dash-nav-arrow">→</span>
           </a>
 
-          {/* Impression */}
+          {/* Contact Card */}
+          <a href="/dashboard/contact" className="dash-nav-card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontSize: '1.5rem', flexShrink: 0, width: 32, textAlign: 'center' }}>📇</span>
+              <div>
+                <h3 className="dash-nav-title">Contact Card</h3>
+                <p className="dash-nav-desc">
+                  {contactFieldCount > 0
+                    ? `${contactFieldCount} field${contactFieldCount !== 1 ? 's' : ''} configured · Business & Personal vCards`
+                    : 'Set up your vCard contact info'}
+                </p>
+              </div>
+            </div>
+            <span className="dash-nav-arrow">→</span>
+          </a>
+
+          {/* Impression (personal) */}
           {isPaid ? (
             <a href="/dashboard/impression" className="dash-nav-card">
-              <div>
-                <h3 className="dash-nav-title">Impression</h3>
-                <p className="dash-nav-desc">
-                  Hidden personal page · PIN-protected · Personal links & photo
-                </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '1.5rem', flexShrink: 0, width: 32, textAlign: 'center' }}>🤫</span>
+                <div>
+                  <h3 className="dash-nav-title">Impression (personal)</h3>
+                  <p className="dash-nav-desc">
+                    Hidden personal page · PIN-protected · Personal links & photo
+                  </p>
+                </div>
               </div>
               <span className="dash-nav-arrow">→</span>
             </a>
           ) : (
             <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
-              <div>
-                <h3 className="dash-nav-title">Impression</h3>
-                <p className="dash-nav-desc">Upgrade to Premium to unlock</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '1.5rem', flexShrink: 0, width: 32, textAlign: 'center' }}>🤫</span>
+                <div>
+                  <h3 className="dash-nav-title">Impression (personal)</h3>
+                  <p className="dash-nav-desc">Upgrade to Premium to unlock</p>
+                </div>
               </div>
               <span className="dash-nav-arrow">🔒</span>
             </a>
@@ -171,36 +196,29 @@ export default async function DashboardPage({
           {/* Showcase */}
           {isPaid ? (
             <a href="/dashboard/showcase" className="dash-nav-card">
-              <div>
-                <h3 className="dash-nav-title">Showcase</h3>
-                <p className="dash-nav-desc">
-                  Portfolio page · PIN-protected · Projects, resume & showcase links
-                </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '1.5rem', flexShrink: 0, width: 32, textAlign: 'center' }}>🏆</span>
+                <div>
+                  <h3 className="dash-nav-title">Showcase</h3>
+                  <p className="dash-nav-desc">
+                    Portfolio page · PIN-protected · Projects, resume & showcase links
+                  </p>
+                </div>
               </div>
               <span className="dash-nav-arrow">→</span>
             </a>
           ) : (
             <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
-              <div>
-                <h3 className="dash-nav-title">Showcase</h3>
-                <p className="dash-nav-desc">Upgrade to Premium to unlock</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '1.5rem', flexShrink: 0, width: 32, textAlign: 'center' }}>🏆</span>
+                <div>
+                  <h3 className="dash-nav-title">Showcase</h3>
+                  <p className="dash-nav-desc">Upgrade to Premium to unlock</p>
+                </div>
               </div>
               <span className="dash-nav-arrow">🔒</span>
             </a>
           )}
-
-          {/* Contact Card */}
-          <a href="/dashboard/contact" className="dash-nav-card">
-            <div>
-              <h3 className="dash-nav-title">Contact Card</h3>
-              <p className="dash-nav-desc">
-                {contactFieldCount > 0
-                  ? `${contactFieldCount} field${contactFieldCount !== 1 ? 's' : ''} configured · Business & Personal vCards`
-                  : 'Set up your vCard contact info'}
-              </p>
-            </div>
-            <span className="dash-nav-arrow">→</span>
-          </a>
 
           {/* Status Tags */}
           <div className="dash-nav-card" style={{ cursor: 'default' }}>
@@ -216,21 +234,27 @@ export default async function DashboardPage({
           {/* Analytics */}
           {isPaid ? (
             <a href="/dashboard/analytics" className="dash-nav-card">
-              <div>
-                <h3 className="dash-nav-title">Analytics</h3>
-                <p className="dash-nav-desc">
-                  {parseInt(analytics.total_views) > 0
-                    ? `${analytics.total_views} total views · Engagement tracking`
-                    : 'View engagement data and link clicks'}
-                </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '1.5rem', flexShrink: 0, width: 32, textAlign: 'center' }}>📊</span>
+                <div>
+                  <h3 className="dash-nav-title">Analytics</h3>
+                  <p className="dash-nav-desc">
+                    {parseInt(analytics.total_views) > 0
+                      ? `${analytics.total_views} total views · Engagement tracking`
+                      : 'View engagement data and link clicks'}
+                  </p>
+                </div>
               </div>
               <span className="dash-nav-arrow">→</span>
             </a>
           ) : (
             <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
-              <div>
-                <h3 className="dash-nav-title">Analytics</h3>
-                <p className="dash-nav-desc">Upgrade to Premium to unlock</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '1.5rem', flexShrink: 0, width: 32, textAlign: 'center' }}>📊</span>
+                <div>
+                  <h3 className="dash-nav-title">Analytics</h3>
+                  <p className="dash-nav-desc">Upgrade to Premium to unlock</p>
+                </div>
               </div>
               <span className="dash-nav-arrow">🔒</span>
             </a>
@@ -238,11 +262,14 @@ export default async function DashboardPage({
 
           {/* Account */}
           <a href="/dashboard/account" className="dash-nav-card">
-            <div>
-              <h3 className="dash-nav-title">Account Settings</h3>
-              <p className="dash-nav-desc">
-                Email, password, subscription, billing
-              </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontSize: '1.5rem', flexShrink: 0, width: 32, textAlign: 'center' }}>⚙️</span>
+              <div>
+                <h3 className="dash-nav-title">Account Settings</h3>
+                <p className="dash-nav-desc">
+                  Email, password, subscription, billing
+                </p>
+              </div>
             </div>
             <span className="dash-nav-arrow">→</span>
           </a>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { THEMES } from '@/lib/themes';
 import PodEditor from '@/components/pods/PodEditor';
 import ProfileTemplate from '@/components/templates/ProfileTemplate';
+import ToggleSwitch from '@/components/ToggleSwitch';
 import '@/styles/dashboard.css';
 import '@/styles/profile.css';
 
@@ -841,12 +842,10 @@ export default function ProfileEditor() {
         {/* ─── Sharing Settings ──────────────────── */}
         <div style={sectionStyle}>
           <h3 style={sectionTitleStyle}>Sharing</h3>
-          <label style={{ ...labelStyle, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input
-              type="checkbox"
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            <ToggleSwitch
               checked={allowSharing}
-              onChange={async (e) => {
-                const val = e.target.checked;
+              onChange={async (val) => {
                 setAllowSharing(val);
                 try {
                   await fetch('/api/profile', {
@@ -856,19 +855,12 @@ export default function ProfileEditor() {
                   });
                 } catch { /* silent */ }
               }}
-              style={{ width: 16, height: 16, accentColor: '#e8a849' }}
+              label="Allow visitors to share your profile"
+              description="Shows a share button on your public profile page."
             />
-            Allow visitors to share your profile
-          </label>
-          <p style={{ fontSize: '0.75rem', color: '#5d6370', margin: '0.375rem 0 0 1.5rem' }}>
-            Shows a share button on your public profile page.
-          </p>
-          <label style={{ ...labelStyle, margin: '0.75rem 0 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input
-              type="checkbox"
+            <ToggleSwitch
               checked={allowFeedback}
-              onChange={async (e) => {
-                const val = e.target.checked;
+              onChange={async (val) => {
                 setAllowFeedback(val);
                 try {
                   await fetch('/api/profile', {
@@ -878,13 +870,10 @@ export default function ProfileEditor() {
                   });
                 } catch { /* silent */ }
               }}
-              style={{ width: 16, height: 16, accentColor: '#e8a849' }}
+              label="Show feedback button on your profile"
+              description="Allows visitors to send feedback or report your profile."
             />
-            Show feedback button on your profile
-          </label>
-          <p style={{ fontSize: '0.75rem', color: '#5d6370', margin: '0.375rem 0 0 1.5rem' }}>
-            Allows visitors to send feedback or report your profile.
-          </p>
+          </div>
         </div>
 
         {/* ─── Profile URL Info ──────────────────── */}
