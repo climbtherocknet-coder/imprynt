@@ -22,20 +22,13 @@ interface PageData {
   buttonLabel: string;
   isActive: boolean;
   allowRemember: boolean;
-  links: LinkItem[];
 }
 
-const LINK_TYPES = [
-  { type: 'email', label: 'Personal Email', placeholder: 'me@personal.com', icon: '✉️' },
-  { type: 'phone', label: 'Personal Phone', placeholder: '+1 (555) 000-0000', icon: '📱' },
-  { type: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/handle', icon: '📷' },
-  { type: 'twitter', label: 'X / Twitter', placeholder: 'https://x.com/handle', icon: '𝕏' },
-  { type: 'tiktok', label: 'TikTok', placeholder: 'https://tiktok.com/@handle', icon: '🎵' },
-  { type: 'facebook', label: 'Facebook', placeholder: 'https://facebook.com/you', icon: 'f' },
-  { type: 'linkedin', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/you', icon: '💼' },
-  { type: 'website', label: 'Personal Site', placeholder: 'https://mysite.com', icon: '🌐' },
-  { type: 'custom', label: 'Custom Link', placeholder: 'https://...', icon: '🔗' },
-];
+const LINK_ICONS: Record<string, string> = {
+  linkedin: '💼', website: '🌐', email: '✉️', phone: '📱', booking: '📅',
+  instagram: '📷', twitter: '𝕏', github: '⌨️', facebook: 'f', tiktok: '🎵',
+  youtube: '▶️', spotify: '🎧', custom: '🔗', vcard: '📇',
+};
 
 // ── Styles ─────────────────────────────────────────────
 
@@ -97,9 +90,14 @@ export default function ImpressionEditor() {
   // Creating vs editing
   const [isNew, setIsNew] = useState(true);
 
-  // Load existing impression page + profile slug
+  // Load existing impression page + profile slug + personal links
   useEffect(() => {
-    fetch('/api/profile').then(r => r.json()).then(d => { if (d.profile?.slug) setSlug(d.profile.slug); }).catch(() => {});
+    fetch('/api/profile').then(r => r.json()).then(d => {
+      if (d.profile?.slug) setSlug(d.profile.slug);
+      if (d.links) {
+        setLinks(d.links.filter((l: LinkItem & { showPersonal?: boolean }) => l.showPersonal));
+      }
+    }).catch(() => {});
     fetch('/api/protected-pages?mode=hidden')
       .then(res => res.json())
       .then(data => {
@@ -109,7 +107,6 @@ export default function ImpressionEditor() {
           setPageTitle(p.pageTitle);
           setBioText(p.bioText);
           setIsActive(p.isActive);
-          setLinks(p.links);
           setIconColor(p.iconColor || '');
           setIconOpacity(p.iconOpacity ?? 0.35);
           setIconCorner(p.iconCorner || 'bottom-right');
@@ -162,7 +159,7 @@ export default function ImpressionEditor() {
           throw new Error(d.error || 'Failed to create');
         }
         const result = await res.json();
-        setPage({ ...page!, id: result.id, pageTitle, bioText, visibilityMode: 'hidden', buttonLabel: '', isActive: true, links: [] });
+        setPage({ ...page!, id: result.id, pageTitle, bioText, visibilityMode: 'hidden', buttonLabel: '', isActive: true, allowRemember: true });
         setIsNew(false);
         setPin('');
         setPinConfirm('');
@@ -201,60 +198,6 @@ export default function ImpressionEditor() {
       setSaving(false);
     }
   }, [isNew, page, pageTitle, bioText, pin, pinConfirm, isActive, iconColor, iconOpacity, iconCorner, allowRemember]);
-
-  // Link CRUD
-  async function addLink(linkType: string) {
-    if (!page?.id) return;
-    const typeDef = LINK_TYPES.find(t => t.type === linkType);
-    try {
-      const res = await fetch('/api/protected-pages/links', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          protectedPageId: page.id,
-          linkType,
-          label: typeDef?.label || '',
-          url: '',
-        }),
-      });
-      if (!res.ok) throw new Error('Failed to add link');
-      const newLink = await res.json();
-      setLinks(prev => [...prev, newLink]);
-    } catch {
-      setError('Failed to add link');
-    }
-  }
-
-  function updateLinkLocal(id: string, field: string, value: string) {
-    setLinks(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
-  }
-
-  async function saveLinkUpdate(link: LinkItem) {
-    if (!link.id) return;
-    try {
-      await fetch('/api/protected-pages/links', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: link.id,
-          linkType: link.linkType,
-          label: link.label,
-          url: link.url,
-        }),
-      });
-    } catch {
-      setError('Failed to update link');
-    }
-  }
-
-  async function deleteLink(id: string) {
-    try {
-      await fetch(`/api/protected-pages/links?id=${id}`, { method: 'DELETE' });
-      setLinks(prev => prev.filter(l => l.id !== id));
-    } catch {
-      setError('Failed to delete link');
-    }
-  }
 
   // ── Render ───────────────────────────────────────────
 
@@ -541,103 +484,68 @@ export default function ImpressionEditor() {
           {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Impression' : 'Save Changes'}
         </button>
 
-        {/* Links (only show after page is created) */}
+        {/* Personal Links (read-only — managed in Profile editor) */}
         {!isNew && page && (
           <div style={sectionStyle}>
             <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: '#eceef2' }}>Personal Links</h3>
             <p style={{ fontSize: '0.8125rem', color: '#5d6370', marginBottom: '1rem' }}>
-              These are the links people see when they unlock your Impression.
+              Links tagged as &ldquo;PERSONAL&rdquo; appear when someone unlocks your Impression.{' '}
+              <a href="/dashboard/profile" style={{ color: '#e8a849', textDecoration: 'none', fontWeight: 500 }}>
+                Manage links in Profile &rarr;
+              </a>
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              {links.map((link, i) => (
-                <div
-                  key={link.id || i}
-                  style={{
-                    backgroundColor: '#0c1017',
-                    border: '1px solid #283042',
-                    borderRadius: '0.5rem',
-                    padding: '0.75rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                  }}
-                >
-                  <select
-                    value={link.linkType}
-                    onChange={e => {
-                      const newType = e.target.value;
-                      const typeDef = LINK_TYPES.find(t => t.type === newType);
-                      updateLinkLocal(link.id!, 'linkType', newType);
-                      if (typeDef) updateLinkLocal(link.id!, 'label', typeDef.label);
-                    }}
+            {links.length === 0 ? (
+              <div style={{
+                padding: '1.5rem',
+                textAlign: 'center',
+                backgroundColor: '#0c1017',
+                borderRadius: '0.5rem',
+                border: '1px dashed #283042',
+              }}>
+                <p style={{ fontSize: '0.875rem', color: '#5d6370', margin: 0 }}>
+                  No personal links yet. Go to{' '}
+                  <a href="/dashboard/profile" style={{ color: '#e8a849', textDecoration: 'none' }}>
+                    Profile &rarr; Links
+                  </a>
+                  {' '}and toggle links to &ldquo;PERSONAL&rdquo;.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {links.map((link, i) => (
+                  <div
+                    key={link.id || i}
                     style={{
-                      padding: '0.375rem 0.5rem',
-                      border: '1px solid #283042',
-                      borderRadius: '0.375rem',
-                      fontSize: '0.8125rem',
-                      fontFamily: 'inherit',
                       backgroundColor: '#0c1017',
-                      color: '#eceef2',
-                      width: 120,
-                      flexShrink: 0,
+                      border: '1px solid #283042',
+                      borderRadius: '0.5rem',
+                      padding: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
                     }}
                   >
-                    {LINK_TYPES.map(lt => (
-                      <option key={lt.type} value={lt.type}>{lt.icon} {lt.label}</option>
-                    ))}
-                  </select>
-
-                  <input
-                    type="text"
-                    value={link.label}
-                    onChange={e => updateLinkLocal(link.id!, 'label', e.target.value)}
-                    onBlur={() => saveLinkUpdate(link)}
-                    placeholder="Label"
-                    style={{ ...inputStyle, flex: '0 0 80px', padding: '0.375rem 0.5rem', fontSize: '0.8125rem' }}
-                  />
-
-                  <input
-                    type="text"
-                    value={link.url}
-                    onChange={e => updateLinkLocal(link.id!, 'url', e.target.value)}
-                    onBlur={() => saveLinkUpdate(link)}
-                    placeholder={LINK_TYPES.find(t => t.type === link.linkType)?.placeholder || 'https://...'}
-                    style={{ ...inputStyle, flex: 1, padding: '0.375rem 0.5rem', fontSize: '0.8125rem' }}
-                  />
-
-                  <button
-                    onClick={() => link.id && deleteLink(link.id)}
-                    style={{ background: 'none', border: 'none', color: '#5d6370', cursor: 'pointer', fontSize: '1.1rem', padding: '0.25rem', lineHeight: 1, flexShrink: 0 }}
-                    title="Remove"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {links.length < 10 && (
-              <select
-                value=""
-                onChange={e => { if (e.target.value) addLink(e.target.value); e.target.value = ''; }}
-                style={{
-                  width: '100%',
-                  padding: '0.625rem 0.75rem',
-                  border: '2px dashed #283042',
-                  borderRadius: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontFamily: 'inherit',
-                  backgroundColor: 'transparent',
-                  color: '#5d6370',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="">+ Add a personal link...</option>
-                {LINK_TYPES.map(lt => (
-                  <option key={lt.type} value={lt.type}>{lt.icon} {lt.label}</option>
+                    <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>
+                      {LINK_ICONS[link.linkType] || '🔗'}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#eceef2', marginBottom: '0.125rem' }}>
+                        {link.label || link.linkType}
+                      </div>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        color: '#5d6370',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {link.url}
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </select>
+              </div>
             )}
           </div>
         )}

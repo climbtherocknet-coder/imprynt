@@ -644,7 +644,7 @@ function ProtectedPageView({
 
 // ── Share Button ─────────────────────────────────────────
 
-function ShareButton({ profileId, isDark, corner }: { profileId: string; isDark: boolean; corner: 'top-left' | 'top-right' }) {
+function ShareButton({ profileId, isDark, corner }: { profileId: string; isDark: boolean; corner: 'bottom-left' | 'bottom-right' }) {
   const [copied, setCopied] = useState(false);
 
   async function handleShare() {
@@ -677,7 +677,7 @@ function ShareButton({ profileId, isDark, corner }: { profileId: string; isDark:
   }
 
   return (
-    <div style={{ position: 'fixed', top: 16, [corner === 'top-left' ? 'left' : 'right']: 16, zIndex: 50 }}>
+    <div style={{ position: 'fixed', bottom: 16, [corner === 'bottom-left' ? 'left' : 'right']: 16, zIndex: 50 }}>
       <button
         onClick={handleShare}
         aria-label="Share profile"
@@ -710,9 +710,9 @@ function ShareButton({ profileId, isDark, corner }: { profileId: string; isDark:
       {copied && (
         <div style={{
           position: 'absolute',
-          top: '100%',
-          [corner === 'top-left' ? 'left' : 'right']: 0,
-          marginTop: '0.375rem',
+          bottom: '100%',
+          [corner === 'bottom-left' ? 'left' : 'right']: 0,
+          marginBottom: '0.375rem',
           padding: '0.375rem 0.75rem',
           borderRadius: '9999px',
           backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.8)',
@@ -755,13 +755,13 @@ export default function ProfileClient({ profileId, accent, theme, hasImpression,
       { top: 16, left: 16 }),
   };
 
-  // Share button: top edge, opposite horizontal side from impression
-  const shareCorner: 'top-left' | 'top-right' =
-    iconCorner.includes('left') ? 'top-right' : 'top-left';
+  // Share button: bottom edge, opposite horizontal side from impression
+  const shareCorner: 'bottom-left' | 'bottom-right' =
+    iconCorner === 'bottom-left' ? 'bottom-right' : 'bottom-left';
 
-  // Feedback button: bottom edge, opposite horizontal side from impression
-  const feedbackCorner: 'bottom-left' | 'bottom-right' =
-    iconCorner.includes('left') ? 'bottom-right' : 'bottom-left';
+  // Feedback button: top-right by default, top-left if impression occupies top-right
+  const feedbackCorner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' =
+    iconCorner === 'top-right' ? 'top-left' : 'top-right';
 
   // Check for remembered pages on mount
   const loadPageContent = useCallback(async (pageId: string) => {

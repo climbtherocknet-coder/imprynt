@@ -17,7 +17,8 @@ export async function GET(req: NextRequest) {
   let sql = `
     SELECT pp.id, pp.page_title, pp.visibility_mode, pp.bio_text,
            pp.button_label, pp.resume_url, pp.display_order, pp.is_active,
-           pp.icon_color, pp.icon_opacity, pp.icon_corner, pp.allow_remember
+           pp.icon_color, pp.icon_opacity, pp.icon_corner, pp.allow_remember,
+           pp.profile_id
     FROM protected_pages pp
     JOIN profiles p ON p.id = pp.profile_id
     WHERE pp.user_id = $1
@@ -33,15 +34,16 @@ export async function GET(req: NextRequest) {
 
   const result = await query(sql, params);
 
-  // Also fetch links for each protected page
+  // Fetch links for each page based on visibility mode
   const pages = [];
   for (const row of result.rows) {
+    const visibilityFlag = row.visibility_mode === 'hidden' ? 'show_personal' : 'show_showcase';
     const linksResult = await query(
       `SELECT id, link_type, label, url, display_order
        FROM links
-       WHERE protected_page_id = $1 AND is_active = true
+       WHERE profile_id = $1 AND ${visibilityFlag} = true AND is_active = true
        ORDER BY display_order ASC`,
-      [row.id]
+      [row.profile_id]
     );
 
     pages.push({

@@ -32,11 +32,11 @@ export async function GET(
 
   const profile = result.rows[0];
 
-  // Fetch public links
+  // Fetch public business links
   const linksResult = await query(
     `SELECT link_type, label, url
      FROM links
-     WHERE profile_id = $1 AND is_active = true AND protected_page_id IS NULL
+     WHERE profile_id = $1 AND show_business = true AND is_active = true
      ORDER BY display_order ASC`,
     [profileId]
   );

@@ -33,13 +33,14 @@ export async function GET(
 
   const page = pageResult.rows[0];
 
-  // Fetch links for this protected page
+  // Fetch links based on visibility mode (personal for impression, showcase for visible)
+  const visibilityFlag = page.visibility_mode === 'hidden' ? 'show_personal' : 'show_showcase';
   const linksResult = await query(
     `SELECT id, link_type, label, url, display_order
      FROM links
-     WHERE protected_page_id = $1 AND is_active = true
+     WHERE profile_id = $1 AND ${visibilityFlag} = true AND is_active = true
      ORDER BY display_order ASC`,
-    [pageId]
+    [page.profile_id]
   );
 
   // Fetch pods for this protected page

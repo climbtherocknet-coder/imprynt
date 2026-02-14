@@ -11,7 +11,7 @@ const REASONS = [
 
 interface Props {
   profileId: string;
-  corner: 'bottom-left' | 'bottom-right';
+  corner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
   isDark: boolean;
 }
 
@@ -86,18 +86,21 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
     finally { setLoading(false); }
   }
 
+  const isTop = corner.startsWith('top');
+  const isLeft = corner.endsWith('left');
+
   const position: React.CSSProperties = {
     position: 'fixed',
     zIndex: 50,
-    [corner === 'bottom-left' ? 'left' : 'right']: 16,
-    bottom: 16,
+    [isLeft ? 'left' : 'right']: 16,
+    [isTop ? 'top' : 'bottom']: 16,
   };
 
   const modalPosition: React.CSSProperties = {
     position: 'fixed',
     zIndex: 10000,
-    [corner === 'bottom-left' ? 'left' : 'right']: 16,
-    bottom: 60,
+    [isLeft ? 'left' : 'right']: 16,
+    [isTop ? 'top' : 'bottom']: 50,
   };
 
   const inputStyle: React.CSSProperties = {
@@ -121,8 +124,8 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
         aria-label="Feedback"
         style={{
           ...position,
-          width: 40,
-          height: 40,
+          width: 30,
+          height: 30,
           borderRadius: '50%',
           border: '1.5px solid #e8a849',
           backgroundColor: 'transparent',
@@ -140,7 +143,7 @@ export default function ProfileFeedbackButton({ profileId, corner, isDark }: Pro
         onMouseLeave={e => { if (!open) e.currentTarget.style.opacity = '0.4'; }}
       >
         {/* Chat bubble icon (rotated 180°) */}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'scale(-1, 1)' }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'scale(-1, 1)' }}>
           <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
         </svg>
       </button>

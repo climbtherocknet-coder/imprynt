@@ -90,13 +90,12 @@ CREATE INDEX idx_protected_pages_user ON protected_pages(user_id);
 
 -- ============================================================
 -- LINKS
--- Shared link model for both profiles and protected pages
+-- Unified link model with visibility toggles per context
 -- ============================================================
 CREATE TABLE links (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    profile_id      UUID REFERENCES profiles(id) ON DELETE CASCADE,
-    protected_page_id UUID REFERENCES protected_pages(id) ON DELETE CASCADE,
+    profile_id      UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     link_type       VARCHAR(30) NOT NULL CHECK (link_type IN (
         'linkedin', 'website', 'email', 'phone', 'booking',
         'instagram', 'twitter', 'facebook', 'github',
@@ -106,17 +105,14 @@ CREATE TABLE links (
     url             VARCHAR(500) NOT NULL,
     display_order   INTEGER NOT NULL DEFAULT 0,
     is_active       BOOLEAN NOT NULL DEFAULT true,
+    show_business   BOOLEAN NOT NULL DEFAULT true,
+    show_personal   BOOLEAN NOT NULL DEFAULT false,
+    show_showcase   BOOLEAN NOT NULL DEFAULT false,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- Each link belongs to either a profile OR a protected page, not both
-    CONSTRAINT link_belongs_to_one CHECK (
-        (profile_id IS NOT NULL AND protected_page_id IS NULL) OR
-        (profile_id IS NULL AND protected_page_id IS NOT NULL)
-    )
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_links_profile ON links(profile_id);
-CREATE INDEX idx_links_protected_page ON links(protected_page_id);
 CREATE INDEX idx_links_user ON links(user_id);
 
 -- ============================================================

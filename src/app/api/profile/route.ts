@@ -33,7 +33,7 @@ export async function GET() {
   }
 
   const linksResult = await query(
-    `SELECT id, link_type, label, url, display_order
+    `SELECT id, link_type, label, url, display_order, show_business, show_personal, show_showcase
      FROM links
      WHERE profile_id = $1 AND is_active = true
      ORDER BY display_order ASC`,
@@ -71,6 +71,9 @@ export async function GET() {
       label: l.label || '',
       url: l.url,
       displayOrder: l.display_order,
+      showBusiness: l.show_business,
+      showPersonal: l.show_personal,
+      showShowcase: l.show_showcase,
     })),
   });
 }

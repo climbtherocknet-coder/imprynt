@@ -44,13 +44,13 @@ export async function GET(
 
   const profile = result.rows[0];
 
-  // Fetch ALL links — public profile links + impression page links (deduplicated)
+  // Fetch ALL links with business or personal visibility (deduplicated)
   const linksResult = await query(
     `SELECT DISTINCT ON (link_type, url) link_type, label, url
      FROM links
-     WHERE (profile_id = $1 OR protected_page_id IN (
-       SELECT id FROM protected_pages WHERE profile_id = $1 AND visibility_mode = 'hidden'
-     )) AND is_active = true
+     WHERE profile_id = $1
+       AND (show_business = true OR show_personal = true)
+       AND is_active = true
      ORDER BY link_type, url, display_order ASC`,
     [profileId]
   );

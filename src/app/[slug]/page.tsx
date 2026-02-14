@@ -68,7 +68,7 @@ async function getProfileAny(slug: string) {
 async function getLinks(profileId: string) {
   const result = await query(
     `SELECT id, link_type, label, url FROM links
-     WHERE profile_id = $1 AND is_active = true
+     WHERE profile_id = $1 AND show_business = true AND is_active = true
      ORDER BY display_order ASC`,
     [profileId]
   );

@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
   const userId = session.user.id;
   const body = await req.json();
-  const { linkType, label, url } = body;
+  const { linkType, label, url, showBusiness, showPersonal, showShowcase } = body;
 
   if (!linkType || !VALID_LINK_TYPES.includes(linkType)) {
     return NextResponse.json({ error: 'Invalid link type' }, { status: 400 });
@@ -39,10 +39,18 @@ export async function POST(req: NextRequest) {
   const nextOrder = orderResult.rows[0].next_order;
 
   const result = await query(
-    `INSERT INTO links (user_id, profile_id, link_type, label, url, display_order)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING id, link_type, label, url, display_order`,
-    [userId, profileId, linkType, label?.trim()?.slice(0, 100) || null, (url || '').trim().slice(0, 500), nextOrder]
+    `INSERT INTO links (user_id, profile_id, link_type, label, url, display_order, show_business, show_personal, show_showcase)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     RETURNING id, link_type, label, url, display_order, show_business, show_personal, show_showcase`,
+    [
+      userId, profileId, linkType,
+      label?.trim()?.slice(0, 100) || null,
+      (url || '').trim().slice(0, 500),
+      nextOrder,
+      showBusiness !== false,
+      showPersonal === true,
+      showShowcase === true,
+    ]
   );
 
   const link = result.rows[0];
@@ -52,6 +60,9 @@ export async function POST(req: NextRequest) {
     label: link.label || '',
     url: link.url,
     displayOrder: link.display_order,
+    showBusiness: link.show_business,
+    showPersonal: link.show_personal,
+    showShowcase: link.show_showcase,
   });
 }
 
@@ -87,7 +98,7 @@ export async function PUT(req: NextRequest) {
   }
 
   // Single link update
-  const { id, linkType, label, url } = body;
+  const { id, linkType, label, url, showBusiness, showPersonal, showShowcase } = body;
   if (!id) {
     return NextResponse.json({ error: 'Link ID required' }, { status: 400 });
   }
@@ -95,13 +106,25 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid link type' }, { status: 400 });
   }
 
+  const updates: string[] = [];
+  const values: unknown[] = [];
+  let p = 1;
+
+  if (linkType !== undefined) { updates.push(`link_type = $${p++}`); values.push(linkType); }
+  if (label !== undefined) { updates.push(`label = $${p++}`); values.push(label?.trim()?.slice(0, 100)); }
+  if (url !== undefined) { updates.push(`url = $${p++}`); values.push(url?.trim()?.slice(0, 500)); }
+  if (showBusiness !== undefined) { updates.push(`show_business = $${p++}`); values.push(!!showBusiness); }
+  if (showPersonal !== undefined) { updates.push(`show_personal = $${p++}`); values.push(!!showPersonal); }
+  if (showShowcase !== undefined) { updates.push(`show_showcase = $${p++}`); values.push(!!showShowcase); }
+
+  if (updates.length === 0) {
+    return NextResponse.json({ success: true });
+  }
+
+  values.push(id, userId);
   await query(
-    `UPDATE links SET
-       link_type = COALESCE($1, link_type),
-       label = COALESCE($2, label),
-       url = COALESCE($3, url)
-     WHERE id = $4 AND user_id = $5`,
-    [linkType, label?.trim()?.slice(0, 100), url?.trim()?.slice(0, 500), id, userId]
+    `UPDATE links SET ${updates.join(', ')} WHERE id = $${p} AND user_id = $${p + 1}`,
+    values
   );
 
   return NextResponse.json({ success: true });

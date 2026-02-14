@@ -15,6 +15,9 @@ interface LinkItem {
   label: string;
   url: string;
   displayOrder: number;
+  showBusiness: boolean;
+  showPersonal: boolean;
+  showShowcase: boolean;
 }
 
 interface ProfileData {
@@ -57,6 +60,7 @@ const LINK_TYPES = [
   { type: 'youtube', label: 'YouTube', placeholder: 'https://youtube.com/@channel', icon: '▶️' },
   { type: 'spotify', label: 'Spotify', placeholder: 'https://open.spotify.com/...', icon: '🎧' },
   { type: 'custom', label: 'Custom', placeholder: 'https://...', icon: '🔗' },
+  { type: 'vcard', label: 'vCard', placeholder: 'Download contact card', icon: '📇' },
 ];
 
 const COLOR_PRESETS = [
@@ -218,6 +222,9 @@ export default function ProfileEditor() {
           linkType,
           label: typeDef?.label || '',
           url: '',
+          showBusiness: true,
+          showPersonal: false,
+          showShowcase: false,
         }),
       });
       if (!res.ok) throw new Error('Failed to add link');
@@ -228,7 +235,7 @@ export default function ProfileEditor() {
     }
   }
 
-  async function updateLink(id: string, field: string, value: string) {
+  function updateLink(id: string, field: string, value: string | boolean) {
     // Update locally immediately
     setLinks(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
   }
@@ -244,6 +251,9 @@ export default function ProfileEditor() {
           linkType: link.linkType,
           label: link.label,
           url: link.url,
+          showBusiness: link.showBusiness,
+          showPersonal: link.showPersonal,
+          showShowcase: link.showShowcase,
         }),
       });
     } catch {
@@ -530,7 +540,7 @@ export default function ProfileEditor() {
         <div style={sectionStyle}>
           <h3 style={sectionTitleStyle}>Links</h3>
           <p style={{ fontSize: '0.8125rem', color: '#5d6370', marginBottom: '1rem', marginTop: '-0.5rem' }}>
-            Drag to reorder. Changes save automatically.
+            Drag to reorder. Toggle where each link appears.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
@@ -548,79 +558,136 @@ export default function ProfileEditor() {
                   borderRadius: '0.5rem',
                   padding: '0.75rem',
                   display: 'flex',
-                  alignItems: 'center',
+                  flexDirection: 'column',
                   gap: '0.5rem',
                   cursor: 'grab',
                 }}
               >
-                {/* Drag handle */}
-                <span style={{ color: '#283042', fontSize: '1rem', cursor: 'grab', userSelect: 'none', lineHeight: 1 }}>
-                  ⋮⋮
-                </span>
+                {/* Row 1: drag handle, type, label, URL, delete */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ color: '#283042', fontSize: '1rem', cursor: 'grab', userSelect: 'none', lineHeight: 1 }}>
+                    ⋮⋮
+                  </span>
 
-                {/* Type selector */}
-                <select
-                  value={link.linkType}
-                  onChange={e => {
-                    const newType = e.target.value;
-                    const typeDef = LINK_TYPES.find(t => t.type === newType);
-                    updateLink(link.id!, 'linkType', newType);
-                    if (typeDef) updateLink(link.id!, 'label', typeDef.label);
-                  }}
-                  style={{
-                    padding: '0.375rem 0.5rem',
-                    border: '1px solid #283042',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.8125rem',
-                    fontFamily: 'inherit',
-                    backgroundColor: '#161c28',
-                    color: '#eceef2',
-                    width: 110,
-                    flexShrink: 0,
-                  }}
-                >
-                  {LINK_TYPES.map(lt => (
-                    <option key={lt.type} value={lt.type}>{lt.icon} {lt.label}</option>
-                  ))}
-                </select>
+                  <select
+                    value={link.linkType}
+                    onChange={e => {
+                      const newType = e.target.value;
+                      const typeDef = LINK_TYPES.find(t => t.type === newType);
+                      updateLink(link.id!, 'linkType', newType);
+                      if (typeDef) updateLink(link.id!, 'label', typeDef.label);
+                    }}
+                    style={{
+                      padding: '0.375rem 0.5rem',
+                      border: '1px solid #283042',
+                      borderRadius: '0.375rem',
+                      fontSize: '0.8125rem',
+                      fontFamily: 'inherit',
+                      backgroundColor: '#161c28',
+                      color: '#eceef2',
+                      width: 110,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {LINK_TYPES.map(lt => (
+                      <option key={lt.type} value={lt.type}>{lt.icon} {lt.label}</option>
+                    ))}
+                  </select>
 
-                {/* Label */}
-                <input
-                  type="text"
-                  value={link.label}
-                  onChange={e => updateLink(link.id!, 'label', e.target.value)}
-                  onBlur={() => saveLinkUpdate(link)}
-                  placeholder="Label"
-                  style={{ ...inputStyle, flex: '0 0 90px', padding: '0.375rem 0.5rem', fontSize: '0.8125rem' }}
-                />
+                  <input
+                    type="text"
+                    value={link.label}
+                    onChange={e => updateLink(link.id!, 'label', e.target.value)}
+                    onBlur={() => saveLinkUpdate(link)}
+                    placeholder="Label"
+                    style={{ ...inputStyle, flex: '0 0 90px', padding: '0.375rem 0.5rem', fontSize: '0.8125rem' }}
+                  />
 
-                {/* URL */}
-                <input
-                  type="text"
-                  value={link.url}
-                  onChange={e => updateLink(link.id!, 'url', e.target.value)}
-                  onBlur={() => saveLinkUpdate(link)}
-                  placeholder={LINK_TYPES.find(t => t.type === link.linkType)?.placeholder || 'https://...'}
-                  style={{ ...inputStyle, flex: 1, padding: '0.375rem 0.5rem', fontSize: '0.8125rem' }}
-                />
+                  <input
+                    type="text"
+                    value={link.url}
+                    onChange={e => updateLink(link.id!, 'url', e.target.value)}
+                    onBlur={() => saveLinkUpdate(link)}
+                    placeholder={LINK_TYPES.find(t => t.type === link.linkType)?.placeholder || 'https://...'}
+                    style={{ ...inputStyle, flex: 1, padding: '0.375rem 0.5rem', fontSize: '0.8125rem' }}
+                  />
 
-                {/* Delete */}
-                <button
-                  onClick={() => link.id && deleteLink(link.id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#5d6370',
-                    cursor: 'pointer',
-                    fontSize: '1.1rem',
-                    padding: '0.25rem',
-                    lineHeight: 1,
-                    flexShrink: 0,
-                  }}
-                  title="Remove link"
-                >
-                  ×
-                </button>
+                  <button
+                    onClick={() => link.id && deleteLink(link.id)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#5d6370',
+                      cursor: 'pointer',
+                      fontSize: '1.1rem',
+                      padding: '0.25rem',
+                      lineHeight: 1,
+                      flexShrink: 0,
+                    }}
+                    title="Remove link"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* Row 2: visibility toggle pills */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', paddingLeft: '1.5rem' }}>
+                  <span style={{ fontSize: '0.6875rem', color: '#5d6370', marginRight: '0.25rem' }}>Show on:</span>
+                  <button
+                    onClick={() => {
+                      updateLink(link.id!, 'showBusiness', !link.showBusiness);
+                      saveLinkUpdate({ ...link, showBusiness: !link.showBusiness });
+                    }}
+                    style={{
+                      fontSize: '0.625rem', fontWeight: 600, padding: '0.2rem 0.5rem',
+                      borderRadius: '9999px', border: 'none', textTransform: 'uppercase',
+                      letterSpacing: '0.03em', cursor: 'pointer', fontFamily: 'inherit',
+                      backgroundColor: link.showBusiness ? 'rgba(59, 130, 246, 0.15)' : '#1e2535',
+                      color: link.showBusiness ? '#60a5fa' : '#5d6370',
+                      opacity: link.showBusiness ? 1 : 0.7,
+                      transition: 'all 0.15s',
+                    }}
+                    title="Show on public business profile"
+                  >
+                    BIZ
+                  </button>
+                  <button
+                    onClick={() => {
+                      updateLink(link.id!, 'showPersonal', !link.showPersonal);
+                      saveLinkUpdate({ ...link, showPersonal: !link.showPersonal });
+                    }}
+                    style={{
+                      fontSize: '0.625rem', fontWeight: 600, padding: '0.2rem 0.5rem',
+                      borderRadius: '9999px', border: 'none', textTransform: 'uppercase',
+                      letterSpacing: '0.03em', cursor: 'pointer', fontFamily: 'inherit',
+                      backgroundColor: link.showPersonal ? 'rgba(236, 72, 153, 0.15)' : '#1e2535',
+                      color: link.showPersonal ? '#f472b6' : '#5d6370',
+                      opacity: link.showPersonal ? 1 : 0.7,
+                      transition: 'all 0.15s',
+                    }}
+                    title="Show on personal impression page"
+                  >
+                    PERSONAL
+                  </button>
+                  <button
+                    onClick={() => {
+                      updateLink(link.id!, 'showShowcase', !link.showShowcase);
+                      saveLinkUpdate({ ...link, showShowcase: !link.showShowcase });
+                    }}
+                    style={{
+                      fontSize: '0.625rem', fontWeight: 600, padding: '0.2rem 0.5rem',
+                      borderRadius: '9999px', border: 'none', textTransform: 'uppercase',
+                      letterSpacing: '0.03em', cursor: 'pointer', fontFamily: 'inherit',
+                      backgroundColor: link.showShowcase ? 'rgba(251, 191, 36, 0.15)' : '#1e2535',
+                      color: link.showShowcase ? '#fbbf24' : '#5d6370',
+                      opacity: link.showShowcase ? 1 : 0.7,
+                      transition: 'all 0.15s',
+                    }}
+                    title="Show on showcase page"
+                  >
+                    SHOWCASE
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -851,7 +918,7 @@ export default function ProfileEditor() {
               company={company}
               tagline={tagline}
               photoUrl={photoUrl}
-              links={links.map(l => ({
+              links={links.filter(l => l.showBusiness).map(l => ({
                 id: l.id || String(l.displayOrder),
                 link_type: l.linkType,
                 label: l.label,
