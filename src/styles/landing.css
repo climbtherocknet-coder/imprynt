@@ -3,24 +3,7 @@
    Dark navy + warm gold accent
    ═══════════════════════════════════════════ */
 
-:root {
-  --bg: #0c1017;
-  --bg-lighter: #111621;
-  --surface: #161c28;
-  --surface-2: #1b2233;
-  --surface-3: #212a3d;
-  --text: #eceef2;
-  --text-mid: #a8adb8;
-  --text-muted: #5d6370;
-  --accent: #e8a849;
-  --accent-hover: #f0b85e;
-  --accent-glow: rgba(232, 168, 73, 0.06);
-  --accent-border: rgba(232, 168, 73, 0.14);
-  --border: #1e2535;
-  --border-light: #283042;
-  --serif: var(--font-serif), Georgia, serif;
-  --sans: var(--font-sans), 'Inter', system-ui, -apple-system, sans-serif;
-}
+/* Variables now defined in theme.css */
 
 /* ── Reset ── */
 .landing *, .landing *::before, .landing *::after {

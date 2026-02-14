@@ -50,6 +50,8 @@ CREATE TABLE profiles (
     accent_color    VARCHAR(7) DEFAULT '#3B82F6',   -- hex
     font_pair       VARCHAR(50) DEFAULT 'default',  -- e.g. 'default', 'serif', 'mono'
     is_published    BOOLEAN NOT NULL DEFAULT false,
+    photo_shape     VARCHAR(20) NOT NULL DEFAULT 'circle',
+    photo_radius    INTEGER,
     status_tags     TEXT[] DEFAULT '{}',              -- e.g. {'open_to_network','hiring'}
     slug_rotated_at TIMESTAMPTZ DEFAULT NOW(),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ThemeToggle from '@/components/ThemeToggle';
 import '@/styles/landing.css';
 
 export default function HomePage() {
@@ -14,6 +15,7 @@ export default function HomePage() {
         <div className="lp-nav-links">
           <a href="#compare" className="lp-nav-link hide-m">Why Imprynt</a>
           <a href="#pricing" className="lp-nav-link hide-m">Pricing</a>
+          <ThemeToggle />
           <Link href="/login" className="lp-nav-link">Sign in</Link>
           <Link href="/register" className="lp-nav-cta">Get started</Link>
         </div>

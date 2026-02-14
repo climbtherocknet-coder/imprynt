@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { Inter, Instrument_Serif } from 'next/font/google';
+import ThemeProvider from '@/components/ThemeProvider';
+import '@/styles/theme.css';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -40,8 +42,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${instrumentSerif.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            var t = localStorage.getItem('imprynt-theme') || 'system';
+            var r = t === 'system'
+              ? (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+              : t;
+            document.documentElement.setAttribute('data-theme', r);
+          })();
+        `}} />
+      </head>
       <body style={{ margin: 0, padding: 0 }} className={inter.className}>
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
         {process.env.NEXT_PUBLIC_UMAMI_URL && process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
           <Script
             src={`${process.env.NEXT_PUBLIC_UMAMI_URL}/script.js`}

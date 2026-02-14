@@ -42,6 +42,8 @@ interface ProfileData {
     statusTagColor: string | null;
     allowSharing: boolean;
     allowFeedback: boolean;
+    photoShape: string;
+    photoRadius: number | null;
   };
   links: LinkItem[];
 }
@@ -78,14 +80,14 @@ const TEMPLATE_LIST = Object.values(THEMES);
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.5625rem 0.75rem',
-  border: '1px solid #283042',
+  border: '1px solid var(--border-light, #283042)',
   borderRadius: '0.5rem',
   fontSize: '0.9375rem',
   boxSizing: 'border-box',
   outline: 'none',
   fontFamily: 'inherit',
-  backgroundColor: '#0c1017',
-  color: '#eceef2',
+  backgroundColor: 'var(--bg, #0c1017)',
+  color: 'var(--text, #eceef2)',
 };
 
 const labelStyle: React.CSSProperties = {
@@ -93,13 +95,13 @@ const labelStyle: React.CSSProperties = {
   fontSize: '0.8125rem',
   fontWeight: 500,
   marginBottom: '0.3125rem',
-  color: '#a8adb8',
+  color: 'var(--text-mid, #a8adb8)',
 };
 
 const sectionStyle: React.CSSProperties = {
-  backgroundColor: '#161c28',
+  backgroundColor: 'var(--surface, #161c28)',
   borderRadius: '1rem',
-  border: '1px solid #1e2535',
+  border: '1px solid var(--border, #1e2535)',
   padding: '1.5rem',
   marginBottom: '1.25rem',
 };
@@ -108,13 +110,13 @@ const sectionTitleStyle: React.CSSProperties = {
   fontSize: '1rem',
   fontWeight: 600,
   marginBottom: '1rem',
-  color: '#eceef2',
+  color: 'var(--text, #eceef2)',
 };
 
 const saveBtnStyle: React.CSSProperties = {
   padding: '0.5rem 1.25rem',
-  backgroundColor: '#e8a849',
-  color: '#0c1017',
+  backgroundColor: 'var(--accent, #e8a849)',
+  color: 'var(--bg, #0c1017)',
   border: 'none',
   borderRadius: '2rem',
   fontSize: '0.8125rem',
@@ -147,6 +149,9 @@ export default function ProfileEditor() {
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [allowSharing, setAllowSharing] = useState(true);
   const [allowFeedback, setAllowFeedback] = useState(true);
+  const [photoShape, setPhotoShape] = useState('circle');
+  const [photoRadius, setPhotoRadius] = useState<number>(50);
+  const [showShapeSlider, setShowShapeSlider] = useState(false);
   const [previewPods, setPreviewPods] = useState<{ id: string; podType: string; label: string; title: string; body: string; imageUrl: string; stats: { num: string; label: string }[]; ctaLabel: string; ctaUrl: string; tags?: string; imagePosition?: string }[]>([]);
 
   // Photo upload
@@ -181,6 +186,12 @@ export default function ProfileEditor() {
         setPhotoUrl(d.profile.photoUrl);
         setAllowSharing(d.profile.allowSharing !== false);
         setAllowFeedback(d.profile.allowFeedback !== false);
+        setPhotoShape(d.profile.photoShape || 'circle');
+        if (d.profile.photoRadius != null) setPhotoRadius(d.profile.photoRadius);
+        else {
+          const map: Record<string, number> = { circle: 50, rounded: 32, soft: 16, square: 0 };
+          setPhotoRadius(map[d.profile.photoShape] ?? 50);
+        }
         setLoading(false);
       })
       .catch(() => {
@@ -730,7 +741,7 @@ export default function ProfileEditor() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={sectionTitleStyle}>Appearance</h3>
             <button
-              onClick={() => saveSection('appearance', { template, primaryColor, accentColor, fontPair })}
+              onClick={() => saveSection('appearance', { template, primaryColor, accentColor, fontPair, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null })}
               disabled={saving === 'appearance'}
               style={{ ...saveBtnStyle, opacity: saving === 'appearance' ? 0.6 : 1 }}
             >
@@ -837,6 +848,83 @@ export default function ProfileEditor() {
               style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid #283042', cursor: 'pointer', padding: 0 }}
             />
           </div>
+
+          {/* Photo shape */}
+          <label style={{ ...labelStyle, marginTop: '1.25rem' }}>Photo Shape</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            {([
+              { id: 'circle', label: 'Circle', render: <div style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: '#e8a849' }} /> },
+              { id: 'rounded', label: 'Rounded', render: <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: '#e8a849' }} /> },
+              { id: 'soft', label: 'Soft', render: <div style={{ width: 28, height: 28, borderRadius: 4, backgroundColor: '#e8a849' }} /> },
+              { id: 'square', label: 'Square', render: <div style={{ width: 28, height: 28, borderRadius: 0, backgroundColor: '#e8a849' }} /> },
+              { id: 'hexagon', label: 'Hexagon', render: <div style={{ width: 28, height: 28, clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)', backgroundColor: '#e8a849' }} /> },
+              { id: 'diamond', label: 'Diamond', render: <div style={{ width: 28, height: 28, clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', backgroundColor: '#e8a849' }} /> },
+            ] as const).map(shape => {
+              const isSelected = photoShape === shape.id;
+              return (
+                <button
+                  key={shape.id}
+                  onClick={() => {
+                    setPhotoShape(shape.id);
+                    const map: Record<string, number> = { circle: 50, rounded: 32, soft: 16, square: 0 };
+                    if (map[shape.id] !== undefined) setPhotoRadius(map[shape.id]);
+                    if (shape.id === 'hexagon' || shape.id === 'diamond') setShowShapeSlider(false);
+                  }}
+                  title={shape.label}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '0.375rem',
+                    border: isSelected ? '2px solid #e8a849' : '2px solid #283042',
+                    backgroundColor: '#1e2535',
+                    cursor: 'pointer',
+                    padding: 0,
+                    transition: 'border-color 0.15s',
+                  }}
+                >
+                  {shape.render}
+                </button>
+              );
+            })}
+          </div>
+          {!['hexagon', 'diamond'].includes(photoShape) && (
+            <button
+              onClick={() => setShowShapeSlider(!showShapeSlider)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                fontSize: '0.75rem', color: '#5d6370', padding: 0, marginBottom: '0.25rem',
+                transition: 'color 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#e8a849')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#5d6370')}
+            >
+              {showShapeSlider ? 'Hide' : 'Customize'} radius
+            </button>
+          )}
+          {showShapeSlider && !['hexagon', 'diamond'].includes(photoShape) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.25rem' }}>
+              <input
+                type="range"
+                min={0}
+                max={50}
+                value={photoRadius}
+                onChange={e => {
+                  const val = parseInt(e.target.value);
+                  setPhotoRadius(val);
+                  if (val === 50) setPhotoShape('circle');
+                  else if (val === 32) setPhotoShape('rounded');
+                  else if (val === 16) setPhotoShape('soft');
+                  else if (val === 0) setPhotoShape('square');
+                  else setPhotoShape('custom');
+                }}
+                style={{ flex: 1, accentColor: '#e8a849' }}
+              />
+              <span style={{ fontSize: '0.75rem', color: '#a8adb8', minWidth: 32, textAlign: 'right' }}>{photoRadius}%</span>
+            </div>
+          )}
         </div>
 
         {/* ─── Sharing Settings ──────────────────── */}
@@ -921,6 +1009,8 @@ export default function ProfileEditor() {
               isPaid={isPaid}
               statusTags={data.profile.statusTags || []}
               statusTagColor={data.profile.statusTagColor || undefined}
+              photoShape={photoShape}
+              photoRadius={photoShape === 'custom' ? photoRadius : null}
             />
           </div>
         </div>

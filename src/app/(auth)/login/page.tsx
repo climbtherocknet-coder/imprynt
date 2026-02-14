@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import ThemeToggle from '@/components/ThemeToggle';
 import '@/styles/auth.css';
 
 export default function LoginPage() {
@@ -51,6 +52,9 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
+      <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
+        <ThemeToggle />
+      </div>
       <Link href="/" className="auth-logo">
         <span className="auth-logo-mark" />
         <span className="auth-logo-text">Imprynt</span>

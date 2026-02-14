@@ -25,6 +25,8 @@ export interface ProfileTemplateProps {
   isPaid: boolean;
   statusTags?: string[];
   statusTagColor?: string;
+  photoShape?: string;
+  photoRadius?: number | null;
 }
 
 function getLinkHref(link: { link_type: string; url: string }) {
@@ -51,10 +53,15 @@ export default function ProfileTemplate({
   isPaid,
   statusTags = [],
   statusTagColor,
+  photoShape,
+  photoRadius,
 }: ProfileTemplateProps) {
   const theme = getTheme(template);
   const cssVars = getThemeCSSVars(theme);
   const dataAttrs = getTemplateDataAttrs(theme);
+  // User's photo shape overrides the theme default
+  const effectiveShape = photoShape || theme.modifiers.photoShape;
+  dataAttrs['data-photo'] = effectiveShape === 'custom' ? 'custom' : effectiveShape;
   const googleFontsUrl = getGoogleFontsUrl(theme);
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
   const subtitle = [title, company].filter(Boolean).join(' · ');
@@ -111,6 +118,8 @@ export default function ProfileTemplate({
                 subtitle={subtitle}
                 tagline={tagline}
                 hasTagline={!!theme.effects?.heroTagline}
+                photoShape={effectiveShape}
+                photoRadius={photoRadius}
               />
             </div>
           ) : (
@@ -121,6 +130,8 @@ export default function ProfileTemplate({
               subtitle={subtitle}
               tagline={tagline}
               hasTagline={!!theme.effects?.heroTagline}
+              photoShape={effectiveShape}
+              photoRadius={photoRadius}
             />
           )}
 
@@ -204,15 +215,21 @@ export default function ProfileTemplate({
 
 // ── Hero sub-component (used in both wrapped and unwrapped modes)
 function HeroContent({
-  photoUrl, fullName, firstName, subtitle, tagline, hasTagline,
+  photoUrl, fullName, firstName, subtitle, tagline, hasTagline, photoShape, photoRadius,
 }: {
   photoUrl: string; fullName: string; firstName: string;
   subtitle: string; tagline: string; hasTagline: boolean;
+  photoShape?: string; photoRadius?: number | null;
 }) {
+  const customPhotoStyle: React.CSSProperties | undefined =
+    photoShape === 'custom' && photoRadius != null
+      ? { borderRadius: `${photoRadius}%` }
+      : undefined;
+
   return (
     <>
       <div className="hero-top fade-in d1">
-        <div className="photo">
+        <div className="photo" style={customPhotoStyle}>
           {photoUrl ? (
             <img src={photoUrl} alt={fullName} />
           ) : (

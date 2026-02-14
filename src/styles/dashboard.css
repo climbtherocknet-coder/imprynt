@@ -626,7 +626,7 @@
 .rte-content {
   padding: 0.5625rem 0.75rem;
   font-size: 0.9375rem;
-  color: #eceef2;
+  color: var(--text, #eceef2);
   font-family: inherit;
   line-height: 1.65;
   min-height: 80px;
@@ -644,7 +644,7 @@
 .rte-content p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
-  color: #4a5068;
+  color: var(--text-muted, #5d6370);
   pointer-events: none;
   height: 0;
 }
@@ -652,7 +652,7 @@
 /* Inline formatting */
 .rte-content strong {
   font-weight: 700;
-  color: #fff;
+  color: var(--text, #eceef2);
 }
 .rte-content em {
   font-style: italic;
@@ -660,7 +660,7 @@
 
 /* Links */
 .rte-content a {
-  color: #e8a849;
+  color: var(--accent, #e8a849);
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
@@ -729,7 +729,7 @@
 .preview-phone {
   width: 375px;
   height: 720px;
-  border: 3px solid #283042;
+  border: 3px solid var(--border-light, #283042);
   border-radius: 2.5rem;
   overflow: hidden;
   position: relative;
@@ -745,7 +745,7 @@
   width: 80px;
   height: 6px;
   border-radius: 3px;
-  background: #283042;
+  background: var(--border-light, #283042);
   z-index: 10;
 }
 

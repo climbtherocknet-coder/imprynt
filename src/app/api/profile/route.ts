@@ -23,7 +23,7 @@ export async function GET() {
 
   const profileResult = await query(
     `SELECT id, slug, redirect_id, title, company, tagline, bio_heading, bio,
-            photo_url, template, primary_color, accent_color, font_pair, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback
+            photo_url, template, primary_color, accent_color, font_pair, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback, photo_shape, photo_radius
      FROM profiles WHERE user_id = $1`,
     [userId]
   );
@@ -65,6 +65,8 @@ export async function GET() {
       statusTagColor: profile.status_tag_color || null,
       allowSharing: profile.allow_sharing !== false,
       allowFeedback: profile.allow_feedback !== false,
+      photoShape: profile.photo_shape || 'circle',
+      photoRadius: profile.photo_radius != null ? profile.photo_radius : null,
     },
     links: linksResult.rows.map((l: Record<string, unknown>) => ({
       id: l.id,
@@ -118,10 +120,11 @@ export async function PUT(req: NextRequest) {
         ]
       );
     } else if (section === 'appearance') {
-      const { template, primaryColor, accentColor, fontPair } = body;
+      const { template, primaryColor, accentColor, fontPair, photoShape, photoRadius } = body;
 
       const validFonts = ['default', 'serif', 'mono'];
       const hexRegex = /^#[0-9a-fA-F]{6}$/;
+      const validShapes = ['circle', 'rounded', 'soft', 'square', 'hexagon', 'diamond', 'custom'];
 
       if (template && !isValidTemplate(template)) {
         return NextResponse.json({ error: 'Invalid template' }, { status: 400 });
@@ -142,15 +145,24 @@ export async function PUT(req: NextRequest) {
       if (fontPair && !validFonts.includes(fontPair)) {
         return NextResponse.json({ error: 'Invalid font pair' }, { status: 400 });
       }
+      if (photoShape && !validShapes.includes(photoShape)) {
+        return NextResponse.json({ error: 'Invalid photo shape' }, { status: 400 });
+      }
+
+      const radiusVal = photoShape === 'custom' && typeof photoRadius === 'number'
+        ? Math.max(0, Math.min(50, photoRadius))
+        : null;
 
       await query(
         `UPDATE profiles SET
           template = COALESCE($1, template),
           primary_color = COALESCE($2, primary_color),
           accent_color = COALESCE($3, accent_color),
-          font_pair = COALESCE($4, font_pair)
-         WHERE user_id = $5`,
-        [template, primaryColor, accentColor, fontPair, userId]
+          font_pair = COALESCE($4, font_pair),
+          photo_shape = COALESCE($5, photo_shape),
+          photo_radius = $6
+         WHERE user_id = $7`,
+        [template, primaryColor, accentColor, fontPair, photoShape || null, radiusVal, userId]
       );
     } else if (section === 'statusTags') {
       const { statusTags } = body;

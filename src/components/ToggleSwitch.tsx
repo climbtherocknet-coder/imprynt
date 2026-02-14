@@ -25,7 +25,7 @@ export default function ToggleSwitch({ checked, onChange, label, description, di
           borderRadius: 10,
           border: 'none',
           cursor: disabled ? 'not-allowed' : 'pointer',
-          backgroundColor: checked ? '#e8a849' : '#283042',
+          backgroundColor: checked ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
           transition: 'background-color 0.2s',
           padding: 0,
           flexShrink: 0,
@@ -50,7 +50,7 @@ export default function ToggleSwitch({ checked, onChange, label, description, di
         <span style={{
           fontSize: '0.8125rem',
           fontWeight: 500,
-          color: checked ? '#eceef2' : '#a8adb8',
+          color: checked ? 'var(--text, #eceef2)' : 'var(--text-mid, #a8adb8)',
           cursor: disabled ? 'not-allowed' : 'pointer',
           userSelect: 'none',
         }}
@@ -59,7 +59,7 @@ export default function ToggleSwitch({ checked, onChange, label, description, di
           {label}
         </span>
         {description && (
-          <p style={{ fontSize: '0.75rem', color: '#5d6370', margin: '0.125rem 0 0' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0.125rem 0 0' }}>
             {description}
           </p>
         )}

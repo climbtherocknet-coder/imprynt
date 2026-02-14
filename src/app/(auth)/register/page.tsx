@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
+import ThemeToggle from '@/components/ThemeToggle';
 import { validatePassword } from '@/lib/password-validation';
 import '@/styles/auth.css';
 
@@ -180,6 +181,9 @@ function RegisterForm() {
 export default function RegisterPage() {
   return (
     <div className="auth-page">
+      <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
+        <ThemeToggle />
+      </div>
       <Link href="/" className="auth-logo">
         <span className="auth-logo-mark" />
         <span className="auth-logo-text">Imprynt</span>

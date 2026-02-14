@@ -159,6 +159,12 @@
 /* Photo shapes via data-attribute */
 [data-photo="circle"] .photo { border-radius: 50%; }
 [data-photo="rounded-square"] .photo { border-radius: var(--radius-lg); }
+[data-photo="rounded"] .photo { border-radius: 16px; }
+[data-photo="soft"] .photo { border-radius: 8px; }
+[data-photo="square"] .photo { border-radius: 0; }
+[data-photo="hexagon"] .photo { clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); border-radius: 0; }
+[data-photo="diamond"] .photo { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); border-radius: 0; }
+/* custom shape uses inline style for border-radius */
 
 /* ── Links ── */
 .link-row {

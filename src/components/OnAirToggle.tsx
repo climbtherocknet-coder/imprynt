@@ -4,9 +4,10 @@ import { useState } from 'react';
 
 interface Props {
   initialPublished: boolean;
+  slug?: string;
 }
 
-export default function OnAirToggle({ initialPublished }: Props) {
+export default function OnAirToggle({ initialPublished, slug }: Props) {
   const [published, setPublished] = useState(initialPublished);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -93,6 +94,26 @@ export default function OnAirToggle({ initialPublished }: Props) {
             }}
           />
         </button>
+
+        {/* View live profile link */}
+        {published && slug && (
+          <a
+            href={`/${slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: '0.75rem',
+              color: 'var(--text-muted, #5d6370)',
+              textDecoration: 'none',
+              marginLeft: '0.25rem',
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text, #eceef2)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted, #5d6370)')}
+          >
+            View &rarr;
+          </a>
+        )}
       </div>
 
       {/* Confirmation message */}
