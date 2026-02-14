@@ -12,8 +12,10 @@ export async function POST(req: NextRequest) {
   }
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!webhookSecret) {
-    console.error('STRIPE_WEBHOOK_SECRET not set');
+  const isDev = process.env.NODE_ENV === 'development';
+
+  if (!webhookSecret && !isDev) {
+    console.error('STRIPE_WEBHOOK_SECRET not set in production');
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
   }
 
@@ -21,17 +23,24 @@ export async function POST(req: NextRequest) {
   const body = await req.text();
   const signature = req.headers.get('stripe-signature');
 
-  if (!signature) {
-    return NextResponse.json({ error: 'No signature' }, { status: 400 });
-  }
-
   let event: Stripe.Event;
 
-  try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-  } catch (err) {
-    console.error('Webhook signature verification failed:', err);
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+  if (webhookSecret && signature) {
+    try {
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    } catch (err) {
+      console.error('Webhook signature verification failed:', err);
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+    }
+  } else if (isDev) {
+    console.warn('[DEV] Skipping Stripe webhook signature verification');
+    try {
+      event = JSON.parse(body) as Stripe.Event;
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+  } else {
+    return NextResponse.json({ error: 'No signature' }, { status: 400 });
   }
 
   try {

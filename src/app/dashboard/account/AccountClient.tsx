@@ -78,10 +78,13 @@ export default function AccountClient({ user, accessories }: AccountProps) {
         body: JSON.stringify({ plan, accessory }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to start checkout');
+      }
       if (data.url) {
         window.location.href = data.url;
       } else {
-        throw new Error(data.error || 'Failed to start checkout');
+        throw new Error('No checkout URL returned');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Checkout failed');
@@ -212,7 +215,7 @@ export default function AccountClient({ user, accessories }: AccountProps) {
         </div>
 
         {/* Plan & Billing */}
-        <div style={sectionStyle}>
+        <div id="upgrade" style={sectionStyle}>
           <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', color: '#eceef2' }}>Plan & Billing</h3>
 
           <div style={{

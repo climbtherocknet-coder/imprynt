@@ -54,6 +54,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Check plan
+  const planResult = await query('SELECT plan FROM users WHERE id = $1', [session.user.id]);
+  if (planResult.rows[0]?.plan === 'free') {
+    return NextResponse.json({ error: 'Premium required' }, { status: 403 });
+  }
+
   const body = await req.json();
   const { protectedPageId, title, description, imageUrl, linkUrl, tags, itemDate } = body;
 
@@ -116,6 +122,12 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Check plan
+  const planResult = await query('SELECT plan FROM users WHERE id = $1', [session.user.id]);
+  if (planResult.rows[0]?.plan === 'free') {
+    return NextResponse.json({ error: 'Premium required' }, { status: 403 });
+  }
+
   const body = await req.json();
   const { id, title, description, imageUrl, linkUrl, tags, itemDate } = body;
 
@@ -162,6 +174,12 @@ export async function DELETE(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Check plan
+  const planResult = await query('SELECT plan FROM users WHERE id = $1', [session.user.id]);
+  if (planResult.rows[0]?.plan === 'free') {
+    return NextResponse.json({ error: 'Premium required' }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);

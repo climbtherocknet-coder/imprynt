@@ -20,6 +20,10 @@ export async function POST(req: NextRequest) {
   // plan: 'monthly' | 'annual'
   // accessory: 'ring' | 'band' | null (optional one-time purchase)
 
+  if (!plan || !['monthly', 'annual'].includes(plan)) {
+    return NextResponse.json({ error: 'Invalid plan selected' }, { status: 400 });
+  }
+
   // Validate plan
   const priceId = plan === 'annual' ? STRIPE_PRICES.premiumAnnual : STRIPE_PRICES.premiumMonthly;
   if (!priceId) {
@@ -99,6 +103,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: checkoutSession.url });
   } catch (err) {
     console.error('Stripe checkout error:', err);
-    return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
+    const message = err instanceof Error ? err.message : 'Failed to create checkout session';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

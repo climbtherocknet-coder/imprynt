@@ -143,6 +143,13 @@ export async function PUT(req: NextRequest) {
   }
 
   const userId = session.user.id;
+
+  // Check plan
+  const planResult = await query('SELECT plan FROM users WHERE id = $1', [userId]);
+  if (planResult.rows[0]?.plan === 'free') {
+    return NextResponse.json({ error: 'Premium required' }, { status: 403 });
+  }
+
   const body = await req.json();
   const { id, pageTitle, bioText, buttonLabel, resumeUrl, pin, isActive, iconColor, iconOpacity, iconCorner, allowRemember } = body;
 

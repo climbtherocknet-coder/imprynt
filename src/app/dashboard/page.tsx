@@ -4,6 +4,7 @@ import { query } from '@/lib/db';
 import SignOutButton from './SignOutButton';
 import StatusTagPicker from './StatusTagPicker';
 import OnAirToggle from '@/components/OnAirToggle';
+import CheckoutToast from './CheckoutToast';
 import '@/styles/dashboard.css';
 
 interface ProfileRow {
@@ -23,7 +24,14 @@ interface AnalyticsRow {
   last_viewed: string | null;
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ checkout?: string }>;
+}) {
+  const resolvedParams = await searchParams;
+  const checkoutStatus = resolvedParams.checkout;
+
   const session = await auth();
   if (!session?.user) {
     redirect('/login');
@@ -104,6 +112,8 @@ export default async function DashboardPage() {
         </div>
       </header>
 
+      {checkoutStatus && <CheckoutToast status={checkoutStatus} />}
+
       <main className="dash-main">
         {/* Stats Row */}
         <div className="dash-stats">
@@ -170,7 +180,7 @@ export default async function DashboardPage() {
               <span className="dash-nav-arrow">→</span>
             </a>
           ) : (
-            <div className="dash-nav-card dash-nav-card--locked">
+            <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
               <div>
                 <h3 className="dash-nav-title">Impression</h3>
                 <p className="dash-nav-desc">
@@ -178,7 +188,7 @@ export default async function DashboardPage() {
                 </p>
               </div>
               <span className="dash-nav-arrow">🔒</span>
-            </div>
+            </a>
           )}
 
           {/* Showcase */}
@@ -193,7 +203,7 @@ export default async function DashboardPage() {
               <span className="dash-nav-arrow">→</span>
             </a>
           ) : (
-            <div className="dash-nav-card dash-nav-card--locked">
+            <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
               <div>
                 <h3 className="dash-nav-title">Showcase</h3>
                 <p className="dash-nav-desc">
@@ -201,7 +211,7 @@ export default async function DashboardPage() {
                 </p>
               </div>
               <span className="dash-nav-arrow">🔒</span>
-            </div>
+            </a>
           )}
 
           {/* Account */}
