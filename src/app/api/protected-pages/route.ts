@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     SELECT pp.id, pp.page_title, pp.visibility_mode, pp.bio_text,
            pp.button_label, pp.resume_url, pp.display_order, pp.is_active,
            pp.icon_color, pp.icon_opacity, pp.icon_corner, pp.allow_remember,
-           pp.profile_id
+           pp.photo_url, pp.profile_id
     FROM protected_pages pp
     JOIN profiles p ON p.id = pp.profile_id
     WHERE pp.user_id = $1
@@ -57,6 +57,7 @@ export async function GET(req: NextRequest) {
       iconOpacity: row.icon_opacity != null ? parseFloat(row.icon_opacity) : 0.35,
       iconCorner: row.icon_corner || 'bottom-right',
       allowRemember: row.allow_remember !== false,
+      photoUrl: row.photo_url || '',
       displayOrder: row.display_order,
       isActive: row.is_active,
       links: linksResult.rows.map((l: Record<string, unknown>) => ({
@@ -153,7 +154,7 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { id, pageTitle, bioText, buttonLabel, resumeUrl, pin, isActive, iconColor, iconOpacity, iconCorner, allowRemember } = body;
+  const { id, pageTitle, bioText, buttonLabel, resumeUrl, pin, isActive, iconColor, iconOpacity, iconCorner, allowRemember, photoUrl } = body;
 
   if (!id) {
     return NextResponse.json({ error: 'Page ID required' }, { status: 400 });
@@ -209,6 +210,10 @@ export async function PUT(req: NextRequest) {
   if (allowRemember !== undefined) {
     updates.push(`allow_remember = $${paramIdx++}`);
     params.push(!!allowRemember);
+  }
+  if (photoUrl !== undefined) {
+    updates.push(`photo_url = $${paramIdx++}`);
+    params.push(photoUrl?.trim()?.slice(0, 500) || null);
   }
   if (pin) {
     if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {

@@ -23,7 +23,7 @@ export async function GET() {
 
   const profileResult = await query(
     `SELECT id, slug, redirect_id, title, company, tagline, bio_heading, bio,
-            photo_url, template, primary_color, accent_color, font_pair, is_published, status_tags, allow_sharing, allow_feedback
+            photo_url, template, primary_color, accent_color, font_pair, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback
      FROM profiles WHERE user_id = $1`,
     [userId]
   );
@@ -62,6 +62,7 @@ export async function GET() {
       fontPair: profile.font_pair,
       isPublished: profile.is_published,
       statusTags: profile.status_tags || [],
+      statusTagColor: profile.status_tag_color || null,
       allowSharing: profile.allow_sharing !== false,
       allowFeedback: profile.allow_feedback !== false,
     },

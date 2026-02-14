@@ -79,6 +79,9 @@ CREATE TABLE protected_pages (
     icon_color      VARCHAR(20),      -- impression icon color (default: accent color)
     icon_opacity    NUMERIC(3,2) DEFAULT 0.35,  -- impression icon opacity (0.0 - 1.0)
     icon_corner     VARCHAR(20) DEFAULT 'bottom-right', -- impression icon corner placement
+    photo_url       VARCHAR(500),     -- personal photo for impression pages
+    allow_remember  BOOLEAN NOT NULL DEFAULT true,
+    pin_version     INTEGER NOT NULL DEFAULT 1,
     display_order   INTEGER NOT NULL DEFAULT 0,
     is_active       BOOLEAN NOT NULL DEFAULT true,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
