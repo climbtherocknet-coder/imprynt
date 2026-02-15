@@ -1,14 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useWaitlistModal } from './WaitlistCTA';
 
 const STORAGE_KEY = 'waitlist-banner-dismissed';
 
-interface Props {
-  onJoin: () => void;
-}
-
-export default function WaitlistBanner({ onJoin }: Props) {
+export default function WaitlistBanner() {
+  const openModal = useWaitlistModal();
   const [dismissed, setDismissed] = useState(true); // hidden until hydration
 
   useEffect(() => {
@@ -28,7 +26,7 @@ export default function WaitlistBanner({ onJoin }: Props) {
         <span className="lp-wl-banner-text">
           Imprynt is in early access — spots are limited
         </span>
-        <button onClick={onJoin} className="lp-wl-banner-cta">
+        <button onClick={openModal} className="lp-wl-banner-cta">
           Join waitlist →
         </button>
       </div>
