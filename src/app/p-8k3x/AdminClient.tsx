@@ -183,6 +183,7 @@ export default function AdminClient({ adminEmail }: { adminEmail: string }) {
 
 interface TrafficData {
   configured: boolean;
+  error?: string;
   period: string;
   stats: {
     pageviews?: { value: number };
@@ -305,10 +306,10 @@ function OverviewTab() {
         </div>
 
         {!traffic?.configured ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#5d6370', fontSize: '0.8125rem', background: '#161c28', borderRadius: '0.75rem', border: '1px solid #1e2535' }}>
+          <div style={{ padding: '2rem', textAlign: 'center', color: '#5d6370', fontSize: '0.8125rem', background: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
             <p style={{ margin: '0 0 0.5rem' }}>Analytics not configured yet.</p>
             <p style={{ margin: 0, fontSize: '0.75rem' }}>
-              Set up Umami and add NEXT_PUBLIC_UMAMI_WEBSITE_ID to your environment.
+              {traffic?.error || 'Set up Umami and add UMAMI_WEBSITE_ID to your environment.'}
             </p>
           </div>
         ) : trafficLoading ? (

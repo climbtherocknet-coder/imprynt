@@ -46,12 +46,12 @@ export async function GET(req: NextRequest) {
   }
 
   if (!WEBSITE_ID) {
-    return NextResponse.json({ error: 'Umami not configured', configured: false }, { status: 200 });
+    return NextResponse.json({ error: 'UMAMI_WEBSITE_ID env var is empty', configured: false }, { status: 200 });
   }
 
   const token = await getUmamiToken();
   if (!token) {
-    return NextResponse.json({ error: 'Cannot connect to Umami', configured: false }, { status: 200 });
+    return NextResponse.json({ error: `Cannot authenticate with Umami at ${UMAMI_API_URL}`, configured: false }, { status: 200 });
   }
 
   // Parse period from query
