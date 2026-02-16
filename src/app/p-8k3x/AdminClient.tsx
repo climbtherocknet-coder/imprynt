@@ -146,8 +146,8 @@ export default function AdminClient({ adminEmail }: { adminEmail: string }) {
             <div className="dash-logo-mark" />
             <span className="dash-logo-text">Imprynt</span>
           </Link>
-          <span style={{ color: '#283042' }}>/</span>
-          <span style={{ fontSize: '0.875rem', color: '#5d6370' }}>Admin</span>
+          <span style={{ color: 'var(--border-light)' }}>/</span>
+          <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Admin</span>
         </div>
         <Link href="/dashboard" className="admin-btn admin-btn--ghost admin-btn--small">
           Dashboard
@@ -223,7 +223,7 @@ function OverviewTab() {
   }, [trafficPeriod]);
 
   if (!stats) {
-    return <p style={{ color: '#5d6370' }}>Loading...</p>;
+    return <p style={{ color: 'var(--text-muted)' }}>Loading...</p>;
   }
 
   const periodLabels: Record<TrafficPeriod, string> = {
@@ -283,7 +283,7 @@ function OverviewTab() {
       {/* Traffic Analytics */}
       <div style={{ marginTop: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <h3 style={{ margin: 0, fontSize: '0.875rem', color: '#eceef2', fontWeight: 600 }}>
+          <h3 style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', fontWeight: 600 }}>
             Site Traffic
             {traffic?.activeVisitors !== undefined && traffic.activeVisitors > 0 && (
               <span style={{ marginLeft: '0.75rem', fontSize: '0.75rem', color: '#22c55e', fontWeight: 500 }}>
@@ -306,14 +306,14 @@ function OverviewTab() {
         </div>
 
         {!traffic?.configured ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#5d6370', fontSize: '0.8125rem', background: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem', background: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
             <p style={{ margin: '0 0 0.5rem' }}>Analytics not configured yet.</p>
             <p style={{ margin: 0, fontSize: '0.75rem' }}>
               {traffic?.error || 'Set up Umami and add UMAMI_WEBSITE_ID to your environment.'}
             </p>
           </div>
         ) : trafficLoading ? (
-          <p style={{ color: '#5d6370', fontSize: '0.8125rem' }}>Loading traffic data...</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Loading traffic data...</p>
         ) : (
           <>
             {/* Traffic Stat Cards */}
@@ -342,8 +342,8 @@ function OverviewTab() {
 
             {/* Pageviews Chart */}
             {pvData.length > 0 && (
-              <div style={{ background: '#161c28', borderRadius: '0.75rem', border: '1px solid #1e2535', padding: '1rem', marginBottom: '1.25rem' }}>
-                <div style={{ fontSize: '0.75rem', color: '#5d6370', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div style={{ background: 'var(--surface)', borderRadius: '0.75rem', border: '1px solid var(--border)', padding: '1rem', marginBottom: '1.25rem' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Pageviews
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: 80 }}>
@@ -354,18 +354,18 @@ function OverviewTab() {
                       : new Date(d.x).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                     return (
                       <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }} title={`${label}: ${d.y} views`}>
-                        <div style={{ width: '100%', maxWidth: 24, height: `${pct}%`, backgroundColor: '#e8a849', borderRadius: '2px 2px 0 0', opacity: 0.85, transition: 'height 0.3s' }} />
+                        <div style={{ width: '100%', maxWidth: 24, height: `${pct}%`, backgroundColor: 'var(--accent)', borderRadius: '2px 2px 0 0', opacity: 0.85, transition: 'height 0.3s' }} />
                       </div>
                     );
                   })}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.375rem' }}>
-                  <span style={{ fontSize: '0.625rem', color: '#5d6370' }}>
+                  <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>
                     {pvData.length > 0 && (trafficPeriod === '24h'
                       ? new Date(pvData[0].x).toLocaleTimeString('en-US', { hour: 'numeric' })
                       : new Date(pvData[0].x).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))}
                   </span>
-                  <span style={{ fontSize: '0.625rem', color: '#5d6370' }}>
+                  <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>
                     {pvData.length > 1 && (trafficPeriod === '24h'
                       ? new Date(pvData[pvData.length - 1].x).toLocaleTimeString('en-US', { hour: 'numeric' })
                       : new Date(pvData[pvData.length - 1].x).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))}
@@ -377,20 +377,20 @@ function OverviewTab() {
             {/* Top Pages + Referrers side by side */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               {/* Top Pages */}
-              <div style={{ background: '#161c28', borderRadius: '0.75rem', border: '1px solid #1e2535', padding: '1rem' }}>
-                <div style={{ fontSize: '0.75rem', color: '#5d6370', marginBottom: '0.625rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div style={{ background: 'var(--surface)', borderRadius: '0.75rem', border: '1px solid var(--border)', padding: '1rem' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.625rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Top Pages
                 </div>
                 {(traffic.topPages || []).length === 0 ? (
-                  <p style={{ fontSize: '0.8125rem', color: '#5d6370', margin: 0 }}>No data</p>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>No data</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                     {traffic.topPages.slice(0, 10).map((p, i) => (
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.8125rem', color: '#a8adb8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-mid)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                           {p.x || '/'}
                         </span>
-                        <span style={{ fontSize: '0.75rem', color: '#e8a849', fontWeight: 500, flexShrink: 0 }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 500, flexShrink: 0 }}>
                           {p.y}
                         </span>
                       </div>
@@ -400,20 +400,20 @@ function OverviewTab() {
               </div>
 
               {/* Top Referrers */}
-              <div style={{ background: '#161c28', borderRadius: '0.75rem', border: '1px solid #1e2535', padding: '1rem' }}>
-                <div style={{ fontSize: '0.75rem', color: '#5d6370', marginBottom: '0.625rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div style={{ background: 'var(--surface)', borderRadius: '0.75rem', border: '1px solid var(--border)', padding: '1rem' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.625rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Top Referrers
                 </div>
                 {(traffic.topReferrers || []).length === 0 ? (
-                  <p style={{ fontSize: '0.8125rem', color: '#5d6370', margin: 0 }}>No data</p>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>No data</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                     {traffic.topReferrers.slice(0, 10).map((r, i) => (
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.8125rem', color: '#a8adb8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-mid)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                           {r.x || '(direct)'}
                         </span>
-                        <span style={{ fontSize: '0.75rem', color: '#e8a849', fontWeight: 500, flexShrink: 0 }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 500, flexShrink: 0 }}>
                           {r.y}
                         </span>
                       </div>
@@ -423,14 +423,19 @@ function OverviewTab() {
               </div>
             </div>
 
-            {/* Full Dashboard Link */}
-            {process.env.NEXT_PUBLIC_UMAMI_URL && (
+            {/* Full Dashboard Link — uses analytics.{domain} subdomain */}
+            {process.env.NEXT_PUBLIC_APP_URL && (
               <div style={{ marginTop: '1rem', textAlign: 'right' }}>
                 <a
-                  href={process.env.NEXT_PUBLIC_UMAMI_URL}
+                  href={(() => {
+                    try {
+                      const u = new URL(process.env.NEXT_PUBLIC_APP_URL!);
+                      return `${u.protocol}//analytics.${u.host}`;
+                    } catch { return '#'; }
+                  })()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ fontSize: '0.75rem', color: '#e8a849', textDecoration: 'none', opacity: 0.7 }}
+                  style={{ fontSize: '0.75rem', color: 'var(--accent)', textDecoration: 'none', opacity: 0.7 }}
                 >
                   Open full Umami dashboard &rarr;
                 </a>
@@ -651,7 +656,7 @@ function UsersTab() {
         <button type="submit" className="admin-btn admin-btn--primary admin-btn--small">Search</button>
       </form>
 
-      <p style={{ fontSize: '0.75rem', color: '#5d6370', marginBottom: '0.75rem' }}>
+      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
         {total} user{total !== 1 ? 's' : ''} found
       </p>
 
@@ -675,7 +680,7 @@ function UsersTab() {
                   style={{ cursor: 'pointer' }}
                   className={expandedId === u.id ? 'admin-row-expanded' : ''}
                 >
-                  <td style={{ color: '#eceef2', fontWeight: 500 }}>
+                  <td style={{ color: 'var(--text)', fontWeight: 500 }}>
                     {u.firstName} {u.lastName}
                     {u.isLocked && (
                       <span title="Rate-limited (locked)" style={{ marginLeft: '0.375rem', color: '#f59e0b', fontSize: '0.75rem' }}>
@@ -697,12 +702,12 @@ function UsersTab() {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        style={{ color: '#e8a849', textDecoration: 'none', fontSize: '0.8125rem' }}
+                        style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: '0.8125rem' }}
                       >
                         /{u.slug}
                       </a>
                     ) : (
-                      <span style={{ color: '#5d6370' }}>—</span>
+                      <span style={{ color: 'var(--text-muted)' }}>—</span>
                     )}
                   </td>
                   <td>{fmtDate(u.createdAt)}</td>
@@ -712,7 +717,7 @@ function UsersTab() {
                     <td colSpan={6} style={{ padding: 0 }}>
                       <div className="admin-detail">
                         {!detail ? (
-                          <p style={{ color: '#5d6370', fontSize: '0.8125rem' }}>Loading...</p>
+                          <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Loading...</p>
                         ) : (
                           <>
                             <div className="admin-detail-grid">
@@ -769,7 +774,7 @@ function UsersTab() {
                             {/* Plan Change */}
                             <div style={{ marginTop: '1rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontSize: '0.75rem', color: '#5d6370', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                   Plan:
                                 </span>
                                 <select
@@ -798,8 +803,8 @@ function UsersTab() {
                             </div>
 
                             {/* Account Actions */}
-                            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #1e2535', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                              <span style={{ fontSize: '0.75rem', color: '#5d6370', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.25rem' }}>
+                            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.25rem' }}>
                                 Actions:
                               </span>
 
@@ -954,7 +959,7 @@ function UsersTab() {
           >
             Prev
           </button>
-          <span style={{ fontSize: '0.8125rem', color: '#5d6370', lineHeight: '2' }}>
+          <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: '2' }}>
             Page {page} of {totalPages}
           </span>
           <button
@@ -1126,7 +1131,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
     }
   }
 
-  if (loading) return <p style={{ color: '#5d6370' }}>Loading...</p>;
+  if (loading) return <p style={{ color: 'var(--text-muted)' }}>Loading...</p>;
 
   return (
     <>
@@ -1135,7 +1140,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
         <h3 className="admin-section-title">Generate Invite Codes</h3>
         <form onSubmit={generateCodes} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: '#5d6370', marginBottom: '0.25rem' }}>Count</label>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Count</label>
             <input
               className="admin-input"
               type="number"
@@ -1147,7 +1152,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: '#5d6370', marginBottom: '0.25rem' }}>Max uses</label>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Max uses</label>
             <input
               className="admin-input"
               type="number"
@@ -1159,7 +1164,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: '#5d6370', marginBottom: '0.25rem' }}>Expires in (days)</label>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Expires in (days)</label>
             <input
               className="admin-input"
               type="number"
@@ -1171,7 +1176,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: '#5d6370', marginBottom: '0.25rem' }}>Plan</label>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Plan</label>
             <select
               className="admin-input"
               value={grantedPlan}
@@ -1183,7 +1188,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
             </select>
           </div>
           <div style={{ flex: 1, minWidth: 150 }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: '#5d6370', marginBottom: '0.25rem' }}>Note</label>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Note</label>
             <input
               className="admin-input"
               value={note}
@@ -1392,7 +1397,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
             })}
             {codes.length === 0 && (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', color: '#5d6370', padding: '2rem' }}>
+                <td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
                   No invite codes yet. Generate some above.
                 </td>
               </tr>
@@ -1472,7 +1477,7 @@ function WaitlistTab() {
     }
   }
 
-  if (loading) return <p style={{ color: '#5d6370' }}>Loading...</p>;
+  if (loading) return <p style={{ color: 'var(--text-muted)' }}>Loading...</p>;
 
   const pending = entries.filter((e) => !e.invited);
   const invited = entries.filter((e) => e.invited);
@@ -1507,7 +1512,7 @@ function WaitlistTab() {
       <div className="admin-section">
         <h3 className="admin-section-title">Pending ({pending.length})</h3>
         {pending.length === 0 ? (
-          <p style={{ fontSize: '0.8125rem', color: '#5d6370' }}>No pending waitlist entries.</p>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>No pending waitlist entries.</p>
         ) : (
           <table className="admin-table">
             <thead>
@@ -1522,7 +1527,7 @@ function WaitlistTab() {
             <tbody>
               {pending.map((e) => (
                 <tr key={e.id}>
-                  <td style={{ color: '#eceef2' }}>{e.email}</td>
+                  <td style={{ color: 'var(--text)' }}>{e.email}</td>
                   <td>{e.source}</td>
                   <td>{fmtDate(e.createdAt)}</td>
                   <td>
@@ -1639,7 +1644,7 @@ function FeedbackTab() {
     }
   }
 
-  if (loading) return <p style={{ color: '#5d6370' }}>Loading...</p>;
+  if (loading) return <p style={{ color: 'var(--text-muted)' }}>Loading...</p>;
 
   // Detail view
   if (selected) {
@@ -1653,7 +1658,7 @@ function FeedbackTab() {
           &larr; Back to list
         </button>
 
-        <div style={{ background: '#0c1017', border: '1px solid #1e2535', borderRadius: '0.75rem', padding: '1.25rem' }}>
+        <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.25rem' }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
             <span style={{
@@ -1665,35 +1670,35 @@ function FeedbackTab() {
               {selected.feedbackType === 'report' && '\u26A0\uFE0F '}
               {selected.status}
             </span>
-            <span style={{ fontSize: '0.75rem', color: '#5d6370' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               {new Date(selected.createdAt).toLocaleString()}
             </span>
           </div>
 
           {/* Email / User */}
           {selected.email && (
-            <p style={{ fontSize: '0.8125rem', color: '#a8adb8', margin: '0 0 0.5rem' }}>
-              <span style={{ color: '#5d6370' }}>From:</span> {selected.email}
-              {selected.userId && <span style={{ color: '#5d6370' }}> (registered user)</span>}
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-mid)', margin: '0 0 0.5rem' }}>
+              <span style={{ color: 'var(--text-muted)' }}>From:</span> {selected.email}
+              {selected.userId && <span style={{ color: 'var(--text-muted)' }}> (registered user)</span>}
             </p>
           )}
 
           {/* Page URL */}
           {selected.pageUrl && (
-            <p style={{ fontSize: '0.8125rem', color: '#a8adb8', margin: '0 0 0.5rem' }}>
-              <span style={{ color: '#5d6370' }}>Page:</span> {selected.pageUrl}
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-mid)', margin: '0 0 0.5rem' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Page:</span> {selected.pageUrl}
             </p>
           )}
 
           {/* Reported profile */}
           {selected.reportedSlug && (
             <p style={{ fontSize: '0.8125rem', margin: '0 0 0.5rem' }}>
-              <span style={{ color: '#5d6370' }}>Reported profile:</span>{' '}
+              <span style={{ color: 'var(--text-muted)' }}>Reported profile:</span>{' '}
               <a
                 href={`/${selected.reportedSlug}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#e8a849', textDecoration: 'none' }}
+                style={{ color: 'var(--accent)', textDecoration: 'none' }}
               >
                 /{selected.reportedSlug}
               </a>
@@ -1702,17 +1707,17 @@ function FeedbackTab() {
 
           {/* Full message */}
           <div style={{
-            marginTop: '0.75rem', padding: '1rem', background: '#161c28',
-            borderRadius: '0.5rem', border: '1px solid #1e2535',
+            marginTop: '0.75rem', padding: '1rem', background: 'var(--surface)',
+            borderRadius: '0.5rem', border: '1px solid var(--border)',
           }}>
-            <p style={{ fontSize: '0.875rem', color: '#eceef2', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
               {selected.message}
             </p>
           </div>
 
           {/* Status dropdown */}
           <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.75rem', color: '#5d6370', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Status:
             </span>
             <select
@@ -1729,7 +1734,7 @@ function FeedbackTab() {
 
           {/* Admin notes */}
           <div style={{ marginTop: '0.75rem' }}>
-            <label style={{ fontSize: '0.75rem', color: '#5d6370', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.375rem' }}>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.375rem' }}>
               Admin Notes
             </label>
             <textarea
@@ -1774,7 +1779,7 @@ function FeedbackTab() {
       </div>
 
       {filtered.length === 0 ? (
-        <p style={{ fontSize: '0.8125rem', color: '#5d6370' }}>No feedback entries{filter !== 'all' ? ` with status "${filter}"` : ''}.</p>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>No feedback entries{filter !== 'all' ? ` with status "${filter}"` : ''}.</p>
       ) : (
         <div className="admin-section">
           <table className="admin-table">
@@ -1795,14 +1800,14 @@ function FeedbackTab() {
                   style={{ cursor: 'pointer' }}
                 >
                   <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(e.createdAt)}</td>
-                  <td style={{ color: '#eceef2' }}>{e.email || '—'}</td>
+                  <td style={{ color: 'var(--text)' }}>{e.email || '—'}</td>
                   <td style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {e.feedbackType === 'report' && (
                       <span style={{ marginRight: '0.25rem' }}>{'\u26A0\uFE0F'}</span>
                     )}
                     {e.message.slice(0, 80)}{e.message.length > 80 ? '...' : ''}
                   </td>
-                  <td style={{ fontSize: '0.75rem', color: '#5d6370', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {e.reportedSlug ? (
                       <span style={{ color: '#f97316' }}>/{e.reportedSlug}</span>
                     ) : (
