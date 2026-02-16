@@ -10,6 +10,8 @@ const WEBSITE_ID = process.env.UMAMI_WEBSITE_ID || '';
 // Cache token in memory (expires after 10 minutes)
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
+let lastAuthError = '';
+
 async function getUmamiToken(): Promise<string | null> {
   if (cachedToken && cachedToken.expiresAt > Date.now()) {
     return cachedToken.token;
@@ -22,11 +24,16 @@ async function getUmamiToken(): Promise<string | null> {
       body: JSON.stringify({ username: UMAMI_USERNAME, password: UMAMI_PASSWORD }),
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      lastAuthError = `HTTP ${res.status}: ${text.slice(0, 200)}`;
+      return null;
+    }
     const data = await res.json();
     cachedToken = { token: data.token, expiresAt: Date.now() + 10 * 60 * 1000 };
     return data.token;
-  } catch {
+  } catch (err) {
+    lastAuthError = err instanceof Error ? err.message : String(err);
     return null;
   }
 }
@@ -51,7 +58,7 @@ export async function GET(req: NextRequest) {
 
   const token = await getUmamiToken();
   if (!token) {
-    return NextResponse.json({ error: `Cannot authenticate with Umami at ${UMAMI_API_URL}`, configured: false }, { status: 200 });
+    return NextResponse.json({ error: `Umami auth failed (${UMAMI_API_URL}, user=${UMAMI_USERNAME}): ${lastAuthError}`, configured: false }, { status: 200 });
   }
 
   // Parse period from query
