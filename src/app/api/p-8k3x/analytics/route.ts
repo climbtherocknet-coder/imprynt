@@ -5,7 +5,7 @@ import { isAdmin } from '@/lib/admin';
 const UMAMI_API_URL = process.env.UMAMI_API_URL || 'http://umami:3000';
 const UMAMI_USERNAME = process.env.UMAMI_USERNAME || 'admin';
 const UMAMI_PASSWORD = process.env.UMAMI_PASSWORD || 'umami';
-const WEBSITE_ID = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || '';
+const WEBSITE_ID = process.env.UMAMI_WEBSITE_ID || '';
 
 // Cache token in memory (expires after 10 minutes)
 let cachedToken: { token: string; expiresAt: number } | null = null;
