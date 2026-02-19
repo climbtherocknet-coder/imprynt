@@ -112,7 +112,7 @@ export default function HomePage() {
             <div className="lp-ct-c lp-ct-them">Copy-paste a URL</div>
             <div className="lp-ct-c lp-ct-us"><strong>Tap your ring.</strong> That{"'"}s it.</div>
             <div className="lp-ct-c lp-ct-them">Their platform, their ads</div>
-            <div className="lp-ct-c lp-ct-us"><strong>No ads. No data selling.</strong> Ever.</div>
+            <div className="lp-ct-c lp-ct-us"><strong>Your page, your brand.</strong> No middleman.</div>
           </div>
         </section>
 
@@ -291,7 +291,7 @@ export default function HomePage() {
                 <div className="lp-pr-item"><span className="d">●</span> Portfolio button on profile</div>
                 <div className="lp-pr-item"><span className="d">●</span> Personal page (hidden layer)</div>
                 <div className="lp-pr-item"><span className="d">●</span> Analytics</div>
-                <div className="lp-pr-item"><span className="d">●</span> No watermark</div>
+                <div className="lp-pr-item"><span className="d">●</span> No ads, no watermark, no data sharing</div>
               </div>
               <WaitlistButton className="lp-pr-btn lp-pr-btn-prem">Join waitlist</WaitlistButton>
             </div>

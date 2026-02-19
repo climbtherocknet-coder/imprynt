@@ -6,7 +6,8 @@
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed:demo": "cat db/seeds/demo-profiles.sql | docker exec -i imprynt-db psql -U imprynt -d imprynt"
   },
   "dependencies": {
     "@auth/pg-adapter": "^1.7.4",
