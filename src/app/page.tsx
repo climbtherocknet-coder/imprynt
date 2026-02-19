@@ -28,19 +28,20 @@ export default function HomePage() {
         {/* ═══════ HERO ═══════ */}
         <section className="lp-hero">
           <div className="lp-hero-content">
-            <div className="lp-hero-eyebrow">NFC-powered networking</div>
+            <div className="lp-hero-eyebrow">Your page. Your identity. Your rules.</div>
             <h1 className="lp-hero-headline">
-              Make every<br />introduction<br /><em>unforgettable</em>
+              One page.<br /><em>Every connection.</em>
             </h1>
             <p className="lp-hero-sub">
-              Tap your ring, share your page. Your profile, your portfolio, your private layer
-              for real connections, all in one tap. No cards. No app. No friction.
+              Build a profile page that actually represents you. Share it with a link, a QR code,
+              or a tap of your ring. Add a hidden personal layer for people you trust.
+              Free to start, no app required.
             </p>
             <div className="lp-hero-ctas">
-              <WaitlistButton className="lp-btn-primary">Join waitlist</WaitlistButton>
-              <a href="#compare" className="lp-btn-ghost">Why not Linktree?</a>
+              <WaitlistButton className="lp-btn-primary">Build your page free</WaitlistButton>
+              <a href="#how" className="lp-btn-ghost">See how it works</a>
             </div>
-            <p className="lp-hero-proof">Free to start. No credit card required.</p>
+            <p className="lp-hero-proof">Free forever. No credit card. Set up in 5 minutes.</p>
           </div>
           <div className="lp-hero-visual">
             <div className="lp-phone">
@@ -48,48 +49,92 @@ export default function HomePage() {
                 <div className="m-row">
                   <div className="m-photo" />
                   <div className="m-info">
-                    <div className="m-name">Sofia Reyes</div>
-                    <div className="m-title">Luxury Real Estate · Austin TX</div>
+                    <div className="m-name">Alex Reeves</div>
+                    <div className="m-title">Designer + Photographer · Portland</div>
                   </div>
                 </div>
                 <div className="m-pills">
-                  <span className="m-pill">LinkedIn</span>
-                  <span className="m-pill">Website</span>
-                  <span className="m-pill">Email</span>
-                  <span className="m-pill">Call</span>
                   <span className="m-pill">Instagram</span>
+                  <span className="m-pill">Portfolio</span>
+                  <span className="m-pill">Email</span>
+                  <span className="m-pill">LinkedIn</span>
+                  <span className="m-pill">Book a call</span>
                 </div>
                 <div className="m-save">↓ Save Contact</div>
                 <div className="m-hr" />
                 <div className="m-card">
-                  <div className="m-card-t">About Sofia</div>
-                  <div className="m-card-p">Helping families find their place. Luxury properties across Central Texas since 2012.</div>
+                  <div className="m-card-t">About</div>
+                  <div className="m-card-p">I design brand identities and shoot editorial portraits. Currently booking for spring.</div>
                 </div>
                 <div className="m-card">
-                  <div className="m-card-t">Track Record</div>
-                  <div className="m-card-p">$142M volume · 340+ homes · 98% satisfaction</div>
+                  <div className="m-card-t">By the Numbers</div>
+                  <div className="m-card-p">160+ projects · 4.9★ rating · 6 years</div>
                 </div>
-                <div className="m-listing">
-                  <div className="m-listing-img" />
-                  <div className="m-listing-body">
-                    <div className="m-listing-type">Listing · Active</div>
-                    <div className="m-listing-name">2847 Ridgewood Trail</div>
-                    <div className="m-listing-meta">4 bed · 3.5 bath · $1.85M</div>
+                <div className="m-project">
+                  <div className="m-project-img" />
+                  <div className="m-project-body">
+                    <div className="m-project-type">Project · Brand Identity</div>
+                    <div className="m-project-name">Watershed Coffee Co.</div>
+                    <div className="m-project-meta">Identity, packaging, web</div>
                   </div>
                 </div>
-                <div className="m-listing">
-                  <div className="m-listing-img" />
-                  <div className="m-listing-body">
-                    <div className="m-listing-type">Listing · Pending</div>
-                    <div className="m-listing-name">The Elms at Barton Creek</div>
-                    <div className="m-listing-meta">5 bed · 4 bath · $2.4M</div>
+                <div className="m-project">
+                  <div className="m-project-img" />
+                  <div className="m-project-body">
+                    <div className="m-project-type">Project · Photography</div>
+                    <div className="m-project-name">Kinfolk Editorial Shoot</div>
+                    <div className="m-project-meta">Editorial, portrait, lifestyle</div>
                   </div>
                 </div>
-                <div className="m-gate">🔒 View all listings (5)</div>
+                <div className="m-gate">🔒 Client portal (3)</div>
                 <div className="m-impression" />
               </div>
             </div>
           </div>
+        </section>
+
+        {/* ═══════ TRUST BAR ═══════ */}
+        <div className="lp-trust-bar">
+          <span className="lp-trust-item">Works with any phone</span>
+          <span className="lp-trust-item">No app to download</span>
+          <span className="lp-trust-item">iPhone + Android</span>
+          <span className="lp-trust-item">Set up in 5 minutes</span>
+        </div>
+
+        <div className="lp-divider"><hr /></div>
+
+        {/* ═══════ FREE TIER SHOWCASE ═══════ */}
+        <section className="lp-free-showcase">
+          <p className="lp-label">Start here</p>
+          <h2 className="lp-headline">Everything you need.<br />Nothing you have to pay for.</h2>
+          <p className="lp-free-sub">The free plan isn{"'"}t a teaser. It{"'"}s a real product.</p>
+          <div className="lp-free-grid">
+            <div className="lp-free-card">
+              <h3>Your page, your way</h3>
+              <p>Full profile page with your name, bio, links, and content sections. Pick from 4 templates. Customize your colors. Publish in minutes.</p>
+            </div>
+            <div className="lp-free-card">
+              <h3>Share it anywhere</h3>
+              <p>QR code, direct link, or add it to your socials. Every profile gets a free QR code you can download, print, or screenshot. No ring required.</p>
+            </div>
+            <div className="lp-free-card">
+              <h3>Save Contact</h3>
+              <p>Visitors tap one button and your name, number, and email land in their phone. No typing, no spelling, no {"\u201C"}what was your name again?{"\u201D"}</p>
+            </div>
+            <div className="lp-free-card">
+              <h3>Content sections</h3>
+              <p>Add an About section, showcase your stats, or feature a project. Your profile isn{"'"}t just links — it tells your story.</p>
+            </div>
+            <div className="lp-free-card">
+              <h3>Works on any phone</h3>
+              <p>No app to download. No account to create. When someone visits your page, it just works. Mobile-first, loads fast.</p>
+            </div>
+            <div className="lp-free-card">
+              <h3>Privacy by default</h3>
+              <p>Your profile URL is randomized. Contact info is rendered client-side. You control what{"'"}s visible and what{"'"}s not.</p>
+            </div>
+          </div>
+          <WaitlistButton className="lp-btn-primary">Build your page free</WaitlistButton>
         </section>
 
         <div className="lp-divider"><hr /></div>
@@ -104,42 +149,44 @@ export default function HomePage() {
             <div className="lp-ct-h lp-ct-h-them">Others</div>
             <div className="lp-ct-h lp-ct-h-us">Imprynt</div>
             <div className="lp-ct-c lp-ct-them">A list of links</div>
-            <div className="lp-ct-c lp-ct-us"><strong>Full profile page</strong> you design</div>
+            <div className="lp-ct-c lp-ct-us"><strong>Full profile page</strong> with content sections</div>
+            <div className="lp-ct-c lp-ct-them">One layout, no personality</div>
+            <div className="lp-ct-c lp-ct-us"><strong>10 templates,</strong> custom colors, your style</div>
+            <div className="lp-ct-c lp-ct-them">No contact card</div>
+            <div className="lp-ct-c lp-ct-us"><strong>One-tap Save Contact</strong> with vCard</div>
             <div className="lp-ct-c lp-ct-them">Public only</div>
             <div className="lp-ct-c lp-ct-us"><strong>PIN-protected layers</strong> you control</div>
-            <div className="lp-ct-c lp-ct-them">Same card as everyone</div>
-            <div className="lp-ct-c lp-ct-us"><strong>Typed showcase:</strong> projects, listings, services</div>
+            <div className="lp-ct-c lp-ct-them">No QR code (or paid)</div>
+            <div className="lp-ct-c lp-ct-us"><strong>Free QR code</strong> for every profile</div>
             <div className="lp-ct-c lp-ct-them">Copy-paste a URL</div>
-            <div className="lp-ct-c lp-ct-us"><strong>Tap your ring.</strong> That{"'"}s it.</div>
-            <div className="lp-ct-c lp-ct-them">Their platform, their ads</div>
-            <div className="lp-ct-c lp-ct-us"><strong>Your page, your brand.</strong> No middleman.</div>
+            <div className="lp-ct-c lp-ct-us"><strong>Link, QR code,</strong> or NFC ring tap</div>
           </div>
         </section>
 
         <div className="lp-divider"><hr /></div>
 
         {/* ═══════ HOW IT WORKS ═══════ */}
-        <div className="lp-section-alt">
+        <div className="lp-section-alt" id="how">
           <section className="lp-how">
             <div className="lp-how-header">
               <p className="lp-label">How it works</p>
-              <h2 className="lp-headline">Three steps. Five minutes. Done.</h2>
+              <h2 className="lp-headline">Five minutes. Seriously.</h2>
             </div>
             <div className="lp-how-grid">
               <div className="lp-how-card">
                 <div className="lp-how-num">1</div>
                 <h3>Build your page</h3>
-                <p>Name, bio, links, and a few sections about what you do. Pick a template. Publish in minutes.</p>
+                <p>Name, bio, links, a template, and your colors. Add content sections about what you do. Hit publish.</p>
               </div>
               <div className="lp-how-card">
                 <div className="lp-how-num">2</div>
-                <h3>Add your layers</h3>
-                <p>Public page for everyone. Portfolio for clients. A private Personal page for real connections. Each with its own PIN.</p>
+                <h3>Share it everywhere</h3>
+                <p>Grab your QR code. Drop your link in your Instagram bio. Print it on a card. Or upgrade to an NFC ring and just tap.</p>
               </div>
               <div className="lp-how-card">
                 <div className="lp-how-num">3</div>
-                <h3>Tap and connect</h3>
-                <p>Your ring arrives ready. Tap any phone. No app needed on their end. They see your world instantly.</p>
+                <h3>Make it yours</h3>
+                <p>Go premium for a hidden Personal page, a Portfolio, advanced templates, analytics, and an NFC accessory. Or stay free — it{"'"}s still good.</p>
               </div>
             </div>
           </section>
@@ -147,15 +194,15 @@ export default function HomePage() {
 
         <div className="lp-divider"><hr /></div>
 
-        {/* ═══════ IMPRESSION ═══════ */}
+        {/* ═══════ PERSONAL LAYER ═══════ */}
         <section className="lp-impression">
           <p className="lp-label">The hidden layer</p>
-          <h2 className="lp-headline" style={{ marginBottom: '0.75rem' }}>Your <em>Personal</em> layer</h2>
+          <h2 className="lp-headline" style={{ marginBottom: '0.75rem' }}>A page <em>behind</em> the page</h2>
           <p className="lp-impression-desc">
-            Every profile has a hidden layer only you know about. Share the PIN with someone you trust,
-            and they unlock your personal side: your real number, your Instagram, a note just for them.
-            The icon is yours to customize, color, transparency, placement. Subtle enough to miss,
-            obvious enough to find when you know where to look.
+            Every Imprynt profile can have a hidden Personal page. It{"'"}s invisible to visitors unless
+            you tell them it exists. Share the PIN with someone you trust, and they see the real you:
+            your personal number, your private socials, a note just for them. The icon is customizable —
+            subtle enough to miss, obvious enough to find when you know where to look.
           </p>
           <div className="lp-impression-demos">
             <div className="lp-imp-demo">
@@ -171,6 +218,7 @@ export default function HomePage() {
               <span className="lp-imp-label">Bold</span>
             </div>
           </div>
+          <p className="lp-imp-premium">Premium feature</p>
         </section>
 
         <div className="lp-divider"><hr /></div>
@@ -179,14 +227,34 @@ export default function HomePage() {
         <section className="lp-cases">
           <div className="lp-cases-header">
             <p className="lp-label">Built for people who show up</p>
-            <h2 className="lp-headline">From conferences to open houses</h2>
-            <p className="lp-cases-sub">If you meet people face to face, Imprynt works for you.</p>
+            <h2 className="lp-headline">For conferences, classrooms, open houses,<br />and everything in between</h2>
+            <p className="lp-cases-sub">If you meet people, Imprynt works for you.</p>
           </div>
           <div className="lp-cases-grid">
             <div className="lp-case-card">
+              <div className="lp-case-who">Students + Job Seekers</div>
+              <div className="lp-case-quote">{"\u201C"}I put my GitHub, resume, and portfolio on one page. Recruiters tap my ring and they{"'"}ve already seen my work.{"\u201D"}</div>
+              <p className="lp-case-desc">Projects, resume link, and LinkedIn on your free page. Portfolio and references behind a PIN when you{"'"}re ready.</p>
+              <div className="lp-case-tags">
+                <span className="lp-case-tag">Projects</span>
+                <span className="lp-case-tag">Resume</span>
+                <span className="lp-case-tag">GitHub</span>
+              </div>
+            </div>
+            <div className="lp-case-card">
+              <div className="lp-case-who">Creatives + Artists</div>
+              <div className="lp-case-quote">{"\u201C"}My work speaks for itself. Now it literally does.{"\u201D"}</div>
+              <p className="lp-case-desc">Portfolio front and center. Behind-the-scenes work gated for clients. Social links everywhere. Works for designers, photographers, illustrators, anyone with a visual practice.</p>
+              <div className="lp-case-tags">
+                <span className="lp-case-tag">Portfolio</span>
+                <span className="lp-case-tag">Instagram</span>
+                <span className="lp-case-tag">Custom links</span>
+              </div>
+            </div>
+            <div className="lp-case-card">
               <div className="lp-case-who">Real Estate</div>
               <div className="lp-case-quote">{"\u201C"}They tapped my ring and saw my listings before I finished my pitch.{"\u201D"}</div>
-              <p className="lp-case-desc">Active listings on your public page. Sold history and investor decks behind a PIN. Price visibility you control.</p>
+              <p className="lp-case-desc">Active listings on your public page. Sold history and investor decks behind a PIN. Contact info that stays current.</p>
               <div className="lp-case-tags">
                 <span className="lp-case-tag">Listings</span>
                 <span className="lp-case-tag">Status badges</span>
@@ -194,33 +262,33 @@ export default function HomePage() {
               </div>
             </div>
             <div className="lp-case-card">
-              <div className="lp-case-who">Founders</div>
+              <div className="lp-case-who">Founders + Startups</div>
               <div className="lp-case-quote">{"\u201C"}One tap and they had my deck, my bio, and a Calendly link.{"\u201D"}</div>
-              <p className="lp-case-desc">Your story and traction up front. Pitch deck and metrics behind a portfolio PIN. Personal number in your hidden page.</p>
+              <p className="lp-case-desc">Your story and traction up front. Pitch deck and financials behind a portfolio PIN. Personal number in your hidden page.</p>
               <div className="lp-case-tags">
-                <span className="lp-case-tag">Projects</span>
-                <span className="lp-case-tag">Services</span>
+                <span className="lp-case-tag">Pitch deck</span>
+                <span className="lp-case-tag">Stats</span>
                 <span className="lp-case-tag">Personal</span>
               </div>
             </div>
             <div className="lp-case-card">
-              <div className="lp-case-who">Sales Teams</div>
-              <div className="lp-case-quote">{"\u201C"}No more {"\u2018"}let me find my card.{"\u2019"} I tap their phone and keep talking.{"\u201D"}</div>
-              <p className="lp-case-desc">Professional profile with booking link front and center. Case studies and pricing in the portfolio. Conversation keeps moving.</p>
+              <div className="lp-case-who">DJs + Musicians</div>
+              <div className="lp-case-quote">{"\u201C"}I share my Spotify, my booking link, and my socials in one tap. No more Instagram DM chains.{"\u201D"}</div>
+              <p className="lp-case-desc">Streaming links, booking calendar, and upcoming shows on your page. Press kit and rider behind a PIN.</p>
               <div className="lp-case-tags">
-                <span className="lp-case-tag">Services</span>
+                <span className="lp-case-tag">Spotify</span>
                 <span className="lp-case-tag">Booking</span>
-                <span className="lp-case-tag">vCard</span>
+                <span className="lp-case-tag">Streaming</span>
               </div>
             </div>
             <div className="lp-case-card">
-              <div className="lp-case-who">Creatives</div>
-              <div className="lp-case-quote">{"\u201C"}My work speaks for itself. Now it literally does.{"\u201D"}</div>
-              <p className="lp-case-desc">Portfolio on your profile with images, links, and tags. Best work public, client work gated. Social links everywhere.</p>
+              <div className="lp-case-who">Sales + Consulting</div>
+              <div className="lp-case-quote">{"\u201C"}No more {"\u2018"}let me find my card.{"\u2019"} I tap their phone and keep talking.{"\u201D"}</div>
+              <p className="lp-case-desc">Professional profile with booking link front and center. Case studies and pricing in the portfolio. Conversation keeps moving.</p>
               <div className="lp-case-tags">
-                <span className="lp-case-tag">Projects</span>
-                <span className="lp-case-tag">Events</span>
-                <span className="lp-case-tag">Custom links</span>
+                <span className="lp-case-tag">Booking</span>
+                <span className="lp-case-tag">Services</span>
+                <span className="lp-case-tag">vCard</span>
               </div>
             </div>
           </div>
@@ -233,25 +301,26 @@ export default function HomePage() {
           <section className="lp-products">
             <div className="lp-products-header">
               <p className="lp-label">The accessories</p>
-              <h2 className="lp-headline">Wear your network</h2>
-              <p className="lp-products-sub">NFC accessories that work with any phone. No app needed on their end.</p>
+              <h2 className="lp-headline">Share with a tap</h2>
+              <p className="lp-products-sub">NFC accessories that work with any phone. No app needed on their end. Available with Premium.</p>
             </div>
             <div className="lp-products-grid">
               <div className="lp-prod-card">
                 <div className="lp-prod-icon lp-prod-icon-ring" />
                 <div className="lp-prod-name">Sygnet</div>
                 <div className="lp-prod-latin">signum — seal, mark</div>
-                <p className="lp-prod-desc">Ceramic NFC ring. Wear it, tap it, done. Sizes 6-12.</p>
-                <div className="lp-prod-price">Pricing coming soon</div>
+                <p className="lp-prod-desc">Ceramic NFC ring. Tap any phone, your page opens instantly. Sizes 6–12.</p>
+                <div className="lp-prod-price">Pricing at launch</div>
               </div>
               <div className="lp-prod-card">
                 <div className="lp-prod-icon lp-prod-icon-band" />
                 <div className="lp-prod-name">Armilla</div>
                 <div className="lp-prod-latin">armilla — honor bracelet</div>
-                <p className="lp-prod-desc">Adjustable silicone NFC band. Lightweight, durable, one size fits all.</p>
-                <div className="lp-prod-price">Pricing coming soon</div>
+                <p className="lp-prod-desc">Adjustable silicone NFC wristband. Lightweight, durable, waterproof. One size.</p>
+                <div className="lp-prod-price">Pricing at launch</div>
               </div>
             </div>
+            <p className="lp-products-note">Don{"'"}t need hardware? No problem. Your free page works with a link or QR code.</p>
           </section>
         </div>
 
@@ -261,8 +330,8 @@ export default function HomePage() {
         <section className="lp-pricing" id="pricing">
           <div className="lp-pricing-header">
             <p className="lp-label">Pricing</p>
-            <h2 className="lp-headline">Start free. Upgrade when you{"'"}re ready.</h2>
-            <p className="lp-pricing-sub">We{"'"}re in early access. Pricing details coming soon.</p>
+            <h2 className="lp-headline">Start free. Grow when you{"'"}re ready.</h2>
+            <p className="lp-pricing-sub">No trials, no bait-and-switch. The free plan is a real product.</p>
           </div>
           <div className="lp-pricing-grid">
             <div className="lp-pr lp-pr-free">
@@ -270,13 +339,16 @@ export default function HomePage() {
               <div className="lp-pr-price">$0</div>
               <div className="lp-pr-note">Free forever</div>
               <div className="lp-pr-list">
-                <div className="lp-pr-item"><span className="d">●</span> Public profile page</div>
+                <div className="lp-pr-item"><span className="d">●</span> Full profile page</div>
+                <div className="lp-pr-item"><span className="d">●</span> 4 templates with color customization</div>
+                <div className="lp-pr-item"><span className="d">●</span> Unlimited social + contact links</div>
+                <div className="lp-pr-item"><span className="d">●</span> QR code (download, print, screenshot)</div>
+                <div className="lp-pr-item"><span className="d">●</span> Save Contact button (vCard)</div>
                 <div className="lp-pr-item"><span className="d">●</span> 2 content sections</div>
-                <div className="lp-pr-item"><span className="d">●</span> 4 templates</div>
-                <div className="lp-pr-item"><span className="d">●</span> Share via link or QR code</div>
-                <div className="lp-pr-item"><span className="d">●</span> Imprynt branding on profile</div>
+                <div className="lp-pr-item"><span className="d">●</span> Mobile-first, loads fast</div>
+                <div className="lp-pr-item"><span className="d">●</span> {"\u201C"}Powered by Imprynt{"\u201D"} badge</div>
               </div>
-              <WaitlistButton className="lp-pr-btn lp-pr-btn-free">Join waitlist</WaitlistButton>
+              <WaitlistButton className="lp-pr-btn lp-pr-btn-free">Build your page free</WaitlistButton>
             </div>
             <div className="lp-pr lp-pr-prem">
               <div className="lp-pr-badge">Early Access</div>
@@ -284,20 +356,21 @@ export default function HomePage() {
               <div className="lp-pr-price">Coming soon</div>
               <div className="lp-pr-note">Early testers get access free</div>
               <div className="lp-pr-list">
-                <div className="lp-pr-item"><span className="d">●</span> Everything in Free</div>
-                <div className="lp-pr-item"><span className="d">●</span> 6 content sections</div>
+                <div className="lp-pr-item"><span className="d">●</span> Everything in Free, plus:</div>
                 <div className="lp-pr-item"><span className="d">●</span> All 10 templates + full customization</div>
-                <div className="lp-pr-item"><span className="d">●</span> Portfolio page with content blocks</div>
-                <div className="lp-pr-item"><span className="d">●</span> Portfolio button on profile</div>
-                <div className="lp-pr-item"><span className="d">●</span> Personal page (hidden layer)</div>
-                <div className="lp-pr-item"><span className="d">●</span> Analytics</div>
-                <div className="lp-pr-item"><span className="d">●</span> No ads, no watermark, no data sharing</div>
+                <div className="lp-pr-item"><span className="d">●</span> Unlimited content sections</div>
+                <div className="lp-pr-item"><span className="d">●</span> Personal page (hidden layer with PIN)</div>
+                <div className="lp-pr-item"><span className="d">●</span> Portfolio page (visible or PIN-gated)</div>
+                <div className="lp-pr-item"><span className="d">●</span> Advanced photo styling (shapes, animations)</div>
+                <div className="lp-pr-item"><span className="d">●</span> Analytics (views, clicks, sources)</div>
+                <div className="lp-pr-item"><span className="d">●</span> No ads, no watermark</div>
+                <div className="lp-pr-item"><span className="d">●</span> NFC accessories available (ring or band)</div>
               </div>
               <WaitlistButton className="lp-pr-btn lp-pr-btn-prem">Join waitlist</WaitlistButton>
             </div>
           </div>
           <p className="lp-pricing-note">
-            NFC accessories (ring, bracelet) available with Premium. Pricing announced at launch.
+            NFC accessories available separately or bundled with Premium. Pricing details at launch.
           </p>
         </section>
 
@@ -305,9 +378,9 @@ export default function HomePage() {
 
         {/* ═══════ FINAL CTA ═══════ */}
         <section className="lp-final">
-          <h2 className="lp-final-headline">Stop handing out paper. Start making connections that stick.</h2>
-          <p className="lp-final-sub">Build your page in five minutes. Free to start.</p>
-          <WaitlistButton className="lp-btn-primary">Join the waitlist</WaitlistButton>
+          <h2 className="lp-final-headline">Your next introduction starts here.</h2>
+          <p className="lp-final-sub">Build your page in five minutes. Share it with a link, a QR code, or a tap.</p>
+          <WaitlistButton className="lp-btn-primary">Build your page free</WaitlistButton>
         </section>
 
         {/* ═══════ FOOTER ═══════ */}

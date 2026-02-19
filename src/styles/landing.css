@@ -658,6 +658,10 @@
   .lp-cases-grid { grid-template-columns: 1fr 1fr; }
 }
 
+@media (min-width: 800px) {
+  .lp-cases-grid { grid-template-columns: 1fr 1fr 1fr; }
+}
+
 .lp-case-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1309,4 +1313,158 @@
 
 @media (max-width: 480px) {
   .lp-wl-card { padding: 1.5rem 1.25rem; max-width: calc(100vw - 2rem); }
+}
+
+/* ═══════════════════════════════════════════
+   TRUST BAR
+   ═══════════════════════════════════════════ */
+.lp-trust-bar {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  padding: 1.5rem 2rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.lp-trust-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.lp-trust-item::before {
+  content: '✓';
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+/* ═══════════════════════════════════════════
+   FREE TIER SHOWCASE
+   ═══════════════════════════════════════════ */
+.lp-free-showcase {
+  padding: 6rem 2rem;
+  text-align: center;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.lp-free-sub {
+  font-size: 1rem;
+  color: var(--text-mid);
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+}
+
+.lp-free-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  margin: 2rem 0;
+  text-align: left;
+}
+
+@media (min-width: 640px) {
+  .lp-free-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (min-width: 900px) {
+  .lp-free-grid { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+.lp-free-card {
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: border-color 0.2s;
+}
+
+.lp-free-card:hover { border-color: var(--accent-border); }
+
+.lp-free-card h3 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.5rem;
+}
+
+.lp-free-card p {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════
+   PHONE MOCKUP — PROJECT CARDS
+   ═══════════════════════════════════════════ */
+.m-project {
+  display: flex;
+  gap: 0.375rem;
+  padding: 0.3125rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4375rem;
+  background: var(--surface);
+}
+
+.m-project-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.25rem;
+  background: linear-gradient(135deg, var(--surface-2), var(--surface));
+  flex-shrink: 0;
+}
+
+.m-project-body {
+  flex: 1;
+  min-width: 0;
+  padding: 0.0625rem 0;
+}
+
+.m-project-type {
+  font-size: 0.3125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.m-project-name {
+  font-size: 0.5rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 0.0625rem;
+}
+
+.m-project-meta {
+  font-size: 0.375rem;
+  color: var(--text-muted);
+  margin-top: 0.0625rem;
+}
+
+/* ═══════════════════════════════════════════
+   PERSONAL LAYER — PREMIUM LABEL
+   ═══════════════════════════════════════════ */
+.lp-imp-premium {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  opacity: 0.7;
+  margin-top: 0.75rem;
+}
+
+/* ═══════════════════════════════════════════
+   PRODUCTS — NOTE
+   ═══════════════════════════════════════════ */
+.lp-products-note {
+  text-align: center;
+  margin-top: 1.75rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
 }
