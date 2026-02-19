@@ -523,6 +523,26 @@ function ProtectedPageView({
           </div>
         )}
 
+        {/* Save Contact (showcase pages only) */}
+        {!isImpression && (
+          <div style={{ marginTop: content.links.length > 0 || (content.page.resumeUrl && content.page.showResume !== false) ? '1rem' : '0' }}>
+            <a
+              href={`/api/vcard/${profileId}`}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: '0.5rem', padding: '0.75rem 1.25rem',
+                borderRadius: 'var(--radius)', textDecoration: 'none',
+                fontWeight: 600, fontSize: '0.875rem',
+                backgroundColor: 'var(--accent-soft)',
+                color: accent,
+                border: '1px solid var(--accent-border)',
+              }}
+            >
+              Save Contact
+            </a>
+          </div>
+        )}
+
         {content.links.length === 0 && !content.pods?.length && !content.showcaseItems?.length && !isImpression && !(content.page.resumeUrl && content.page.showResume !== false) && (
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontStyle: 'italic' }}>
             No content added yet.

@@ -3,7 +3,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import PodEditor from '@/components/pods/PodEditor';
 import ToggleSwitch from '@/components/ToggleSwitch';
+import ProtectedPagePreview from '@/components/templates/ProtectedPagePreview';
+import type { PodData } from '@/components/pods/PodRenderer';
 import '@/styles/dashboard.css';
+import '@/styles/profile.css';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -26,12 +29,6 @@ interface PageData {
   isActive: boolean;
   allowRemember: boolean;
 }
-
-const LINK_ICONS: Record<string, string> = {
-  linkedin: '💼', website: '🌐', email: '✉️', phone: '📱', booking: '📅',
-  instagram: '📷', twitter: '𝕏', github: '⌨️', facebook: 'f', tiktok: '🎵',
-  youtube: '▶️', spotify: '🎧', custom: '🔗', vcard: '📇',
-};
 
 // ── Styles ─────────────────────────────────────────────
 
@@ -89,6 +86,15 @@ export default function ShowcaseEditor() {
   const [allowRemember, setAllowRemember] = useState(true);
   const [isNew, setIsNew] = useState(true);
 
+  // Profile data for preview
+  const [profileData, setProfileData] = useState<{
+    firstName: string; lastName: string; photoUrl: string;
+    template: string; accentColor: string;
+    photoShape: string; photoRadius: number; photoSize: string;
+    photoPositionX: number; photoPositionY: number;
+  } | null>(null);
+  const [previewPods, setPreviewPods] = useState<PodData[]>([]);
+
   // Resume upload
   const [resumeUploading, setResumeUploading] = useState(false);
   const resumeRef = useRef<HTMLInputElement>(null);
@@ -99,6 +105,20 @@ export default function ShowcaseEditor() {
       if (d.profile?.slug) setSlug(d.profile.slug);
       if (d.links) {
         setLinks(d.links.filter((l: LinkItem & { showShowcase?: boolean }) => l.showShowcase));
+      }
+      if (d.user && d.profile) {
+        setProfileData({
+          firstName: d.user.firstName || '',
+          lastName: d.user.lastName || '',
+          photoUrl: d.profile.photoUrl || '',
+          template: d.profile.template || 'clean',
+          accentColor: d.profile.accentColor || '',
+          photoShape: d.profile.photoShape || 'circle',
+          photoRadius: d.profile.photoRadius ?? 50,
+          photoSize: d.profile.photoSize || 'medium',
+          photoPositionX: d.profile.photoPositionX ?? 50,
+          photoPositionY: d.profile.photoPositionY ?? 50,
+        });
       }
     }).catch(() => {});
     fetch('/api/protected-pages?mode=visible')
@@ -230,6 +250,14 @@ export default function ShowcaseEditor() {
     }
   }
 
+  const handlePodsChange = useCallback((pods: { id: string; isActive: boolean; podType: string; label: string; title: string; body: string; imageUrl: string; stats: { num: string; label: string }[]; ctaLabel: string; ctaUrl: string; tags?: string; imagePosition?: string }[]) => {
+    setPreviewPods(pods.filter(p => p.isActive).map(p => ({
+      id: p.id, podType: p.podType, label: p.label, title: p.title, body: p.body,
+      imageUrl: p.imageUrl, stats: p.stats, ctaLabel: p.ctaLabel, ctaUrl: p.ctaUrl,
+      tags: p.tags || '', imagePosition: p.imagePosition || 'left',
+    })));
+  }, []);
+
   // ── Render ───────────────────────────────────────────
 
   if (loading) {
@@ -244,7 +272,7 @@ export default function ShowcaseEditor() {
     <div className="dash-page">
 
       {/* Header */}
-      <header className="dash-header">
+      <header className="dash-header" style={{ position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <a href="/dashboard" className="dash-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="dash-logo-mark" />
@@ -278,7 +306,8 @@ export default function ShowcaseEditor() {
         </div>
       )}
 
-      <main className="dash-main">
+      <div className="editor-split">
+      <main className="dash-main editor-panel" style={{ paddingBottom: '4rem' }}>
 
         {/* Intro */}
         <div style={{ marginBottom: '1.5rem' }}>
@@ -286,7 +315,7 @@ export default function ShowcaseEditor() {
             {isNew ? 'Create Your Showcase' : 'Showcase Settings'}
           </h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
-            Your Showcase appears as a labeled button on your public profile. Visitors who tap it and enter the PIN see your curated portfolio of projects, work, or listings.
+            A PIN-protected portfolio page for selective sharing. Use it for client work samples, investor decks, project galleries, real estate listings, or anything you want to gate behind a PIN. A labeled button appears on your public profile for visitors to find it.
           </p>
         </div>
 
@@ -384,7 +413,8 @@ export default function ShowcaseEditor() {
               <ToggleSwitch
                 checked={isActive}
                 onChange={setIsActive}
-                label="Showcase is active"
+                label="Show button on profile"
+                description="Displays your Showcase button on your public profile page."
               />
               <ToggleSwitch
                 checked={allowRemember}
@@ -450,72 +480,6 @@ export default function ShowcaseEditor() {
           {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Showcase' : 'Save Settings'}
         </button>
 
-        {/* Showcase Links (read-only — managed in Profile editor) */}
-        {!isNew && page && (
-          <div style={sectionStyle}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>Showcase Links</h3>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
-              Links tagged as &ldquo;SHOWCASE&rdquo; appear on your showcase page.{' '}
-              <a href="/dashboard/profile" style={{ color: 'var(--accent, #e8a849)', textDecoration: 'none', fontWeight: 500 }}>
-                Manage links in Profile &rarr;
-              </a>
-            </p>
-
-            {links.length === 0 ? (
-              <div style={{
-                padding: '1.5rem',
-                textAlign: 'center',
-                backgroundColor: 'var(--bg, #0c1017)',
-                borderRadius: '0.5rem',
-                border: '1px dashed var(--border-light, #283042)',
-              }}>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
-                  No showcase links yet. Go to{' '}
-                  <a href="/dashboard/profile" style={{ color: 'var(--accent, #e8a849)', textDecoration: 'none' }}>
-                    Profile &rarr; Links
-                  </a>
-                  {' '}and toggle links to &ldquo;SHOWCASE&rdquo;.
-                </p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {links.map((link, i) => (
-                  <div
-                    key={link.id || i}
-                    style={{
-                      backgroundColor: 'var(--bg, #0c1017)',
-                      border: '1px solid var(--border-light, #283042)',
-                      borderRadius: '0.5rem',
-                      padding: '0.75rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.75rem',
-                    }}
-                  >
-                    <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>
-                      {LINK_ICONS[link.linkType] || '🔗'}
-                    </span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text, #eceef2)', marginBottom: '0.125rem' }}>
-                        {link.label || link.linkType}
-                      </div>
-                      <div style={{
-                        fontSize: '0.75rem',
-                        color: 'var(--text-muted, #5d6370)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}>
-                        {link.url}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Content Blocks (only after page is created) */}
         {!isNew && page && (
           <div style={sectionStyle}>
@@ -525,11 +489,42 @@ export default function ShowcaseEditor() {
               isPaid={true}
               visibilityMode="visible"
               onError={setError}
+              onPodsChange={handlePodsChange}
             />
           </div>
         )}
 
       </main>
+
+      {/* ─── Live Preview Panel (desktop only) ──────── */}
+      <aside className="preview-panel">
+        <div className="preview-phone">
+          <div className="preview-phone-notch" />
+          <div className="preview-phone-screen">
+            {profileData && (
+              <ProtectedPagePreview
+                mode="showcase"
+                firstName={profileData.firstName}
+                lastName={profileData.lastName}
+                photoUrl={profileData.photoUrl}
+                template={profileData.template}
+                accentColor={profileData.accentColor}
+                bioText={bioText}
+                links={links.map(l => ({ id: l.id || '', linkType: l.linkType, label: l.label, url: l.url }))}
+                pods={previewPods}
+                resumeUrl={resumeUrl}
+                showResume={showResume}
+                photoShape={profileData.photoShape}
+                photoRadius={profileData.photoRadius}
+                photoSize={profileData.photoSize}
+                photoPositionX={profileData.photoPositionX}
+                photoPositionY={profileData.photoPositionY}
+              />
+            )}
+          </div>
+        </div>
+      </aside>
+      </div>
     </div>
   );
 }

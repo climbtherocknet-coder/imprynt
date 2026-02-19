@@ -3,7 +3,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import PodEditor from '@/components/pods/PodEditor';
 import ToggleSwitch from '@/components/ToggleSwitch';
+import ProtectedPagePreview from '@/components/templates/ProtectedPagePreview';
+import type { PodData } from '@/components/pods/PodRenderer';
 import '@/styles/dashboard.css';
+import '@/styles/profile.css';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -25,12 +28,6 @@ interface PageData {
   allowRemember: boolean;
   photoUrl: string;
 }
-
-const LINK_ICONS: Record<string, string> = {
-  linkedin: '💼', website: '🌐', email: '✉️', phone: '📱', booking: '📅',
-  instagram: '📷', twitter: '𝕏', github: '⌨️', facebook: 'f', tiktok: '🎵',
-  youtube: '▶️', spotify: '🎧', custom: '🔗', vcard: '📇',
-};
 
 // ── Styles ─────────────────────────────────────────────
 
@@ -95,6 +92,28 @@ export default function ImpressionEditor() {
   const [photoUploading, setPhotoUploading] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
 
+  // Profile data for preview
+  const [profileData, setProfileData] = useState<{
+    firstName: string; lastName: string; photoUrl: string;
+    template: string; accentColor: string; plan: string;
+    photoShape: string; photoRadius: number; photoSize: string;
+    photoPositionX: number; photoPositionY: number; photoAnimation: string;
+  } | null>(null);
+  const [previewPods, setPreviewPods] = useState<PodData[]>([]);
+
+  // Photo settings (synced from profile, editable here)
+  const [photoShape, setPhotoShape] = useState('circle');
+  const [photoRadius, setPhotoRadius] = useState(50);
+  const [photoSize, setPhotoSize] = useState('medium');
+  const [photoPositionX, setPhotoPositionX] = useState(50);
+  const [photoPositionY, setPhotoPositionY] = useState(50);
+  const [photoAnimation, setPhotoAnimation] = useState('none');
+  const [showPhotoSettings, setShowPhotoSettings] = useState(false);
+  const [showShapeSlider, setShowShapeSlider] = useState(false);
+  const [photoSettingsSaving, setPhotoSettingsSaving] = useState(false);
+  const [photoSettingsSaved, setPhotoSettingsSaved] = useState(false);
+  const isPaid = profileData?.plan !== 'free';
+
   // Creating vs editing
   const [isNew, setIsNew] = useState(true);
 
@@ -104,6 +123,34 @@ export default function ImpressionEditor() {
       if (d.profile?.slug) setSlug(d.profile.slug);
       if (d.links) {
         setLinks(d.links.filter((l: LinkItem & { showPersonal?: boolean }) => l.showPersonal));
+      }
+      if (d.user && d.profile) {
+        setProfileData({
+          firstName: d.user.firstName || '',
+          lastName: d.user.lastName || '',
+          photoUrl: d.profile.photoUrl || '',
+          template: d.profile.template || 'clean',
+          accentColor: d.profile.accentColor || '',
+          plan: d.user.plan || 'free',
+          photoShape: d.profile.photoShape || 'circle',
+          photoRadius: d.profile.photoRadius ?? 50,
+          photoSize: d.profile.photoSize || 'medium',
+          photoPositionX: d.profile.photoPositionX ?? 50,
+          photoPositionY: d.profile.photoPositionY ?? 50,
+          photoAnimation: d.profile.photoAnimation || 'none',
+        });
+        // Populate local photo settings state
+        setPhotoShape(d.profile.photoShape || 'circle');
+        const r = d.profile.photoRadius;
+        if (r != null) setPhotoRadius(r);
+        else {
+          const map: Record<string, number> = { circle: 50, rounded: 32, soft: 16, square: 0 };
+          setPhotoRadius(map[d.profile.photoShape] ?? 50);
+        }
+        setPhotoSize(d.profile.photoSize || 'medium');
+        setPhotoPositionX(d.profile.photoPositionX ?? 50);
+        setPhotoPositionY(d.profile.photoPositionY ?? 50);
+        setPhotoAnimation(d.profile.photoAnimation || 'none');
       }
     }).catch(() => {});
     fetch('/api/protected-pages?mode=hidden')
@@ -210,6 +257,31 @@ export default function ImpressionEditor() {
     }
   }, [isNew, page, pageTitle, bioText, pin, pinConfirm, isActive, iconColor, iconOpacity, iconCorner, allowRemember, photoMode, photoUrl]);
 
+  // Save photo settings to profile
+  async function savePhotoSettings() {
+    setPhotoSettingsSaving(true);
+    setPhotoSettingsSaved(false);
+    setError('');
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          section: 'appearance',
+          photoShape, photoRadius, photoSize,
+          photoPositionX, photoPositionY, photoAnimation,
+        }),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to save'); }
+      setPhotoSettingsSaved(true);
+      setTimeout(() => setPhotoSettingsSaved(false), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save photo settings');
+    } finally {
+      setPhotoSettingsSaving(false);
+    }
+  }
+
   // Photo upload
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -232,6 +304,14 @@ export default function ImpressionEditor() {
     }
   }
 
+  const handlePodsChange = useCallback((updatedPods: { id: string; podType: string; label: string; title: string; body: string; imageUrl: string; stats: { num: string; label: string }[]; ctaLabel: string; ctaUrl: string; tags?: string; imagePosition?: string }[]) => {
+    setPreviewPods(updatedPods.map(p => ({
+      id: p.id, podType: p.podType, label: p.label, title: p.title, body: p.body,
+      imageUrl: p.imageUrl, stats: p.stats, ctaLabel: p.ctaLabel, ctaUrl: p.ctaUrl,
+      tags: p.tags || '', imagePosition: p.imagePosition || 'left',
+    })));
+  }, []);
+
   // ── Render ───────────────────────────────────────────
 
   if (loading) {
@@ -246,7 +326,7 @@ export default function ImpressionEditor() {
     <div className="dash-page">
 
       {/* Header */}
-      <header className="dash-header">
+      <header className="dash-header" style={{ position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <a href="/dashboard" className="dash-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="dash-logo-mark" />
@@ -280,7 +360,8 @@ export default function ImpressionEditor() {
         </div>
       )}
 
-      <main className="dash-main">
+      <div className="editor-split">
+      <main className="dash-main editor-panel" style={{ paddingBottom: '4rem' }}>
 
         {/* Intro */}
         <div style={{ marginBottom: '1.5rem' }}>
@@ -338,56 +419,59 @@ export default function ImpressionEditor() {
           )}
         </div>
 
-        {/* Personal Photo (only after created) */}
+        {/* Photo Section (only after created) */}
         {!isNew && (
           <div style={sectionStyle}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>Impression Photo</h3>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
-              Choose a different photo for your Impression page, or use your profile photo.
-            </p>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>Photo & Icon</h3>
 
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <button
-                onClick={() => setPhotoMode('profile')}
-                style={{
-                  padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid',
-                  borderColor: photoMode === 'profile' ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
-                  backgroundColor: photoMode === 'profile' ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
-                  color: photoMode === 'profile' ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
-                  fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >
-                Use profile photo
-              </button>
-              <button
-                onClick={() => setPhotoMode('custom')}
-                style={{
-                  padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid',
-                  borderColor: photoMode === 'custom' ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
-                  backgroundColor: photoMode === 'custom' ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
-                  color: photoMode === 'custom' ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
-                  fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >
-                Different photo
-              </button>
-            </div>
+            {/* Impression-specific photo */}
+            <div>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
+                Optionally use a different photo for your Impression page.
+              </p>
 
-            {photoMode === 'custom' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                {photoUrl && (
-                  <img src={photoUrl} alt="Personal" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-light, #283042)' }} />
-                )}
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <button
-                  onClick={() => photoRef.current?.click()}
-                  disabled={photoUploading}
+                  onClick={() => setPhotoMode('profile')}
                   style={{
-                    padding: '0.375rem 0.75rem', backgroundColor: 'var(--border, #1e2535)', border: '1px solid var(--border-light, #283042)',
-                    borderRadius: '0.375rem', fontSize: '0.8125rem', fontWeight: 500,
-                    cursor: photoUploading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: 'var(--text, #eceef2)',
+                    padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid',
+                    borderColor: photoMode === 'profile' ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
+                    backgroundColor: photoMode === 'profile' ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
+                    color: photoMode === 'profile' ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                    fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
                   }}
                 >
-                  {photoUploading ? 'Uploading...' : photoUrl ? 'Change' : 'Upload photo'}
+                  Same as profile
+                </button>
+                <button
+                  onClick={() => setPhotoMode('custom')}
+                  style={{
+                    padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid',
+                    borderColor: photoMode === 'custom' ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
+                    backgroundColor: photoMode === 'custom' ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
+                    color: photoMode === 'custom' ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                    fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  Upload custom
+                </button>
+              </div>
+
+              {photoMode === 'custom' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  {photoUrl && (
+                    <img src={photoUrl} alt="Personal" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-light, #283042)' }} />
+                  )}
+                  <button
+                    onClick={() => photoRef.current?.click()}
+                    disabled={photoUploading}
+                    style={{
+                      padding: '0.375rem 0.75rem', backgroundColor: 'var(--border, #1e2535)', border: '1px solid var(--border-light, #283042)',
+                      borderRadius: '0.375rem', fontSize: '0.8125rem', fontWeight: 500,
+                      cursor: photoUploading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: 'var(--text, #eceef2)',
+                    }}
+                  >
+                    {photoUploading ? 'Uploading...' : photoUrl ? 'Change' : 'Upload photo'}
                 </button>
                 {photoUrl && (
                   <button
@@ -404,122 +488,326 @@ export default function ImpressionEditor() {
                 <input ref={photoRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoUpload} style={{ display: 'none' }} />
               </div>
             )}
-          </div>
-        )}
-
-        {/* Icon Settings (only show after page is created) */}
-        {!isNew && (
-          <div style={sectionStyle}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>Icon Appearance</h3>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
-              Customize the circle-dot icon that appears on your public profile. It should be subtle — only those you tell will know to tap it.
-            </p>
-
-            {/* Preview */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border-light, #283042)' }}>
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  border: `1.5px solid ${iconColor || 'var(--accent, #e8a849)'}`,
-                  backgroundColor: 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  opacity: iconOpacity,
-                  flexShrink: 0,
-                }}
-              >
-                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: iconColor || 'var(--accent, #e8a849)', display: 'block' }} />
-              </div>
-              <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>Preview at current opacity</span>
             </div>
 
-            {/* Color */}
-            <div style={{ marginBottom: '0.75rem' }}>
-              <label style={labelStyle}>Icon color</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input
-                  type="color"
-                  value={iconColor || '#e8a849'}
-                  onChange={e => setIconColor(e.target.value)}
-                  style={{ width: 36, height: 36, padding: 0, border: '1px solid var(--border-light, #283042)', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--bg, #0c1017)' }}
-                />
-                <input
-                  type="text"
-                  value={iconColor}
-                  onChange={e => setIconColor(e.target.value)}
-                  placeholder="#e8a849 (default: accent)"
-                  style={{ ...inputStyle, flex: 1 }}
-                />
-              </div>
-            </div>
+            {/* ── Photo Settings (collapsible) ── */}
+            <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '1rem', marginTop: '1rem' }}>
+              <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+                <div
+                  onClick={() => setShowPhotoSettings(!showPhotoSettings)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}
+                >
+                  <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showPhotoSettings ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
+                  <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>Photo Settings</label>
+                  {!isPaid && (
+                    <span style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.05em', backgroundColor: 'var(--border-light, #283042)', color: 'var(--text-muted, #5d6370)', padding: '1px 4px', borderRadius: '3px', lineHeight: 1.4 }}>PRO</span>
+                  )}
+                </div>
 
-            {/* Opacity */}
-            <div style={{ marginBottom: '0.75rem' }}>
-              <label style={labelStyle}>Opacity — {Math.round(iconOpacity * 100)}%</label>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {[
-                  { label: 'Subtle', value: 0.15 },
-                  { label: 'Low', value: 0.25 },
-                  { label: 'Medium', value: 0.35 },
-                  { label: 'Visible', value: 0.55 },
-                  { label: 'Bold', value: 0.80 },
-                ].map(opt => (
+                {showPhotoSettings && (<>
+                  {/* Size picker */}
+                  <div style={{ marginBottom: '0.75rem', marginTop: '0.75rem' }}>
+                    <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Size</label>
+                    <div style={{ display: 'flex', gap: '0.375rem' }}>
+                      {([
+                        { id: 'small', label: 'S', iconSize: 12 },
+                        { id: 'medium', label: 'M', iconSize: 16 },
+                        { id: 'large', label: 'L', iconSize: 20 },
+                      ] as const).map(s => (
+                        <button
+                          key={s.id}
+                          onClick={() => setPhotoSize(s.id)}
+                          style={{
+                            width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            borderRadius: '0.375rem',
+                            border: photoSize === s.id ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                            backgroundColor: 'var(--surface, #161c28)', cursor: 'pointer', padding: 0,
+                            transition: 'border-color 0.15s',
+                          }}
+                        >
+                          <div style={{ width: s.iconSize, height: s.iconSize, borderRadius: '50%', backgroundColor: photoSize === s.id ? 'var(--accent, #e8a849)' : 'var(--text-muted, #5d6370)' }} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Shape picker */}
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Shape</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
+                      {([
+                        { id: 'circle', label: 'Circle', free: true, render: <div style={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                        { id: 'rounded', label: 'Rounded', free: false, render: <div style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                        { id: 'soft', label: 'Soft', free: false, render: <div style={{ width: 22, height: 22, borderRadius: 3, backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                        { id: 'square', label: 'Square', free: true, render: <div style={{ width: 22, height: 22, borderRadius: 0, backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                        { id: 'hexagon', label: 'Hexagon', free: false, render: <div style={{ width: 22, height: 22, clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)', backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                        { id: 'diamond', label: 'Diamond', free: false, render: <div style={{ width: 22, height: 22, clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                      ] as const).map(shape => {
+                        const isSelected = photoShape === shape.id;
+                        const isLocked = !isPaid && !shape.free;
+                        return (
+                          <button
+                            key={shape.id}
+                            onClick={() => {
+                              if (isLocked) return;
+                              setPhotoShape(shape.id);
+                              const map: Record<string, number> = { circle: 50, rounded: 32, soft: 16, square: 0 };
+                              if (map[shape.id] !== undefined) setPhotoRadius(map[shape.id]);
+                              if (shape.id === 'hexagon' || shape.id === 'diamond') setShowShapeSlider(false);
+                            }}
+                            title={isLocked ? `${shape.label} (Premium)` : shape.label}
+                            style={{
+                              width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              borderRadius: '0.375rem', position: 'relative',
+                              border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                              backgroundColor: 'var(--surface, #161c28)',
+                              cursor: isLocked ? 'not-allowed' : 'pointer', padding: 0,
+                              opacity: isLocked ? 0.45 : 1,
+                              transition: 'border-color 0.15s, opacity 0.15s',
+                            }}
+                          >
+                            {shape.render}
+                            {isLocked && (
+                              <span style={{ position: 'absolute', top: -4, right: -4, fontSize: '0.4375rem', fontWeight: 700, backgroundColor: 'var(--border-light, #283042)', color: 'var(--text-muted, #5d6370)', padding: '0px 3px', borderRadius: '2px', lineHeight: 1.4 }}>PRO</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                      {!['hexagon', 'diamond'].includes(photoShape) && (
+                        <button
+                          onClick={() => { if (!isPaid) return; setShowShapeSlider(!showShapeSlider); }}
+                          style={{
+                            background: 'none', border: 'none', fontFamily: 'inherit',
+                            fontSize: '0.6875rem', padding: '0 0.25rem',
+                            cursor: isPaid ? 'pointer' : 'not-allowed',
+                            color: isPaid ? 'var(--text-muted, #5d6370)' : 'var(--border-light, #283042)',
+                            transition: 'color 0.15s',
+                          }}
+                          onMouseEnter={e => { if (isPaid) e.currentTarget.style.color = 'var(--accent, #e8a849)'; }}
+                          onMouseLeave={e => { if (isPaid) e.currentTarget.style.color = 'var(--text-muted, #5d6370)'; }}
+                        >
+                          {showShapeSlider ? 'Hide' : 'Custom'}
+                        </button>
+                      )}
+                    </div>
+                    {showShapeSlider && !['hexagon', 'diamond'].includes(photoShape) && isPaid && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                        <input
+                          type="range" min={0} max={50} value={photoRadius}
+                          onChange={e => {
+                            const val = parseInt(e.target.value);
+                            setPhotoRadius(val);
+                            if (val === 50) setPhotoShape('circle');
+                            else if (val === 32) setPhotoShape('rounded');
+                            else if (val === 16) setPhotoShape('soft');
+                            else if (val === 0) setPhotoShape('square');
+                            else setPhotoShape('custom');
+                          }}
+                          style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }}
+                        />
+                        <span style={{ fontSize: '0.6875rem', color: 'var(--text-mid, #a8adb8)', minWidth: 28, textAlign: 'right' }}>{photoRadius}%</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Position display */}
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Position</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-mid, #a8adb8)' }}>X: {photoPositionX}%</span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-mid, #a8adb8)' }}>Y: {photoPositionY}%</span>
+                      {(photoPositionX !== 50 || photoPositionY !== 50) && (
+                        <button
+                          onClick={() => { setPhotoPositionX(50); setPhotoPositionY(50); }}
+                          style={{
+                            background: 'none', border: '1px solid var(--border-light, #283042)', borderRadius: '0.25rem',
+                            fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', cursor: 'pointer', padding: '0.125rem 0.375rem', fontFamily: 'inherit',
+                          }}
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                    <p style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', margin: '0.25rem 0 0' }}>
+                      Drag the photo on your profile editor to reposition.
+                    </p>
+                  </div>
+
+                  {/* Animation picker */}
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Animation</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+                      {([
+                        { id: 'none', label: 'None', free: true },
+                        { id: 'fade', label: 'Fade', free: false },
+                        { id: 'slide-left', label: '\u2190', free: false },
+                        { id: 'slide-right', label: '\u2192', free: false },
+                        { id: 'scale', label: 'Scale', free: false },
+                        { id: 'pop', label: 'Pop', free: false },
+                      ] as const).map(anim => {
+                        const isSelected = photoAnimation === anim.id;
+                        const isLocked = !isPaid && !anim.free;
+                        return (
+                          <button
+                            key={anim.id}
+                            onClick={() => {
+                              if (isLocked) return;
+                              setPhotoAnimation(anim.id);
+                            }}
+                            style={{
+                              padding: '0.25rem 0.5rem', borderRadius: '9999px', fontSize: '0.6875rem', fontWeight: 500,
+                              border: isSelected ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                              backgroundColor: isSelected ? 'rgba(232, 168, 73, 0.1)' : 'var(--surface, #161c28)',
+                              color: isSelected ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                              cursor: isLocked ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                              opacity: isLocked ? 0.45 : 1, position: 'relative',
+                              transition: 'all 0.15s',
+                            }}
+                          >
+                            {anim.label}
+                            {isLocked && (
+                              <span style={{ fontSize: '0.4375rem', fontWeight: 700, marginLeft: '0.25rem', color: 'var(--text-muted, #5d6370)' }}>PRO</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Save photo settings */}
                   <button
-                    key={opt.label}
-                    type="button"
-                    onClick={() => setIconOpacity(opt.value)}
+                    onClick={savePhotoSettings}
+                    disabled={photoSettingsSaving}
                     style={{
-                      padding: '0.375rem 0.75rem',
-                      borderRadius: '2rem',
-                      border: '1px solid',
-                      borderColor: iconOpacity === opt.value ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
-                      backgroundColor: iconOpacity === opt.value ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
-                      color: iconOpacity === opt.value ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
-                      fontSize: '0.8125rem',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
+                      padding: '0.375rem 1rem',
+                      backgroundColor: photoSettingsSaved ? '#22c55e' : 'var(--accent, #e8a849)',
+                      color: 'var(--bg, #0c1017)',
+                      border: 'none', borderRadius: '2rem',
+                      fontSize: '0.75rem', fontWeight: 600,
+                      cursor: photoSettingsSaving ? 'not-allowed' : 'pointer',
+                      fontFamily: 'inherit', opacity: photoSettingsSaving ? 0.6 : 1,
+                      transition: 'background-color 0.2s',
                     }}
                   >
-                    {opt.label}
+                    {photoSettingsSaving ? 'Saving...' : photoSettingsSaved ? 'Saved!' : 'Save Photo Settings'}
                   </button>
-                ))}
+                </>)}
               </div>
             </div>
 
-            {/* Corner */}
-            <div>
-              <label style={labelStyle}>Corner placement</label>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {[
-                  { label: 'Bottom Right', value: 'bottom-right' },
-                  { label: 'Bottom Left', value: 'bottom-left' },
-                  { label: 'Top Right', value: 'top-right' },
-                  { label: 'Top Left', value: 'top-left' },
-                ].map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setIconCorner(opt.value)}
-                    style={{
-                      padding: '0.375rem 0.75rem',
-                      borderRadius: '2rem',
-                      border: '1px solid',
-                      borderColor: iconCorner === opt.value ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
-                      backgroundColor: iconCorner === opt.value ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
-                      color: iconCorner === opt.value ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
-                      fontSize: '0.8125rem',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+            {/* ── Hidden Tap Icon ── */}
+            <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '1rem', marginTop: '1rem' }}>
+              <label style={{ ...labelStyle, fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Hidden Tap Icon</label>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
+                Customize the circle-dot icon on your public profile. Only those you tell will know to tap it.
+              </p>
+
+              {/* Preview */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border-light, #283042)' }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    border: `1.5px solid ${iconColor || 'var(--accent, #e8a849)'}`,
+                    backgroundColor: 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: iconOpacity,
+                    flexShrink: 0,
+                  }}
+                >
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: iconColor || 'var(--accent, #e8a849)', display: 'block' }} />
+                </div>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>Preview at current opacity</span>
+              </div>
+
+              {/* Color */}
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={labelStyle}>Icon color</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="color"
+                    value={iconColor || '#e8a849'}
+                    onChange={e => setIconColor(e.target.value)}
+                    style={{ width: 36, height: 36, padding: 0, border: '1px solid var(--border-light, #283042)', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--bg, #0c1017)' }}
+                  />
+                  <input
+                    type="text"
+                    value={iconColor}
+                    onChange={e => setIconColor(e.target.value)}
+                    placeholder="#e8a849 (default: accent)"
+                    style={{ ...inputStyle, flex: 1 }}
+                  />
+                </div>
+              </div>
+
+              {/* Opacity */}
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={labelStyle}>Opacity — {Math.round(iconOpacity * 100)}%</label>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {[
+                    { label: 'Subtle', value: 0.15 },
+                    { label: 'Low', value: 0.25 },
+                    { label: 'Medium', value: 0.35 },
+                    { label: 'Visible', value: 0.55 },
+                    { label: 'Bold', value: 0.80 },
+                  ].map(opt => (
+                    <button
+                      key={opt.label}
+                      type="button"
+                      onClick={() => setIconOpacity(opt.value)}
+                      style={{
+                        padding: '0.375rem 0.75rem',
+                        borderRadius: '2rem',
+                        border: '1px solid',
+                        borderColor: iconOpacity === opt.value ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
+                        backgroundColor: iconOpacity === opt.value ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
+                        color: iconOpacity === opt.value ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                        fontSize: '0.8125rem',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Corner */}
+              <div>
+                <label style={labelStyle}>Corner placement</label>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {[
+                    { label: 'Bottom Right', value: 'bottom-right' },
+                    { label: 'Bottom Left', value: 'bottom-left' },
+                    { label: 'Top Right', value: 'top-right' },
+                    { label: 'Top Left', value: 'top-left' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setIconCorner(opt.value)}
+                      style={{
+                        padding: '0.375rem 0.75rem',
+                        borderRadius: '2rem',
+                        border: '1px solid',
+                        borderColor: iconCorner === opt.value ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
+                        backgroundColor: iconCorner === opt.value ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
+                        color: iconCorner === opt.value ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                        fontSize: '0.8125rem',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -579,72 +867,6 @@ export default function ImpressionEditor() {
           {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Impression' : 'Save Changes'}
         </button>
 
-        {/* Personal Links (read-only — managed in Profile editor) */}
-        {!isNew && page && (
-          <div style={sectionStyle}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>Personal Links</h3>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
-              Links tagged as &ldquo;PERSONAL&rdquo; appear when someone unlocks your Impression.{' '}
-              <a href="/dashboard/profile" style={{ color: 'var(--accent, #e8a849)', textDecoration: 'none', fontWeight: 500 }}>
-                Manage links in Profile &rarr;
-              </a>
-            </p>
-
-            {links.length === 0 ? (
-              <div style={{
-                padding: '1.5rem',
-                textAlign: 'center',
-                backgroundColor: 'var(--bg, #0c1017)',
-                borderRadius: '0.5rem',
-                border: '1px dashed var(--border-light, #283042)',
-              }}>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
-                  No personal links yet. Go to{' '}
-                  <a href="/dashboard/profile" style={{ color: 'var(--accent, #e8a849)', textDecoration: 'none' }}>
-                    Profile &rarr; Links
-                  </a>
-                  {' '}and toggle links to &ldquo;PERSONAL&rdquo;.
-                </p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {links.map((link, i) => (
-                  <div
-                    key={link.id || i}
-                    style={{
-                      backgroundColor: 'var(--bg, #0c1017)',
-                      border: '1px solid var(--border-light, #283042)',
-                      borderRadius: '0.5rem',
-                      padding: '0.75rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.75rem',
-                    }}
-                  >
-                    <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>
-                      {LINK_ICONS[link.linkType] || '🔗'}
-                    </span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text, #eceef2)', marginBottom: '0.125rem' }}>
-                        {link.label || link.linkType}
-                      </div>
-                      <div style={{
-                        fontSize: '0.75rem',
-                        color: 'var(--text-muted, #5d6370)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}>
-                        {link.url}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Content Blocks (only after page is created) */}
         {!isNew && page && (
           <div style={sectionStyle}>
@@ -654,6 +876,7 @@ export default function ImpressionEditor() {
               isPaid={true}
               visibilityMode="hidden"
               onError={setError}
+              onPodsChange={handlePodsChange}
             />
           </div>
         )}
@@ -669,6 +892,35 @@ export default function ImpressionEditor() {
         </div>
 
       </main>
+
+      {/* ─── Live Preview Panel (desktop only) ──────── */}
+      <aside className="preview-panel">
+        <div className="preview-phone">
+          <div className="preview-phone-notch" />
+          <div className="preview-phone-screen">
+            {profileData && (
+              <ProtectedPagePreview
+                mode="impression"
+                firstName={profileData.firstName}
+                lastName={profileData.lastName}
+                photoUrl={photoMode === 'custom' && photoUrl ? photoUrl : profileData.photoUrl}
+                template={profileData.template}
+                accentColor={profileData.accentColor}
+                bioText={bioText}
+                links={links.map(l => ({ id: l.id || '', linkType: l.linkType, label: l.label, url: l.url }))}
+                pods={previewPods}
+                photoShape={photoShape}
+                photoRadius={photoRadius}
+                photoSize={photoSize}
+                photoPositionX={photoPositionX}
+                photoPositionY={photoPositionY}
+                photoAnimation={photoAnimation}
+              />
+            )}
+          </div>
+        </div>
+      </aside>
+      </div>
     </div>
   );
 }

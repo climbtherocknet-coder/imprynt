@@ -18,6 +18,7 @@
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border, #1e2535);
+  background-color: var(--bg, #0c1017);
 }
 
 .dash-logo {
@@ -108,9 +109,15 @@
 /* ── Stats grid ── */
 .dash-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
   margin-bottom: 1.5rem;
+}
+
+.dash-stat-sublabel {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0;
 }
 
 .dash-stat-card {

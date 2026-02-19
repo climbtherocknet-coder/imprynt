@@ -202,7 +202,7 @@ export default async function DashboardPage({
         <div className="dash-header-right">
           <ThemeToggle />
           <span className={`dash-plan-badge ${isPaid ? 'dash-plan-badge--paid' : 'dash-plan-badge--free'}`}>
-            {isPaid ? 'Premium' : 'Free'}
+            {plan === 'advisory' ? 'Advisory' : isPaid ? 'Premium' : 'Free'}
           </span>
           <span className="dash-user-name">
             {session.user.name || session.user.email}
@@ -218,15 +218,12 @@ export default async function DashboardPage({
         {/* Stats Row */}
         <div className="dash-stats">
           <div className="dash-stat-card">
-            <p className="dash-stat-label">Signa</p>
+            <p className="dash-stat-label">Views</p>
             <p className="dash-stat-value">{analytics.total_views}</p>
+            <p className="dash-stat-sublabel">Total profile views</p>
           </div>
           <div className="dash-stat-card">
-            <p className="dash-stat-label">Links</p>
-            <p className="dash-stat-value">{linkCount}</p>
-          </div>
-          <div className="dash-stat-card">
-            <p className="dash-stat-label">Status</p>
+            <p className="dash-stat-label">On Air</p>
             <OnAirToggle initialPublished={profile?.is_published ?? false} slug={profile?.slug} />
           </div>
         </div>
@@ -239,9 +236,9 @@ export default async function DashboardPage({
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <IconStatus />
                 <div>
-                  <h3 className="dash-nav-title">Status</h3>
+                  <h3 className="dash-nav-title">Status Tags</h3>
                   <p className="dash-nav-desc">
-                    Badges shown on your public profile
+                    Add badges to your public profile
                   </p>
                 </div>
               </div>

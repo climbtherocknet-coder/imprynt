@@ -301,7 +301,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
         </span>
       </div>
       <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
-        Add sections to your page. Click a block to edit it.
+        Add sections to your page — an About Me, project highlights, a call to action, or anything else visitors should see.
       </p>
 
       {/* Pod list */}

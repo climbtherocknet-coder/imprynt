@@ -44,6 +44,11 @@ interface ProfileData {
     allowFeedback: boolean;
     photoShape: string;
     photoRadius: number | null;
+    photoSize: string;
+    photoPositionX: number;
+    photoPositionY: number;
+    photoAnimation: string;
+    vcardPinEnabled: boolean;
   };
   links: LinkItem[];
 }
@@ -149,9 +154,25 @@ export default function ProfileEditor() {
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [allowSharing, setAllowSharing] = useState(true);
   const [allowFeedback, setAllowFeedback] = useState(true);
+  const [vcardPinEnabled, setVcardPinEnabled] = useState(false);
+  const [vcardPinInput, setVcardPinInput] = useState('');
+  const [vcardPinSaving, setVcardPinSaving] = useState(false);
+  const [vcardPinSaved, setVcardPinSaved] = useState(false);
   const [photoShape, setPhotoShape] = useState('circle');
   const [photoRadius, setPhotoRadius] = useState<number>(50);
   const [showShapeSlider, setShowShapeSlider] = useState(false);
+  const [showPhotoSettings, setShowPhotoSettings] = useState(false);
+  const [showSharingSettings, setShowSharingSettings] = useState(false);
+  const [photoSize, setPhotoSize] = useState('medium');
+  const [photoPositionX, setPhotoPositionX] = useState(50);
+  const [photoPositionY, setPhotoPositionY] = useState(50);
+  const [photoAnimation, setPhotoAnimation] = useState('none');
+  const [previewKey, setPreviewKey] = useState(0);
+  const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
+  const [showUrlPopup, setShowUrlPopup] = useState(false);
+  const [nfcCopied, setNfcCopied] = useState(false);
+  const urlPopupRef = useRef<HTMLDivElement>(null);
   const [previewPods, setPreviewPods] = useState<{ id: string; podType: string; label: string; title: string; body: string; imageUrl: string; stats: { num: string; label: string }[]; ctaLabel: string; ctaUrl: string; tags?: string; imagePosition?: string }[]>([]);
 
   // Photo upload
@@ -159,9 +180,13 @@ export default function ProfileEditor() {
   const [photoUrl, setPhotoUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Drag state
+  // Drag state (links)
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
+
+  // Photo drag-to-reposition refs
+  const dragStartRef = useRef<{ x: number; y: number; startPosX: number; startPosY: number } | null>(null);
+  const dragMovedRef = useRef(false);
 
   const isPaid = data?.user.plan !== 'free';
 
@@ -186,12 +211,17 @@ export default function ProfileEditor() {
         setPhotoUrl(d.profile.photoUrl);
         setAllowSharing(d.profile.allowSharing !== false);
         setAllowFeedback(d.profile.allowFeedback !== false);
+        setVcardPinEnabled(!!d.profile.vcardPinEnabled);
         setPhotoShape(d.profile.photoShape || 'circle');
         if (d.profile.photoRadius != null) setPhotoRadius(d.profile.photoRadius);
         else {
           const map: Record<string, number> = { circle: 50, rounded: 32, soft: 16, square: 0 };
           setPhotoRadius(map[d.profile.photoShape] ?? 50);
         }
+        setPhotoSize(d.profile.photoSize || 'medium');
+        setPhotoPositionX(d.profile.photoPositionX ?? 50);
+        setPhotoPositionY(d.profile.photoPositionY ?? 50);
+        setPhotoAnimation(d.profile.photoAnimation || 'none');
         setLoading(false);
       })
       .catch(() => {
@@ -352,6 +382,43 @@ export default function ProfileEditor() {
     }
   }
 
+  // Photo drag-to-reposition
+  useEffect(() => {
+    if (!isDraggingPhoto) return;
+    function handlePointerMove(e: PointerEvent) {
+      if (!dragStartRef.current) return;
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMovedRef.current = true;
+      const newX = Math.max(0, Math.min(100, dragStartRef.current.startPosX - dx));
+      const newY = Math.max(0, Math.min(100, dragStartRef.current.startPosY - dy));
+      setPhotoPositionX(Math.round(newX));
+      setPhotoPositionY(Math.round(newY));
+    }
+    function handlePointerUp() {
+      dragStartRef.current = null;
+      setIsDraggingPhoto(false);
+    }
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [isDraggingPhoto]);
+
+  // Close URL popup on click outside
+  useEffect(() => {
+    if (!showUrlPopup) return;
+    function handleClick(e: MouseEvent) {
+      if (urlPopupRef.current && !urlPopupRef.current.contains(e.target as Node)) {
+        setShowUrlPopup(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showUrlPopup]);
+
   const handlePodsChange = useCallback((pods: { id: string; podType: string; label: string; title: string; body: string; imageUrl: string; stats: { num: string; label: string }[]; ctaLabel: string; ctaUrl: string; tags?: string; imagePosition?: string; showOnProfile: boolean }[]) => {
     setPreviewPods(pods.filter(p => p.showOnProfile !== false));
   }, []);
@@ -377,6 +444,9 @@ export default function ProfileEditor() {
   const profileUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/${data.profile.slug}`
     : `/${data.profile.slug}`;
+  const nfcUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/r/${data.profile.redirectId}`
+    : `/r/${data.profile.redirectId}`;
 
   return (
     <div className="dash-page">
@@ -394,15 +464,71 @@ export default function ProfileEditor() {
           <a href="/dashboard" style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent, #e8a849)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted, #5d6370)')}>
             &#8592; Dashboard
           </a>
-          <a
-            href={profileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="dash-btn-ghost"
-            style={{ padding: '0.375rem 0.75rem' }}
-          >
-            View Profile →
-          </a>
+          <div style={{ position: 'relative' }} ref={urlPopupRef}>
+            <button
+              onClick={() => setShowUrlPopup(v => !v)}
+              className="dash-btn-ghost"
+              style={{ padding: '0.375rem 0.75rem', cursor: 'pointer', fontFamily: 'inherit', background: 'none' }}
+            >
+              Share / URL
+            </button>
+            {showUrlPopup && (
+              <div style={{
+                position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem',
+                width: 360, backgroundColor: 'var(--surface, #161c28)',
+                border: '1px solid var(--border, #1e2535)', borderRadius: '0.75rem',
+                padding: '1rem', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 100,
+              }}>
+                <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted, #5d6370)', marginBottom: '0.5rem', marginTop: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Profile URL</p>
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                  <input readOnly value={profileUrl} style={{ ...inputStyle, fontSize: '0.8125rem', flex: 1 }} onFocus={e => e.target.select()} />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(profileUrl).then(() => {
+                        setUrlCopied(true);
+                        setTimeout(() => setUrlCopied(false), 2000);
+                      });
+                    }}
+                    style={{ ...saveBtnStyle, padding: '0.375rem 0.75rem', whiteSpace: 'nowrap', fontSize: '0.75rem' }}
+                  >
+                    {urlCopied ? '✓' : 'Copy'}
+                  </button>
+                </div>
+
+                <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted, #5d6370)', marginBottom: '0.5rem', marginTop: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>NFC / QR Redirect</p>
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                  <input readOnly value={nfcUrl} style={{ ...inputStyle, fontSize: '0.8125rem', flex: 1 }} onFocus={e => e.target.select()} />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(nfcUrl).then(() => {
+                        setNfcCopied(true);
+                        setTimeout(() => setNfcCopied(false), 2000);
+                      });
+                    }}
+                    style={{ ...saveBtnStyle, padding: '0.375rem 0.75rem', whiteSpace: 'nowrap', fontSize: '0.75rem' }}
+                  >
+                    {nfcCopied ? '✓' : 'Copy'}
+                  </button>
+                </div>
+
+                <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ fontSize: '0.8125rem', color: 'var(--text, #eceef2)', margin: 0, fontWeight: 500 }}>Regenerate Slug</p>
+                    <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', margin: '0.125rem 0 0' }}>Get a new random profile URL</p>
+                  </div>
+                  <button disabled style={{ padding: '0.375rem 0.75rem', fontSize: '0.6875rem', fontWeight: 600, border: '1px solid var(--border, #1e2535)', borderRadius: '2rem', backgroundColor: 'transparent', color: 'var(--text-muted, #5d6370)', cursor: 'not-allowed', fontFamily: 'inherit', opacity: 0.6 }}>
+                    Coming Soon
+                  </button>
+                </div>
+
+                <div style={{ marginTop: '0.75rem', textAlign: 'center' }}>
+                  <a href={profileUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8125rem', color: 'var(--accent, #e8a849)', textDecoration: 'none' }}>
+                    Open Profile →
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -417,23 +543,32 @@ export default function ProfileEditor() {
       <div className="editor-split">
       <main className="dash-main editor-panel" style={{ paddingBottom: '4rem' }}>
 
-        {/* ─── Identity Section ──────────────────── */}
+        {/* ─── My Main Profile Section ─────────── */}
         <div style={sectionStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={sectionTitleStyle}>Identity</h3>
+            <h3 style={sectionTitleStyle}>My Main Profile</h3>
             <button
-              onClick={() => saveSection('identity', { firstName, lastName, title, company, tagline, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null })}
-              disabled={saving === 'identity'}
-              style={{ ...saveBtnStyle, opacity: saving === 'identity' ? 0.6 : 1 }}
+              onClick={() => saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor, fontPair, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation })}
+              disabled={saving === 'profile'}
+              style={{ ...saveBtnStyle, opacity: saving === 'profile' ? 0.6 : 1 }}
             >
-              {saving === 'identity' ? 'Saving...' : saved === 'identity' ? '\u2713 Saved' : 'Save'}
+              {saving === 'profile' ? 'Saving...' : saved === 'profile' ? '\u2713 Saved' : 'Save'}
             </button>
           </div>
 
           {/* Photo upload */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
             <div
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                if (dragMovedRef.current) { dragMovedRef.current = false; return; }
+                fileInputRef.current?.click();
+              }}
+              onPointerDown={(e) => {
+                if (!photoUrl) return;
+                dragMovedRef.current = false;
+                dragStartRef.current = { x: e.clientX, y: e.clientY, startPosX: photoPositionX, startPosY: photoPositionY };
+                setIsDraggingPhoto(true);
+              }}
               style={{
                 width: 72,
                 height: 72,
@@ -447,7 +582,7 @@ export default function ProfileEditor() {
                   : photoShape === 'diamond' ? 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)'
                   : undefined,
                 overflow: 'hidden',
-                cursor: 'pointer',
+                cursor: photoUrl ? (isDraggingPhoto ? 'grabbing' : 'grab') : 'pointer',
                 flexShrink: 0,
                 backgroundColor: 'var(--border, #1e2535)',
                 display: 'flex',
@@ -456,13 +591,15 @@ export default function ProfileEditor() {
                 border: ['hexagon', 'diamond'].includes(photoShape) ? 'none' : '2px dashed var(--border-light, #283042)',
                 position: 'relative',
                 transition: 'border-radius 0.2s, clip-path 0.2s',
+                touchAction: 'none',
               }}
+              title={photoUrl ? 'Drag to reposition' : 'Click to upload'}
             >
               {photoUrl ? (
                 <img
                   src={photoUrl}
                   alt="Profile"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${photoPositionX}% ${photoPositionY}%`, pointerEvents: 'none' }}
                 />
               ) : (
                 <span style={{ fontSize: '1.5rem', color: 'var(--text-muted, #5d6370)' }}>+</span>
@@ -501,7 +638,7 @@ export default function ProfileEditor() {
                 {uploading ? 'Uploading...' : photoUrl ? 'Change photo' : 'Upload photo'}
               </button>
               <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', margin: '0.375rem 0 0' }}>
-                JPEG, PNG, or WebP. Max 5MB.
+                JPEG, PNG, or WebP. Max 10MB.
               </p>
             </div>
             <input
@@ -513,83 +650,190 @@ export default function ProfileEditor() {
             />
           </div>
 
-          {/* Photo shape picker — inline with photo */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <label style={labelStyle}>Photo shape</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
-              {([
-                { id: 'circle', label: 'Circle', render: <div style={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: 'var(--accent, #e8a849)' }} /> },
-                { id: 'rounded', label: 'Rounded', render: <div style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: 'var(--accent, #e8a849)' }} /> },
-                { id: 'soft', label: 'Soft', render: <div style={{ width: 22, height: 22, borderRadius: 3, backgroundColor: 'var(--accent, #e8a849)' }} /> },
-                { id: 'square', label: 'Square', render: <div style={{ width: 22, height: 22, borderRadius: 0, backgroundColor: 'var(--accent, #e8a849)' }} /> },
-                { id: 'hexagon', label: 'Hexagon', render: <div style={{ width: 22, height: 22, clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)', backgroundColor: 'var(--accent, #e8a849)' }} /> },
-                { id: 'diamond', label: 'Diamond', render: <div style={{ width: 22, height: 22, clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', backgroundColor: 'var(--accent, #e8a849)' }} /> },
-              ] as const).map(shape => {
-                const isSelected = photoShape === shape.id;
-                return (
+          {/* ── Photo Settings (collapsible) ── */}
+          <div style={{ marginBottom: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+            <div
+              onClick={() => setShowPhotoSettings(!showPhotoSettings)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}
+            >
+              <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showPhotoSettings ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
+              <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>Photo Settings</label>
+              {!isPaid && (
+                <span style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.05em', backgroundColor: 'var(--border-light, #283042)', color: 'var(--text-muted, #5d6370)', padding: '1px 4px', borderRadius: '3px', lineHeight: 1.4 }}>PRO</span>
+              )}
+            </div>
+
+            {showPhotoSettings && (<>
+            {/* Size picker */}
+            <div style={{ marginBottom: '0.75rem' }}>
+              <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Size</label>
+              <div style={{ display: 'flex', gap: '0.375rem' }}>
+                {([
+                  { id: 'small', label: 'S', iconSize: 12 },
+                  { id: 'medium', label: 'M', iconSize: 16 },
+                  { id: 'large', label: 'L', iconSize: 20 },
+                ] as const).map(s => (
                   <button
-                    key={shape.id}
-                    onClick={() => {
-                      setPhotoShape(shape.id);
-                      const map: Record<string, number> = { circle: 50, rounded: 32, soft: 16, square: 0 };
-                      if (map[shape.id] !== undefined) setPhotoRadius(map[shape.id]);
-                      if (shape.id === 'hexagon' || shape.id === 'diamond') setShowShapeSlider(false);
-                    }}
-                    title={shape.label}
+                    key={s.id}
+                    onClick={() => setPhotoSize(s.id)}
                     style={{
-                      width: 34,
-                      height: 34,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
                       borderRadius: '0.375rem',
-                      border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
-                      backgroundColor: 'var(--surface-raised, #1e2535)',
-                      cursor: 'pointer',
-                      padding: 0,
+                      border: photoSize === s.id ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                      backgroundColor: 'var(--surface, #161c28)', cursor: 'pointer', padding: 0,
                       transition: 'border-color 0.15s',
                     }}
                   >
-                    {shape.render}
+                    <div style={{ width: s.iconSize, height: s.iconSize, borderRadius: '50%', backgroundColor: photoSize === s.id ? 'var(--accent, #e8a849)' : 'var(--text-muted, #5d6370)' }} />
                   </button>
-                );
-              })}
-              {!['hexagon', 'diamond'].includes(photoShape) && (
-                <button
-                  onClick={() => setShowShapeSlider(!showShapeSlider)}
-                  style={{
-                    background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                    fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', padding: '0 0.25rem',
-                    transition: 'color 0.15s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent, #e8a849)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted, #5d6370)')}
-                >
-                  {showShapeSlider ? 'Hide' : 'Custom'}
-                </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Shape picker */}
+            <div style={{ marginBottom: '0.75rem' }}>
+              <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Shape</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
+                {([
+                  { id: 'circle', label: 'Circle', free: true, render: <div style={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                  { id: 'rounded', label: 'Rounded', free: false, render: <div style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                  { id: 'soft', label: 'Soft', free: false, render: <div style={{ width: 22, height: 22, borderRadius: 3, backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                  { id: 'square', label: 'Square', free: true, render: <div style={{ width: 22, height: 22, borderRadius: 0, backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                  { id: 'hexagon', label: 'Hexagon', free: false, render: <div style={{ width: 22, height: 22, clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)', backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                  { id: 'diamond', label: 'Diamond', free: false, render: <div style={{ width: 22, height: 22, clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                ] as const).map(shape => {
+                  const isSelected = photoShape === shape.id;
+                  const isLocked = !isPaid && !shape.free;
+                  return (
+                    <button
+                      key={shape.id}
+                      onClick={() => {
+                        if (isLocked) return;
+                        setPhotoShape(shape.id);
+                        const map: Record<string, number> = { circle: 50, rounded: 32, soft: 16, square: 0 };
+                        if (map[shape.id] !== undefined) setPhotoRadius(map[shape.id]);
+                        if (shape.id === 'hexagon' || shape.id === 'diamond') setShowShapeSlider(false);
+                      }}
+                      title={isLocked ? `${shape.label} (Premium)` : shape.label}
+                      style={{
+                        width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        borderRadius: '0.375rem', position: 'relative',
+                        border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                        backgroundColor: 'var(--surface, #161c28)',
+                        cursor: isLocked ? 'not-allowed' : 'pointer', padding: 0,
+                        opacity: isLocked ? 0.45 : 1,
+                        transition: 'border-color 0.15s, opacity 0.15s',
+                      }}
+                    >
+                      {shape.render}
+                      {isLocked && (
+                        <span style={{ position: 'absolute', top: -4, right: -4, fontSize: '0.4375rem', fontWeight: 700, backgroundColor: 'var(--border-light, #283042)', color: 'var(--text-muted, #5d6370)', padding: '0px 3px', borderRadius: '2px', lineHeight: 1.4 }}>PRO</span>
+                      )}
+                    </button>
+                  );
+                })}
+                {!['hexagon', 'diamond'].includes(photoShape) && (
+                  <button
+                    onClick={() => { if (!isPaid) return; setShowShapeSlider(!showShapeSlider); }}
+                    style={{
+                      background: 'none', border: 'none', fontFamily: 'inherit',
+                      fontSize: '0.6875rem', padding: '0 0.25rem',
+                      cursor: isPaid ? 'pointer' : 'not-allowed',
+                      color: isPaid ? 'var(--text-muted, #5d6370)' : 'var(--border-light, #283042)',
+                      transition: 'color 0.15s',
+                    }}
+                    onMouseEnter={e => { if (isPaid) e.currentTarget.style.color = 'var(--accent, #e8a849)'; }}
+                    onMouseLeave={e => { if (isPaid) e.currentTarget.style.color = 'var(--text-muted, #5d6370)'; }}
+                  >
+                    {showShapeSlider ? 'Hide' : 'Custom'}
+                  </button>
+                )}
+              </div>
+              {showShapeSlider && !['hexagon', 'diamond'].includes(photoShape) && isPaid && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <input
+                    type="range" min={0} max={50} value={photoRadius}
+                    onChange={e => {
+                      const val = parseInt(e.target.value);
+                      setPhotoRadius(val);
+                      if (val === 50) setPhotoShape('circle');
+                      else if (val === 32) setPhotoShape('rounded');
+                      else if (val === 16) setPhotoShape('soft');
+                      else if (val === 0) setPhotoShape('square');
+                      else setPhotoShape('custom');
+                    }}
+                    style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }}
+                  />
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-mid, #a8adb8)', minWidth: 28, textAlign: 'right' }}>{photoRadius}%</span>
+                </div>
               )}
             </div>
-            {showShapeSlider && !['hexagon', 'diamond'].includes(photoShape) && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <input
-                  type="range"
-                  min={0}
-                  max={50}
-                  value={photoRadius}
-                  onChange={e => {
-                    const val = parseInt(e.target.value);
-                    setPhotoRadius(val);
-                    if (val === 50) setPhotoShape('circle');
-                    else if (val === 32) setPhotoShape('rounded');
-                    else if (val === 16) setPhotoShape('soft');
-                    else if (val === 0) setPhotoShape('square');
-                    else setPhotoShape('custom');
-                  }}
-                  style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }}
-                />
-                <span style={{ fontSize: '0.6875rem', color: 'var(--text-mid, #a8adb8)', minWidth: 28, textAlign: 'right' }}>{photoRadius}%</span>
+
+            {/* Position display */}
+            <div style={{ marginBottom: '0.75rem' }}>
+              <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Position</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-mid, #a8adb8)' }}>X: {photoPositionX}%</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-mid, #a8adb8)' }}>Y: {photoPositionY}%</span>
+                {(photoPositionX !== 50 || photoPositionY !== 50) && (
+                  <button
+                    onClick={() => { setPhotoPositionX(50); setPhotoPositionY(50); }}
+                    style={{
+                      background: 'none', border: '1px solid var(--border-light, #283042)', borderRadius: '0.25rem',
+                      fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', cursor: 'pointer', padding: '0.125rem 0.375rem', fontFamily: 'inherit',
+                    }}
+                  >
+                    Reset
+                  </button>
+                )}
               </div>
-            )}
+              <p style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', margin: '0.25rem 0 0' }}>
+                Drag the photo above to reposition.
+              </p>
+            </div>
+
+            {/* Animation picker */}
+            <div>
+              <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Animation</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+                {([
+                  { id: 'none', label: 'None', free: true },
+                  { id: 'fade', label: 'Fade', free: false },
+                  { id: 'slide-left', label: '\u2190', free: false },
+                  { id: 'slide-right', label: '\u2192', free: false },
+                  { id: 'scale', label: 'Scale', free: false },
+                  { id: 'pop', label: 'Pop', free: false },
+                ] as const).map(anim => {
+                  const isSelected = photoAnimation === anim.id;
+                  const isLocked = !isPaid && !anim.free;
+                  return (
+                    <button
+                      key={anim.id}
+                      onClick={() => {
+                        if (isLocked) return;
+                        setPhotoAnimation(anim.id);
+                        setPreviewKey(k => k + 1);
+                      }}
+                      style={{
+                        padding: '0.25rem 0.5rem', borderRadius: '9999px', fontSize: '0.6875rem', fontWeight: 500,
+                        border: isSelected ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                        backgroundColor: isSelected ? 'rgba(232, 168, 73, 0.1)' : 'var(--surface, #161c28)',
+                        color: isSelected ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                        cursor: isLocked ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                        opacity: isLocked ? 0.45 : 1, position: 'relative',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {anim.label}
+                      {isLocked && (
+                        <span style={{ fontSize: '0.4375rem', fontWeight: 700, marginLeft: '0.25rem', color: 'var(--text-muted, #5d6370)' }}>PRO</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            </>)}
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
@@ -627,24 +871,113 @@ export default function ProfileEditor() {
               style={inputStyle}
             />
           </div>
+
+          {/* ── Theme & Colors ── */}
+          <div style={{ borderTop: '1px solid var(--border, #1e2535)', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
+            <label style={labelStyle}>Template</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.5rem', marginBottom: '1.25rem' }}>
+              {TEMPLATE_LIST.map(t => {
+                const isSelected = template === t.id;
+                const isLocked = !isPaid && t.tier === 'premium';
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => {
+                      if (isLocked) return;
+                      setTemplate(t.id);
+                    }}
+                    style={{
+                      padding: 0,
+                      border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                      borderRadius: '0.5rem',
+                      cursor: isLocked ? 'not-allowed' : 'pointer',
+                      overflow: 'hidden',
+                      background: 'none',
+                      transition: 'border-color 0.15s',
+                      opacity: isLocked ? 0.45 : 1,
+                      position: 'relative',
+                    }}
+                  >
+                    <div style={{
+                      backgroundColor: t.colors.bg,
+                      padding: '0.75rem 0.5rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      minHeight: 60,
+                    }}>
+                      <div style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: t.modifiers.photoShape === 'circle' ? '50%' : '4px',
+                        backgroundColor: t.colors.accent,
+                        opacity: 0.3,
+                      }} />
+                      <div style={{ width: '60%', height: 5, borderRadius: 3, backgroundColor: t.colors.text, opacity: 0.7 }} />
+                      <div style={{ width: '70%', height: 14, borderRadius: 4, backgroundColor: t.colors.accent, marginTop: 2 }} />
+                    </div>
+                    <div style={{ padding: '0.375rem', backgroundColor: 'var(--surface, #161c28)', borderTop: '1px solid var(--border, #1e2535)' }}>
+                      <p style={{ fontSize: '0.6875rem', fontWeight: 600, margin: 0, color: 'var(--text, #eceef2)' }}>{t.name}</p>
+                    </div>
+                    {t.tier === 'premium' && (
+                      <span style={{
+                        position: 'absolute',
+                        top: 4,
+                        right: 4,
+                        fontSize: '0.5rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.05em',
+                        backgroundColor: isLocked ? 'var(--border-light, #283042)' : 'var(--accent, #e8a849)',
+                        color: isLocked ? 'var(--text-muted, #5d6370)' : 'var(--bg, #0c1017)',
+                        padding: '1px 4px',
+                        borderRadius: '3px',
+                        lineHeight: 1.4,
+                      }}>
+                        PRO
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <label style={labelStyle}>Accent color override</label>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', marginTop: '-0.125rem', marginBottom: '0.5rem' }}>
+              Leave blank to use the template default.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
+              {COLOR_PRESETS.map(c => (
+                <button
+                  key={c}
+                  onClick={() => setAccentColor(c)}
+                  style={{
+                    width: 28, height: 28, borderRadius: '50%',
+                    backgroundColor: c,
+                    border: accentColor === c ? '3px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                    cursor: 'pointer', padding: 0,
+                    outline: accentColor === c ? '2px solid var(--bg, #0c1017)' : 'none',
+                    outlineOffset: -3,
+                    transform: accentColor === c ? 'scale(1.1)' : 'scale(1)',
+                    transition: 'transform 0.1s',
+                  }}
+                />
+              ))}
+              <input
+                type="color"
+                value={accentColor}
+                onChange={e => setAccentColor(e.target.value)}
+                style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-light, #283042)', cursor: 'pointer', padding: 0 }}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* ─── Content Blocks (Pods) Section ─────── */}
-        <div style={sectionStyle}>
-          <PodEditor
-            parentType="profile"
-            parentId={data.profile.id}
-            isPaid={isPaid}
-            onError={setError}
-            onPodsChange={handlePodsChange}
-          />
-        </div>
-
-        {/* ─── Links Section ─────────────────────── */}
+        {/* ─── The Nexus (Links) Section ─────────── */}
         <div style={sectionStyle}>
           <h3 style={sectionTitleStyle}>Links</h3>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem', marginTop: '-0.5rem' }}>
-            Drag to reorder. Toggle where each link appears.
+            Your social links, contact info, and web presence. Drag to reorder. Toggle visibility for your Business, Personal, and Showcase pages.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
@@ -822,177 +1155,135 @@ export default function ProfileEditor() {
               ))}
             </select>
           )}
-        </div>
 
-        {/* ─── Appearance Section ────────────────── */}
-        <div style={sectionStyle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={sectionTitleStyle}>Appearance</h3>
-            <button
-              onClick={() => saveSection('appearance', { template, primaryColor, accentColor, fontPair })}
-              disabled={saving === 'appearance'}
-              style={{ ...saveBtnStyle, opacity: saving === 'appearance' ? 0.6 : 1 }}
+          {/* ── Sharing & Privacy (collapsible) ── */}
+          <div style={{ marginTop: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+            <div
+              onClick={() => setShowSharingSettings(!showSharingSettings)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}
             >
-              {saving === 'appearance' ? 'Saving...' : saved === 'appearance' ? '\u2713 Saved' : 'Save'}
-            </button>
-          </div>
+              <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showSharingSettings ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
+              <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>Sharing & Privacy</label>
+            </div>
 
-          {/* Template picker */}
-          <label style={labelStyle}>Template</label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.5rem', marginBottom: '1.25rem' }}>
-            {TEMPLATE_LIST.map(t => {
-              const isSelected = template === t.id;
-              const isLocked = !isPaid && t.tier === 'premium';
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => {
-                    if (isLocked) return;
-                    setTemplate(t.id);
+            {showSharingSettings && (<>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginTop: '1rem' }}>
+                <ToggleSwitch
+                  checked={allowSharing}
+                  onChange={async (val) => {
+                    setAllowSharing(val);
+                    try {
+                      await fetch('/api/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ section: 'sharing', allowSharing: val }),
+                      });
+                    } catch { /* silent */ }
                   }}
-                  style={{
-                    padding: 0,
-                    border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
-                    borderRadius: '0.5rem',
-                    cursor: isLocked ? 'not-allowed' : 'pointer',
-                    overflow: 'hidden',
-                    background: 'none',
-                    transition: 'border-color 0.15s',
-                    opacity: isLocked ? 0.45 : 1,
-                    position: 'relative',
+                  label="Allow visitors to share your profile"
+                  description="Shows a share button on your public profile page."
+                />
+                <ToggleSwitch
+                  checked={allowFeedback}
+                  onChange={async (val) => {
+                    setAllowFeedback(val);
+                    try {
+                      await fetch('/api/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ section: 'feedback', allowFeedback: val }),
+                      });
+                    } catch { /* silent */ }
                   }}
-                >
-                  <div style={{
-                    backgroundColor: t.colors.bg,
-                    padding: '0.75rem 0.5rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                    minHeight: 60,
-                  }}>
-                    <div style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: t.modifiers.photoShape === 'circle' ? '50%' : '4px',
-                      backgroundColor: t.colors.accent,
-                      opacity: 0.3,
-                    }} />
-                    <div style={{ width: '60%', height: 5, borderRadius: 3, backgroundColor: t.colors.text, opacity: 0.7 }} />
-                    <div style={{ width: '70%', height: 14, borderRadius: 4, backgroundColor: t.colors.accent, marginTop: 2 }} />
-                  </div>
-                  <div style={{ padding: '0.375rem', backgroundColor: 'var(--surface, #161c28)', borderTop: '1px solid var(--border, #1e2535)' }}>
-                    <p style={{ fontSize: '0.6875rem', fontWeight: 600, margin: 0, color: 'var(--text, #eceef2)' }}>{t.name}</p>
-                  </div>
-                  {/* Tier badge */}
-                  {t.tier === 'premium' && (
-                    <span style={{
-                      position: 'absolute',
-                      top: 4,
-                      right: 4,
-                      fontSize: '0.5rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.05em',
-                      backgroundColor: isLocked ? 'var(--border-light, #283042)' : 'var(--accent, #e8a849)',
-                      color: isLocked ? 'var(--text-muted, #5d6370)' : 'var(--bg, #0c1017)',
-                      padding: '1px 4px',
-                      borderRadius: '3px',
-                      lineHeight: 1.4,
-                    }}>
-                      PRO
-                    </span>
+                  label="Show feedback button on your profile"
+                  description="Allows visitors to send feedback or report your profile."
+                />
+
+                {/* vCard PIN protection */}
+                <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
+                  <ToggleSwitch
+                    checked={vcardPinEnabled}
+                    onChange={async (val) => {
+                      if (!val) {
+                        setVcardPinEnabled(false);
+                        setVcardPinInput('');
+                        try {
+                          await fetch('/api/profile', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ section: 'vcardPin', vcardPin: null }),
+                          });
+                        } catch { /* silent */ }
+                      } else {
+                        setVcardPinEnabled(true);
+                      }
+                    }}
+                    label="PIN-protect Save Contact"
+                    description="Require a PIN before visitors can download your contact card."
+                  />
+                  {vcardPinEnabled && (
+                    <div style={{ marginTop: '0.625rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={8}
+                        value={vcardPinInput}
+                        onChange={e => { setVcardPinInput(e.target.value); setVcardPinSaved(false); }}
+                        placeholder="4-8 digit PIN"
+                        style={{
+                          ...inputStyle,
+                          width: 140,
+                          textAlign: 'center',
+                          letterSpacing: '0.15em',
+                        }}
+                      />
+                      <button
+                        onClick={async () => {
+                          if (vcardPinInput.length < 4) { setError('PIN must be at least 4 characters'); return; }
+                          setVcardPinSaving(true);
+                          try {
+                            const res = await fetch('/api/profile', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ section: 'vcardPin', vcardPin: vcardPinInput }),
+                            });
+                            if (!res.ok) {
+                              const d = await res.json();
+                              setError(d.error || 'Failed to save PIN');
+                            } else {
+                              setVcardPinSaved(true);
+                              setTimeout(() => setVcardPinSaved(false), 2000);
+                            }
+                          } catch { setError('Failed to save PIN'); }
+                          finally { setVcardPinSaving(false); }
+                        }}
+                        disabled={vcardPinSaving || vcardPinInput.length < 4}
+                        style={{
+                          ...saveBtnStyle,
+                          padding: '0.5rem 0.75rem',
+                          fontSize: '0.8125rem',
+                          opacity: vcardPinSaving || vcardPinInput.length < 4 ? 0.5 : 1,
+                        }}
+                      >
+                        {vcardPinSaving ? '...' : vcardPinSaved ? '\u2713' : 'Set PIN'}
+                      </button>
+                    </div>
                   )}
-                </button>
-              );
-            })}
+                </div>
+              </div>
+            </>)}
           </div>
-
-          {/* Accent color */}
-          <label style={labelStyle}>Accent color override</label>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', marginTop: '-0.125rem', marginBottom: '0.5rem' }}>
-            Leave blank to use the template default.
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
-            {COLOR_PRESETS.map(c => (
-              <button
-                key={c}
-                onClick={() => setAccentColor(c)}
-                style={{
-                  width: 28, height: 28, borderRadius: '50%',
-                  backgroundColor: c,
-                  border: accentColor === c ? '3px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
-                  cursor: 'pointer', padding: 0,
-                  outline: accentColor === c ? '2px solid var(--bg, #0c1017)' : 'none',
-                  outlineOffset: -3,
-                  transform: accentColor === c ? 'scale(1.1)' : 'scale(1)',
-                  transition: 'transform 0.1s',
-                }}
-              />
-            ))}
-            <input
-              type="color"
-              value={accentColor}
-              onChange={e => setAccentColor(e.target.value)}
-              style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-light, #283042)', cursor: 'pointer', padding: 0 }}
-            />
-          </div>
-
         </div>
 
-        {/* ─── Sharing Settings ──────────────────── */}
+        {/* ─── First Impressions (Pods) Section ───── */}
         <div style={sectionStyle}>
-          <h3 style={sectionTitleStyle}>Sharing</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-            <ToggleSwitch
-              checked={allowSharing}
-              onChange={async (val) => {
-                setAllowSharing(val);
-                try {
-                  await fetch('/api/profile', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ section: 'sharing', allowSharing: val }),
-                  });
-                } catch { /* silent */ }
-              }}
-              label="Allow visitors to share your profile"
-              description="Shows a share button on your public profile page."
-            />
-            <ToggleSwitch
-              checked={allowFeedback}
-              onChange={async (val) => {
-                setAllowFeedback(val);
-                try {
-                  await fetch('/api/profile', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ section: 'feedback', allowFeedback: val }),
-                  });
-                } catch { /* silent */ }
-              }}
-              label="Show feedback button on your profile"
-              description="Allows visitors to send feedback or report your profile."
-            />
-          </div>
-        </div>
-
-        {/* ─── Profile URL Info ──────────────────── */}
-        <div style={{ ...sectionStyle, backgroundColor: 'var(--bg, #0c1017)' }}>
-          <h3 style={{ ...sectionTitleStyle, fontSize: '0.875rem' }}>Profile URLs</h3>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>
-            <p style={{ margin: '0 0 0.5rem' }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-mid, #a8adb8)' }}>Public URL: </span>
-              <code style={{ backgroundColor: 'var(--border, #1e2535)', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', color: 'var(--text, #eceef2)' }}>
-                {profileUrl}
-              </code>
-            </p>
-            <p style={{ margin: 0 }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-mid, #a8adb8)' }}>NFC Redirect: </span>
-              <code style={{ backgroundColor: 'var(--border, #1e2535)', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', color: 'var(--text, #eceef2)' }}>
-                /r/{data.profile.redirectId}
-              </code>
-            </p>
-          </div>
+          <PodEditor
+            parentType="profile"
+            parentId={data.profile.id}
+            isPaid={isPaid}
+            onError={setError}
+            onPodsChange={handlePodsChange}
+          />
         </div>
 
       </main>
@@ -1003,6 +1294,7 @@ export default function ProfileEditor() {
           <div className="preview-phone-notch" />
           <div className="preview-phone-screen">
             <ProfileTemplate
+              key={previewKey}
               profileId={data.profile.id}
               template={template}
               firstName={firstName}
@@ -1023,6 +1315,11 @@ export default function ProfileEditor() {
               statusTagColor={data.profile.statusTagColor || undefined}
               photoShape={photoShape}
               photoRadius={photoShape === 'custom' ? photoRadius : null}
+              photoSize={photoSize}
+              photoPositionX={photoPositionX}
+              photoPositionY={photoPositionY}
+              photoAnimation={photoAnimation}
+              vcardPinEnabled={vcardPinEnabled}
             />
           </div>
         </div>
