@@ -168,7 +168,8 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
   const [fontPair, setFontPair] = useState('default');
   const [linkDisplay, setLinkDisplay] = useState('default');
   const [showQrCode, setShowQrCode] = useState(false);
-  const [qrSvg, setQrSvg] = useState<string | null>(null);
+  const [qrLoaded, setQrLoaded] = useState(false);
+  const [qrError, setQrError] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [allowSharing, setAllowSharing] = useState(true);
@@ -302,28 +303,13 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
     finally { setContactSaving(false); }
   }
 
-  // Lazy-load QR code SVG when panel opens
+  // Reset QR load state when panel is closed so it reloads if reopened
   useEffect(() => {
-    if (showQrCode && qrSvg === null) {
-      fetch('/api/profile/qr')
-        .then(r => {
-          if (!r.ok) throw new Error(`QR API error: ${r.status}`);
-          return r.text();
-        })
-        .then(svg => {
-          if (svg.startsWith('<svg') || svg.startsWith('<?xml')) {
-            setQrSvg(svg);
-          } else {
-            console.warn('QR response was not SVG:', svg.substring(0, 100));
-            setQrSvg('');
-          }
-        })
-        .catch(err => {
-          console.warn('QR code fetch failed:', err);
-          setQrSvg('');
-        });
+    if (!showQrCode) {
+      setQrLoaded(false);
+      setQrError(false);
     }
-  }, [showQrCode, qrSvg]);
+  }, [showQrCode]);
 
   // Save helpers
   const saveSection = useCallback(async (section: string, body: Record<string, unknown>) => {
@@ -1394,26 +1380,36 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
                 <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
                   Share your profile without NFC. Print it, add it to slides, or show it on your phone.
                 </p>
-                {qrSvg ? (
-                  <>
-                    <div
-                      style={{ display: 'inline-block', padding: '1rem', backgroundColor: '#fff', borderRadius: '0.75rem', marginBottom: '0.75rem' }}
-                      dangerouslySetInnerHTML={{ __html: qrSvg }}
-                    />
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                      <a href="/api/profile/qr?format=png" download="imprynt-qr.png" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download PNG</a>
-                      <a href="/api/profile/qr?format=svg" download="imprynt-qr.svg" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download SVG</a>
-                    </div>
-                  </>
-                ) : qrSvg === '' ? (
+                {qrError ? (
                   <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>
                     Unable to generate QR code. Try refreshing the page.
                   </p>
                 ) : (
-                  <div style={{ padding: '2rem 0' }}>
-                    <div style={{ width: 24, height: 24, border: '2px solid var(--border-light)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
-                    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                  </div>
+                  <>
+                    {!qrLoaded && (
+                      <div style={{ padding: '2rem 0' }}>
+                        <div style={{ width: 24, height: 24, border: '2px solid var(--border-light)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+                        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                      </div>
+                    )}
+                    <div style={{ display: qrLoaded ? 'block' : 'none' }}>
+                      <div style={{ display: 'inline-block', padding: '1rem', backgroundColor: '#fff', borderRadius: '0.75rem', marginBottom: '0.75rem' }}>
+                        <img
+                          src="/api/profile/qr"
+                          alt="QR code for your profile"
+                          width={180}
+                          height={180}
+                          style={{ display: 'block' }}
+                          onLoad={() => setQrLoaded(true)}
+                          onError={() => { setQrError(true); setQrLoaded(false); }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <a href="/api/profile/qr?format=png" download="imprynt-qr.png" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download PNG</a>
+                        <a href="/api/profile/qr?format=svg" download="imprynt-qr.svg" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download SVG</a>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
             )}
