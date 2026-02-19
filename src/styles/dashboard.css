@@ -625,6 +625,107 @@
   }
 }
 
+/* ── Dashboard hero nav card ── */
+.dash-nav-card--hero {
+  background: linear-gradient(135deg, var(--surface, #161c28) 0%, rgba(232, 168, 73, 0.04) 100%);
+  border-color: var(--accent-border, rgba(232, 168, 73, 0.14));
+  padding: 1.5rem 1.25rem;
+}
+
+/* ═══════════════════════════════════════════
+   PAGE EDITOR
+   ═══════════════════════════════════════════ */
+
+.page-editor-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background-color: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.page-editor-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0 1.25rem;
+}
+
+.page-editor-tab {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.page-editor-tab:hover {
+  color: var(--text-mid);
+}
+
+.page-editor-tab--active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.page-editor-tab .pro-badge {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background-color: var(--border-light);
+  color: var(--text-muted);
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1.4;
+}
+
+.page-editor-tab-desc {
+  padding: 0.5rem 1.25rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.page-editor-content {
+  padding: 0 1.25rem 2rem;
+  max-width: 1200px;
+}
+
+/* Trial prompt card */
+.trial-prompt {
+  background-color: var(--surface);
+  border: 1px solid var(--accent-border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.trial-prompt h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.5rem;
+}
+
+.trial-prompt p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0 0 1rem;
+}
+
 /* ═══════════════════════════════════════════
    TIPTAP RICH TEXT EDITOR
    ═══════════════════════════════════════════ */

@@ -21,6 +21,8 @@ CREATE TABLE users (
     stripe_subscription_id VARCHAR(255),
     setup_completed BOOLEAN NOT NULL DEFAULT false,
     invite_code_id  UUID,                        -- FK added after invite_codes table created
+    trial_started_at TIMESTAMPTZ,
+    trial_ends_at    TIMESTAMPTZ,
     password_changed_at TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()

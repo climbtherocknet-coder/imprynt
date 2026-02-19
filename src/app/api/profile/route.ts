@@ -14,7 +14,7 @@ export async function GET() {
   const userId = session.user.id;
 
   const userResult = await query(
-    'SELECT first_name, last_name, plan FROM users WHERE id = $1',
+    'SELECT first_name, last_name, plan, trial_started_at, trial_ends_at FROM users WHERE id = $1',
     [userId]
   );
   const user = userResult.rows[0];
@@ -53,6 +53,8 @@ export async function GET() {
       firstName: user.first_name || '',
       lastName: user.last_name || '',
       plan: user.plan,
+      trialStartedAt: user.trial_started_at || null,
+      trialEndsAt: user.trial_ends_at || null,
     },
     profile: {
       id: profile.id,

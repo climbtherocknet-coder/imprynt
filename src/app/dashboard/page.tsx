@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
+import { getPlanStatus } from '@/lib/plan';
 import SignOutButton from './SignOutButton';
 import StatusTagPicker from './StatusTagPicker';
 import OnAirToggle from '@/components/OnAirToggle';
@@ -26,45 +27,13 @@ interface AnalyticsRow {
   last_viewed: string | null;
 }
 
-// ── SVG Icon Components ──────────────────────────────
 const iconWrap: React.CSSProperties = { width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--text-muted, #5d6370)' };
 
-function IconProfile() {
+function IconMyPage() {
   return (
     <div style={iconWrap}>
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="10" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/><path d="M19 3l2 2-5 5-2 0 0-2 5-5z"/>
-      </svg>
-    </div>
-  );
-}
-
-function IconContact() {
-  return (
-    <div style={iconWrap}>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8" cy="11" r="2.5"/><path d="M14 10h4"/><path d="M14 14h4"/><path d="M5 18c0-2 1.5-3 3-3s3 1 3 3"/>
-      </svg>
-    </div>
-  );
-}
-
-function IconImpression({ color }: { color?: string }) {
-  const c = color || undefined;
-  return (
-    <div style={{ ...iconWrap, color: c || iconWrap.color }}>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
-      </svg>
-    </div>
-  );
-}
-
-function IconShowcase() {
-  return (
-    <div style={iconWrap}>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
       </svg>
     </div>
   );
@@ -125,13 +94,14 @@ export default async function DashboardPage({
 
   // Gate: redirect to setup if not completed
   const userCheck = await query(
-    'SELECT setup_completed, email_verified FROM users WHERE id = $1',
+    'SELECT setup_completed, email_verified, plan, trial_started_at, trial_ends_at FROM users WHERE id = $1',
     [userId]
   );
   if (!userCheck.rows[0]?.setup_completed) {
     redirect('/dashboard/setup');
   }
   const emailVerified = !!userCheck.rows[0]?.email_verified;
+  const planStatus = getPlanStatus(userCheck.rows[0]);
 
   // Fetch profile
   const profileResult = await query(
@@ -155,42 +125,6 @@ export default async function DashboardPage({
     }
   }
 
-  // Link count
-  let linkCount = 0;
-  if (profile) {
-    const linkResult = await query(
-      `SELECT COUNT(*) as count FROM links l
-       JOIN profiles p ON p.id = l.profile_id
-       WHERE p.user_id = $1 AND l.is_active = true`,
-      [userId]
-    );
-    linkCount = parseInt(linkResult.rows[0]?.count || '0');
-  }
-
-  // Contact field count
-  let contactFieldCount = 0;
-  const cfResult = await query(
-    'SELECT COUNT(*) as count FROM contact_fields WHERE user_id = $1',
-    [userId]
-  );
-  contactFieldCount = parseInt(cfResult.rows[0]?.count || '0');
-
-  // Impression icon color
-  let impressionIconColor: string | null = null;
-  if (profile) {
-    const impResult = await query(
-      `SELECT pp.icon_color FROM protected_pages pp
-       JOIN profiles p ON p.id = pp.profile_id
-       WHERE p.user_id = $1 AND pp.is_active = true AND pp.visibility_mode = 'hidden'
-       LIMIT 1`,
-      [userId]
-    );
-    impressionIconColor = impResult.rows[0]?.icon_color || null;
-  }
-
-  const plan = (session.user as Record<string, unknown>).plan as string;
-  const isPaid = plan !== 'free';
-
   return (
     <div className="dash-page">
       {/* Header */}
@@ -201,8 +135,8 @@ export default async function DashboardPage({
         </div>
         <div className="dash-header-right">
           <ThemeToggle />
-          <span className={`dash-plan-badge ${isPaid ? 'dash-plan-badge--paid' : 'dash-plan-badge--free'}`}>
-            {plan === 'advisory' ? 'Advisory' : isPaid ? 'Premium' : 'Free'}
+          <span className={`dash-plan-badge ${planStatus.isPaid ? 'dash-plan-badge--paid' : 'dash-plan-badge--free'}`}>
+            {planStatus.badgeLabel}
           </span>
           <span className="dash-user-name">
             {session.user.name || session.user.email}
@@ -215,6 +149,7 @@ export default async function DashboardPage({
 
       <main className="dash-main">
         {!emailVerified && <VerificationBanner email={session.user.email || ''} />}
+
         {/* Stats Row */}
         <div className="dash-stats">
           <div className="dash-stat-card">
@@ -230,108 +165,22 @@ export default async function DashboardPage({
 
         {/* Navigation Cards */}
         <div className="dash-nav-list">
-          {/* Status Tags */}
-          <div className="dash-nav-card" style={{ cursor: 'default' }}>
-            <div style={{ width: '100%' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                <IconStatus />
-                <div>
-                  <h3 className="dash-nav-title">Status Tags</h3>
-                  <p className="dash-nav-desc">
-                    Add badges to your public profile
-                  </p>
-                </div>
-              </div>
-              <StatusTagPicker initialTags={profile?.status_tags || []} initialColor={profile?.status_tag_color} isPaid={isPaid} />
-            </div>
-          </div>
-
-          {/* Public Profile (biz) */}
-          <a href="/dashboard/profile" className="dash-nav-card">
+          {/* My Page — hero card, full width */}
+          <a href="/dashboard/page-editor" className="dash-nav-card dash-nav-card--hero">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <IconProfile />
+              <IconMyPage />
               <div>
-                <h3 className="dash-nav-title">Public Profile (biz)</h3>
+                <h3 className="dash-nav-title">My Page</h3>
                 <p className="dash-nav-desc">
-                  {profile?.title || 'No title'} {profile?.company ? `at ${profile.company}` : ''} · {profile?.template} template · {linkCount} links
+                  Edit your profile, personal page, and portfolio.
                 </p>
               </div>
             </div>
             <span className="dash-nav-arrow">&rarr;</span>
           </a>
-
-          {/* Contact Card */}
-          <a href="/dashboard/contact" className="dash-nav-card">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <IconContact />
-              <div>
-                <h3 className="dash-nav-title">Contact Card</h3>
-                <p className="dash-nav-desc">
-                  {contactFieldCount > 0
-                    ? `${contactFieldCount} field${contactFieldCount !== 1 ? 's' : ''} configured · Business & Personal vCards`
-                    : 'Set up your vCard contact info'}
-                </p>
-              </div>
-            </div>
-            <span className="dash-nav-arrow">&rarr;</span>
-          </a>
-
-          {/* Impression (personal) */}
-          {isPaid ? (
-            <a href="/dashboard/impression" className="dash-nav-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <IconImpression color={impressionIconColor || undefined} />
-                <div>
-                  <h3 className="dash-nav-title">Impression (personal)</h3>
-                  <p className="dash-nav-desc">
-                    Hidden personal page · PIN-protected · Personal links & photo
-                  </p>
-                </div>
-              </div>
-              <span className="dash-nav-arrow">&rarr;</span>
-            </a>
-          ) : (
-            <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <IconImpression />
-                <div>
-                  <h3 className="dash-nav-title">Impression (personal)</h3>
-                  <p className="dash-nav-desc">Upgrade to Premium to unlock</p>
-                </div>
-              </div>
-              <span className="dash-nav-arrow"><IconLock /></span>
-            </a>
-          )}
-
-          {/* Showcase */}
-          {isPaid ? (
-            <a href="/dashboard/showcase" className="dash-nav-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <IconShowcase />
-                <div>
-                  <h3 className="dash-nav-title">Showcase</h3>
-                  <p className="dash-nav-desc">
-                    Portfolio page · PIN-protected · Projects, resume & showcase links
-                  </p>
-                </div>
-              </div>
-              <span className="dash-nav-arrow">&rarr;</span>
-            </a>
-          ) : (
-            <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <IconShowcase />
-                <div>
-                  <h3 className="dash-nav-title">Showcase</h3>
-                  <p className="dash-nav-desc">Upgrade to Premium to unlock</p>
-                </div>
-              </div>
-              <span className="dash-nav-arrow"><IconLock /></span>
-            </a>
-          )}
 
           {/* Analytics */}
-          {isPaid ? (
+          {planStatus.isPaid ? (
             <a href="/dashboard/analytics" className="dash-nav-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <IconAnalytics />
@@ -352,7 +201,7 @@ export default async function DashboardPage({
                 <IconAnalytics />
                 <div>
                   <h3 className="dash-nav-title">Analytics</h3>
-                  <p className="dash-nav-desc">Upgrade to Premium to unlock</p>
+                  <p className="dash-nav-desc">Upgrade to unlock</p>
                 </div>
               </div>
               <span className="dash-nav-arrow"><IconLock /></span>
@@ -372,6 +221,22 @@ export default async function DashboardPage({
             </div>
             <span className="dash-nav-arrow">&rarr;</span>
           </a>
+
+          {/* Status Tags */}
+          <div className="dash-nav-card" style={{ cursor: 'default' }}>
+            <div style={{ width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <IconStatus />
+                <div>
+                  <h3 className="dash-nav-title">Status Tags</h3>
+                  <p className="dash-nav-desc">
+                    Add badges to your public profile
+                  </p>
+                </div>
+              </div>
+              <StatusTagPicker initialTags={profile?.status_tags || []} initialColor={profile?.status_tag_color} isPaid={planStatus.isPaid} />
+            </div>
+          </div>
         </div>
       </main>
     </div>
