@@ -872,6 +872,126 @@ export default function ProfileEditor() {
             />
           </div>
 
+          {/* ── Sharing & Privacy (collapsible) ── */}
+          <div style={{ borderTop: '1px solid var(--border, #1e2535)', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
+            <div style={{ padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+              <div
+                onClick={() => setShowSharingSettings(!showSharingSettings)}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}
+              >
+                <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showSharingSettings ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
+                <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>Sharing & Privacy</label>
+              </div>
+
+              {showSharingSettings && (<>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginTop: '1rem' }}>
+                  <ToggleSwitch
+                    checked={allowSharing}
+                    onChange={async (val) => {
+                      setAllowSharing(val);
+                      try {
+                        await fetch('/api/profile', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ section: 'sharing', allowSharing: val }),
+                        });
+                      } catch { /* silent */ }
+                    }}
+                    label="Allow visitors to share your profile"
+                    description="Shows a share button on your public profile page."
+                  />
+                  <ToggleSwitch
+                    checked={allowFeedback}
+                    onChange={async (val) => {
+                      setAllowFeedback(val);
+                      try {
+                        await fetch('/api/profile', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ section: 'feedback', allowFeedback: val }),
+                        });
+                      } catch { /* silent */ }
+                    }}
+                    label="Show feedback button on your profile"
+                    description="Allows visitors to send feedback or report your profile."
+                  />
+
+                  {/* vCard PIN protection */}
+                  <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
+                    <ToggleSwitch
+                      checked={vcardPinEnabled}
+                      onChange={async (val) => {
+                        if (!val) {
+                          setVcardPinEnabled(false);
+                          setVcardPinInput('');
+                          try {
+                            await fetch('/api/profile', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ section: 'vcardPin', vcardPin: null }),
+                            });
+                          } catch { /* silent */ }
+                        } else {
+                          setVcardPinEnabled(true);
+                        }
+                      }}
+                      label="PIN-protect Save Contact"
+                      description="Require a PIN before visitors can download your contact card."
+                    />
+                    {vcardPinEnabled && (
+                      <div style={{ marginTop: '0.625rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <input
+                          type="password"
+                          inputMode="numeric"
+                          maxLength={8}
+                          value={vcardPinInput}
+                          onChange={e => { setVcardPinInput(e.target.value); setVcardPinSaved(false); }}
+                          placeholder="4-8 digit PIN"
+                          style={{
+                            ...inputStyle,
+                            width: 140,
+                            textAlign: 'center',
+                            letterSpacing: '0.15em',
+                          }}
+                        />
+                        <button
+                          onClick={async () => {
+                            if (vcardPinInput.length < 4) { setError('PIN must be at least 4 characters'); return; }
+                            setVcardPinSaving(true);
+                            try {
+                              const res = await fetch('/api/profile', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ section: 'vcardPin', vcardPin: vcardPinInput }),
+                              });
+                              if (!res.ok) {
+                                const d = await res.json();
+                                setError(d.error || 'Failed to save PIN');
+                              } else {
+                                setVcardPinSaved(true);
+                                setTimeout(() => setVcardPinSaved(false), 2000);
+                              }
+                            } catch { setError('Failed to save PIN'); }
+                            finally { setVcardPinSaving(false); }
+                          }}
+                          disabled={vcardPinSaving || vcardPinInput.length < 4}
+                          style={{
+                            ...saveBtnStyle,
+                            padding: '0.5rem 0.75rem',
+                            fontSize: '0.8125rem',
+                            opacity: vcardPinSaving || vcardPinInput.length < 4 ? 0.5 : 1,
+                          }}
+                        >
+                          {vcardPinSaving ? '...' : vcardPinSaved ? '\u2713' : 'Set PIN'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>)}
+            </div>
+          </div>
+
           {/* ── Theme & Colors ── */}
           <div style={{ borderTop: '1px solid var(--border, #1e2535)', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
             <label style={labelStyle}>Template</label>
@@ -1156,123 +1276,6 @@ export default function ProfileEditor() {
             </select>
           )}
 
-          {/* ── Sharing & Privacy (collapsible) ── */}
-          <div style={{ marginTop: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
-            <div
-              onClick={() => setShowSharingSettings(!showSharingSettings)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}
-            >
-              <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showSharingSettings ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
-              <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>Sharing & Privacy</label>
-            </div>
-
-            {showSharingSettings && (<>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginTop: '1rem' }}>
-                <ToggleSwitch
-                  checked={allowSharing}
-                  onChange={async (val) => {
-                    setAllowSharing(val);
-                    try {
-                      await fetch('/api/profile', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ section: 'sharing', allowSharing: val }),
-                      });
-                    } catch { /* silent */ }
-                  }}
-                  label="Allow visitors to share your profile"
-                  description="Shows a share button on your public profile page."
-                />
-                <ToggleSwitch
-                  checked={allowFeedback}
-                  onChange={async (val) => {
-                    setAllowFeedback(val);
-                    try {
-                      await fetch('/api/profile', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ section: 'feedback', allowFeedback: val }),
-                      });
-                    } catch { /* silent */ }
-                  }}
-                  label="Show feedback button on your profile"
-                  description="Allows visitors to send feedback or report your profile."
-                />
-
-                {/* vCard PIN protection */}
-                <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
-                  <ToggleSwitch
-                    checked={vcardPinEnabled}
-                    onChange={async (val) => {
-                      if (!val) {
-                        setVcardPinEnabled(false);
-                        setVcardPinInput('');
-                        try {
-                          await fetch('/api/profile', {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ section: 'vcardPin', vcardPin: null }),
-                          });
-                        } catch { /* silent */ }
-                      } else {
-                        setVcardPinEnabled(true);
-                      }
-                    }}
-                    label="PIN-protect Save Contact"
-                    description="Require a PIN before visitors can download your contact card."
-                  />
-                  {vcardPinEnabled && (
-                    <div style={{ marginTop: '0.625rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <input
-                        type="password"
-                        inputMode="numeric"
-                        maxLength={8}
-                        value={vcardPinInput}
-                        onChange={e => { setVcardPinInput(e.target.value); setVcardPinSaved(false); }}
-                        placeholder="4-8 digit PIN"
-                        style={{
-                          ...inputStyle,
-                          width: 140,
-                          textAlign: 'center',
-                          letterSpacing: '0.15em',
-                        }}
-                      />
-                      <button
-                        onClick={async () => {
-                          if (vcardPinInput.length < 4) { setError('PIN must be at least 4 characters'); return; }
-                          setVcardPinSaving(true);
-                          try {
-                            const res = await fetch('/api/profile', {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ section: 'vcardPin', vcardPin: vcardPinInput }),
-                            });
-                            if (!res.ok) {
-                              const d = await res.json();
-                              setError(d.error || 'Failed to save PIN');
-                            } else {
-                              setVcardPinSaved(true);
-                              setTimeout(() => setVcardPinSaved(false), 2000);
-                            }
-                          } catch { setError('Failed to save PIN'); }
-                          finally { setVcardPinSaving(false); }
-                        }}
-                        disabled={vcardPinSaving || vcardPinInput.length < 4}
-                        style={{
-                          ...saveBtnStyle,
-                          padding: '0.5rem 0.75rem',
-                          fontSize: '0.8125rem',
-                          opacity: vcardPinSaving || vcardPinInput.length < 4 ? 0.5 : 1,
-                        }}
-                      >
-                        {vcardPinSaving ? '...' : vcardPinSaved ? '\u2713' : 'Set PIN'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>)}
-          </div>
         </div>
 
         {/* ─── First Impressions (Pods) Section ───── */}
