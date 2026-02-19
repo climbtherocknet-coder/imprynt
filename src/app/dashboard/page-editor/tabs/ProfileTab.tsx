@@ -10,7 +10,6 @@ import '@/styles/dashboard.css';
 import '@/styles/profile.css';
 
 const CONTACT_FIELD_DEFS = [
-  { type: 'company', label: 'Company Name', placeholder: 'Acme Corp', inputType: 'text' },
   { type: 'phone_cell', label: 'Cell Phone', placeholder: '+1 (555) 000-0000', inputType: 'tel' },
   { type: 'phone_work', label: 'Work Phone', placeholder: '+1 (555) 000-0000', inputType: 'tel' },
   { type: 'phone_personal', label: 'Personal Phone', placeholder: '+1 (555) 000-0000', inputType: 'tel' },
