@@ -139,6 +139,11 @@
   color: #f87171;
 }
 
+.admin-badge--advisory {
+  background: rgba(129, 140, 248, 0.12);
+  color: #818cf8;
+}
+
 /* ── Code Display ── */
 .admin-code {
   font-family: 'SF Mono', 'Fira Code', monospace;

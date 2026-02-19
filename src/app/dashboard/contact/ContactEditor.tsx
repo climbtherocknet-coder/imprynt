@@ -102,7 +102,7 @@ export default function ContactEditor({ contactFields: initialContactFields }: C
 
   return (
     <div className="dash-page">
-      <header className="dash-header">
+      <header className="dash-header" style={{ position: 'sticky', top: 0, zIndex: 50 }}>
         <div className="dash-logo">
           <a href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
             <div className="dash-logo-mark" />

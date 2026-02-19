@@ -101,12 +101,14 @@ function fmtDate(d: string) {
 }
 
 function planLabel(plan: string) {
+  if (plan === 'advisory') return 'Advisory';
   if (plan === 'premium_monthly') return 'Monthly';
   if (plan === 'premium_annual') return 'Annual';
   return 'Free';
 }
 
 function planBadgeClass(plan: string) {
+  if (plan === 'advisory') return 'admin-badge admin-badge--advisory';
   return plan === 'free' ? 'admin-badge admin-badge--free' : 'admin-badge admin-badge--premium';
 }
 
@@ -652,6 +654,7 @@ function UsersTab() {
           <option value="free">Free</option>
           <option value="premium_monthly">Monthly</option>
           <option value="premium_annual">Annual</option>
+          <option value="advisory">Advisory</option>
         </select>
         <button type="submit" className="admin-btn admin-btn--primary admin-btn--small">Search</button>
       </form>
@@ -786,6 +789,7 @@ function UsersTab() {
                                   <option value="free">Free</option>
                                   <option value="premium_monthly">Premium Monthly</option>
                                   <option value="premium_annual">Premium Annual</option>
+                                  <option value="advisory">Advisory</option>
                                 </select>
                                 <button
                                   className="admin-btn admin-btn--primary admin-btn--small"
@@ -1185,6 +1189,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
             >
               <option value="free">Free</option>
               <option value="premium_monthly">Premium</option>
+              <option value="advisory">Advisory</option>
             </select>
           </div>
           <div style={{ flex: 1, minWidth: 150 }}>
@@ -1268,6 +1273,7 @@ function CodesTab({ adminEmail }: { adminEmail: string }) {
                       >
                         <option value="free">Free</option>
                         <option value="premium_monthly">Premium</option>
+                        <option value="advisory">Advisory</option>
                       </select>
                     ) : (
                       <span className={`admin-badge admin-badge--${c.grantedPlan === 'free' ? 'free' : 'active'}`}>
@@ -1539,6 +1545,7 @@ function WaitlistTab() {
                     >
                       <option value="free">Free</option>
                       <option value="premium_monthly">Premium</option>
+                      <option value="advisory">Advisory</option>
                     </select>
                   </td>
                   <td>

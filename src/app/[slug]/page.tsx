@@ -35,6 +35,11 @@ interface ProfileData {
   status_tag_color: string | null;
   photo_shape: string;
   photo_radius: number | null;
+  photo_size: string;
+  photo_position_x: number;
+  photo_position_y: number;
+  photo_animation: string;
+  vcard_pin_hash: string | null;
 }
 
 interface LinkData {
@@ -59,13 +64,21 @@ async function getProfileAny(slug: string) {
   const result = await query(
     `SELECT p.id as profile_id, p.user_id, u.first_name, u.last_name, p.title, p.company,
             p.tagline, p.bio_heading, p.bio, p.photo_url, p.template,
-            p.primary_color, p.accent_color, p.font_pair, u.plan, p.status_tags, p.is_published, p.allow_sharing, p.allow_feedback, p.status_tag_color, p.photo_shape, p.photo_radius
+            p.primary_color, p.accent_color, p.font_pair, u.plan, p.status_tags, p.is_published, p.allow_sharing, p.allow_feedback, p.status_tag_color, p.photo_shape, p.photo_radius, p.photo_size, p.photo_position_x, p.photo_position_y, p.photo_animation
      FROM profiles p
      JOIN users u ON u.id = p.user_id
      WHERE p.slug = $1 AND u.account_status = 'active'`,
     [slug]
   );
-  return result.rows[0] as ProfileData | undefined;
+  const profile = result.rows[0] as ProfileData | undefined;
+  if (profile) {
+    // Fetch vcard_pin_hash separately (column may not exist if migration not run)
+    try {
+      const pinResult = await query('SELECT vcard_pin_hash FROM profiles WHERE id = $1', [profile.profile_id]);
+      profile.vcard_pin_hash = pinResult.rows[0]?.vcard_pin_hash || null;
+    } catch { profile.vcard_pin_hash = null; }
+  }
+  return profile;
 }
 
 async function getLinks(profileId: string) {
@@ -262,6 +275,11 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         statusTagColor={profile.status_tag_color || undefined}
         photoShape={profile.photo_shape || undefined}
         photoRadius={profile.photo_radius}
+        photoSize={profile.photo_size || 'medium'}
+        photoPositionX={profile.photo_position_x ?? 50}
+        photoPositionY={profile.photo_position_y ?? 50}
+        photoAnimation={profile.photo_animation || 'none'}
+        vcardPinEnabled={!!profile.vcard_pin_hash}
       />
 
       {/* Client-side interactive elements (PIN modal, protected pages) */}

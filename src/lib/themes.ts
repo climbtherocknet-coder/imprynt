@@ -28,7 +28,7 @@ export interface TemplateTheme {
     borderHover: string;
   };
   modifiers: {
-    photoShape: 'circle' | 'rounded-square';
+    photoShape: 'circle' | 'rounded';
     linkStyle: 'pills' | 'stacked' | 'full-width-pills';
     buttonStyle: 'pill' | 'rounded' | 'sharp';
     cardStyle: 'bordered' | 'shadowed' | 'flat';
@@ -312,7 +312,7 @@ const noir: TemplateTheme = {
     borderHover: '#383838',
   },
   modifiers: {
-    photoShape: 'rounded-square',
+    photoShape: 'rounded',
     linkStyle: 'pills',
     buttonStyle: 'pill',
     cardStyle: 'flat',
@@ -357,7 +357,7 @@ const signal: TemplateTheme = {
     borderHover: '#d4d4d4',
   },
   modifiers: {
-    photoShape: 'rounded-square',
+    photoShape: 'rounded',
     linkStyle: 'full-width-pills',
     buttonStyle: 'sharp',
     cardStyle: 'bordered',
@@ -397,7 +397,7 @@ const studio: TemplateTheme = {
     borderHover: '#2a2a38',
   },
   modifiers: {
-    photoShape: 'rounded-square',
+    photoShape: 'rounded',
     linkStyle: 'pills',
     buttonStyle: 'rounded',
     cardStyle: 'bordered',

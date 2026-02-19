@@ -158,13 +158,23 @@
 
 /* Photo shapes via data-attribute */
 [data-photo="circle"] .photo { border-radius: 50%; }
-[data-photo="rounded-square"] .photo { border-radius: var(--radius-lg); }
 [data-photo="rounded"] .photo { border-radius: 16px; }
 [data-photo="soft"] .photo { border-radius: 8px; }
 [data-photo="square"] .photo { border-radius: 0; }
 [data-photo="hexagon"] .photo { clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); border-radius: 0; }
 [data-photo="diamond"] .photo { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); border-radius: 0; }
 /* custom shape uses inline style for border-radius */
+
+/* Photo sizes via data-attribute */
+[data-photo-size="small"] .photo { width: 56px; height: 56px; }
+[data-photo-size="medium"] .photo { width: 72px; height: 72px; }
+[data-photo-size="large"] .photo { width: 96px; height: 96px; }
+
+@media (min-width: 768px) {
+  [data-photo-size="small"] .photo { width: 64px; height: 64px; }
+  [data-photo-size="medium"] .photo { width: 88px; height: 88px; }
+  [data-photo-size="large"] .photo { width: 110px; height: 110px; }
+}
 
 /* ── Links ── */
 .link-row {
@@ -894,14 +904,9 @@
   gap: 0;
 }
 .t-warm .photo {
-  width: 96px;
-  height: 96px;
   margin-bottom: 1.5rem;
   border: 3px solid var(--surface);
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-}
-@media (min-width: 768px) {
-  .t-warm .photo { width: 110px; height: 110px; }
 }
 .t-warm .hero-bio { margin: 0 auto 1.75rem; max-width: 460px; }
 .t-warm .link-row { justify-content: center; }
@@ -1084,6 +1089,19 @@
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.3; }
 }
+
+/* Photo entrance animations */
+@keyframes photoFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes photoSlideLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes photoSlideRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes photoScale { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+@keyframes photoPop { 0% { opacity: 0; transform: scale(0.5); } 70% { transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
+
+[data-photo-anim="fade"] .photo { animation: photoFade 0.6s ease both; }
+[data-photo-anim="slide-left"] .photo { animation: photoSlideLeft 0.5s ease-out both; }
+[data-photo-anim="slide-right"] .photo { animation: photoSlideRight 0.5s ease-out both; }
+[data-photo-anim="scale"] .photo { animation: photoScale 0.5s ease-out both; }
+[data-photo-anim="pop"] .photo { animation: photoPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
 
 /* ═══════════════════════════════════════════
    PIN MODAL (kept from existing)

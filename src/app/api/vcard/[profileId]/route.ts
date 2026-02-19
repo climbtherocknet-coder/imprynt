@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { recordScore } from '@/lib/scoring';
+import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
 // GET - Generate and download a vCard for a profile
@@ -31,6 +32,22 @@ export async function GET(
   }
 
   const profile = result.rows[0];
+
+  // Check vCard PIN protection (column may not exist if migration not run)
+  try {
+    const pinResult = await query('SELECT vcard_pin_hash FROM profiles WHERE id = $1', [profileId]);
+    const pinHash = pinResult.rows[0]?.vcard_pin_hash;
+    if (pinHash) {
+      const pin = req.nextUrl.searchParams.get('pin');
+      if (!pin) {
+        return NextResponse.json({ error: 'PIN required', pinRequired: true }, { status: 403 });
+      }
+      const match = await bcrypt.compare(pin, pinHash);
+      if (!match) {
+        return NextResponse.json({ error: 'Invalid PIN', pinRequired: true }, { status: 403 });
+      }
+    }
+  } catch { /* column doesn't exist yet — no PIN protection */ }
 
   // Fetch public business links
   const linksResult = await query(

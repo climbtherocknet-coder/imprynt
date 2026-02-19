@@ -1,6 +1,6 @@
 # Imprynt Platform Roadmap
 
-**Last updated:** February 12, 2026
+**Last updated:** February 16, 2026
 **Maintained by:** Tim Kline
 
 This is the living roadmap for the Imprynt platform (trysygnet.com / imprynt.io). Items are grouped by priority and effort. Each item has a status, tier impact, and brief rationale.
@@ -503,6 +503,33 @@ Registration likely accepts any password. Should enforce minimum requirements (8
 **Tier:** All users (public-facing)
 
 There's a privacy policy and terms page, but no user-friendly FAQ that explains how the platform works, how data is protected, and answers common questions. This is a trust signal for potential users evaluating the product. See detailed spec below.
+
+---
+
+## V3 Foundations
+
+### Recovery Email
+**Status:** planned
+**Effort:** Small-Medium
+**Tier:** All users
+**Priority:** Medium (pre-enterprise)
+
+Secondary email address for account recovery only. Not displayed publicly, not used for notifications. Stored encrypted at rest. Use case: user loses access to their primary email, recovery email provides an alternative path back in. Implementation: `recovery_email` column on users table (encrypted), verification flow separate from primary email, exposed in account settings only. This is a trust and safety feature that needs to ship before enterprise/team plans.
+
+### Enterprise Containerization
+**Status:** planned
+**Effort:** Large
+**Tier:** Enterprise (V3+)
+
+Per-customer containers with isolated database, domain, and branding. Each enterprise customer gets their own instance running on shared infrastructure but with complete data isolation. The advisory plan tier differentiates early advisors from future enterprise admins. Architecture: Docker Compose per customer with orchestration layer (Kubernetes or custom), automated provisioning, shared container registry, per-customer DNS/SSL via Caddy or Traefik.
+
+### Template Light/Dark Variants
+**Status:** planned
+**Effort:** Large
+**Tier:** Premium (viewer-facing)
+**Priority:** High (needs design work first)
+
+Each template gets an optional light/dark counterpart. Dark templates (Midnight, Noir, Studio, Dusk) get light variants; light templates (Clean, Warm, Classic, Soft, Editorial, Signal) get dark variants. Viewer-facing toggle in the profile corner. This is design-first work — each variant needs a carefully crafted complementary palette, not just color inversion. Consider shipping 2-3 variants first (e.g. Midnight-Light, Clean-Dark) and expanding. CSS variable swap on toggle, viewer preference stored in localStorage.
 
 ---
 

@@ -35,6 +35,7 @@ const PLAN_LABELS: Record<string, string> = {
   free: 'Free',
   premium_monthly: 'Premium (Monthly)',
   premium_annual: 'Premium (Annual)',
+  advisory: 'Advisory',
 };
 
 const STATUS_LABELS: Record<string, string> = {

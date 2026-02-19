@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
 import { isValidTemplate, isFreeTier } from '@/lib/themes';
+import bcrypt from 'bcryptjs';
 
 // GET - Load full profile data for the editor
 export async function GET() {
@@ -23,7 +24,7 @@ export async function GET() {
 
   const profileResult = await query(
     `SELECT id, slug, redirect_id, title, company, tagline, bio_heading, bio,
-            photo_url, template, primary_color, accent_color, font_pair, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback, photo_shape, photo_radius
+            photo_url, template, primary_color, accent_color, font_pair, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback, photo_shape, photo_radius, photo_size, photo_position_x, photo_position_y, photo_animation
      FROM profiles WHERE user_id = $1`,
     [userId]
   );
@@ -31,6 +32,13 @@ export async function GET() {
   if (!profile) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
   }
+
+  // Fetch vcard_pin_hash separately (column may not exist if migration not run)
+  let vcardPinHash: string | null = null;
+  try {
+    const pinResult = await query('SELECT vcard_pin_hash FROM profiles WHERE id = $1', [profile.id]);
+    vcardPinHash = pinResult.rows[0]?.vcard_pin_hash || null;
+  } catch { /* column doesn't exist yet */ }
 
   const linksResult = await query(
     `SELECT id, link_type, label, url, display_order, show_business, show_personal, show_showcase
@@ -67,6 +75,11 @@ export async function GET() {
       allowFeedback: profile.allow_feedback !== false,
       photoShape: profile.photo_shape || 'circle',
       photoRadius: profile.photo_radius != null ? profile.photo_radius : null,
+      photoSize: profile.photo_size || 'medium',
+      photoPositionX: profile.photo_position_x ?? 50,
+      photoPositionY: profile.photo_position_y ?? 50,
+      photoAnimation: profile.photo_animation || 'none',
+      vcardPinEnabled: !!vcardPinHash,
     },
     links: linksResult.rows.map((l: Record<string, unknown>) => ({
       id: l.id,
@@ -94,30 +107,21 @@ export async function PUT(req: NextRequest) {
 
   try {
     if (section === 'identity') {
-      // Name, title, company, tagline, photo shape
-      const { firstName, lastName, title, company, tagline, photoShape, photoRadius } = body;
+      // Name, title, company, tagline
+      const { firstName, lastName, title, company, tagline } = body;
       await query(
         'UPDATE users SET first_name = $1, last_name = $2 WHERE id = $3',
         [firstName?.trim() || null, lastName?.trim() || null, userId]
       );
 
-      const validShapes = ['circle', 'rounded', 'soft', 'square', 'hexagon', 'diamond', 'custom'];
-      const shapeVal = photoShape && validShapes.includes(photoShape) ? photoShape : null;
-      const radiusVal = shapeVal === 'custom' && typeof photoRadius === 'number'
-        ? Math.max(0, Math.min(50, photoRadius))
-        : null;
-
       await query(
-        `UPDATE profiles SET title = $1, company = $2, tagline = $3,
-         photo_shape = COALESCE($5, photo_shape), photo_radius = $6
+        `UPDATE profiles SET title = $1, company = $2, tagline = $3
          WHERE user_id = $4`,
         [
           title?.trim()?.slice(0, 100) || null,
           company?.trim()?.slice(0, 100) || null,
           tagline?.trim()?.slice(0, 100) || null,
           userId,
-          shapeVal,
-          radiusVal,
         ]
       );
     } else if (section === 'bio') {
@@ -131,10 +135,14 @@ export async function PUT(req: NextRequest) {
         ]
       );
     } else if (section === 'appearance') {
-      const { template, primaryColor, accentColor, fontPair } = body;
+      const { template, primaryColor, accentColor, fontPair,
+              photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation } = body;
 
       const validFonts = ['default', 'serif', 'mono'];
       const hexRegex = /^#[0-9a-fA-F]{6}$/;
+      const validShapes = ['circle', 'rounded', 'soft', 'square', 'hexagon', 'diamond', 'custom'];
+      const validSizes = ['small', 'medium', 'large'];
+      const validAnimations = ['none', 'fade', 'slide-left', 'slide-right', 'scale', 'pop'];
 
       if (template && !isValidTemplate(template)) {
         return NextResponse.json({ error: 'Invalid template' }, { status: 400 });
@@ -156,14 +164,31 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ error: 'Invalid font pair' }, { status: 400 });
       }
 
+      // Photo settings validation
+      const shapeVal = photoShape && validShapes.includes(photoShape) ? photoShape : null;
+      const radiusVal = shapeVal === 'custom' && typeof photoRadius === 'number'
+        ? Math.max(0, Math.min(50, photoRadius))
+        : null;
+      const sizeVal = photoSize && validSizes.includes(photoSize) ? photoSize : null;
+      const posX = typeof photoPositionX === 'number' ? Math.max(0, Math.min(100, photoPositionX)) : null;
+      const posY = typeof photoPositionY === 'number' ? Math.max(0, Math.min(100, photoPositionY)) : null;
+      const animVal = photoAnimation && validAnimations.includes(photoAnimation) ? photoAnimation : null;
+
       await query(
         `UPDATE profiles SET
           template = COALESCE($1, template),
           primary_color = COALESCE($2, primary_color),
           accent_color = COALESCE($3, accent_color),
-          font_pair = COALESCE($4, font_pair)
+          font_pair = COALESCE($4, font_pair),
+          photo_shape = COALESCE($6, photo_shape),
+          photo_radius = $7,
+          photo_size = COALESCE($8, photo_size),
+          photo_position_x = COALESCE($9, photo_position_x),
+          photo_position_y = COALESCE($10, photo_position_y),
+          photo_animation = COALESCE($11, photo_animation)
          WHERE user_id = $5`,
-        [template, primaryColor, accentColor, fontPair, userId]
+        [template, primaryColor, accentColor, fontPair, userId,
+         shapeVal, radiusVal, sizeVal, posX, posY, animVal]
       );
     } else if (section === 'statusTags') {
       const { statusTags } = body;
@@ -200,6 +225,87 @@ export async function PUT(req: NextRequest) {
         'UPDATE profiles SET status_tag_color = $1 WHERE user_id = $2',
         [val, userId]
       );
+    } else if (section === 'profile') {
+      // Combined identity + appearance save
+      const { firstName, lastName, title, company, tagline,
+              template, primaryColor, accentColor, fontPair,
+              photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation } = body;
+
+      // Update user name
+      await query(
+        'UPDATE users SET first_name = $1, last_name = $2 WHERE id = $3',
+        [firstName?.trim() || null, lastName?.trim() || null, userId]
+      );
+
+      // Validate appearance fields
+      const validFonts = ['default', 'serif', 'mono'];
+      const hexRegex = /^#[0-9a-fA-F]{6}$/;
+      const validShapes = ['circle', 'rounded', 'soft', 'square', 'hexagon', 'diamond', 'custom'];
+      const validSizes = ['small', 'medium', 'large'];
+      const validAnimations = ['none', 'fade', 'slide-left', 'slide-right', 'scale', 'pop'];
+
+      if (template && !isValidTemplate(template)) {
+        return NextResponse.json({ error: 'Invalid template' }, { status: 400 });
+      }
+      if (template && !isFreeTier(template)) {
+        const planResult = await query('SELECT plan FROM users WHERE id = $1', [userId]);
+        if (planResult.rows[0]?.plan === 'free') {
+          return NextResponse.json({ error: 'Premium template requires a paid plan' }, { status: 403 });
+        }
+      }
+      if (primaryColor && !hexRegex.test(primaryColor)) {
+        return NextResponse.json({ error: 'Invalid primary color' }, { status: 400 });
+      }
+      if (accentColor && !hexRegex.test(accentColor)) {
+        return NextResponse.json({ error: 'Invalid accent color' }, { status: 400 });
+      }
+      if (fontPair && !validFonts.includes(fontPair)) {
+        return NextResponse.json({ error: 'Invalid font pair' }, { status: 400 });
+      }
+
+      const shapeVal = photoShape && validShapes.includes(photoShape) ? photoShape : null;
+      const radiusVal = shapeVal === 'custom' && typeof photoRadius === 'number'
+        ? Math.max(0, Math.min(50, photoRadius))
+        : null;
+      const sizeVal = photoSize && validSizes.includes(photoSize) ? photoSize : null;
+      const posX = typeof photoPositionX === 'number' ? Math.max(0, Math.min(100, photoPositionX)) : null;
+      const posY = typeof photoPositionY === 'number' ? Math.max(0, Math.min(100, photoPositionY)) : null;
+      const animVal = photoAnimation && validAnimations.includes(photoAnimation) ? photoAnimation : null;
+
+      await query(
+        `UPDATE profiles SET
+          title = $1, company = $2, tagline = $3,
+          template = COALESCE($4, template),
+          primary_color = COALESCE($5, primary_color),
+          accent_color = COALESCE($6, accent_color),
+          font_pair = COALESCE($7, font_pair),
+          photo_shape = COALESCE($9, photo_shape),
+          photo_radius = $10,
+          photo_size = COALESCE($11, photo_size),
+          photo_position_x = COALESCE($12, photo_position_x),
+          photo_position_y = COALESCE($13, photo_position_y),
+          photo_animation = COALESCE($14, photo_animation)
+         WHERE user_id = $8`,
+        [
+          title?.trim()?.slice(0, 100) || null,
+          company?.trim()?.slice(0, 100) || null,
+          tagline?.trim()?.slice(0, 100) || null,
+          template, primaryColor, accentColor, fontPair, userId,
+          shapeVal, radiusVal, sizeVal, posX, posY, animVal,
+        ]
+      );
+    } else if (section === 'vcardPin') {
+      const { vcardPin } = body;
+      if (vcardPin === null || vcardPin === '') {
+        // Remove PIN protection
+        await query('UPDATE profiles SET vcard_pin_hash = NULL WHERE user_id = $1', [userId]);
+      } else {
+        if (typeof vcardPin !== 'string' || vcardPin.length < 4 || vcardPin.length > 8) {
+          return NextResponse.json({ error: 'PIN must be 4-8 characters' }, { status: 400 });
+        }
+        const hash = await bcrypt.hash(vcardPin, 10);
+        await query('UPDATE profiles SET vcard_pin_hash = $1 WHERE user_id = $2', [hash, userId]);
+      }
     } else {
       return NextResponse.json({ error: 'Invalid section' }, { status: 400 });
     }

@@ -1,6 +1,7 @@
 import '@/styles/profile.css';
 import { getTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, LINK_ICONS } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
+import SaveContactButton from '@/components/templates/SaveContactButton';
 
 const STATUS_TAG_LABELS: Record<string, string> = {
   open_to_network: 'Open to Network',
@@ -27,6 +28,11 @@ export interface ProfileTemplateProps {
   statusTagColor?: string;
   photoShape?: string;
   photoRadius?: number | null;
+  photoSize?: string;
+  photoPositionX?: number;
+  photoPositionY?: number;
+  photoAnimation?: string;
+  vcardPinEnabled?: boolean;
 }
 
 function getLinkHref(link: { link_type: string; url: string }) {
@@ -55,6 +61,11 @@ export default function ProfileTemplate({
   statusTagColor,
   photoShape,
   photoRadius,
+  photoSize,
+  photoPositionX,
+  photoPositionY,
+  photoAnimation,
+  vcardPinEnabled = false,
 }: ProfileTemplateProps) {
   const theme = getTheme(template);
   const cssVars = getThemeCSSVars(theme);
@@ -62,6 +73,10 @@ export default function ProfileTemplate({
   // User's photo shape overrides the theme default
   const effectiveShape = photoShape || theme.modifiers.photoShape;
   dataAttrs['data-photo'] = effectiveShape === 'custom' ? 'custom' : effectiveShape;
+  dataAttrs['data-photo-size'] = photoSize || 'medium';
+  if (photoAnimation && photoAnimation !== 'none') {
+    dataAttrs['data-photo-anim'] = photoAnimation;
+  }
   const googleFontsUrl = getGoogleFontsUrl(theme);
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
   const subtitle = [title, company].filter(Boolean).join(' · ');
@@ -120,6 +135,8 @@ export default function ProfileTemplate({
                 hasTagline={!!theme.effects?.heroTagline}
                 photoShape={effectiveShape}
                 photoRadius={photoRadius}
+                photoPositionX={photoPositionX}
+                photoPositionY={photoPositionY}
               />
             </div>
           ) : (
@@ -132,6 +149,8 @@ export default function ProfileTemplate({
               hasTagline={!!theme.effects?.heroTagline}
               photoShape={effectiveShape}
               photoRadius={photoRadius}
+              photoPositionX={photoPositionX}
+              photoPositionY={photoPositionY}
             />
           )}
 
@@ -177,11 +196,7 @@ export default function ProfileTemplate({
           )}
 
           {/* Save Contact */}
-          <div className="save-row fade-in d4">
-            <a href={`/api/vcard/${profileId}`} className="save-btn">
-              ↓ Save Contact
-            </a>
-          </div>
+          <SaveContactButton profileId={profileId} pinProtected={vcardPinEnabled} />
         </div>
 
         {/* ─── Pods ─── */}
@@ -215,11 +230,12 @@ export default function ProfileTemplate({
 
 // ── Hero sub-component (used in both wrapped and unwrapped modes)
 function HeroContent({
-  photoUrl, fullName, firstName, subtitle, tagline, hasTagline, photoShape, photoRadius,
+  photoUrl, fullName, firstName, subtitle, tagline, hasTagline, photoShape, photoRadius, photoPositionX, photoPositionY,
 }: {
   photoUrl: string; fullName: string; firstName: string;
   subtitle: string; tagline: string; hasTagline: boolean;
   photoShape?: string; photoRadius?: number | null;
+  photoPositionX?: number; photoPositionY?: number;
 }) {
   const customPhotoStyle: React.CSSProperties | undefined =
     photoShape === 'custom' && photoRadius != null
@@ -231,7 +247,7 @@ function HeroContent({
       <div className="hero-top fade-in d1">
         <div className="photo" style={customPhotoStyle}>
           {photoUrl ? (
-            <img src={photoUrl} alt={fullName} />
+            <img src={photoUrl} alt={fullName} style={{ objectPosition: `${photoPositionX ?? 50}% ${photoPositionY ?? 50}%` }} />
           ) : (
             <div className="photo-inner">
               {(firstName?.[0] || '').toUpperCase()}

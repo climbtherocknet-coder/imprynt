@@ -71,7 +71,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Waitlist entry ID required' }, { status: 400 });
   }
 
-  const validPlans = ['free', 'premium_monthly', 'premium_annual'];
+  const validPlans = ['free', 'premium_monthly', 'premium_annual', 'advisory'];
   const plan = validPlans.includes(grantedPlan) ? grantedPlan : 'free';
 
   // Generate a single-use invite code with the selected plan

@@ -33,7 +33,7 @@ export default function PodRenderer({ pod, delay }: { pod: PodData; delay: numbe
       <div className={`pod fade-in ${delayClass}`}>
         <div className={`pod-split${isRight ? ' pod-split-reverse' : ''}`}>
           {pod.imageUrl ? (
-            <img src={pod.imageUrl} alt={pod.title || ''} className="pod-img" />
+            <img src={pod.imageUrl} alt={pod.title || ''} className="pod-img" referrerPolicy="no-referrer" />
           ) : (
             <div className="pod-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
               PHOTO
@@ -90,7 +90,7 @@ export default function PodRenderer({ pod, delay }: { pod: PodData; delay: numbe
         {pod.label && <p className="pod-label">{pod.label}</p>}
         <a href={pod.ctaUrl} target="_blank" rel="noopener noreferrer" className="pod-link-preview">
           {pod.imageUrl && (
-            <img src={pod.imageUrl} alt={pod.title || ''} className="pod-link-img" />
+            <img src={pod.imageUrl} alt={pod.title || ''} className="pod-link-img" referrerPolicy="no-referrer" />
           )}
           <div className="pod-link-body">
             {pod.title && <h3 className="pod-link-title">{pod.title}</h3>}
@@ -109,7 +109,7 @@ export default function PodRenderer({ pod, delay }: { pod: PodData; delay: numbe
         {pod.label && <p className="pod-label">{pod.label}</p>}
         <div className="pod-project">
           {pod.imageUrl && (
-            <img src={pod.imageUrl} alt={pod.title || ''} className="pod-project-img" />
+            <img src={pod.imageUrl} alt={pod.title || ''} className="pod-project-img" referrerPolicy="no-referrer" />
           )}
           <div className="pod-project-body">
             {pod.title && <h3 className="pod-title">{pod.title}</h3>}

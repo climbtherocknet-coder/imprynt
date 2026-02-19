@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
 import { isAdmin } from '@/lib/admin';
 
-const VALID_PLANS = ['free', 'premium_monthly', 'premium_annual'];
+const VALID_PLANS = ['free', 'premium_monthly', 'premium_annual', 'advisory'];
 
 export async function PUT(
   req: NextRequest,
@@ -19,7 +19,7 @@ export async function PUT(
 
   if (!plan || !VALID_PLANS.includes(plan)) {
     return NextResponse.json(
-      { error: 'Invalid plan. Must be: free, premium_monthly, or premium_annual' },
+      { error: 'Invalid plan. Must be: free, premium_monthly, premium_annual, or advisory' },
       { status: 400 }
     );
   }

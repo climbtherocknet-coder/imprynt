@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   const expiresInDays = body.expiresInDays ?? null;
   const note = body.note?.trim().slice(0, 255) || null;
   const count = Math.min(Math.max(1, body.count ?? 1), 20); // max 20 codes at once
-  const validPlans = ['free', 'premium_monthly', 'premium_annual'];
+  const validPlans = ['free', 'premium_monthly', 'premium_annual', 'advisory'];
   const grantedPlan = validPlans.includes(body.grantedPlan) ? body.grantedPlan : 'free';
 
   const expiresAt = expiresInDays
@@ -113,7 +113,7 @@ export async function PUT(req: NextRequest) {
   }
 
   if (grantedPlan !== undefined) {
-    const vp = ['free', 'premium_monthly', 'premium_annual'];
+    const vp = ['free', 'premium_monthly', 'premium_annual', 'advisory'];
     sets.push(`granted_plan = $${idx++}`);
     params.push(vp.includes(grantedPlan) ? grantedPlan : 'free');
   }
