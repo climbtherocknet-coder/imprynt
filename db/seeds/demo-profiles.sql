@@ -354,13 +354,16 @@ INSERT INTO pods (profile_id, pod_type, display_order, title, body, show_on_prof
    'Rooftop Vinyasa (Saturdays, Silver Lake) · Sound healing circles (first Sunday of month) · Tulum retreat (May) · Bali immersion (October). Online 1:1 coaching year-round.',
    true, true);
 
--- ─── PROTECTED PAGES (5 of 10 profiles) ─────────────────────────────────────
+-- ─── PROTECTED PAGES (8 of 10 profiles) ─────────────────────────────────────
 -- Unique numeric PINs per page (bcrypt, cost 10):
---   Alex Morgan personal:    1001
---   Emma Patel personal:     2002
---   Marcus Knight personal:  3003
---   Nia Williams portfolio:  4004
---   Luna Rivera personal:    5005
+--   Alex Morgan personal:         1001
+--   Emma Patel personal:          2002
+--   Marcus Knight personal:       3003
+--   Nia Williams portfolio:       4004
+--   Luna Rivera personal:         5005
+--   Felix Yamamoto portfolio:     6006
+--   Emma Patel portfolio:         7007
+--   Alex Morgan portfolio:        8008
 
 INSERT INTO protected_pages (id, user_id, profile_id, page_title, visibility_mode, pin_hash, bio_text, button_label, is_active) VALUES
 
@@ -407,6 +410,33 @@ INSERT INTO protected_pages (id, user_id, profile_id, page_title, visibility_mod
    'Personal', 'hidden',
    '$2a$10$GA3riDx8RzhJ.symRk75YeeP8yroDyIG2T6T33wfinrL65/e3HpdO',
    'This is my personal space. If you''re here, you''ve already earned it. My number and retreat invites below.',
-   NULL, true);
+   NULL, true),
+
+  -- Felix Yamamoto: visible portfolio page — PIN: 6006
+  ('c3000000-0000-0000-0000-000000000006',
+   'a1000000-0000-0000-0000-000000000009',
+   'b2000000-0000-0000-0000-000000000009',
+   'Selected Works', 'visible',
+   '$2a$10$Ji2k9HE.a4G/cV3xp0.KquBjRhOiXsxTyzQ7OblFX0QnTbHc/Z8P6',
+   'Full project documentation, concept drawings, and photography for selected residential and hospitality projects. PIN available on request.',
+   'Selected Works', true),
+
+  -- Emma Patel: visible client portfolio — PIN: 7007
+  ('c3000000-0000-0000-0000-000000000007',
+   'a1000000-0000-0000-0000-000000000004',
+   'b2000000-0000-0000-0000-000000000004',
+   'Client Portfolio', 'visible',
+   '$2a$10$e8qooP4pcPkCKVp1JxxPHuJkPIwv1/Y1XWB4CZW4ayfqLT2KqEhDG',
+   'Full-resolution galleries from brand shoots, editorial work, and portrait sessions. Shared with clients and collaborators.',
+   'Client Portfolio', true),
+
+  -- Alex Morgan: visible product case studies — PIN: 8008
+  ('c3000000-0000-0000-0000-000000000008',
+   'a1000000-0000-0000-0000-000000000001',
+   'b2000000-0000-0000-0000-000000000001',
+   'Product Case Studies', 'visible',
+   '$2a$10$ct4R8pzCki4mWhrg2iBPE.PQya/9DJFAccjLiOyvfHzWikHP4x6dq',
+   'Deep dives on shipped products: research approach, decision frameworks, and outcomes. For hiring managers and collaborators.',
+   'Case Studies', true);
 
 COMMIT;
