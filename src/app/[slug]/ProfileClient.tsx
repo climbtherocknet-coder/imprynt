@@ -29,12 +29,12 @@ interface ProtectedPageContent {
   showcaseItems?: ShowcaseItemData[];
 }
 
-interface ShowcasePage {
+interface PortfolioPage {
   id: string;
   buttonLabel: string;
 }
 
-interface ImpressionIcon {
+interface PersonalIcon {
   color: string;
   opacity: number;
   corner: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
@@ -44,9 +44,9 @@ interface ProfileClientProps {
   profileId: string;
   accent: string;
   theme: string;
-  hasImpression: boolean;
-  impressionIcon?: ImpressionIcon;
-  showcasePages: ShowcasePage[];
+  hasPersonal: boolean;
+  personalIcon?: PersonalIcon;
+  portfolioPages: PortfolioPage[];
   allowSharing?: boolean;
   allowFeedback?: boolean;
 }
@@ -350,7 +350,7 @@ function ProtectedPageView({
   } as React.CSSProperties;
 
   const fullName = [content.profile.firstName, content.profile.lastName].filter(Boolean).join(' ');
-  const isImpression = content.page.visibilityMode === 'hidden';
+  const isPersonal = content.page.visibilityMode === 'hidden';
 
   return (
     <>
@@ -402,7 +402,7 @@ function ProtectedPageView({
         </button>
 
         {/* Easter egg badge */}
-        {isImpression && (
+        {isPersonal && (
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -486,7 +486,7 @@ function ProtectedPageView({
         </div>
 
         {/* Personal vCard download (impression pages only) */}
-        {isImpression && downloadToken && (
+        {isPersonal && downloadToken && (
           <div style={{ marginTop: content.links.length > 0 ? '1rem' : '0' }}>
             <a
               href={`/api/vcard/${profileId}/personal?token=${downloadToken}`}
@@ -506,7 +506,7 @@ function ProtectedPageView({
         )}
 
         {/* Resume link (showcase pages only, when enabled) */}
-        {!isImpression && content.page.resumeUrl && content.page.showResume !== false && (
+        {!isPersonal && content.page.resumeUrl && content.page.showResume !== false && (
           <div style={{ marginTop: content.links.length > 0 ? '1rem' : '0' }}>
             <a
               href={content.page.resumeUrl}
@@ -528,7 +528,7 @@ function ProtectedPageView({
         )}
 
         {/* Save Contact (showcase pages only) */}
-        {!isImpression && (
+        {!isPersonal && (
           <div style={{ marginTop: content.links.length > 0 || (content.page.resumeUrl && content.page.showResume !== false) ? '1rem' : '0' }}>
             <a
               href={`/api/vcard/${profileId}`}
@@ -547,7 +547,7 @@ function ProtectedPageView({
           </div>
         )}
 
-        {content.links.length === 0 && !content.pods?.length && !content.showcaseItems?.length && !isImpression && !(content.page.resumeUrl && content.page.showResume !== false) && (
+        {content.links.length === 0 && !content.pods?.length && !content.showcaseItems?.length && !isPersonal && !(content.page.resumeUrl && content.page.showResume !== false) && (
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontStyle: 'italic' }}>
             No content added yet.
           </p>
@@ -755,7 +755,7 @@ function ShareButton({ profileId, isDark, corner }: { profileId: string; isDark:
 
 // ── Main Client Component ──────────────────────────────
 
-export default function ProfileClient({ profileId, accent, theme, hasImpression, impressionIcon, showcasePages, allowSharing, allowFeedback }: ProfileClientProps) {
+export default function ProfileClient({ profileId, accent, theme, hasPersonal, personalIcon, portfolioPages, allowSharing, allowFeedback }: ProfileClientProps) {
   const [showPinModal, setShowPinModal] = useState(false);
   const [protectedContent, setProtectedContent] = useState<ProtectedPageContent | null>(null);
   const [vcardToken, setVcardToken] = useState<string | undefined>(undefined);
@@ -764,10 +764,10 @@ export default function ProfileClient({ profileId, accent, theme, hasImpression,
   const [isRemembered, setIsRemembered] = useState(false);
   const isDark = isDarkTemplate(theme);
 
-  // Impression icon settings with defaults
-  const iconColor = impressionIcon?.color || accent;
-  const iconOpacity = impressionIcon?.opacity ?? 0.35;
-  const iconCorner = impressionIcon?.corner || 'bottom-right';
+  // Personal icon settings with defaults
+  const iconColor = personalIcon?.color || accent;
+  const iconOpacity = personalIcon?.opacity ?? 0.35;
+  const iconCorner = personalIcon?.corner || 'bottom-right';
 
   // Position based on corner setting
   const iconPosition: React.CSSProperties = {
@@ -899,7 +899,7 @@ export default function ProfileClient({ profileId, accent, theme, hasImpression,
       )}
 
       {/* Impression: circle-dot logo mark (also handles showcase/protected pages) */}
-      {hasImpression && (
+      {hasPersonal && (
         <button
           onClick={() => setShowPinModal(true)}
           aria-label="Hidden content"

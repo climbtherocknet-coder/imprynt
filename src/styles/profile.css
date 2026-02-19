@@ -204,12 +204,15 @@
   color: var(--accent);
 }
 .link-pill .icon {
-  font-size: 0.6875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--accent);
-  font-weight: 700;
-  width: 16px;
-  text-align: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
+.link-pill .icon svg { width: 14px; height: 14px; }
 
 /* Stacked links */
 .link-stacked {
@@ -237,13 +240,15 @@
   background: var(--accent-soft);
 }
 .link-stacked-item .icon {
-  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--accent);
-  font-weight: 600;
-  width: 20px;
-  text-align: center;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
+.link-stacked-item .icon svg { width: 16px; height: 16px; }
 
 /* Full-width pills */
 .link-full-width {
@@ -273,12 +278,50 @@
   color: var(--accent);
 }
 .link-full-width-item .icon {
-  font-size: 0.6875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--accent);
-  font-weight: 700;
-  width: 16px;
-  text-align: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
+.link-full-width-item .icon svg { width: 14px; height: 14px; }
+
+/* ── Icon-only link display ── */
+.link-icons-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+.link-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius, 0.625rem);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.link-icon-btn:hover {
+  background: var(--accent-border);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.link-icon-btn .icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+.link-icon-btn .icon svg { width: 20px; height: 20px; }
 
 /* ── Save Contact Button ── */
 .save-row { margin-bottom: 2.5rem; }

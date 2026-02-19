@@ -134,7 +134,7 @@ export default function HomePage() {
               <div className="lp-how-card">
                 <div className="lp-how-num">2</div>
                 <h3>Add your layers</h3>
-                <p>Public page for everyone. Portfolio for clients. A private Impression for real connections. Each with its own PIN.</p>
+                <p>Public page for everyone. Portfolio for clients. A private Personal page for real connections. Each with its own PIN.</p>
               </div>
               <div className="lp-how-card">
                 <div className="lp-how-num">3</div>
@@ -150,7 +150,7 @@ export default function HomePage() {
         {/* ═══════ IMPRESSION ═══════ */}
         <section className="lp-impression">
           <p className="lp-label">The hidden layer</p>
-          <h2 className="lp-headline" style={{ marginBottom: '0.75rem' }}>Leave an <em>Impression</em></h2>
+          <h2 className="lp-headline" style={{ marginBottom: '0.75rem' }}>Your <em>Personal</em> layer</h2>
           <p className="lp-impression-desc">
             Every profile has a hidden layer only you know about. Share the PIN with someone you trust,
             and they unlock your personal side: your real number, your Instagram, a note just for them.
@@ -196,11 +196,11 @@ export default function HomePage() {
             <div className="lp-case-card">
               <div className="lp-case-who">Founders</div>
               <div className="lp-case-quote">{"\u201C"}One tap and they had my deck, my bio, and a Calendly link.{"\u201D"}</div>
-              <p className="lp-case-desc">Your story and traction up front. Pitch deck and metrics behind a portfolio PIN. Personal number in your Impression.</p>
+              <p className="lp-case-desc">Your story and traction up front. Pitch deck and metrics behind a portfolio PIN. Personal number in your hidden page.</p>
               <div className="lp-case-tags">
                 <span className="lp-case-tag">Projects</span>
                 <span className="lp-case-tag">Services</span>
-                <span className="lp-case-tag">Impression</span>
+                <span className="lp-case-tag">Personal</span>
               </div>
             </div>
             <div className="lp-case-card">
@@ -287,9 +287,9 @@ export default function HomePage() {
                 <div className="lp-pr-item"><span className="d">●</span> Everything in Free</div>
                 <div className="lp-pr-item"><span className="d">●</span> 6 content sections</div>
                 <div className="lp-pr-item"><span className="d">●</span> All 10 templates + full customization</div>
-                <div className="lp-pr-item"><span className="d">●</span> Portfolio with typed showcase items</div>
-                <div className="lp-pr-item"><span className="d">●</span> Public showcase on profile</div>
-                <div className="lp-pr-item"><span className="d">●</span> Impression (hidden personal layer)</div>
+                <div className="lp-pr-item"><span className="d">●</span> Portfolio page with content blocks</div>
+                <div className="lp-pr-item"><span className="d">●</span> Portfolio button on profile</div>
+                <div className="lp-pr-item"><span className="d">●</span> Personal page (hidden layer)</div>
                 <div className="lp-pr-item"><span className="d">●</span> Analytics</div>
                 <div className="lp-pr-item"><span className="d">●</span> No watermark</div>
               </div>

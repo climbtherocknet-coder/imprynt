@@ -49,8 +49,9 @@ CREATE TABLE profiles (
     photo_url       VARCHAR(500),
     template        VARCHAR(50) NOT NULL DEFAULT 'clean',
     primary_color   VARCHAR(7) DEFAULT '#000000',   -- hex
-    accent_color    VARCHAR(7) DEFAULT '#3B82F6',   -- hex
+    accent_color    VARCHAR(7) DEFAULT NULL,         -- hex; NULL = use template default
     font_pair       VARCHAR(50) DEFAULT 'default',  -- e.g. 'default', 'serif', 'mono'
+    link_display    VARCHAR(20) NOT NULL DEFAULT 'default', -- 'default' | 'icons'
     is_published    BOOLEAN NOT NULL DEFAULT false,
     photo_shape     VARCHAR(20) NOT NULL DEFAULT 'circle',
     photo_radius    INTEGER,

@@ -40,6 +40,7 @@ interface ProfileData {
   photo_position_y: number;
   photo_animation: string;
   vcard_pin_hash: string | null;
+  link_display: string;
 }
 
 interface LinkData {
@@ -64,7 +65,7 @@ async function getProfileAny(slug: string) {
   const result = await query(
     `SELECT p.id as profile_id, p.user_id, u.first_name, u.last_name, p.title, p.company,
             p.tagline, p.bio_heading, p.bio, p.photo_url, p.template,
-            p.primary_color, p.accent_color, p.font_pair, u.plan, p.status_tags, p.is_published, p.allow_sharing, p.allow_feedback, p.status_tag_color, p.photo_shape, p.photo_radius, p.photo_size, p.photo_position_x, p.photo_position_y, p.photo_animation
+            p.primary_color, p.accent_color, p.font_pair, p.link_display, u.plan, p.status_tags, p.is_published, p.allow_sharing, p.allow_feedback, p.status_tag_color, p.photo_shape, p.photo_radius, p.photo_size, p.photo_position_x, p.photo_position_y, p.photo_animation
      FROM profiles p
      JOIN users u ON u.id = p.user_id
      WHERE p.slug = $1 AND u.account_status = 'active'`,
@@ -130,7 +131,7 @@ async function getVisibleProtectedPages(profileId: string) {
   return result.rows as ProtectedPageData[];
 }
 
-async function getImpressionSettings(profileId: string) {
+async function getPersonalSettings(profileId: string) {
   const result = await query(
     `SELECT id, icon_color, icon_opacity, icon_corner FROM protected_pages
      WHERE profile_id = $1 AND is_active = true AND visibility_mode = 'hidden'
@@ -230,7 +231,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
     getVisibleProtectedPages(profile.profile_id),
   ]);
 
-  const impressionSettings = profile.plan !== 'free' ? await getImpressionSettings(profile.profile_id) : null;
+  const personalSettings = profile.plan !== 'free' ? await getPersonalSettings(profile.profile_id) : null;
 
   // Log page view only if published (don't count owner previews)
   if (profile.is_published) {
@@ -263,6 +264,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         profileId={profile.profile_id}
         template={profile.template}
         accentColor={profile.accent_color || undefined}
+        linkDisplay={profile.link_display || 'default'}
         firstName={profile.first_name}
         lastName={profile.last_name}
         title={profile.title}
@@ -288,9 +290,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         profileId={profile.profile_id}
         accent={accent}
         theme={theme.id}
-        hasImpression={!!impressionSettings || visibleProtectedPages.length > 0}
-        impressionIcon={impressionSettings || undefined}
-        showcasePages={visibleProtectedPages.map(p => ({ id: p.id, buttonLabel: p.button_label }))}
+        hasPersonal={!!personalSettings || visibleProtectedPages.length > 0}
+        personalIcon={personalSettings || undefined}
+        portfolioPages={visibleProtectedPages.map(p => ({ id: p.id, buttonLabel: p.button_label }))}
         allowSharing={profile.allow_sharing !== false}
         allowFeedback={profile.allow_feedback !== false}
       />

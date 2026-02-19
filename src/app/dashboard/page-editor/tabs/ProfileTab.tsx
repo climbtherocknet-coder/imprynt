@@ -164,8 +164,11 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
   const [bio, setBio] = useState('');
   const [template, setTemplate] = useState('clean');
   const [primaryColor, setPrimaryColor] = useState('#000000');
-  const [accentColor, setAccentColor] = useState('#3B82F6');
+  const [accentColor, setAccentColor] = useState('');
   const [fontPair, setFontPair] = useState('default');
+  const [linkDisplay, setLinkDisplay] = useState('default');
+  const [showQrCode, setShowQrCode] = useState(false);
+  const [qrSvg, setQrSvg] = useState('');
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [allowSharing, setAllowSharing] = useState(true);
   const [allowFeedback, setAllowFeedback] = useState(true);
@@ -232,8 +235,9 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
         setBio(d.profile.bio);
         setTemplate(d.profile.template);
         setPrimaryColor(d.profile.primaryColor);
-        setAccentColor(d.profile.accentColor);
+        setAccentColor(d.profile.accentColor || '');
         setFontPair(d.profile.fontPair);
+        setLinkDisplay(d.profile.linkDisplay || 'default');
         setLinks(d.links);
         setPhotoUrl(d.profile.photoUrl);
         setAllowSharing(d.profile.allowSharing !== false);
@@ -296,6 +300,16 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
     } catch { /* silent */ }
     finally { setContactSaving(false); }
   }
+
+  // Lazy-load QR code SVG when panel opens
+  useEffect(() => {
+    if (showQrCode && !qrSvg) {
+      fetch('/api/profile/qr')
+        .then(r => r.text())
+        .then(svg => setQrSvg(svg))
+        .catch(() => {});
+    }
+  }, [showQrCode, qrSvg]);
 
   // Save helpers
   const saveSection = useCallback(async (section: string, body: Record<string, unknown>) => {
@@ -525,7 +539,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={sectionTitleStyle}>My Main Profile</h3>
             <button
-              onClick={() => saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor, fontPair, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation })}
+              onClick={() => saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor: accentColor || null, fontPair, linkDisplay, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation })}
               disabled={saving === 'profile'}
               style={{ ...saveBtnStyle, opacity: saving === 'profile' ? 0.6 : 1 }}
             >
@@ -1068,11 +1082,24 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
               })}
             </div>
 
-            <label style={labelStyle}>Accent color override</label>
+            <label style={labelStyle}>Accent color</label>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', marginTop: '-0.125rem', marginBottom: '0.5rem' }}>
-              Leave blank to use the template default.
+              Uses the template&apos;s accent by default. Pick a color to override.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
+              <button
+                onClick={() => setAccentColor('')}
+                style={{
+                  height: 28, borderRadius: '9999px', padding: '0 0.625rem',
+                  fontSize: '0.6875rem', fontWeight: 500, fontFamily: 'inherit',
+                  border: !accentColor ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                  backgroundColor: !accentColor ? 'rgba(232,168,73,0.1)' : 'var(--surface, #161c28)',
+                  color: !accentColor ? 'var(--accent, #e8a849)' : 'var(--text-muted, #5d6370)',
+                  cursor: 'pointer', transition: 'all 0.15s',
+                }}
+              >
+                Theme default
+              </button>
               {COLOR_PRESETS.map(c => (
                 <button
                   key={c}
@@ -1091,7 +1118,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
               ))}
               <input
                 type="color"
-                value={accentColor}
+                value={accentColor || '#e8a849'}
                 onChange={e => setAccentColor(e.target.value)}
                 style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-light, #283042)', cursor: 'pointer', padding: 0 }}
               />
@@ -1101,9 +1128,30 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
 
         {/* ─── The Nexus (Links) Section ─────────── */}
         <div style={sectionStyle}>
-          <h3 style={sectionTitleStyle}>Links</h3>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem', marginTop: '-0.5rem' }}>
-            Your social links, contact info, and web presence. Drag to reorder. Toggle visibility for your Business, Personal, and Showcase pages.
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
+            <h3 style={sectionTitleStyle}>Links</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', marginRight: '0.125rem' }}>Display:</span>
+              {(['default', 'icons'] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setLinkDisplay(mode)}
+                  style={{
+                    padding: '0.25rem 0.625rem', borderRadius: '9999px', fontSize: '0.6875rem',
+                    fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                    border: linkDisplay === mode ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                    backgroundColor: linkDisplay === mode ? 'rgba(232,168,73,0.1)' : 'var(--surface, #161c28)',
+                    color: linkDisplay === mode ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {mode === 'default' ? 'Labels' : 'Icons only'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem', marginTop: '0.25rem' }}>
+            Your social links, contact info, and web presence. Drag to reorder. Toggle visibility for your Business, Personal, and Portfolio pages.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
@@ -1282,6 +1330,36 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
             </select>
           )}
 
+          {/* QR Code (collapsible) */}
+          <div style={{ marginTop: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+            <div
+              onClick={() => setShowQrCode(!showQrCode)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}
+            >
+              <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showQrCode ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
+              <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>QR Code</label>
+            </div>
+            {showQrCode && (
+              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
+                  Share your profile without NFC. Print it, add it to slides, or show it on your phone.
+                </p>
+                {qrSvg ? (
+                  <div
+                    style={{ display: 'inline-block', padding: '1rem', backgroundColor: '#fff', borderRadius: '0.75rem', marginBottom: '0.75rem' }}
+                    dangerouslySetInnerHTML={{ __html: qrSvg }}
+                  />
+                ) : (
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>Generating...</p>
+                )}
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                  <a href="/api/profile/qr?format=png" download="imprynt-qr.png" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', color: 'var(--text-mid, #a8adb8)', textDecoration: 'none', backgroundColor: 'var(--surface, #161c28)' }}>Download PNG</a>
+                  <a href="/api/profile/qr?format=svg" download="imprynt-qr.svg" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', color: 'var(--text-mid, #a8adb8)', textDecoration: 'none', backgroundColor: 'var(--surface, #161c28)' }}>Download SVG</a>
+                </div>
+              </div>
+            )}
+          </div>
+
         </div>
 
         {/* ─── First Impressions (Pods) Section ───── */}
@@ -1306,7 +1384,8 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
               key={previewKey}
               profileId={data.profile.id}
               template={template}
-              accentColor={accentColor}
+              accentColor={accentColor || undefined}
+              linkDisplay={linkDisplay}
               firstName={firstName}
               lastName={lastName}
               title={title}

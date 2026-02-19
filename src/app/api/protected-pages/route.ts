@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
   );
   if (existingResult.rows.length > 0) {
     return NextResponse.json({
-      error: `You already have an active ${visibilityMode === 'hidden' ? 'Impression' : 'Showcase'} page. Edit the existing one instead.`
+      error: `You already have an active ${visibilityMode === 'hidden' ? 'Personal' : 'Portfolio'} page. Edit the existing one instead.`
     }, { status: 400 });
   }
 

@@ -34,6 +34,7 @@ export interface ProfileTemplateProps {
   photoAnimation?: string;
   vcardPinEnabled?: boolean;
   accentColor?: string;
+  linkDisplay?: string;
 }
 
 function getLinkHref(link: { link_type: string; url: string }) {
@@ -68,6 +69,7 @@ export default function ProfileTemplate({
   photoAnimation,
   vcardPinEnabled = false,
   accentColor,
+  linkDisplay = 'default',
 }: ProfileTemplateProps) {
   const theme = getTheme(template);
   const cssVars = getThemeCSSVars(theme);
@@ -165,35 +167,55 @@ export default function ProfileTemplate({
           {/* Links */}
           {links.length > 0 && (
             <>
-              {linkStyle === 'pills' && (
-                <div className="link-row fade-in d3">
+              {linkDisplay === 'icons' ? (
+                <div className="link-icons-row fade-in d3">
                   {links.map(link => (
-                    <a key={link.id} href={getLinkHref(link)} target={getLinkTarget(link.link_type)} rel="noopener noreferrer" className="link-pill">
-                      <span className="icon">{LINK_ICONS[link.link_type] || '>'}</span>
-                      {link.label || link.link_type}
+                    <a
+                      key={link.id}
+                      href={getLinkHref(link)}
+                      target={getLinkTarget(link.link_type)}
+                      rel="noopener noreferrer"
+                      className="link-icon-btn"
+                      title={link.label || link.link_type}
+                      aria-label={link.label || link.link_type}
+                    >
+                      <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[link.link_type] || LINK_ICONS.custom }} />
                     </a>
                   ))}
                 </div>
-              )}
-              {linkStyle === 'stacked' && (
-                <div className="link-stacked fade-in d3">
-                  {links.map(link => (
-                    <a key={link.id} href={getLinkHref(link)} target={getLinkTarget(link.link_type)} rel="noopener noreferrer" className="link-stacked-item">
-                      <span className="icon">{LINK_ICONS[link.link_type] || '>'}</span>
-                      {link.label || link.link_type}
-                    </a>
-                  ))}
-                </div>
-              )}
-              {linkStyle === 'full-width-pills' && (
-                <div className="link-full-width fade-in d3">
-                  {links.map(link => (
-                    <a key={link.id} href={getLinkHref(link)} target={getLinkTarget(link.link_type)} rel="noopener noreferrer" className="link-full-width-item">
-                      <span className="icon">{LINK_ICONS[link.link_type] || '>'}</span>
-                      {link.label || link.link_type}
-                    </a>
-                  ))}
-                </div>
+              ) : (
+                <>
+                  {linkStyle === 'pills' && (
+                    <div className="link-row fade-in d3">
+                      {links.map(link => (
+                        <a key={link.id} href={getLinkHref(link)} target={getLinkTarget(link.link_type)} rel="noopener noreferrer" className="link-pill">
+                          <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[link.link_type] || LINK_ICONS.custom }} />
+                          {link.label || link.link_type}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                  {linkStyle === 'stacked' && (
+                    <div className="link-stacked fade-in d3">
+                      {links.map(link => (
+                        <a key={link.id} href={getLinkHref(link)} target={getLinkTarget(link.link_type)} rel="noopener noreferrer" className="link-stacked-item">
+                          <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[link.link_type] || LINK_ICONS.custom }} />
+                          {link.label || link.link_type}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                  {linkStyle === 'full-width-pills' && (
+                    <div className="link-full-width fade-in d3">
+                      {links.map(link => (
+                        <a key={link.id} href={getLinkHref(link)} target={getLinkTarget(link.link_type)} rel="noopener noreferrer" className="link-full-width-item">
+                          <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[link.link_type] || LINK_ICONS.custom }} />
+                          {link.label || link.link_type}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}

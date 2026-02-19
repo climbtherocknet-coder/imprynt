@@ -1,0 +1,1 @@
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS link_display VARCHAR(20) NOT NULL DEFAULT 'default';

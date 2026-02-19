@@ -192,7 +192,7 @@ export default function ProtectedPagePreview({
                   border: '2px solid transparent',
                 }}
               >
-                <span style={{ fontSize: '1rem' }}>{LINK_ICONS[link.linkType] || '>'}</span>
+                <span style={{ width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }} dangerouslySetInnerHTML={{ __html: LINK_ICONS[link.linkType] || LINK_ICONS.custom }} />
                 {link.label || link.linkType}
               </a>
             ))}

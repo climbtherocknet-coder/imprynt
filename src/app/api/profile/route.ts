@@ -24,7 +24,7 @@ export async function GET() {
 
   const profileResult = await query(
     `SELECT id, slug, redirect_id, title, company, tagline, bio_heading, bio,
-            photo_url, template, primary_color, accent_color, font_pair, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback, photo_shape, photo_radius, photo_size, photo_position_x, photo_position_y, photo_animation
+            photo_url, template, primary_color, accent_color, font_pair, link_display, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback, photo_shape, photo_radius, photo_size, photo_position_x, photo_position_y, photo_animation
      FROM profiles WHERE user_id = $1`,
     [userId]
   );
@@ -70,6 +70,7 @@ export async function GET() {
       primaryColor: profile.primary_color,
       accentColor: profile.accent_color,
       fontPair: profile.font_pair,
+      linkDisplay: profile.link_display || 'default',
       isPublished: profile.is_published,
       statusTags: profile.status_tags || [],
       statusTagColor: profile.status_tag_color || null,
@@ -137,7 +138,7 @@ export async function PUT(req: NextRequest) {
         ]
       );
     } else if (section === 'appearance') {
-      const { template, primaryColor, accentColor, fontPair,
+      const { template, primaryColor, accentColor, fontPair, linkDisplay,
               photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation } = body;
 
       const validFonts = ['default', 'serif', 'mono'];
@@ -159,12 +160,15 @@ export async function PUT(req: NextRequest) {
       if (primaryColor && !hexRegex.test(primaryColor)) {
         return NextResponse.json({ error: 'Invalid primary color' }, { status: 400 });
       }
-      if (accentColor && !hexRegex.test(accentColor)) {
+      const accentVal = accentColor === '' ? null : (accentColor || undefined);
+      if (accentVal && !hexRegex.test(accentVal)) {
         return NextResponse.json({ error: 'Invalid accent color' }, { status: 400 });
       }
       if (fontPair && !validFonts.includes(fontPair)) {
         return NextResponse.json({ error: 'Invalid font pair' }, { status: 400 });
       }
+      const validDisplayModes = ['default', 'icons'];
+      const displayVal = linkDisplay && validDisplayModes.includes(linkDisplay) ? linkDisplay : null;
 
       // Photo settings validation
       const shapeVal = photoShape && validShapes.includes(photoShape) ? photoShape : null;
@@ -180,8 +184,9 @@ export async function PUT(req: NextRequest) {
         `UPDATE profiles SET
           template = COALESCE($1, template),
           primary_color = COALESCE($2, primary_color),
-          accent_color = COALESCE($3, accent_color),
+          accent_color = CASE WHEN $3::text = '__clear__' THEN NULL ELSE COALESCE($3, accent_color) END,
           font_pair = COALESCE($4, font_pair),
+          link_display = COALESCE($12, link_display),
           photo_shape = COALESCE($6, photo_shape),
           photo_radius = $7,
           photo_size = COALESCE($8, photo_size),
@@ -189,8 +194,8 @@ export async function PUT(req: NextRequest) {
           photo_position_y = COALESCE($10, photo_position_y),
           photo_animation = COALESCE($11, photo_animation)
          WHERE user_id = $5`,
-        [template, primaryColor, accentColor, fontPair, userId,
-         shapeVal, radiusVal, sizeVal, posX, posY, animVal]
+        [template, primaryColor, accentVal === null ? '__clear__' : accentColor, fontPair, userId,
+         shapeVal, radiusVal, sizeVal, posX, posY, animVal, displayVal]
       );
     } else if (section === 'statusTags') {
       const { statusTags } = body;
@@ -230,7 +235,7 @@ export async function PUT(req: NextRequest) {
     } else if (section === 'profile') {
       // Combined identity + appearance save
       const { firstName, lastName, title, company, tagline,
-              template, primaryColor, accentColor, fontPair,
+              template, primaryColor, accentColor, fontPair, linkDisplay,
               photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation } = body;
 
       // Update user name
@@ -258,12 +263,15 @@ export async function PUT(req: NextRequest) {
       if (primaryColor && !hexRegex.test(primaryColor)) {
         return NextResponse.json({ error: 'Invalid primary color' }, { status: 400 });
       }
-      if (accentColor && !hexRegex.test(accentColor)) {
+      const accentValP = accentColor === '' ? null : (accentColor || undefined);
+      if (accentValP && !hexRegex.test(accentValP)) {
         return NextResponse.json({ error: 'Invalid accent color' }, { status: 400 });
       }
       if (fontPair && !validFonts.includes(fontPair)) {
         return NextResponse.json({ error: 'Invalid font pair' }, { status: 400 });
       }
+      const validDisplayModesP = ['default', 'icons'];
+      const displayValP = linkDisplay && validDisplayModesP.includes(linkDisplay) ? linkDisplay : null;
 
       const shapeVal = photoShape && validShapes.includes(photoShape) ? photoShape : null;
       const radiusVal = shapeVal === 'custom' && typeof photoRadius === 'number'
@@ -279,8 +287,9 @@ export async function PUT(req: NextRequest) {
           title = $1, company = $2, tagline = $3,
           template = COALESCE($4, template),
           primary_color = COALESCE($5, primary_color),
-          accent_color = COALESCE($6, accent_color),
+          accent_color = CASE WHEN $6::text = '__clear__' THEN NULL ELSE COALESCE($6, accent_color) END,
           font_pair = COALESCE($7, font_pair),
+          link_display = COALESCE($15, link_display),
           photo_shape = COALESCE($9, photo_shape),
           photo_radius = $10,
           photo_size = COALESCE($11, photo_size),
@@ -292,8 +301,13 @@ export async function PUT(req: NextRequest) {
           title?.trim()?.slice(0, 100) || null,
           company?.trim()?.slice(0, 100) || null,
           tagline?.trim()?.slice(0, 100) || null,
-          template, primaryColor, accentColor, fontPair, userId,
+          template,
+          primaryColor,
+          accentValP === null ? '__clear__' : accentColor,
+          fontPair,
+          userId,
           shapeVal, radiusVal, sizeVal, posX, posY, animVal,
+          displayValP,
         ]
       );
     } else if (section === 'vcardPin') {
