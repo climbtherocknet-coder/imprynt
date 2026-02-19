@@ -1,7 +1,7 @@
 -- Demo Profile Seed
 -- 10 personas, one per template, showcasing the full platform
 --
--- Password for all demo accounts: demo2026!
+-- Password for all demo accounts: Demo2026!!
 -- Protected page PINs (unique per page, numeric): 1001 / 2002 / 3003 / 4004 / 5005
 -- Hashes pre-generated: bcrypt 10 rounds
 --
@@ -14,69 +14,69 @@ BEGIN;
 DELETE FROM users WHERE is_demo = true;
 
 -- ─── CONSTANTS ───────────────────────────────────────────────────────────────
--- password_hash for 'demo2026!' (bcrypt, cost 10)
--- $2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry
+-- password_hash for 'Demo2026!!' (bcrypt, cost 10)
+-- $2a$10$E5o91BF1p.qqtcAS8aSqTekB6gtDwm7VhnnFTrE/TLJ2CavBCd0Rm
 
 -- ─── USERS ───────────────────────────────────────────────────────────────────
 INSERT INTO users (id, email, password_hash, first_name, last_name, plan, account_status, setup_completed, email_verified, is_demo) VALUES
   -- 1. clean template — Alex Morgan, Product Manager
   ('a1000000-0000-0000-0000-000000000001',
    'demo.alex@imprynt.io',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$E5o91BF1p.qqtcAS8aSqTekB6gtDwm7VhnnFTrE/TLJ2CavBCd0Rm',
    'Alex', 'Morgan', 'premium_monthly', 'active', true, NOW(), true),
 
   -- 2. warm template — Sarah Chen, Life Coach
   ('a1000000-0000-0000-0000-000000000002',
    'demo.sarah@imprynt.io',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$E5o91BF1p.qqtcAS8aSqTekB6gtDwm7VhnnFTrE/TLJ2CavBCd0Rm',
    'Sarah', 'Chen', 'premium_monthly', 'active', true, NOW(), true),
 
   -- 3. classic template — Robert Evans, Attorney
   ('a1000000-0000-0000-0000-000000000003',
    'demo.robert@imprynt.io',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$E5o91BF1p.qqtcAS8aSqTekB6gtDwm7VhnnFTrE/TLJ2CavBCd0Rm',
    'Robert', 'Evans', 'premium_monthly', 'active', true, NOW(), true),
 
   -- 4. soft template — Emma Patel, Photographer
   ('a1000000-0000-0000-0000-000000000004',
    'demo.emma@imprynt.io',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$E5o91BF1p.qqtcAS8aSqTekB6gtDwm7VhnnFTrE/TLJ2CavBCd0Rm',
    'Emma', 'Patel', 'premium_monthly', 'active', true, NOW(), true),
 
   -- 5. midnight template — Marcus Knight, DJ & Music Producer
   ('a1000000-0000-0000-0000-000000000005',
    'demo.marcus@imprynt.io',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$E5o91BF1p.qqtcAS8aSqTekB6gtDwm7VhnnFTrE/TLJ2CavBCd0Rm',
    'Marcus', 'Knight', 'premium_monthly', 'active', true, NOW(), true),
 
   -- 6. editorial template — Isabelle Durant, Journalist
   ('a1000000-0000-0000-0000-000000000006',
    'demo.isabelle@imprynt.io',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$E5o91BF1p.qqtcAS8aSqTekB6gtDwm7VhnnFTrE/TLJ2CavBCd0Rm',
    'Isabelle', 'Durant', 'premium_monthly', 'active', true, NOW(), true),
 
   -- 7. noir template — Jake Torres, Private Investigator
   ('a1000000-0000-0000-0000-000000000007',
    'demo.jake@imprynt.io',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$E5o91BF1p.qqtcAS8aSqTekB6gtDwm7VhnnFTrE/TLJ2CavBCd0Rm',
    'Jake', 'Torres', 'premium_monthly', 'active', true, NOW(), true),
 
   -- 8. signal template — Nia Williams, Cybersecurity Engineer
   ('a1000000-0000-0000-0000-000000000008',
    'demo.nia@imprynt.io',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$E5o91BF1p.qqtcAS8aSqTekB6gtDwm7VhnnFTrE/TLJ2CavBCd0Rm',
    'Nia', 'Williams', 'premium_monthly', 'active', true, NOW(), true),
 
   -- 9. studio template — Felix Yamamoto, Architect
   ('a1000000-0000-0000-0000-000000000009',
    'demo.felix@imprynt.io',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$E5o91BF1p.qqtcAS8aSqTekB6gtDwm7VhnnFTrE/TLJ2CavBCd0Rm',
    'Felix', 'Yamamoto', 'premium_monthly', 'active', true, NOW(), true),
 
   -- 10. dusk template — Luna Rivera, Yoga & Wellness Coach
   ('a1000000-0000-0000-0000-000000000010',
    'demo.luna@imprynt.io',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$E5o91BF1p.qqtcAS8aSqTekB6gtDwm7VhnnFTrE/TLJ2CavBCd0Rm',
    'Luna', 'Rivera', 'premium_monthly', 'active', true, NOW(), true);
 
 -- ─── PROFILES ────────────────────────────────────────────────────────────────
