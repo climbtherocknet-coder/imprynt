@@ -168,7 +168,8 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
   const [fontPair, setFontPair] = useState('default');
   const [linkDisplay, setLinkDisplay] = useState('default');
   const [showQrCode, setShowQrCode] = useState(false);
-  const [qrSvg, setQrSvg] = useState('');
+  const [qrSvg, setQrSvg] = useState<string | null>(null);
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [allowSharing, setAllowSharing] = useState(true);
   const [allowFeedback, setAllowFeedback] = useState(true);
@@ -303,11 +304,24 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
 
   // Lazy-load QR code SVG when panel opens
   useEffect(() => {
-    if (showQrCode && !qrSvg) {
+    if (showQrCode && qrSvg === null) {
       fetch('/api/profile/qr')
-        .then(r => r.text())
-        .then(svg => setQrSvg(svg))
-        .catch(() => {});
+        .then(r => {
+          if (!r.ok) throw new Error(`QR API error: ${r.status}`);
+          return r.text();
+        })
+        .then(svg => {
+          if (svg.startsWith('<svg') || svg.startsWith('<?xml')) {
+            setQrSvg(svg);
+          } else {
+            console.warn('QR response was not SVG:', svg.substring(0, 100));
+            setQrSvg('');
+          }
+        })
+        .catch(err => {
+          console.warn('QR code fetch failed:', err);
+          setQrSvg('');
+        });
     }
   }, [showQrCode, qrSvg]);
 
@@ -521,6 +535,42 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
     ? `${window.location.origin}/r/${data.profile.redirectId}`
     : `/r/${data.profile.redirectId}`;
 
+  function renderPreview() {
+    if (!data) return null;
+    return (
+      <ProfileTemplate
+        key={previewKey}
+        profileId={data.profile.id}
+        template={template}
+        accentColor={accentColor || undefined}
+        linkDisplay={linkDisplay}
+        firstName={firstName}
+        lastName={lastName}
+        title={title}
+        company={company}
+        tagline={tagline}
+        photoUrl={photoUrl}
+        links={links.filter(l => l.showBusiness).map(l => ({
+          id: l.id || String(l.displayOrder),
+          link_type: l.linkType,
+          label: l.label,
+          url: l.url,
+        }))}
+        pods={previewPods}
+        isPaid={isPaid}
+        statusTags={data.profile.statusTags || []}
+        statusTagColor={data.profile.statusTagColor || undefined}
+        photoShape={photoShape}
+        photoRadius={photoShape === 'custom' ? photoRadius : null}
+        photoSize={photoSize}
+        photoPositionX={photoPositionX}
+        photoPositionY={photoPositionY}
+        photoAnimation={photoAnimation}
+        vcardPinEnabled={vcardPinEnabled}
+      />
+    );
+  }
+
   return (
     <>
       {/* Error banner */}
@@ -645,7 +695,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
           <div style={{ marginBottom: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
             <div
               onClick={() => setShowPhotoSettings(!showPhotoSettings)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}
+              className="collapsible-header"
             >
               <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showPhotoSettings ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
               <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>Photo Settings</label>
@@ -868,7 +918,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
             <div style={{ padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
               <div
                 onClick={() => setShowContactCard(!showContactCard)}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}
+                className="collapsible-header"
               >
                 <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showContactCard ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
                 <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>Contact Card</label>
@@ -919,7 +969,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
             <div style={{ padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
               <div
                 onClick={() => setShowSharingSettings(!showSharingSettings)}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}
+                className="collapsible-header"
               >
                 <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showSharingSettings ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
                 <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>Sharing & Privacy</label>
@@ -1334,7 +1384,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
           <div style={{ marginTop: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
             <div
               onClick={() => setShowQrCode(!showQrCode)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}
+              className="collapsible-header"
             >
               <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showQrCode ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
               <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>QR Code</label>
@@ -1345,17 +1395,26 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
                   Share your profile without NFC. Print it, add it to slides, or show it on your phone.
                 </p>
                 {qrSvg ? (
-                  <div
-                    style={{ display: 'inline-block', padding: '1rem', backgroundColor: '#fff', borderRadius: '0.75rem', marginBottom: '0.75rem' }}
-                    dangerouslySetInnerHTML={{ __html: qrSvg }}
-                  />
+                  <>
+                    <div
+                      style={{ display: 'inline-block', padding: '1rem', backgroundColor: '#fff', borderRadius: '0.75rem', marginBottom: '0.75rem' }}
+                      dangerouslySetInnerHTML={{ __html: qrSvg }}
+                    />
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      <a href="/api/profile/qr?format=png" download="imprynt-qr.png" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download PNG</a>
+                      <a href="/api/profile/qr?format=svg" download="imprynt-qr.svg" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download SVG</a>
+                    </div>
+                  </>
+                ) : qrSvg === '' ? (
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>
+                    Unable to generate QR code. Try refreshing the page.
+                  </p>
                 ) : (
-                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>Generating...</p>
+                  <div style={{ padding: '2rem 0' }}>
+                    <div style={{ width: 24, height: 24, border: '2px solid var(--border-light)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+                    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                  </div>
                 )}
-                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                  <a href="/api/profile/qr?format=png" download="imprynt-qr.png" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', color: 'var(--text-mid, #a8adb8)', textDecoration: 'none', backgroundColor: 'var(--surface, #161c28)' }}>Download PNG</a>
-                  <a href="/api/profile/qr?format=svg" download="imprynt-qr.svg" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', color: 'var(--text-mid, #a8adb8)', textDecoration: 'none', backgroundColor: 'var(--surface, #161c28)' }}>Download SVG</a>
-                </div>
               </div>
             )}
           </div>
@@ -1380,40 +1439,42 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
         <div className="preview-phone">
           <div className="preview-phone-notch" />
           <div className="preview-phone-screen">
-            <ProfileTemplate
-              key={previewKey}
-              profileId={data.profile.id}
-              template={template}
-              accentColor={accentColor || undefined}
-              linkDisplay={linkDisplay}
-              firstName={firstName}
-              lastName={lastName}
-              title={title}
-              company={company}
-              tagline={tagline}
-              photoUrl={photoUrl}
-              links={links.filter(l => l.showBusiness).map(l => ({
-                id: l.id || String(l.displayOrder),
-                link_type: l.linkType,
-                label: l.label,
-                url: l.url,
-              }))}
-              pods={previewPods}
-              isPaid={isPaid}
-              statusTags={data.profile.statusTags || []}
-              statusTagColor={data.profile.statusTagColor || undefined}
-              photoShape={photoShape}
-              photoRadius={photoShape === 'custom' ? photoRadius : null}
-              photoSize={photoSize}
-              photoPositionX={photoPositionX}
-              photoPositionY={photoPositionY}
-              photoAnimation={photoAnimation}
-              vcardPinEnabled={vcardPinEnabled}
-            />
+            {renderPreview()}
           </div>
         </div>
       </aside>
       </div>
+
+      {/* ─── Mobile Preview Button ──────────────────── */}
+      <button
+        className="mobile-preview-btn"
+        onClick={() => setShowMobilePreview(true)}
+        aria-label="Preview profile"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+          <rect x="5" y="2" width="14" height="20" rx="2" />
+          <path d="M12 18h.01" />
+        </svg>
+        Preview
+      </button>
+
+      {/* ─── Mobile Preview Overlay ─────────────────── */}
+      {showMobilePreview && (
+        <div className="mobile-preview-overlay" onClick={() => setShowMobilePreview(false)}>
+          <div className="mobile-preview-container" onClick={e => e.stopPropagation()}>
+            <div className="mobile-preview-header">
+              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text)' }}>Preview</span>
+              <button
+                onClick={() => setShowMobilePreview(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.25rem', cursor: 'pointer', padding: '0.25rem', lineHeight: 1 }}
+              >✕</button>
+            </div>
+            <div className="mobile-preview-body">
+              {renderPreview()}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

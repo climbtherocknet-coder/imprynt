@@ -118,6 +118,7 @@ export default function PersonalTab({ planStatus, onTrialActivated }: { planStat
 
   // Creating vs editing
   const [isNew, setIsNew] = useState(true);
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
 
   // Load existing impression page + profile slug + personal links
   useEffect(() => {
@@ -314,6 +315,29 @@ export default function PersonalTab({ planStatus, onTrialActivated }: { planStat
     })));
   }, []);
 
+  function renderPreview() {
+    if (!profileData) return null;
+    return (
+      <ProtectedPagePreview
+        mode="impression"
+        firstName={profileData.firstName}
+        lastName={profileData.lastName}
+        photoUrl={photoMode === 'custom' && photoUrl ? photoUrl : profileData.photoUrl}
+        template={profileData.template}
+        accentColor={profileData.accentColor}
+        bioText={bioText}
+        links={links.map(l => ({ id: l.id || '', linkType: l.linkType, label: l.label, url: l.url }))}
+        pods={previewPods}
+        photoShape={photoShape}
+        photoRadius={photoRadius}
+        photoSize={photoSize}
+        photoPositionX={photoPositionX}
+        photoPositionY={photoPositionY}
+        photoAnimation={photoAnimation}
+      />
+    );
+  }
+
   // ── Render ───────────────────────────────────────────
 
   async function handleStartTrial() {
@@ -484,7 +508,7 @@ export default function PersonalTab({ planStatus, onTrialActivated }: { planStat
               <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
                 <div
                   onClick={() => setShowPhotoSettings(!showPhotoSettings)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}
+                  className="collapsible-header"
                 >
                   <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showPhotoSettings ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
                   <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>Photo Settings</label>
@@ -887,29 +911,42 @@ export default function PersonalTab({ planStatus, onTrialActivated }: { planStat
         <div className="preview-phone">
           <div className="preview-phone-notch" />
           <div className="preview-phone-screen">
-            {profileData && (
-              <ProtectedPagePreview
-                mode="impression"
-                firstName={profileData.firstName}
-                lastName={profileData.lastName}
-                photoUrl={photoMode === 'custom' && photoUrl ? photoUrl : profileData.photoUrl}
-                template={profileData.template}
-                accentColor={profileData.accentColor}
-                bioText={bioText}
-                links={links.map(l => ({ id: l.id || '', linkType: l.linkType, label: l.label, url: l.url }))}
-                pods={previewPods}
-                photoShape={photoShape}
-                photoRadius={photoRadius}
-                photoSize={photoSize}
-                photoPositionX={photoPositionX}
-                photoPositionY={photoPositionY}
-                photoAnimation={photoAnimation}
-              />
-            )}
+            {renderPreview()}
           </div>
         </div>
       </aside>
       </div>
+
+      {/* ─── Mobile Preview Button ──────────────────── */}
+      <button
+        className="mobile-preview-btn"
+        onClick={() => setShowMobilePreview(true)}
+        aria-label="Preview personal page"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+          <rect x="5" y="2" width="14" height="20" rx="2" />
+          <path d="M12 18h.01" />
+        </svg>
+        Preview
+      </button>
+
+      {/* ─── Mobile Preview Overlay ─────────────────── */}
+      {showMobilePreview && (
+        <div className="mobile-preview-overlay" onClick={() => setShowMobilePreview(false)}>
+          <div className="mobile-preview-container" onClick={e => e.stopPropagation()}>
+            <div className="mobile-preview-header">
+              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text)' }}>Preview</span>
+              <button
+                onClick={() => setShowMobilePreview(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.25rem', cursor: 'pointer', padding: '0.25rem', lineHeight: 1 }}
+              >✕</button>
+            </div>
+            <div className="mobile-preview-body">
+              {renderPreview()}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

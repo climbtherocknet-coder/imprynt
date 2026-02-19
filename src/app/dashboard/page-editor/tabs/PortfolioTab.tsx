@@ -92,6 +92,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated }: Props) {
   const [isActive, setIsActive] = useState(true);
   const [allowRemember, setAllowRemember] = useState(true);
   const [isNew, setIsNew] = useState(true);
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
 
   // Profile data for preview
   const [profileData, setProfileData] = useState<{
@@ -276,6 +277,30 @@ export default function PortfolioTab({ planStatus, onTrialActivated }: Props) {
     } finally {
       setStartingTrial(false);
     }
+  }
+
+  function renderPreview() {
+    if (!profileData) return null;
+    return (
+      <ProtectedPagePreview
+        mode="showcase"
+        firstName={profileData.firstName}
+        lastName={profileData.lastName}
+        photoUrl={profileData.photoUrl}
+        template={profileData.template}
+        accentColor={profileData.accentColor}
+        bioText={bioText}
+        links={links.map(l => ({ id: l.id || '', linkType: l.linkType, label: l.label, url: l.url }))}
+        pods={previewPods}
+        resumeUrl={resumeUrl}
+        showResume={showResume}
+        photoShape={profileData.photoShape}
+        photoRadius={profileData.photoRadius}
+        photoSize={profileData.photoSize}
+        photoPositionX={profileData.photoPositionX}
+        photoPositionY={profileData.photoPositionY}
+      />
+    );
   }
 
   // ── Render ───────────────────────────────────────────
@@ -510,30 +535,42 @@ export default function PortfolioTab({ planStatus, onTrialActivated }: Props) {
         <div className="preview-phone">
           <div className="preview-phone-notch" />
           <div className="preview-phone-screen">
-            {profileData && (
-              <ProtectedPagePreview
-                mode="showcase"
-                firstName={profileData.firstName}
-                lastName={profileData.lastName}
-                photoUrl={profileData.photoUrl}
-                template={profileData.template}
-                accentColor={profileData.accentColor}
-                bioText={bioText}
-                links={links.map(l => ({ id: l.id || '', linkType: l.linkType, label: l.label, url: l.url }))}
-                pods={previewPods}
-                resumeUrl={resumeUrl}
-                showResume={showResume}
-                photoShape={profileData.photoShape}
-                photoRadius={profileData.photoRadius}
-                photoSize={profileData.photoSize}
-                photoPositionX={profileData.photoPositionX}
-                photoPositionY={profileData.photoPositionY}
-              />
-            )}
+            {renderPreview()}
           </div>
         </div>
       </aside>
       </div>
+
+      {/* ─── Mobile Preview Button ──────────────────── */}
+      <button
+        className="mobile-preview-btn"
+        onClick={() => setShowMobilePreview(true)}
+        aria-label="Preview portfolio page"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+          <rect x="5" y="2" width="14" height="20" rx="2" />
+          <path d="M12 18h.01" />
+        </svg>
+        Preview
+      </button>
+
+      {/* ─── Mobile Preview Overlay ─────────────────── */}
+      {showMobilePreview && (
+        <div className="mobile-preview-overlay" onClick={() => setShowMobilePreview(false)}>
+          <div className="mobile-preview-container" onClick={e => e.stopPropagation()}>
+            <div className="mobile-preview-header">
+              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text)' }}>Preview</span>
+              <button
+                onClick={() => setShowMobilePreview(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.25rem', cursor: 'pointer', padding: '0.25rem', lineHeight: 1 }}
+              >✕</button>
+            </div>
+            <div className="mobile-preview-body">
+              {renderPreview()}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
