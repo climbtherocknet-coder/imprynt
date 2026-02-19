@@ -2,8 +2,8 @@
 -- 10 personas, one per template, showcasing the full platform
 --
 -- Password for all demo accounts: demo2026!
--- Protected page PIN for all demo pages: demo2026!
--- Hash pre-generated: bcrypt 10 rounds
+-- Protected page PINs (unique per page, numeric): 1001 / 2002 / 3003 / 4004 / 5005
+-- Hashes pre-generated: bcrypt 10 rounds
 --
 -- Idempotent: deletes all is_demo=true users (cascades to profiles, links, pods, etc.)
 -- Run via: cat db/seeds/demo-profiles.sql | docker exec -i imprynt-db psql -U imprynt -d imprynt
@@ -14,7 +14,7 @@ BEGIN;
 DELETE FROM users WHERE is_demo = true;
 
 -- ─── CONSTANTS ───────────────────────────────────────────────────────────────
--- password_hash and pin_hash for 'demo2026!' (bcrypt, cost 10)
+-- password_hash for 'demo2026!' (bcrypt, cost 10)
 -- $2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry
 
 -- ─── USERS ───────────────────────────────────────────────────────────────────
@@ -355,53 +355,57 @@ INSERT INTO pods (profile_id, pod_type, display_order, title, body, show_on_prof
    true, true);
 
 -- ─── PROTECTED PAGES (5 of 10 profiles) ─────────────────────────────────────
--- PIN for all demo protected pages: demo2026!
--- Same hash as user passwords: $2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry
+-- Unique numeric PINs per page (bcrypt, cost 10):
+--   Alex Morgan personal:    1001
+--   Emma Patel personal:     2002
+--   Marcus Knight personal:  3003
+--   Nia Williams portfolio:  4004
+--   Luna Rivera personal:    5005
 
 INSERT INTO protected_pages (id, user_id, profile_id, page_title, visibility_mode, pin_hash, bio_text, button_label, is_active) VALUES
 
-  -- Alex Morgan: hidden personal page
+  -- Alex Morgan: hidden personal page — PIN: 1001
   ('c3000000-0000-0000-0000-000000000001',
    'a1000000-0000-0000-0000-000000000001',
    'b2000000-0000-0000-0000-000000000001',
    'Personal', 'hidden',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$xOCxgQ8BjqqmqwSPh0cwBez1tP4Pj7c3In7aZaCZ48E4JBikHmDOm',
    'Hey — glad you found this. This is the real me. My cell is below. Text anytime.',
    NULL, true),
 
-  -- Emma Patel: hidden personal page
+  -- Emma Patel: hidden personal page — PIN: 2002
   ('c3000000-0000-0000-0000-000000000002',
    'a1000000-0000-0000-0000-000000000004',
    'b2000000-0000-0000-0000-000000000004',
    'Personal', 'hidden',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$Xxr5tovPMzSSFQAFbAXfx.krefr5MUX0TRsUkH2LoR1rvsQOMNSCG',
    'You found the hidden layer. This is where I share personal work and my direct number for people I trust.',
    NULL, true),
 
-  -- Marcus Knight: hidden personal page
+  -- Marcus Knight: hidden personal page — PIN: 3003
   ('c3000000-0000-0000-0000-000000000003',
    'a1000000-0000-0000-0000-000000000005',
    'b2000000-0000-0000-0000-000000000005',
    'Personal', 'hidden',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$z41KCRPFXBvzDMM3xfqW5uzArhgE7tpS5WxKdGKHrwDN0YxO/9ATG',
    'Inner circle only. My personal number and some unreleased tracks. Keep it between us.',
    NULL, true),
 
-  -- Nia Williams: visible portfolio page
+  -- Nia Williams: visible portfolio page — PIN: 4004
   ('c3000000-0000-0000-0000-000000000004',
    'a1000000-0000-0000-0000-000000000008',
    'b2000000-0000-0000-0000-000000000008',
    'Research Portfolio', 'visible',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$J.70NIS9.3IswYOVgDaWtOGI8dAdPvJCkUeUxery4sw2n6zhKv2ga',
    'Detailed case studies, published CVEs, and red team reports. PIN required — contact me for access.',
    'Research Portfolio', true),
 
-  -- Luna Rivera: hidden personal page
+  -- Luna Rivera: hidden personal page — PIN: 5005
   ('c3000000-0000-0000-0000-000000000005',
    'a1000000-0000-0000-0000-000000000010',
    'b2000000-0000-0000-0000-000000000010',
    'Personal', 'hidden',
-   '$2a$10$IGzaK.mxQqPw5/KeW7/JAuCNwmBxrA/6L/8bzTl6qAmItrDxp2hry',
+   '$2a$10$GA3riDx8RzhJ.symRk75YeeP8yroDyIG2T6T33wfinrL65/e3HpdO',
    'This is my personal space. If you''re here, you''ve already earned it. My number and retreat invites below.',
    NULL, true);
 
