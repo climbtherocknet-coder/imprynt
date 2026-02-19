@@ -1,5 +1,5 @@
 import '@/styles/profile.css';
-import { getTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, LINK_ICONS } from '@/lib/themes';
+import { getTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, getAccentOverrideVars, LINK_ICONS } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
 import SaveContactButton from '@/components/templates/SaveContactButton';
 
@@ -33,6 +33,7 @@ export interface ProfileTemplateProps {
   photoPositionY?: number;
   photoAnimation?: string;
   vcardPinEnabled?: boolean;
+  accentColor?: string;
 }
 
 function getLinkHref(link: { link_type: string; url: string }) {
@@ -66,9 +67,11 @@ export default function ProfileTemplate({
   photoPositionY,
   photoAnimation,
   vcardPinEnabled = false,
+  accentColor,
 }: ProfileTemplateProps) {
   const theme = getTheme(template);
   const cssVars = getThemeCSSVars(theme);
+  const accentOverrides = accentColor ? getAccentOverrideVars(accentColor) : {};
   const dataAttrs = getTemplateDataAttrs(theme);
   // User's photo shape overrides the theme default
   const effectiveShape = photoShape || theme.modifiers.photoShape;
@@ -98,7 +101,7 @@ export default function ProfileTemplate({
         style={{ ...Object.fromEntries(cssVars.split('; ').map(v => {
           const [key, ...rest] = v.split(': ');
           return [key, rest.join(': ')];
-        })) } as React.CSSProperties}
+        })), ...accentOverrides } as React.CSSProperties}
         {...dataAttrs}
       >
         {/* ─── Status Tags ─── */}

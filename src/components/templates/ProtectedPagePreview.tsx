@@ -1,6 +1,6 @@
 import React from 'react';
 import '@/styles/profile.css';
-import { getTheme, getThemeCSSVars, getTemplateDataAttrs, isDarkTemplate, LINK_ICONS } from '@/lib/themes';
+import { getTheme, getThemeCSSVars, getTemplateDataAttrs, getAccentOverrideVars, isDarkTemplate, LINK_ICONS } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
 
 interface ProtectedPagePreviewProps {
@@ -75,14 +75,18 @@ export default function ProtectedPagePreview({
   const accent = accentOverride || theme.colors.accent;
   const isDark = isDarkTemplate(template);
   const cssVars = getThemeCSSVars(theme);
+  const accentOverrides = accentOverride ? getAccentOverrideVars(accentOverride) : {};
   const dataAttrs = getTemplateDataAttrs(theme);
 
-  const cssVarStyle = Object.fromEntries(
-    cssVars.split('; ').map(v => {
-      const [key, ...rest] = v.split(': ');
-      return [key, rest.join(': ')];
-    })
-  ) as React.CSSProperties;
+  const cssVarStyle = {
+    ...Object.fromEntries(
+      cssVars.split('; ').map(v => {
+        const [key, ...rest] = v.split(': ');
+        return [key, rest.join(': ')];
+      })
+    ),
+    ...accentOverrides,
+  } as React.CSSProperties;
 
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
   const isImpression = mode === 'impression';

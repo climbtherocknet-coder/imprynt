@@ -1306,6 +1306,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
               key={previewKey}
               profileId={data.profile.id}
               template={template}
+              accentColor={accentColor}
               firstName={firstName}
               lastName={lastName}
               title={title}

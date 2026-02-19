@@ -262,6 +262,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
       <ProfileTemplate
         profileId={profile.profile_id}
         template={profile.template}
+        accentColor={profile.accent_color || undefined}
         firstName={profile.first_name}
         lastName={profile.last_name}
         title={profile.title}

@@ -530,6 +530,25 @@ export function getTemplateDataAttrs(theme: TemplateTheme): Record<string, strin
   };
 }
 
+/**
+ * Generate CSS variable overrides for a user-supplied accent hex color.
+ * Derives soft/border/hover variants automatically from the hex value.
+ */
+export function getAccentOverrideVars(hex: string): Record<string, string> {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  // Darken by ~10 % for hover
+  const darken = (n: number) => Math.max(0, Math.round(n * 0.88));
+  const hover = `rgb(${darken(r)}, ${darken(g)}, ${darken(b)})`;
+  return {
+    '--accent': hex,
+    '--accent-soft': `rgba(${r}, ${g}, ${b}, 0.07)`,
+    '--accent-border': `rgba(${r}, ${g}, ${b}, 0.18)`,
+    '--accent-hover': hover,
+  };
+}
+
 /** Check if a template is dark (for meta theme-color, etc.) */
 export function isDarkTemplate(templateId: string): boolean {
   const darkIds = ['midnight', 'noir', 'studio', 'dusk'];

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { getTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, isDarkTemplate, LINK_ICONS } from '@/lib/themes';
+import { getTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, getAccentOverrideVars, isDarkTemplate, LINK_ICONS } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
 import ProfileFeedbackButton from '@/components/ReportButton';
 
@@ -335,15 +335,19 @@ function ProtectedPageView({
   const accent = content.profile.accentColor || theme.colors.accent;
   const isDark = isDarkTemplate(content.profile.template);
   const cssVars = getThemeCSSVars(theme);
+  const accentOverrides = content.profile.accentColor ? getAccentOverrideVars(content.profile.accentColor) : {};
   const dataAttrs = getTemplateDataAttrs(theme);
   const googleFontsUrl = getGoogleFontsUrl(theme);
 
-  const cssVarStyle = Object.fromEntries(
-    cssVars.split('; ').map(v => {
-      const [key, ...rest] = v.split(': ');
-      return [key, rest.join(': ')];
-    })
-  ) as React.CSSProperties;
+  const cssVarStyle = {
+    ...Object.fromEntries(
+      cssVars.split('; ').map(v => {
+        const [key, ...rest] = v.split(': ');
+        return [key, rest.join(': ')];
+      })
+    ),
+    ...accentOverrides,
+  } as React.CSSProperties;
 
   const fullName = [content.profile.firstName, content.profile.lastName].filter(Boolean).join(' ');
   const isImpression = content.page.visibilityMode === 'hidden';
