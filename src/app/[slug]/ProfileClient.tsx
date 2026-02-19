@@ -49,6 +49,7 @@ interface ProfileClientProps {
   portfolioPages: PortfolioPage[];
   allowSharing?: boolean;
   allowFeedback?: boolean;
+  showQrButton?: boolean;
 }
 
 // ── PIN Modal ──────────────────────────────────────────
@@ -755,8 +756,11 @@ function ShareButton({ profileId, isDark, corner }: { profileId: string; isDark:
 
 // ── Main Client Component ──────────────────────────────
 
-export default function ProfileClient({ profileId, accent, theme, hasPersonal, personalIcon, portfolioPages, allowSharing, allowFeedback }: ProfileClientProps) {
+export default function ProfileClient({ profileId, accent, theme, hasPersonal, personalIcon, portfolioPages, allowSharing, allowFeedback, showQrButton }: ProfileClientProps) {
   const [showPinModal, setShowPinModal] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [qrImgLoaded, setQrImgLoaded] = useState(false);
+  const [qrImgError, setQrImgError] = useState(false);
   const [protectedContent, setProtectedContent] = useState<ProtectedPageContent | null>(null);
   const [vcardToken, setVcardToken] = useState<string | undefined>(undefined);
   const [showRememberPrompt, setShowRememberPrompt] = useState(false);
@@ -938,6 +942,110 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
           onSuccess={handlePinSuccess}
           accent={accent}
         />
+      )}
+
+      {/* QR code button */}
+      {showQrButton && (
+        <button
+          onClick={() => { setShowQrModal(true); setQrImgLoaded(false); setQrImgError(false); }}
+          aria-label="Show QR code"
+          style={{
+            position: 'fixed',
+            bottom: 80,
+            right: 16,
+            zIndex: 50,
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
+            border: `1.5px solid ${accent}`,
+            backgroundColor: 'transparent',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            opacity: 0.7,
+            WebkitTapHighlightColor: 'transparent',
+            transition: 'opacity 0.2s',
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <path d="M14 14h2v2h-2zM18 14h3v3h-3zM14 18h2v3h-2z"/>
+          </svg>
+        </button>
+      )}
+
+      {/* QR code modal */}
+      {showQrModal && (
+        <div
+          onClick={() => setShowQrModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1000,
+            background: 'rgba(0,0,0,0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: '#ffffff',
+              borderRadius: '1.25rem',
+              padding: '1.5rem',
+              width: '100%',
+              maxWidth: 280,
+              textAlign: 'center',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            }}
+          >
+            <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', fontWeight: 600, color: '#0c1017' }}>
+              Scan to open profile
+            </p>
+            {qrImgError ? (
+              <p style={{ color: '#ef4444', fontSize: '0.8125rem', margin: '1rem 0' }}>Unable to load QR code.</p>
+            ) : (
+              <>
+                {!qrImgLoaded && (
+                  <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 24, height: 24, border: '2px solid #e5e7eb', borderTopColor: '#0c1017', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                  </div>
+                )}
+                <img
+                  src={`/api/profile/${profileId}/qr`}
+                  alt="QR code for this profile"
+                  width={180}
+                  height={180}
+                  style={{ display: qrImgLoaded ? 'block' : 'none', margin: '0 auto', borderRadius: '0.5rem' }}
+                  onLoad={() => setQrImgLoaded(true)}
+                  onError={() => { setQrImgError(true); setQrImgLoaded(false); }}
+                />
+              </>
+            )}
+            <button
+              onClick={() => setShowQrModal(false)}
+              style={{
+                marginTop: '1rem',
+                padding: '0.5rem 1.5rem',
+                background: 'transparent',
+                border: '1px solid #e5e7eb',
+                borderRadius: '9999px',
+                fontSize: '0.8125rem',
+                color: '#6b7280',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Feedback / Report button */}

@@ -6,7 +6,7 @@ const VALID_FIELD_TYPES = [
   'phone_cell', 'phone_work', 'phone_personal',
   'email_work', 'email_personal',
   'address_work', 'address_home',
-  'birthday', 'pronouns', 'name_suffix', 'company'
+  'birthday', 'pronouns', 'name_suffix', 'company', 'custom'
 ];
 
 // GET - Load all contact fields for current user
@@ -17,7 +17,7 @@ export async function GET() {
   }
 
   const result = await query(
-    `SELECT id, field_type, field_value, show_business, show_personal, display_order
+    `SELECT id, field_type, field_value, custom_label, show_business, show_personal, display_order
      FROM contact_fields
      WHERE user_id = $1
      ORDER BY display_order ASC`,
@@ -28,6 +28,7 @@ export async function GET() {
     id: row.id,
     fieldType: row.field_type,
     fieldValue: row.field_value,
+    customLabel: row.custom_label || null,
     showBusiness: row.show_business,
     showPersonal: row.show_personal,
     displayOrder: row.display_order,
@@ -56,6 +57,9 @@ export async function PUT(req: NextRequest) {
     if (!VALID_FIELD_TYPES.includes(field.fieldType)) {
       return NextResponse.json({ error: `Invalid field type: ${field.fieldType}` }, { status: 400 });
     }
+    if (field.fieldType === 'custom' && !field.customLabel?.trim()) {
+      return NextResponse.json({ error: 'Custom fields require a label' }, { status: 400 });
+    }
   }
 
   // Filter out empty fields
@@ -67,12 +71,13 @@ export async function PUT(req: NextRequest) {
   for (let i = 0; i < nonEmpty.length; i++) {
     const f = nonEmpty[i];
     await query(
-      `INSERT INTO contact_fields (user_id, field_type, field_value, show_business, show_personal, display_order)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+      `INSERT INTO contact_fields (user_id, field_type, field_value, custom_label, show_business, show_personal, display_order)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [
         userId,
         f.fieldType,
         f.fieldValue.trim().slice(0, 500),
+        f.fieldType === 'custom' ? (f.customLabel as string)?.trim()?.slice(0, 100) || null : null,
         f.showBusiness !== false, // default true
         f.showPersonal !== false, // default true
         i,

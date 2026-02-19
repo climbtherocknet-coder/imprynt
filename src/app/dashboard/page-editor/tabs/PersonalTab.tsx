@@ -319,7 +319,7 @@ export default function PersonalTab({ planStatus, onTrialActivated }: { planStat
     if (!profileData) return null;
     return (
       <ProtectedPagePreview
-        mode="impression"
+        mode="personal"
         firstName={profileData.firstName}
         lastName={profileData.lastName}
         photoUrl={photoMode === 'custom' && photoUrl ? photoUrl : profileData.photoUrl}
@@ -379,10 +379,10 @@ export default function PersonalTab({ planStatus, onTrialActivated }: { planStat
         {/* Intro */}
         <div style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.375rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text, #eceef2)', fontFamily: 'var(--serif, Georgia, serif)' }}>
-            {isNew ? 'Create Your Impression' : 'Impression Settings'}
+            {isNew ? 'Create Your Personal Page' : 'Personal Page Settings'}
           </h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
-            Your Impression is a hidden personal page on your profile. Only people you tell about it, and give the PIN to, can find and access it.
+            Your Personal page is a hidden layer on your profile. Only people you tell about it, and give the PIN to, can find and access it.
           </p>
         </div>
 
@@ -420,7 +420,7 @@ export default function PersonalTab({ planStatus, onTrialActivated }: { planStat
               <ToggleSwitch
                 checked={isActive}
                 onChange={setIsActive}
-                label="Impression is active"
+                label="Personal page is active"
               />
               <ToggleSwitch
                 checked={allowRemember}
@@ -440,7 +440,7 @@ export default function PersonalTab({ planStatus, onTrialActivated }: { planStat
             {/* Impression-specific photo */}
             <div>
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
-                Optionally use a different photo for your Impression page.
+                Optionally use a different photo for your Personal page.
               </p>
 
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
@@ -877,7 +877,7 @@ export default function PersonalTab({ planStatus, onTrialActivated }: { planStat
             cursor: saving ? 'not-allowed' : 'pointer',
           }}
         >
-          {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Impression' : 'Save Changes'}
+          {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Personal Page' : 'Save Changes'}
         </button>
 
         {/* Content Blocks (only after page is created) */}
@@ -896,7 +896,7 @@ export default function PersonalTab({ planStatus, onTrialActivated }: { planStat
 
         {/* How it works */}
         <div style={{ ...sectionStyle, backgroundColor: 'var(--bg, #0c1017)' }}>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-mid, #a8adb8)' }}>How your Impression works</h3>
+          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-mid, #a8adb8)' }}>How your Personal page works</h3>
           <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', lineHeight: 1.6 }}>
             <p style={{ margin: '0 0 0.5rem' }}>A small, subtle icon appears in the bottom corner of your public profile. It is intentionally hard to notice.</p>
             <p style={{ margin: '0 0 0.5rem' }}>When someone you trust taps it, they are prompted for a PIN. If they enter the correct PIN, your personal page loads with the links and message you configured above.</p>

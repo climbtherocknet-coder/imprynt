@@ -221,7 +221,7 @@ export default function ProfileTemplate({
           )}
 
           {/* Save Contact */}
-          <SaveContactButton profileId={profileId} pinProtected={vcardPinEnabled} />
+          <SaveContactButton profileId={profileId} pinProtected={vcardPinEnabled} iconOnly={linkDisplay === 'icons'} />
         </div>
 
         {/* ─── Pods ─── */}

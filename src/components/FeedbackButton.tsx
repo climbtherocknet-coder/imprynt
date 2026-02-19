@@ -47,7 +47,7 @@ export default function FeedbackButton({ userEmail }: Props) {
         style={{
           position: 'fixed',
           bottom: 20,
-          right: 20,
+          left: 20,
           zIndex: 9999,
           background: 'var(--border, #1e2535)',
           border: '1px solid var(--border-light, #283042)',
@@ -80,7 +80,7 @@ export default function FeedbackButton({ userEmail }: Props) {
           style={{
             position: 'fixed',
             bottom: 64,
-            right: 20,
+            left: 20,
             zIndex: 9999,
             width: 320,
             background: 'var(--surface, #161c28)',

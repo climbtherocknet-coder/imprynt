@@ -1,0 +1,1 @@
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS show_qr_button BOOLEAN NOT NULL DEFAULT false;

@@ -32,6 +32,7 @@ interface ProfileData {
   is_published: boolean;
   allow_sharing: boolean;
   allow_feedback: boolean;
+  show_qr_button: boolean;
   status_tag_color: string | null;
   photo_shape: string;
   photo_radius: number | null;
@@ -65,7 +66,7 @@ async function getProfileAny(slug: string) {
   const result = await query(
     `SELECT p.id as profile_id, p.user_id, u.first_name, u.last_name, p.title, p.company,
             p.tagline, p.bio_heading, p.bio, p.photo_url, p.template,
-            p.primary_color, p.accent_color, p.font_pair, p.link_display, u.plan, p.status_tags, p.is_published, p.allow_sharing, p.allow_feedback, p.status_tag_color, p.photo_shape, p.photo_radius, p.photo_size, p.photo_position_x, p.photo_position_y, p.photo_animation
+            p.primary_color, p.accent_color, p.font_pair, p.link_display, u.plan, p.status_tags, p.is_published, p.allow_sharing, p.allow_feedback, p.show_qr_button, p.status_tag_color, p.photo_shape, p.photo_radius, p.photo_size, p.photo_position_x, p.photo_position_y, p.photo_animation
      FROM profiles p
      JOIN users u ON u.id = p.user_id
      WHERE p.slug = $1 AND u.account_status = 'active'`,
@@ -295,6 +296,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         portfolioPages={visibleProtectedPages.map(p => ({ id: p.id, buttonLabel: p.button_label }))}
         allowSharing={profile.allow_sharing !== false}
         allowFeedback={profile.allow_feedback !== false}
+        showQrButton={!!profile.show_qr_button}
       />
 
       {/* Link click tracking */}

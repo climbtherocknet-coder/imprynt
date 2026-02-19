@@ -616,8 +616,20 @@
     flex-direction: column;
   }
 
+  .dash-header {
+    padding: 0.5rem 0.75rem;
+  }
+
   .dash-header-right {
     gap: 0.5rem;
+  }
+
+  .dash-logo-text {
+    display: none;
+  }
+
+  .dash-plan-badge {
+    display: none;
   }
 
   .dash-user-name {
@@ -646,6 +658,22 @@
   padding: 0.75rem 1.25rem;
   background-color: var(--bg);
   border-bottom: 1px solid var(--border);
+}
+
+.editor-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.375rem;
+  transition: color 0.15s;
+}
+
+.editor-back-btn:hover {
+  color: var(--text-mid);
 }
 
 .page-editor-tabs {
@@ -1001,5 +1029,9 @@
   .page-editor-tab-desc {
     padding: 0 0.75rem;
     font-size: 0.75rem;
+  }
+
+  .editor-back-text {
+    display: none;
   }
 }

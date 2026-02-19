@@ -4,7 +4,7 @@ import { getTheme, getThemeCSSVars, getTemplateDataAttrs, getAccentOverrideVars,
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
 
 interface ProtectedPagePreviewProps {
-  mode: 'impression' | 'showcase';
+  mode: 'personal' | 'portfolio';
   firstName: string;
   lastName: string;
   photoUrl: string;
@@ -89,7 +89,7 @@ export default function ProtectedPagePreview({
   } as React.CSSProperties;
 
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
-  const isImpression = mode === 'impression';
+  const isImpression = mode === 'personal';
 
   return (
     <div

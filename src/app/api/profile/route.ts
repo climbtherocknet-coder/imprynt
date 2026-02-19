@@ -24,7 +24,7 @@ export async function GET() {
 
   const profileResult = await query(
     `SELECT id, slug, redirect_id, title, company, tagline, bio_heading, bio,
-            photo_url, template, primary_color, accent_color, font_pair, link_display, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback, photo_shape, photo_radius, photo_size, photo_position_x, photo_position_y, photo_animation
+            photo_url, template, primary_color, accent_color, font_pair, link_display, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback, show_qr_button, photo_shape, photo_radius, photo_size, photo_position_x, photo_position_y, photo_animation
      FROM profiles WHERE user_id = $1`,
     [userId]
   );
@@ -76,6 +76,7 @@ export async function GET() {
       statusTagColor: profile.status_tag_color || null,
       allowSharing: profile.allow_sharing !== false,
       allowFeedback: profile.allow_feedback !== false,
+      showQrButton: !!profile.show_qr_button,
       photoShape: profile.photo_shape || 'circle',
       photoRadius: profile.photo_radius != null ? profile.photo_radius : null,
       photoSize: profile.photo_size || 'medium',
@@ -223,6 +224,12 @@ export async function PUT(req: NextRequest) {
       await query(
         'UPDATE profiles SET allow_feedback = $1 WHERE user_id = $2',
         [!!allowFeedback, userId]
+      );
+    } else if (section === 'qrButton') {
+      const { showQrButton } = body;
+      await query(
+        'UPDATE profiles SET show_qr_button = $1 WHERE user_id = $2',
+        [!!showQrButton, userId]
       );
     } else if (section === 'statusTagColor') {
       const { statusTagColor } = body;

@@ -95,8 +95,11 @@ export default function PageEditor({ userId, planStatus: initialPlanStatus, init
           <span className={`dash-plan-badge ${planStatus.isPaid ? 'dash-plan-badge--paid' : 'dash-plan-badge--free'}`}>
             {planStatus.badgeLabel}
           </span>
-          <a href="/dashboard" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', textDecoration: 'none' }}>
-            ← Dashboard
+          <a href="/dashboard" className="editor-back-btn" aria-label="Dashboard">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 5l-7 7 7 7"/>
+            </svg>
+            <span className="editor-back-text">Dashboard</span>
           </a>
         </div>
       </header>

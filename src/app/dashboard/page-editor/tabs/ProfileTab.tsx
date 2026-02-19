@@ -174,6 +174,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [allowSharing, setAllowSharing] = useState(true);
   const [allowFeedback, setAllowFeedback] = useState(true);
+  const [showQrButton, setShowQrButton] = useState(false);
   const [vcardPinEnabled, setVcardPinEnabled] = useState(false);
   const [vcardPinInput, setVcardPinInput] = useState('');
   const [vcardPinSaving, setVcardPinSaving] = useState(false);
@@ -219,6 +220,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
     }
     return map;
   });
+  const [customFields, setCustomFields] = useState<{ tempId: string; label: string; value: string; showBusiness: boolean; showPersonal: boolean }[]>([]);
   const [contactSaving, setContactSaving] = useState(false);
   const [contactSaved, setContactSaved] = useState(false);
 
@@ -244,6 +246,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
         setPhotoUrl(d.profile.photoUrl);
         setAllowSharing(d.profile.allowSharing !== false);
         setAllowFeedback(d.profile.allowFeedback !== false);
+        setShowQrButton(!!d.profile.showQrButton);
         setVcardPinEnabled(!!d.profile.vcardPinEnabled);
         setPhotoShape(d.profile.photoShape || 'circle');
         if (d.profile.photoRadius != null) setPhotoRadius(d.profile.photoRadius);
@@ -265,15 +268,24 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
     // Load contact fields
     fetch('/api/account/contact-fields')
       .then(r => r.json())
-      .then((cf: { fields?: { fieldType: string; fieldValue: string; showBusiness: boolean; showPersonal: boolean }[] }) => {
+      .then((cf: { fields?: { fieldType: string; fieldValue: string; customLabel?: string | null; showBusiness: boolean; showPersonal: boolean }[] }) => {
         if (cf.fields) {
+          const standard = cf.fields.filter(f => f.fieldType !== 'custom');
+          const custom = cf.fields.filter(f => f.fieldType === 'custom');
           setContactFields(prev => {
             const next = { ...prev };
-            for (const f of cf.fields!) {
+            for (const f of standard) {
               next[f.fieldType] = { value: f.fieldValue || '', showBusiness: f.showBusiness ?? true, showPersonal: f.showPersonal ?? true };
             }
             return next;
           });
+          setCustomFields(custom.map((f, i) => ({
+            tempId: `existing-${i}`,
+            label: f.customLabel || '',
+            value: f.fieldValue || '',
+            showBusiness: f.showBusiness ?? true,
+            showPersonal: f.showPersonal ?? true,
+          })));
         }
       })
       .catch(() => { /* silent */ });
@@ -283,7 +295,14 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
     setContactSaving(true);
     setContactSaved(false);
     try {
-      const payload = CONTACT_FIELD_DEFS
+      // Save title + company to profile
+      await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section: 'identity', title, company }),
+      });
+
+      const standardPayload = CONTACT_FIELD_DEFS
         .filter(def => contactFields[def.type]?.value?.trim())
         .map((def, i) => ({
           fieldType: def.type,
@@ -292,6 +311,19 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
           showPersonal: contactFields[def.type].showPersonal,
           displayOrder: i,
         }));
+
+      const customPayload = customFields
+        .filter(f => f.label.trim() && f.value.trim())
+        .map((f, i) => ({
+          fieldType: 'custom',
+          customLabel: f.label,
+          fieldValue: f.value,
+          showBusiness: f.showBusiness,
+          showPersonal: f.showPersonal,
+          displayOrder: standardPayload.length + i,
+        }));
+
+      const payload = [...standardPayload, ...customPayload];
       await fetch('/api/account/contact-fields', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -874,17 +906,6 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Title</label>
-              <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Product Designer" style={inputStyle} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Company</label>
-              <input type="text" value={company} onChange={e => setCompany(e.target.value)} placeholder="Acme Inc." style={inputStyle} />
-            </div>
-          </div>
-
           <div>
             <label style={labelStyle}>
               Tagline
@@ -913,6 +934,19 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
                 <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: '0.75rem 0 1rem' }}>
                   These fields are included when visitors save your contact. Toggle visibility for Business and Personal vCards.
                 </p>
+
+                {/* Title + Company (profile fields, saved together with contact info) */}
+                <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.875rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>Title</label>
+                    <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Product Designer" style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>Company</label>
+                    <input type="text" value={company} onChange={e => setCompany(e.target.value)} placeholder="Acme Inc." style={inputStyle} />
+                  </div>
+                </div>
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
                   {CONTACT_FIELD_DEFS.map(def => {
                     const field = contactFields[def.type];
@@ -941,9 +975,51 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
                       </div>
                     );
                   })}
+
+                  {/* Custom fields */}
+                  {customFields.map((cf, idx) => (
+                    <div key={cf.tempId} style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
+                        <input
+                          type="text"
+                          placeholder="Field label (e.g. Office, Fax)"
+                          value={cf.label}
+                          onChange={e => setCustomFields(prev => prev.map((f, i) => i === idx ? { ...f, label: e.target.value } : f))}
+                          style={{ ...inputStyle, flex: 1, fontSize: '0.8125rem', marginBottom: 0, fontWeight: 500 }}
+                        />
+                        <div style={{ display: 'flex', gap: '0.375rem', marginLeft: '0.5rem' }}>
+                          <button type="button" onClick={() => setCustomFields(prev => prev.map((f, i) => i === idx ? { ...f, showBusiness: !f.showBusiness } : f))}
+                            style={{ fontSize: '0.625rem', fontWeight: 600, padding: '0.2rem 0.5rem', borderRadius: '9999px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '0.03em', backgroundColor: cf.showBusiness ? 'rgba(59, 130, 246, 0.15)' : 'var(--border, #1e2535)', color: cf.showBusiness ? '#60a5fa' : 'var(--text-muted, #5d6370)' }}>
+                            BIZ
+                          </button>
+                          <button type="button" onClick={() => setCustomFields(prev => prev.map((f, i) => i === idx ? { ...f, showPersonal: !f.showPersonal } : f))}
+                            style={{ fontSize: '0.625rem', fontWeight: 600, padding: '0.2rem 0.5rem', borderRadius: '9999px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '0.03em', backgroundColor: cf.showPersonal ? 'rgba(236, 72, 153, 0.15)' : 'var(--border, #1e2535)', color: cf.showPersonal ? '#f472b6' : 'var(--text-muted, #5d6370)' }}>
+                            PERSONAL
+                          </button>
+                          <button type="button" onClick={() => setCustomFields(prev => prev.filter((_, i) => i !== idx))}
+                            style={{ fontSize: '0.625rem', fontWeight: 600, padding: '0.2rem 0.5rem', borderRadius: '9999px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', backgroundColor: 'var(--border, #1e2535)', color: 'var(--text-muted, #5d6370)' }}>
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                      <input type="text" placeholder="Value" value={cf.value}
+                        onChange={e => setCustomFields(prev => prev.map((f, i) => i === idx ? { ...f, value: e.target.value } : f))}
+                        style={inputStyle}
+                      />
+                    </div>
+                  ))}
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCustomFields(prev => [...prev, { tempId: `new-${Date.now()}`, label: '', value: '', showBusiness: true, showPersonal: true }])}
+                  style={{ marginTop: '0.875rem', fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', background: 'none', border: '1px dashed var(--border-light, #283042)', borderRadius: '0.5rem', padding: '0.375rem 0.75rem', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}
+                >
+                  + Add custom field
+                </button>
+
                 <button onClick={handleContactSave} disabled={contactSaving} className="dash-btn"
-                  style={{ marginTop: '1.25rem', width: 'auto', padding: '0.625rem 1.25rem', backgroundColor: contactSaved ? '#059669' : undefined, cursor: contactSaving ? 'not-allowed' : 'pointer', transition: 'background-color 0.2s' }}>
+                  style={{ marginTop: '1rem', width: 'auto', padding: '0.625rem 1.25rem', backgroundColor: contactSaved ? '#059669' : undefined, cursor: contactSaving ? 'not-allowed' : 'pointer', transition: 'background-color 0.2s' }}>
                   {contactSaving ? 'Saving...' : contactSaved ? 'Saved!' : 'Save Contact Info'}
                 </button>
               </>)}
@@ -992,6 +1068,21 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
                     }}
                     label="Show feedback button on your profile"
                     description="Allows visitors to send feedback or report your profile."
+                  />
+                  <ToggleSwitch
+                    checked={showQrButton}
+                    onChange={async (val) => {
+                      setShowQrButton(val);
+                      try {
+                        await fetch('/api/profile', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ section: 'qrButton', showQrButton: val }),
+                        });
+                      } catch { /* silent */ }
+                    }}
+                    label="Show QR code button on your profile"
+                    description="Adds a QR code icon visitors can tap to share your profile URL."
                   />
 
                   {/* vCard PIN protection */}
@@ -1067,6 +1158,57 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
                   </div>
                 </div>
               </>)}
+            </div>
+          </div>
+
+          {/* ── QR Code (collapsible, near Sharing & Privacy) ── */}
+          <div style={{ borderTop: '1px solid var(--border, #1e2535)', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
+            <div style={{ padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+              <div
+                onClick={() => setShowQrCode(!showQrCode)}
+                className="collapsible-header"
+              >
+                <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showQrCode ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
+                <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>QR Code</label>
+              </div>
+              {showQrCode && (
+                <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
+                    Share your profile without NFC. Print it, add it to slides, or show it on your phone.
+                  </p>
+                  {qrError ? (
+                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>
+                      Unable to generate QR code. Try refreshing the page.
+                    </p>
+                  ) : (
+                    <>
+                      {!qrLoaded && (
+                        <div style={{ padding: '2rem 0' }}>
+                          <div style={{ width: 24, height: 24, border: '2px solid var(--border-light)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+                          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                        </div>
+                      )}
+                      <div style={{ display: qrLoaded ? 'block' : 'none' }}>
+                        <div style={{ display: 'inline-block', padding: '1rem', backgroundColor: '#fff', borderRadius: '0.75rem', marginBottom: '0.75rem' }}>
+                          <img
+                            src="/api/profile/qr"
+                            alt="QR code for your profile"
+                            width={180}
+                            height={180}
+                            style={{ display: 'block' }}
+                            onLoad={() => setQrLoaded(true)}
+                            onError={() => { setQrError(true); setQrLoaded(false); }}
+                          />
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                          <a href="/api/profile/qr?format=png" download="imprynt-qr.png" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download PNG</a>
+                          <a href="/api/profile/qr?format=svg" download="imprynt-qr.svg" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download SVG</a>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1312,7 +1454,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
                       opacity: link.showPersonal ? 1 : 0.7,
                       transition: 'all 0.15s',
                     }}
-                    title="Show on personal impression page"
+                    title="Show on personal page"
                   >
                     PERSONAL
                   </button>
@@ -1330,7 +1472,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
                       opacity: link.showShowcase ? 1 : 0.7,
                       transition: 'all 0.15s',
                     }}
-                    title="Show on showcase page"
+                    title="Show on portfolio page"
                   >
                     SHOWCASE
                   </button>
@@ -1365,55 +1507,6 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
               ))}
             </select>
           )}
-
-          {/* QR Code (collapsible) */}
-          <div style={{ marginTop: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
-            <div
-              onClick={() => setShowQrCode(!showQrCode)}
-              className="collapsible-header"
-            >
-              <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showQrCode ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
-              <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>QR Code</label>
-            </div>
-            {showQrCode && (
-              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
-                  Share your profile without NFC. Print it, add it to slides, or show it on your phone.
-                </p>
-                {qrError ? (
-                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>
-                    Unable to generate QR code. Try refreshing the page.
-                  </p>
-                ) : (
-                  <>
-                    {!qrLoaded && (
-                      <div style={{ padding: '2rem 0' }}>
-                        <div style={{ width: 24, height: 24, border: '2px solid var(--border-light)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
-                        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                      </div>
-                    )}
-                    <div style={{ display: qrLoaded ? 'block' : 'none' }}>
-                      <div style={{ display: 'inline-block', padding: '1rem', backgroundColor: '#fff', borderRadius: '0.75rem', marginBottom: '0.75rem' }}>
-                        <img
-                          src="/api/profile/qr"
-                          alt="QR code for your profile"
-                          width={180}
-                          height={180}
-                          style={{ display: 'block' }}
-                          onLoad={() => setQrLoaded(true)}
-                          onError={() => { setQrError(true); setQrLoaded(false); }}
-                        />
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <a href="/api/profile/qr?format=png" download="imprynt-qr.png" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download PNG</a>
-                        <a href="/api/profile/qr?format=svg" download="imprynt-qr.svg" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download SVG</a>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
 
         </div>
 

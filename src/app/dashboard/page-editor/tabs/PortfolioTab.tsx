@@ -283,7 +283,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated }: Props) {
     if (!profileData) return null;
     return (
       <ProtectedPagePreview
-        mode="showcase"
+        mode="portfolio"
         firstName={profileData.firstName}
         lastName={profileData.lastName}
         photoUrl={profileData.photoUrl}
@@ -346,7 +346,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated }: Props) {
         {/* Intro */}
         <div style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.375rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text, #eceef2)', fontFamily: 'var(--serif, Georgia, serif)' }}>
-            {isNew ? 'Create Your Showcase' : 'Showcase Settings'}
+            {isNew ? 'Create Your Portfolio' : 'Portfolio Settings'}
           </h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
             A PIN-protected portfolio page for selective sharing. Use it for client work samples, investor decks, project galleries, real estate listings, or anything you want to gate behind a PIN. A labeled button appears on your public profile for visitors to find it.
@@ -388,7 +388,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated }: Props) {
             <textarea
               value={bioText}
               onChange={e => setBioText(e.target.value.slice(0, 500))}
-              placeholder="A brief intro that appears at the top of your showcase page..."
+              placeholder="A brief intro that appears at the top of your portfolio page..."
               rows={3}
               style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }}
             />
@@ -418,7 +418,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated }: Props) {
               <input ref={resumeRef} type="file" accept="application/pdf" onChange={handleResumeUpload} style={{ display: 'none' }} />
             </div>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0.25rem 0 0' }}>
-              Displayed as a download button on your showcase page.
+              Displayed as a download button on your portfolio page.
             </p>
             {resumeUrl && resumeUrl.startsWith('/uploads/') && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
@@ -442,13 +442,13 @@ export default function PortfolioTab({ planStatus, onTrialActivated }: Props) {
                 checked={showResume}
                 onChange={setShowResume}
                 label="Show resume on page"
-                description="Display a resume download button on your showcase page."
+                description="Display a resume download button on your portfolio page."
               />
               <ToggleSwitch
                 checked={isActive}
                 onChange={setIsActive}
                 label="Show button on profile"
-                description="Displays your Showcase button on your public profile page."
+                description="Displays your Portfolio button on your public profile page."
               />
               <ToggleSwitch
                 checked={allowRemember}
@@ -511,7 +511,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated }: Props) {
             cursor: saving ? 'not-allowed' : 'pointer',
           }}
         >
-          {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Showcase' : 'Save Settings'}
+          {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Portfolio' : 'Save Settings'}
         </button>
 
         {/* Content Blocks (only after page is created) */}
