@@ -11,7 +11,7 @@
 
 $ErrorActionPreference = "Stop"
 $SERVER = "root@5.78.85.128"
-$REMOTE_DIR = "/opt/imprynt"
+$REMOTE_DIR = "/home/imprynt"
 
 Write-Host "`n=== IMPRYNT DEPLOY ===" -ForegroundColor Cyan
 
@@ -37,7 +37,7 @@ Write-Host "Git is clean. HEAD: $($local.Substring(0,8))" -ForegroundColor Green
 # Step 1: Backup production database
 Write-Host "`n[2/6] Backing up production database..." -ForegroundColor Yellow
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-ssh $SERVER "cd $REMOTE_DIR && docker compose -f docker-compose.prod.yml exec -T db pg_dump -U imprynt imprynt > backup_${timestamp}.sql && echo 'Backup: backup_${timestamp}.sql ($(wc -c < backup_${timestamp}.sql) bytes)'"
+ssh $SERVER "cd $REMOTE_DIR && docker compose --env-file .env.production -f docker-compose.prod.yml exec -T db pg_dump -U imprynt imprynt > backup_${timestamp}.sql && echo 'Backup: backup_${timestamp}.sql ($(wc -c < backup_${timestamp}.sql) bytes)'"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: Backup failed. Aborting deploy." -ForegroundColor Red
     exit 1
@@ -62,7 +62,7 @@ cd $REMOTE_DIR
 echo 'Checking migrations...'
 for f in db/migrations/*.sql; do
     echo "  Running: `$f"
-    docker compose -f docker-compose.prod.yml exec -T db psql -U imprynt -d imprynt < `$f 2>&1 | tail -1
+    docker compose --env-file .env.production -f docker-compose.prod.yml exec -T db psql -U imprynt -d imprynt < `$f 2>&1 | tail -1
 done
 echo 'Migrations complete.'
 "@
@@ -70,7 +70,7 @@ Write-Host "Migrations applied." -ForegroundColor Green
 
 # Step 4: Rebuild and restart
 Write-Host "`n[5/6] Rebuilding application..." -ForegroundColor Yellow
-ssh $SERVER "cd $REMOTE_DIR && docker compose -f docker-compose.prod.yml up -d --build 2>&1 | tail -5"
+ssh $SERVER "cd $REMOTE_DIR && docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build 2>&1 | tail -5"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: Build failed. Check server logs." -ForegroundColor Red
     exit 1
@@ -79,10 +79,10 @@ if ($LASTEXITCODE -ne 0) {
 # Wait for app to be healthy
 Write-Host "Waiting for app to start..." -ForegroundColor Yellow
 Start-Sleep -Seconds 10
-$health = ssh $SERVER "curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/api/health"
-if ($health -ne "200") {
-    Write-Host "WARNING: Health check returned $health. Check logs:" -ForegroundColor Yellow
-    ssh $SERVER "cd $REMOTE_DIR && docker compose -f docker-compose.prod.yml logs --tail=20 app"
+$health = ssh $SERVER "docker exec imprynt-app wget -qO- http://127.0.0.1:3000/api/health 2>/dev/null | grep -c healthy || echo 0"
+if ($health -lt 1) {
+    Write-Host "WARNING: Health check failed. Check logs:" -ForegroundColor Yellow
+    ssh $SERVER "cd $REMOTE_DIR && docker compose --env-file .env.production -f docker-compose.prod.yml logs --tail=20 app"
 } else {
     Write-Host "App is healthy." -ForegroundColor Green
 }
@@ -90,10 +90,10 @@ if ($health -ne "200") {
 # Step 5: Seed demo profiles
 Write-Host "`n[6/6] Seeding demo profiles..." -ForegroundColor Yellow
 $seedFile = "$REMOTE_DIR/db/seeds/demo-profiles.sql"
-ssh $SERVER "if [ -f $seedFile ]; then docker compose -f docker-compose.prod.yml exec -T db psql -U imprynt -d imprynt < $seedFile && echo 'Demo seed complete.'; else echo 'No seed file found, skipping.'; fi"
+ssh $SERVER "if [ -f $seedFile ]; then docker compose --env-file .env.production -f docker-compose.prod.yml exec -T db psql -U imprynt -d imprynt < $seedFile && echo 'Demo seed complete.'; else echo 'No seed file found, skipping.'; fi"
 
 # Verify demo profiles
-$demoCount = ssh $SERVER "cd $REMOTE_DIR && docker compose -f docker-compose.prod.yml exec -T db psql -U imprynt -d imprynt -t -c `"SELECT COUNT(*) FROM users WHERE is_demo = true;`""
+$demoCount = ssh $SERVER "cd $REMOTE_DIR && docker compose --env-file .env.production -f docker-compose.prod.yml exec -T db psql -U imprynt -d imprynt -t -c `"SELECT COUNT(*) FROM users WHERE is_demo = true;`""
 Write-Host "Demo profiles in database: $($demoCount.Trim())" -ForegroundColor Cyan
 
 # Done
