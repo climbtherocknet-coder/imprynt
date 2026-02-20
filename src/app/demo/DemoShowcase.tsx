@@ -4,10 +4,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { getTheme, FREE_TEMPLATES } from '@/lib/themes';
 import type { DemoProfile } from './page';
 
-// ── Static demo metadata (PINs are hardcoded — these are known demo accounts) ──
+// ── Static demo metadata (PINs are hardcoded — known demo accounts) ──
 
 const DEMO_META: Record<string, { pin?: string; pinLabel?: string; features: string[] }> = {
-  // Slugs match db/seeds/demo-profiles.sql exactly
   'demo-alex': {
     pin: '8008',
     pinLabel: 'Case Studies',
@@ -52,9 +51,9 @@ const DEMO_META: Record<string, { pin?: string; pinLabel?: string; features: str
   },
 };
 
-// ── Persona Card ──────────────────────────────────────────────────────────────
+// ── Avatar Item ────────────────────────────────────────────────────────────────
 
-function PersonaCard({
+function AvatarItem({
   profile,
   selected,
   onClick,
@@ -65,48 +64,43 @@ function PersonaCard({
 }) {
   const theme = getTheme(profile.template);
   const accent = profile.accentColor || theme.colors.accent;
-  const isFree = (FREE_TEMPLATES as readonly string[]).includes(profile.template);
-
   const initials = `${profile.firstName[0] || ''}${profile.lastName[0] || ''}`.toUpperCase();
+
+  // ring = gap layer (matches bg) + colored ring
+  const ringStyle = selected
+    ? {
+        boxShadow: `0 0 0 2px var(--bg, #0c1017), 0 0 0 4px ${accent}`,
+        transform: 'scale(1.15)',
+      }
+    : undefined;
 
   return (
     <div
-      className={`demo-persona-card${selected ? ' demo-persona-card--active' : ''}`}
+      className={`demo-avatar-item${selected ? ' demo-avatar-item--selected' : ' demo-avatar-item--muted'}`}
       onClick={onClick}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
       aria-label={`${profile.firstName} ${profile.lastName} — ${theme.name} template`}
-      style={selected ? { borderColor: accent, background: `${accent}0d` } : undefined}
+      aria-pressed={selected}
     >
       {profile.photoUrl ? (
-        <div className="demo-persona-photo">
-          <img src={profile.photoUrl} alt={`${profile.firstName} ${profile.lastName}`} />
+        <div className="demo-avatar-circle" style={ringStyle}>
+          <img
+            src={profile.photoUrl}
+            alt={`${profile.firstName} ${profile.lastName}`}
+          />
         </div>
       ) : (
         <div
-          className="demo-persona-initials"
-          style={{ background: `${accent}22`, color: accent }}
+          className="demo-avatar-initials"
+          style={{ background: `${accent}22`, color: accent, ...ringStyle }}
         >
           {initials}
         </div>
       )}
-      <span className="demo-persona-name">
-        {profile.firstName} {profile.lastName}
-      </span>
-      {profile.title && (
-        <span className="demo-persona-title">{profile.title}</span>
-      )}
-      <span
-        className="demo-persona-template"
-        style={
-          selected
-            ? { background: `${accent}22`, color: accent }
-            : { background: 'var(--surface-2, #1b2233)', color: 'var(--text-muted, #5d6370)' }
-        }
-      >
-        {theme.name}
-      </span>
+      <span className="demo-avatar-name">{profile.firstName}</span>
+      <span className="demo-avatar-template-label">{theme.name}</span>
     </div>
   );
 }
@@ -117,14 +111,11 @@ interface Props {
   profiles: DemoProfile[];
 }
 
-type FilterTier = 'all' | 'free' | 'premium';
-
 export default function DemoShowcase({ profiles }: Props) {
   const [selectedSlug, setSelectedSlug] = useState(profiles[0]?.slug ?? '');
   const [iframeKey, setIframeKey] = useState(0);
   const [loading, setLoading] = useState(false);
   const [autoRotate, setAutoRotate] = useState(true);
-  const [filterTier, setFilterTier] = useState<FilterTier>('all');
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -132,44 +123,31 @@ export default function DemoShowcase({ profiles }: Props) {
   const dragScrollLeft = useRef(0);
   const didDrag = useRef(false);
 
-  // Filter profiles by tier
-  const filteredProfiles = profiles.filter((p) => {
-    if (filterTier === 'all') return true;
-    const isFree = (FREE_TEMPLATES as readonly string[]).includes(p.template);
-    return filterTier === 'free' ? isFree : !isFree;
-  });
-
-  // If selected slug not in filtered list, reset to first of filtered
-  useEffect(() => {
-    if (filteredProfiles.length > 0 && !filteredProfiles.find((p) => p.slug === selectedSlug)) {
-      setSelectedSlug(filteredProfiles[0].slug);
-      setIframeKey((k) => k + 1);
-      setLoading(true);
-    }
-  }, [filterTier]); // eslint-disable-line react-hooks/exhaustive-deps
-
   // Auto-rotate every 10s
   useEffect(() => {
-    if (!autoRotate || filteredProfiles.length < 2) return;
+    if (!autoRotate || profiles.length < 2) return;
     const timer = setInterval(() => {
       setSelectedSlug((cur) => {
-        const idx = filteredProfiles.findIndex((p) => p.slug === cur);
-        const next = filteredProfiles[(idx + 1) % filteredProfiles.length];
+        const idx = profiles.findIndex((p) => p.slug === cur);
+        const next = profiles[(idx + 1) % profiles.length];
         setLoading(true);
         setIframeKey((k) => k + 1);
         return next.slug;
       });
     }, 10000);
     return () => clearInterval(timer);
-  }, [autoRotate, filteredProfiles]);
+  }, [autoRotate, profiles]);
 
-  const selectProfile = useCallback((slug: string) => {
-    if (slug === selectedSlug) return;
-    setAutoRotate(false);
-    setLoading(true);
-    setSelectedSlug(slug);
-    setIframeKey((k) => k + 1);
-  }, [selectedSlug]);
+  const selectProfile = useCallback(
+    (slug: string) => {
+      if (slug === selectedSlug) return;
+      setAutoRotate(false);
+      setLoading(true);
+      setSelectedSlug(slug);
+      setIframeKey((k) => k + 1);
+    },
+    [selectedSlug]
+  );
 
   // Drag-to-scroll handlers
   function onMouseDown(e: React.MouseEvent) {
@@ -178,7 +156,7 @@ export default function DemoShowcase({ profiles }: Props) {
     didDrag.current = false;
     dragStartX.current = e.pageX - scrollRef.current.offsetLeft;
     dragScrollLeft.current = scrollRef.current.scrollLeft;
-    scrollRef.current.classList.add('demo-personas--dragging');
+    scrollRef.current.classList.add('demo-avatar-strip--dragging');
   }
 
   function onMouseMove(e: React.MouseEvent) {
@@ -192,13 +170,15 @@ export default function DemoShowcase({ profiles }: Props) {
 
   function onMouseUp() {
     isDragging.current = false;
-    scrollRef.current?.classList.remove('demo-personas--dragging');
+    scrollRef.current?.classList.remove('demo-avatar-strip--dragging');
   }
 
-  const selectedProfile = filteredProfiles.find((p) => p.slug === selectedSlug) ?? filteredProfiles[0];
+  const selectedProfile =
+    profiles.find((p) => p.slug === selectedSlug) ?? profiles[0];
   const meta = selectedProfile ? DEMO_META[selectedProfile.slug] : null;
   const theme = selectedProfile ? getTheme(selectedProfile.template) : null;
-  const accent = selectedProfile?.accentColor || theme?.colors.accent || '#e8a849';
+  const accent =
+    selectedProfile?.accentColor || theme?.colors.accent || '#e8a849';
   const isFree = selectedProfile
     ? (FREE_TEMPLATES as readonly string[]).includes(selectedProfile.template)
     : true;
@@ -208,8 +188,18 @@ export default function DemoShowcase({ profiles }: Props) {
       {/* Header */}
       <header className="demo-header">
         <a href="/" className="demo-header-back">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M19 12H5M12 5l-7 7 7 7"/>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
           Back to Imprynt
         </a>
@@ -223,47 +213,31 @@ export default function DemoShowcase({ profiles }: Props) {
         <div className="demo-hero">
           <h1 className="demo-headline">See Imprynt in action.</h1>
           <p className="demo-subline">
-            Pick a profile. Explore the templates. Try the PIN unlock. Every feature is live.
+            Pick a profile. Explore the templates. Try the PIN unlock. Every
+            feature is live.
           </p>
         </div>
 
-        {/* Filter chips */}
+        {/* Avatar strip */}
         {profiles.length > 0 && (
-          <div className="demo-filter-chips">
-            {(['all', 'free', 'premium'] as FilterTier[]).map((tier) => (
-              <button
-                key={tier}
-                className={`demo-chip${filterTier === tier ? ' demo-chip--active' : ''}`}
-                onClick={() => setFilterTier(tier)}
-              >
-                {tier === 'all' ? 'All templates' : tier === 'free' ? 'Free' : 'Premium'}
-              </button>
+          <div
+            className="demo-avatar-strip"
+            ref={scrollRef}
+            onMouseDown={onMouseDown}
+            onMouseMove={onMouseMove}
+            onMouseUp={onMouseUp}
+            onMouseLeave={onMouseUp}
+          >
+            {profiles.map((p) => (
+              <AvatarItem
+                key={p.slug}
+                profile={p}
+                selected={p.slug === selectedSlug}
+                onClick={() => {
+                  if (!didDrag.current) selectProfile(p.slug);
+                }}
+              />
             ))}
-          </div>
-        )}
-
-        {/* Persona selector */}
-        {filteredProfiles.length > 0 && (
-          <div className="demo-personas-wrap">
-            <div
-              className="demo-personas"
-              ref={scrollRef}
-              onMouseDown={onMouseDown}
-              onMouseMove={onMouseMove}
-              onMouseUp={onMouseUp}
-              onMouseLeave={onMouseUp}
-            >
-              {filteredProfiles.map((p) => (
-                <PersonaCard
-                  key={p.slug}
-                  profile={p}
-                  selected={p.slug === selectedSlug}
-                  onClick={() => {
-                    if (!didDrag.current) selectProfile(p.slug);
-                  }}
-                />
-              ))}
-            </div>
           </div>
         )}
 
@@ -274,10 +248,10 @@ export default function DemoShowcase({ profiles }: Props) {
           </p>
         )}
 
-        {/* Phone + Info split */}
+        {/* Phone + Info (desktop) / chrome-free iframe (mobile) */}
         {selectedProfile && (
           <div className="demo-split">
-            {/* Phone frame */}
+            {/* Phone frame — on mobile CSS strips all chrome and makes it full-width */}
             <div className="demo-phone-wrap">
               <div className="demo-phone">
                 <div className="demo-phone-screen">
@@ -292,13 +266,18 @@ export default function DemoShowcase({ profiles }: Props) {
                     title={`${selectedProfile.firstName} ${selectedProfile.lastName} — live profile`}
                     onLoad={() => setLoading(false)}
                     sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                    style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                      display: 'block',
+                    }}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Info panel — key forces fade animation on switch */}
+            {/* Info panel — key triggers fade animation on profile switch */}
             <div className="demo-info" key={selectedProfile.slug}>
               <div>
                 <div className="demo-info-name">
@@ -306,45 +285,43 @@ export default function DemoShowcase({ profiles }: Props) {
                 </div>
                 {(selectedProfile.title || selectedProfile.company) && (
                   <div className="demo-info-role">
-                    {[selectedProfile.title, selectedProfile.company].filter(Boolean).join(' · ')}
+                    {[selectedProfile.title, selectedProfile.company]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </div>
                 )}
               </div>
 
               <div className="demo-info-template-row">
-                <span className="demo-template-dot" style={{ background: accent }} />
+                <span
+                  className="demo-template-dot"
+                  style={{ background: accent }}
+                />
                 <span>{theme?.name}</span>
-                <span className="demo-tier-badge">{isFree ? 'Free' : 'Premium'}</span>
+                <span className="demo-tier-badge">
+                  {isFree ? 'Free' : 'Premium'}
+                </span>
               </div>
 
-              {meta && meta.features.length > 0 && (
+              {meta?.pin && (
                 <div className="demo-info-section">
-                  <p className="demo-info-label">Features in this profile</p>
-                  <ul className="demo-info-features">
-                    {meta.features.map((f) => (
-                      <li key={f}>{f}</li>
-                    ))}
-                    {selectedProfile.showQrButton && !meta.features.some(f => f.toLowerCase().includes('qr')) && (
-                      <li>QR code button — look for it on the profile</li>
-                    )}
-                  </ul>
-                </div>
-              )}
-
-              <div className="demo-info-section">
-                <p className="demo-info-label">Hidden Pages</p>
-                {meta?.pin ? (
+                  <p className="demo-info-label">Hidden page</p>
                   <div className="demo-pin-section">
                     <p className="demo-pin-label">{meta.pinLabel}</p>
-                    <p className="demo-pin-label" style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      Try entering this PIN on the profile:
+                    <p
+                      className="demo-pin-label"
+                      style={{
+                        marginTop: '0.25rem',
+                        fontSize: '0.75rem',
+                        color: 'var(--text-muted)',
+                      }}
+                    >
+                      Try this PIN on the profile:
                     </p>
                     <code className="demo-pin">{meta.pin}</code>
                   </div>
-                ) : (
-                  <p className="demo-info-muted">No protected pages on this profile</p>
-                )}
-              </div>
+                </div>
+              )}
 
               <a
                 href={`/${selectedProfile.slug}`}
@@ -353,8 +330,20 @@ export default function DemoShowcase({ profiles }: Props) {
                 className="demo-open-btn"
               >
                 Open full profile
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
                 </svg>
               </a>
             </div>
