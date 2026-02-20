@@ -234,18 +234,14 @@
 /* ── Phone frame ── */
 .demo-phone-wrap {
   flex-shrink: 0;
-  width: 380px;
-  height: fit-content;
+  width: 375px;
   position: relative;
-  overflow: hidden;
 }
 
 .demo-phone {
   position: relative;
-  width: 380px;
-  height: 75vh;
-  max-height: 812px;
-  min-height: 500px;
+  width: 375px;
+  aspect-ratio: 9 / 19.5;
   border-radius: 3rem;
   background: #1a1a1a;
   padding: 12px;
@@ -459,25 +455,23 @@
 @media (max-width: 1024px) {
   .demo-split { gap: 2.5rem; }
 
-  .demo-phone-wrap { width: 300px; }
+  .demo-phone-wrap { width: 340px; }
 
   .demo-phone {
-    width: 300px;
-    height: 65vh;
-    max-height: 641px;
-    border-radius: 2.5rem;
-    padding: 10px;
+    width: 340px;
+    border-radius: 2.75rem;
+    padding: 11px;
   }
 
   .demo-phone::before {
-    width: 79px;
-    height: 22px;
-    border-radius: 11px;
-    top: 11px;
+    width: 91px;
+    height: 25px;
+    border-radius: 12px;
+    top: 12px;
   }
 
-  .demo-phone-screen { border-radius: 1.875rem; }
-  .demo-phone-loading { border-radius: 1.875rem; }
+  .demo-phone-screen { border-radius: 2rem; }
+  .demo-phone-loading { border-radius: 2rem; }
 }
 
 @media (max-width: 768px) {
@@ -487,51 +481,51 @@
   /* Hide arrows — touch scroll handles it */
   .demo-carousel-arrow { display: none; }
 
-  .demo-split { flex-direction: column; gap: 2rem; }
+  /* Stack but info panel hidden — phone is full-width hero */
+  .demo-split { display: block; }
 
+  /* Break out of the page container padding — full-width iframe */
   .demo-phone-wrap {
-    width: 100%;
-    display: flex;
-    justify-content: center;
+    width: calc(100% + 2.5rem);
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+    border-top: 1px solid var(--border, #1e2535);
   }
 
+  /* Strip all phone chrome on mobile */
   .demo-phone {
-    width: 260px;
-    height: 555px;
-    max-height: none;
-    border-radius: 2rem;
-    padding: 9px;
+    width: 100%;
+    height: 75vh;
+    min-height: 500px;
+    aspect-ratio: unset;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
   }
 
-  .demo-phone::before {
-    width: 68px;
-    height: 19px;
-    border-radius: 9px;
-    top: 10px;
+  /* Hide Dynamic Island notch */
+  .demo-phone::before { display: none; }
+
+  .demo-phone-screen {
+    border-radius: 0;
+    background: transparent;
   }
 
-  .demo-phone-screen { border-radius: 1.5rem; }
-  .demo-phone-loading { border-radius: 1.5rem; }
+  .demo-phone-loading { border-radius: 0; }
+
+  /* Info panel hidden on mobile — profile speaks for itself */
+  .demo-info { display: none; }
 }
 
 @media (max-width: 480px) {
   .demo-main { padding: 1.75rem 1rem 4rem; }
   .demo-header { padding: 0.75rem 1rem; }
 
-  .demo-phone {
-    width: 210px;
-    height: 449px;
-    border-radius: 1.75rem;
-    padding: 7px;
+  /* Update bleed margins to match tighter 1rem page padding */
+  .demo-phone-wrap {
+    width: calc(100% + 2rem);
+    margin-left: -1rem;
+    margin-right: -1rem;
   }
-
-  .demo-phone::before {
-    width: 55px;
-    height: 15px;
-    border-radius: 7px;
-    top: 8px;
-  }
-
-  .demo-phone-screen { border-radius: 1.25rem; }
-  .demo-phone-loading { border-radius: 1.25rem; }
 }
