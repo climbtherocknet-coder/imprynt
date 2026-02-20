@@ -3,6 +3,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import WaitlistBanner from '@/components/WaitlistBanner';
 import { WaitlistProvider, WaitlistButton } from '@/components/WaitlistCTA';
 import MobileNav from '@/components/MobileNav';
+import HeroPhone from '@/components/HeroPhone';
 import '@/styles/landing.css';
 
 export default function HomePage() {
@@ -47,52 +48,7 @@ export default function HomePage() {
             <p className="lp-hero-proof">Free forever. No credit card. Set up in 5 minutes.</p>
           </div>
           <div className="lp-hero-visual">
-            <div className="lp-phone">
-              <div className="lp-phone-screen">
-                <div className="m-row">
-                  <div className="m-photo" />
-                  <div className="m-info">
-                    <div className="m-name">Alex Reeves</div>
-                    <div className="m-title">Designer + Photographer · Portland</div>
-                  </div>
-                </div>
-                <div className="m-pills">
-                  <span className="m-pill">Instagram</span>
-                  <span className="m-pill">Portfolio</span>
-                  <span className="m-pill">Email</span>
-                  <span className="m-pill">LinkedIn</span>
-                  <span className="m-pill">Book a call</span>
-                </div>
-                <div className="m-save">↓ Save Contact</div>
-                <div className="m-hr" />
-                <div className="m-card">
-                  <div className="m-card-t">About</div>
-                  <div className="m-card-p">I design brand systems and shoot editorial portraits. Currently booking for spring.</div>
-                </div>
-                <div className="m-card">
-                  <div className="m-card-t">By the Numbers</div>
-                  <div className="m-card-p">160+ projects · 4.9★ rating · 6 years</div>
-                </div>
-                <div className="m-project">
-                  <div className="m-project-img" />
-                  <div className="m-project-body">
-                    <div className="m-project-type">Project · Branding</div>
-                    <div className="m-project-name">Watershed Coffee Co.</div>
-                    <div className="m-project-meta">Branding, packaging, web</div>
-                  </div>
-                </div>
-                <div className="m-project">
-                  <div className="m-project-img" />
-                  <div className="m-project-body">
-                    <div className="m-project-type">Project · Photography</div>
-                    <div className="m-project-name">Kinfolk Editorial Shoot</div>
-                    <div className="m-project-meta">Editorial, portrait, lifestyle</div>
-                  </div>
-                </div>
-                <div className="m-gate">🔒 Client portal (3)</div>
-                <div className="m-impression" />
-              </div>
-            </div>
+            <HeroPhone />
           </div>
         </section>
 

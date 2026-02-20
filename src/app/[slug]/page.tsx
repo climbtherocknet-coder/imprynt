@@ -57,9 +57,42 @@ interface ProtectedPageData {
   button_label: string;
 }
 
-export const metadata: Metadata = {
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+
+  try {
+    const result = await query(
+      `SELECT u.first_name, u.last_name, p.title, u.plan
+       FROM users u
+       JOIN profiles p ON p.user_id = u.id
+       WHERE p.slug = $1 AND u.account_status = 'active'`,
+      [slug]
+    );
+
+    if (result.rows.length === 0) {
+      return { robots: { index: false, follow: false } };
+    }
+
+    const row = result.rows[0];
+    const name = [row.first_name, row.last_name].filter(Boolean).join(' ');
+    const role = row.title || '';
+    const isFree = row.plan === 'free';
+
+    let title: string;
+    if (isFree) {
+      title = role ? `IMPRYNT.io — ${name} | ${role}` : `IMPRYNT.io — ${name}`;
+    } else {
+      title = role ? `${name} | ${role}` : name;
+    }
+
+    return {
+      title,
+      robots: { index: false, follow: false },
+    };
+  } catch {
+    return { robots: { index: false, follow: false } };
+  }
+}
 
 // Fetch profile regardless of publish state (for owner preview)
 async function getProfileAny(slug: string) {
