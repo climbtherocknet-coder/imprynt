@@ -36,7 +36,7 @@ export async function GET(
         color: { dark: '#000000', light: '#ffffff' },
         errorCorrectionLevel: 'M',
       });
-      return new NextResponse(pngBuffer, {
+      return new NextResponse(new Uint8Array(pngBuffer), {
         headers: {
           'Content-Type': 'image/png',
           'Cache-Control': 'public, max-age=3600',

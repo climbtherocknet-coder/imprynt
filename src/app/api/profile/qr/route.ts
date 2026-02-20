@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
         color: { dark: '#000000', light: '#ffffff' },
         errorCorrectionLevel: 'M',
       });
-      return new NextResponse(pngBuffer, {
+      return new NextResponse(new Uint8Array(pngBuffer), {
         headers: {
           'Content-Type': 'image/png',
           'Content-Disposition': 'attachment; filename="imprynt-qr.png"',
