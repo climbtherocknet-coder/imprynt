@@ -26,7 +26,7 @@ export default function TermsPage() {
 
         <h2>2. Acceptable Use</h2>
         <p>
-          You may use the platform to create and share your personal or professional digital identity. You may not use the platform to impersonate another person, distribute malware, engage in illegal activities, scrape or harvest data from other users&apos; profiles, or attempt to bypass security measures including PIN protection. We reserve the right to suspend or terminate accounts that violate these terms.
+          You may use the platform to create and share your personal or professional digital presence. You may not use the platform to impersonate another person, distribute malware, engage in illegal activities, scrape or harvest data from other users&apos; profiles, or attempt to bypass security measures including PIN protection. We reserve the right to suspend or terminate accounts that violate these terms.
         </p>
 
         <h2>3. Subscriptions and Payments</h2>

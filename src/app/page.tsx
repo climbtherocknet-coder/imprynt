@@ -2,6 +2,7 @@ import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 import WaitlistBanner from '@/components/WaitlistBanner';
 import { WaitlistProvider, WaitlistButton } from '@/components/WaitlistCTA';
+import MobileNav from '@/components/MobileNav';
 import '@/styles/landing.css';
 
 export default function HomePage() {
@@ -21,15 +22,16 @@ export default function HomePage() {
             <a href="#pricing" className="lp-nav-link hide-m">Pricing</a>
             <Link href="/demo" className="lp-nav-link hide-m">Demo</Link>
             <ThemeToggle />
-            <Link href="/login" className="lp-nav-link">Sign in</Link>
-            <WaitlistButton className="lp-nav-cta">Join waitlist</WaitlistButton>
+            <Link href="/login" className="lp-nav-link hide-m">Sign in</Link>
+            <WaitlistButton className="lp-nav-cta hide-m">Join waitlist</WaitlistButton>
+            <MobileNav />
           </div>
         </nav>
 
         {/* ═══════ HERO ═══════ */}
         <section className="lp-hero">
           <div className="lp-hero-content">
-            <div className="lp-hero-eyebrow">Your page. Your identity. Your rules.</div>
+            <div className="lp-hero-eyebrow">Your page. Your impression. Your rules.</div>
             <h1 className="lp-hero-headline">
               One page.<br /><em>Every connection.</em>
             </h1>
@@ -65,7 +67,7 @@ export default function HomePage() {
                 <div className="m-hr" />
                 <div className="m-card">
                   <div className="m-card-t">About</div>
-                  <div className="m-card-p">I design brand identities and shoot editorial portraits. Currently booking for spring.</div>
+                  <div className="m-card-p">I design brand systems and shoot editorial portraits. Currently booking for spring.</div>
                 </div>
                 <div className="m-card">
                   <div className="m-card-t">By the Numbers</div>
@@ -74,9 +76,9 @@ export default function HomePage() {
                 <div className="m-project">
                   <div className="m-project-img" />
                   <div className="m-project-body">
-                    <div className="m-project-type">Project · Brand Identity</div>
+                    <div className="m-project-type">Project · Branding</div>
                     <div className="m-project-name">Watershed Coffee Co.</div>
-                    <div className="m-project-meta">Identity, packaging, web</div>
+                    <div className="m-project-meta">Branding, packaging, web</div>
                   </div>
                 </div>
                 <div className="m-project">
@@ -100,6 +102,15 @@ export default function HomePage() {
           <span className="lp-trust-item">No app to download</span>
           <span className="lp-trust-item">iPhone + Android</span>
           <span className="lp-trust-item">Set up in 5 minutes</span>
+        </div>
+
+        {/* ═══════ TAGLINE ═══════ */}
+        <div className="lp-tagline">
+          <p>
+            <em>You only get one chance to make a great first impression.</em>
+            <br />
+            Let us help you make it unforgettable.
+          </p>
         </div>
 
         <div className="lp-divider"><hr /></div>

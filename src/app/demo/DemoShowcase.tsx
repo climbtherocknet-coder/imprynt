@@ -295,6 +295,32 @@ export default function DemoShowcase({ profiles }: Props) {
           </p>
         )}
 
+        {/* Mobile-only info bar: template + PIN + open link (info panel hidden on mobile) */}
+        {selectedProfile && (
+          <div className="demo-mobile-info">
+            <div className="demo-mobile-info-left">
+              <span
+                className="demo-template-dot"
+                style={{ background: accent }}
+              />
+              <span>{theme?.name}</span>
+              {meta?.pin && (
+                <span className="demo-mobile-pin">
+                  · PIN: <code>{meta.pin}</code>
+                </span>
+              )}
+            </div>
+            <a
+              href={`/${selectedProfile.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="demo-mobile-open"
+            >
+              Open ↗
+            </a>
+          </div>
+        )}
+
         {/* Phone frame + Info panel */}
         {selectedProfile && (
           <div className="demo-split">

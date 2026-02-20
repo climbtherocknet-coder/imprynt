@@ -105,10 +105,80 @@
 
 .lp-nav-cta:hover { background: var(--accent-hover); }
 
-@media (max-width: 640px) {
+/* Hamburger button — shown on mobile only */
+.lp-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text-mid);
+  cursor: pointer;
+  border-radius: 0.5rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.lp-hamburger:hover {
+  background: var(--surface-2, #1b2233);
+  color: var(--text);
+}
+
+/* Mobile full-width dropdown menu */
+.lp-mobile-menu {
+  position: fixed;
+  top: 57px;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  background: var(--nav-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--nav-border);
+  padding: 0.75rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.lp-mobile-link {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-mid);
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--border, #1e2535);
+  transition: color 0.15s;
+}
+
+.lp-mobile-link:last-of-type { border-bottom: none; }
+
+.lp-mobile-link:hover { color: var(--text); }
+
+.lp-mobile-cta {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 2rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s;
+}
+
+.lp-mobile-cta:hover { background: var(--accent-hover); }
+
+@media (max-width: 768px) {
   .lp-nav { padding: 1rem 1.25rem; }
   .lp-nav-links { gap: 0.875rem; }
   .lp-nav-link.hide-m { display: none; }
+  .lp-nav-cta.hide-m { display: none; }
+  .lp-hamburger { display: flex; }
 }
 
 /* ═══════════════════════════════════════════
@@ -1342,6 +1412,22 @@
   color: var(--accent);
   font-weight: 700;
   font-size: 0.75rem;
+}
+
+/* ── Tagline callout ── */
+.lp-tagline {
+  text-align: center;
+  padding: 2.5rem 2rem 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--text-mid);
+}
+
+.lp-tagline em {
+  color: var(--text);
+  font-style: italic;
 }
 
 /* ═══════════════════════════════════════════

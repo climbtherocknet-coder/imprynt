@@ -514,7 +514,7 @@ export default function SetupWizard({ initialData, isPaid = false }: SetupWizard
                 <textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value.slice(0, 200))}
-                  placeholder="Building the future of digital identity..."
+                  placeholder="Building the future of digital presence..."
                   rows={3}
                   className="setup-textarea"
                 />
