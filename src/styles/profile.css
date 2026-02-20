@@ -303,15 +303,17 @@
   width: 44px;
   height: 44px;
   border-radius: var(--radius, 0.625rem);
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-border);
+  background: var(--bg);
+  border: 1px solid var(--border);
   color: var(--accent);
   text-decoration: none;
   transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  cursor: pointer;
 }
 .link-icon-btn:hover {
-  background: var(--accent-border);
-  border-color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent);
   transform: translateY(-1px);
 }
 .link-icon-btn .icon {

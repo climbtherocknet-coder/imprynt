@@ -182,6 +182,7 @@ export default function ProfileTemplate({
                       <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[link.link_type] || LINK_ICONS.custom }} />
                     </a>
                   ))}
+                  <SaveContactButton profileId={profileId} pinProtected={vcardPinEnabled} iconOnly={true} inline={true} />
                 </div>
               ) : (
                 <>
@@ -220,8 +221,10 @@ export default function ProfileTemplate({
             </>
           )}
 
-          {/* Save Contact */}
-          <SaveContactButton profileId={profileId} pinProtected={vcardPinEnabled} iconOnly={linkDisplay === 'icons'} />
+          {/* Save Contact — icon mode renders it inline above, label modes render it here */}
+          {linkDisplay !== 'icons' && (
+            <SaveContactButton profileId={profileId} pinProtected={vcardPinEnabled} iconOnly={false} />
+          )}
         </div>
 
         {/* ─── Pods ─── */}
