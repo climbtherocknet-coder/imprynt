@@ -3,6 +3,8 @@ import DemoShowcase from './DemoShowcase';
 import '@/styles/demo.css';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'See Imprynt in Action — Live Demo',
   description:
