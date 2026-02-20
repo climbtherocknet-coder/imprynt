@@ -63,6 +63,7 @@ interface ProfileData {
     photoPositionY: number;
     photoAnimation: string;
     vcardPinEnabled: boolean;
+    showQrButton: boolean;
     linkDisplay: string;
   };
   links: LinkItem[];
