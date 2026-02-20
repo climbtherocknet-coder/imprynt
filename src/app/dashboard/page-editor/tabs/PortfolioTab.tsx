@@ -69,7 +69,7 @@ interface Props {
   onTrialActivated?: () => void;
 }
 
-export default function PortfolioTab({ planStatus, onTrialActivated }: Props) {
+export default function PortfolioTab({ planStatus, onTrialActivated, currentTemplate, currentAccentColor, templateLoaded }: Props & { currentTemplate?: string; currentAccentColor?: string; templateLoaded?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -107,9 +107,15 @@ export default function PortfolioTab({ planStatus, onTrialActivated }: Props) {
   const [resumeUploading, setResumeUploading] = useState(false);
   const resumeRef = useRef<HTMLInputElement>(null);
 
+  // Keep preview template in sync when parent ProfileTab changes it live
+  useEffect(() => {
+    if (!templateLoaded) return;
+    setProfileData(prev => prev ? { ...prev, template: currentTemplate || prev.template, accentColor: currentAccentColor !== undefined ? currentAccentColor : prev.accentColor } : prev);
+  }, [currentTemplate, currentAccentColor, templateLoaded]);
+
   // Load existing showcase page + profile slug + showcase links
   useEffect(() => {
-    fetch('/api/profile').then(r => r.json()).then(d => {
+    fetch('/api/profile', { cache: 'no-store' }).then(r => r.json()).then(d => {
       if (d.profile?.slug) setSlug(d.profile.slug);
       if (d.links) {
         setLinks(d.links.filter((l: LinkItem & { showShowcase?: boolean }) => l.showShowcase));
@@ -119,8 +125,9 @@ export default function PortfolioTab({ planStatus, onTrialActivated }: Props) {
           firstName: d.user.firstName || '',
           lastName: d.user.lastName || '',
           photoUrl: d.profile.photoUrl || '',
-          template: d.profile.template || 'clean',
-          accentColor: d.profile.accentColor || '',
+          // Prefer parent-passed template (reflects unsaved profile tab picks)
+          template: currentTemplate || d.profile.template || 'clean',
+          accentColor: currentAccentColor !== undefined ? currentAccentColor : (d.profile.accentColor || ''),
           photoShape: d.profile.photoShape || 'circle',
           photoRadius: d.profile.photoRadius ?? 50,
           photoSize: d.profile.photoSize || 'medium',

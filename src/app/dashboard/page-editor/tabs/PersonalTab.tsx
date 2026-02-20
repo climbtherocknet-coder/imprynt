@@ -63,7 +63,7 @@ const sectionStyle: React.CSSProperties = {
 
 // ── Component ──────────────────────────────────────────
 
-export default function PersonalTab({ planStatus, onTrialActivated }: { planStatus: PlanStatusClient; onTrialActivated: () => Promise<void> }) {
+export default function PersonalTab({ planStatus, onTrialActivated, currentTemplate, currentAccentColor, templateLoaded }: { planStatus: PlanStatusClient; onTrialActivated: () => Promise<void>; currentTemplate?: string; currentAccentColor?: string; templateLoaded?: boolean }) {
   const [startingTrial, setStartingTrial] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -120,9 +120,15 @@ export default function PersonalTab({ planStatus, onTrialActivated }: { planStat
   const [isNew, setIsNew] = useState(true);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
 
+  // Keep preview template in sync when parent ProfileTab changes it live
+  useEffect(() => {
+    if (!templateLoaded) return;
+    setProfileData(prev => prev ? { ...prev, template: currentTemplate || prev.template, accentColor: currentAccentColor !== undefined ? currentAccentColor : prev.accentColor } : prev);
+  }, [currentTemplate, currentAccentColor, templateLoaded]);
+
   // Load existing impression page + profile slug + personal links
   useEffect(() => {
-    fetch('/api/profile').then(r => r.json()).then(d => {
+    fetch('/api/profile', { cache: 'no-store' }).then(r => r.json()).then(d => {
       if (d.profile?.slug) setSlug(d.profile.slug);
       if (d.links) {
         setLinks(d.links.filter((l: LinkItem & { showPersonal?: boolean }) => l.showPersonal));
@@ -132,8 +138,9 @@ export default function PersonalTab({ planStatus, onTrialActivated }: { planStat
           firstName: d.user.firstName || '',
           lastName: d.user.lastName || '',
           photoUrl: d.profile.photoUrl || '',
-          template: d.profile.template || 'clean',
-          accentColor: d.profile.accentColor || '',
+          // Prefer parent-passed template (reflects unsaved profile tab picks)
+          template: currentTemplate || d.profile.template || 'clean',
+          accentColor: currentAccentColor !== undefined ? currentAccentColor : (d.profile.accentColor || ''),
           plan: d.user.plan || 'free',
           photoShape: d.profile.photoShape || 'circle',
           photoRadius: d.profile.photoRadius ?? 50,

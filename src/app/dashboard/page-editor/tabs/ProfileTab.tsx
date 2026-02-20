@@ -146,7 +146,7 @@ const saveBtnStyle: React.CSSProperties = {
 
 // ── Component ──────────────────────────────────────────
 
-export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClient }) {
+export default function ProfileTab({ planStatus, onTemplateChange }: { planStatus: PlanStatusClient; onTemplateChange?: (template: string, accentColor: string) => void }) {
   const [data, setData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
@@ -225,7 +225,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
 
   // Load profile data
   useEffect(() => {
-    fetch('/api/profile')
+    fetch('/api/profile', { cache: 'no-store' })
       .then(r => r.json())
       .then((d: ProfileData) => {
         setData(d);
@@ -1220,7 +1220,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
                 return (
                   <button
                     key={t.id}
-                    onClick={() => setTemplate(t.id)}
+                    onClick={() => { setTemplate(t.id); onTemplateChange?.(t.id, accentColor); }}
                     style={{
                       padding: 0,
                       border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
@@ -1265,7 +1265,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
               <button
-                onClick={() => setAccentColor('')}
+                onClick={() => { setAccentColor(''); onTemplateChange?.(template, ''); }}
                 style={{
                   height: 28, borderRadius: '9999px', padding: '0 0.625rem',
                   fontSize: '0.6875rem', fontWeight: 500, fontFamily: 'inherit',
@@ -1280,7 +1280,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
               {COLOR_PRESETS.map(c => (
                 <button
                   key={c}
-                  onClick={() => setAccentColor(c)}
+                  onClick={() => { setAccentColor(c); onTemplateChange?.(template, c); }}
                   style={{
                     width: 28, height: 28, borderRadius: '50%',
                     backgroundColor: c,
@@ -1296,7 +1296,7 @@ export default function ProfileTab({ planStatus }: { planStatus: PlanStatusClien
               <input
                 type="color"
                 value={accentColor || '#e8a849'}
-                onChange={e => setAccentColor(e.target.value)}
+                onChange={e => { setAccentColor(e.target.value); onTemplateChange?.(template, e.target.value); }}
                 style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-light, #283042)', cursor: 'pointer', padding: 0 }}
               />
             </div>

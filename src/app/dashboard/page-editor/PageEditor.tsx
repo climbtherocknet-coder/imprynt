@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import '@/styles/dashboard.css';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -40,6 +40,28 @@ export default function PageEditor({ userId, planStatus: initialPlanStatus, init
     return valid.includes(initialTab as TabId) ? (initialTab as TabId) : 'profile';
   });
   const [planStatus, setPlanStatus] = useState<PlanStatusClient>(initialPlanStatus);
+
+  // Shared template state — ProfileTab calls onTemplateChange; Personal/Portfolio tabs read these
+  const [currentTemplate, setCurrentTemplate] = useState('clean');
+  const [currentAccentColor, setCurrentAccentColor] = useState('');
+  const [templateLoaded, setTemplateLoaded] = useState(false);
+
+  // Fetch template once on mount so Personal/Portfolio tabs have it immediately
+  useEffect(() => {
+    fetch('/api/profile', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(d => {
+        if (d.profile?.template) setCurrentTemplate(d.profile.template);
+        setCurrentAccentColor(d.profile?.accentColor || '');
+        setTemplateLoaded(true);
+      })
+      .catch(() => setTemplateLoaded(true));
+  }, []);
+
+  const handleTemplateChange = useCallback((template: string, accentColor: string) => {
+    setCurrentTemplate(template);
+    setCurrentAccentColor(accentColor);
+  }, []);
 
   function handleTabChange(tabId: TabId) {
     setActiveTab(tabId);
@@ -160,9 +182,9 @@ export default function PageEditor({ userId, planStatus: initialPlanStatus, init
 
       {/* Tab content */}
       <div className="page-editor-content">
-        {activeTab === 'profile' && <ProfileTab planStatus={planStatus} />}
-        {activeTab === 'personal' && <PersonalTab planStatus={planStatus} onTrialActivated={refreshPlanStatus} />}
-        {activeTab === 'portfolio' && <PortfolioTab planStatus={planStatus} onTrialActivated={refreshPlanStatus} />}
+        {activeTab === 'profile' && <ProfileTab planStatus={planStatus} onTemplateChange={handleTemplateChange} />}
+        {activeTab === 'personal' && <PersonalTab planStatus={planStatus} onTrialActivated={refreshPlanStatus} currentTemplate={currentTemplate} currentAccentColor={currentAccentColor} templateLoaded={templateLoaded} />}
+        {activeTab === 'portfolio' && <PortfolioTab planStatus={planStatus} onTrialActivated={refreshPlanStatus} currentTemplate={currentTemplate} currentAccentColor={currentAccentColor} templateLoaded={templateLoaded} />}
       </div>
     </div>
   );

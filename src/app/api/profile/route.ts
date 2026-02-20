@@ -95,7 +95,7 @@ export async function GET() {
       showPersonal: l.show_personal,
       showShowcase: l.show_showcase,
     })),
-  });
+  }, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 // PUT - Update profile fields
