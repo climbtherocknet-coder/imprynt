@@ -17,9 +17,10 @@ interface StatusTagPickerProps {
   initialTags: string[];
   initialColor?: string | null;
   isPaid?: boolean;
+  disabled?: boolean;
 }
 
-export default function StatusTagPicker({ initialTags, initialColor, isPaid }: StatusTagPickerProps) {
+export default function StatusTagPicker({ initialTags, initialColor, isPaid, disabled }: StatusTagPickerProps) {
   const [tags, setTags] = useState<string[]>(initialTags);
   const [saving, setSaving] = useState(false);
   const [color, setColor] = useState(initialColor || '#22c55e');
@@ -81,7 +82,7 @@ export default function StatusTagPicker({ initialTags, initialColor, isPaid }: S
   };
 
   return (
-    <div>
+    <div style={disabled ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
         {STATUS_OPTIONS.map(opt => {
           const active = tags.includes(opt.slug);

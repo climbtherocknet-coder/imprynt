@@ -1069,7 +1069,9 @@
   align-items: center;
   justify-content: center;
   padding: 0.5rem 2.5rem 0.5rem 1rem;
-  background: var(--accent-glow);
+  background: var(--nav-bg, rgba(12, 16, 23, 0.92));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--accent-border);
   font-size: 0.8125rem;
   color: var(--text);

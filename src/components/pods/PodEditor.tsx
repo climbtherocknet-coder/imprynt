@@ -337,8 +337,21 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
           ctaLabel: data.domain || p.ctaLabel,
         };
       }));
-    } catch (err) {
-      onError(err instanceof Error ? err.message : 'Could not auto-fetch preview. You can enter the details manually below.');
+    } catch {
+      // Pre-populate title/domain from the URL so the user has something to work with
+      try {
+        const parsed = new URL(pod.ctaUrl);
+        const domain = parsed.hostname.replace(/^www\./, '');
+        setPods(prev => prev.map(p => {
+          if (p.id !== podId) return p;
+          return {
+            ...p,
+            title: p.title || domain,
+            ctaLabel: p.ctaLabel || domain,
+          };
+        }));
+      } catch { /* malformed URL */ }
+      onError("Couldn't auto-fetch preview from this site. No worries — fill in the details below.");
     } finally {
       setFetchingPreview(null);
     }
@@ -658,7 +671,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
 
                       {/* Preview fields (auto-filled or manual entry) */}
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.625rem' }}>
-                        Tap "Fetch Preview" to auto-fill, or enter details manually.
+                        Auto-fetch may not work on all sites. You can always enter details manually or upload an image.
                       </p>
                       {pod.imageUrl && (
                         <div style={{ marginBottom: '0.625rem' }}>

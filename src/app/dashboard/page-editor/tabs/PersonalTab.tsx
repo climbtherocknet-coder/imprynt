@@ -100,6 +100,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
     template: string; accentColor: string; plan: string;
     photoShape: string; photoRadius: number; photoSize: string;
     photoPositionX: number; photoPositionY: number; photoAnimation: string;
+    profileId: string;
   } | null>(null);
   const [previewPods, setPreviewPods] = useState<PodData[]>([]);
 
@@ -148,6 +149,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           photoPositionX: d.profile.photoPositionX ?? 50,
           photoPositionY: d.profile.photoPositionY ?? 50,
           photoAnimation: d.profile.photoAnimation || 'none',
+          profileId: d.profile.id || '',
         });
         // Populate local photo settings state
         setPhotoShape(d.profile.photoShape || 'circle');
@@ -335,6 +337,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
         bioText={bioText}
         links={links.map(l => ({ id: l.id || '', linkType: l.linkType, label: l.label, url: l.url }))}
         pods={previewPods}
+        profileId={profileData.profileId}
         photoShape={photoShape}
         photoRadius={photoRadius}
         photoSize={photoSize}

@@ -4,6 +4,7 @@ import { query } from '@/lib/db';
 import { getPlanStatus } from '@/lib/plan';
 import SignOutButton from './SignOutButton';
 import StatusTagPicker from './StatusTagPicker';
+import MyUrlsCard from './MyUrlsCard';
 import OnAirToggle from '@/components/OnAirToggle';
 import ThemeToggle from '@/components/ThemeToggle';
 import CheckoutToast from './CheckoutToast';
@@ -54,16 +55,6 @@ function IconAccount() {
     <div style={iconWrap}>
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2m-9-11h2m18 0h2m-3.3-6.7-1.4 1.4M6.7 17.3l-1.4 1.4m0-13.4 1.4 1.4m10.6 10.6 1.4 1.4"/>
-      </svg>
-    </div>
-  );
-}
-
-function IconStatus() {
-  return (
-    <div style={iconWrap}>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 9h16"/><path d="M4 15h16"/><circle cx="7" cy="9" r="2" fill="currentColor" stroke="none"/><circle cx="17" cy="15" r="2" fill="currentColor" stroke="none"/>
       </svg>
     </div>
   );
@@ -150,16 +141,39 @@ export default async function DashboardPage({
       <main className="dash-main">
         {!emailVerified && <VerificationBanner email={session.user.email || ''} />}
 
-        {/* Stats Row */}
-        <div className="dash-stats">
-          <div className="dash-stat-card">
-            <p className="dash-stat-label">Views</p>
-            <p className="dash-stat-value">{analytics.total_views}</p>
-            <p className="dash-stat-sublabel">Total profile views</p>
-          </div>
-          <div className="dash-stat-card">
-            <p className="dash-stat-label">On Air</p>
+        {/* Control Grid — 2×2 */}
+        <div className="dash-control-grid">
+          {/* On Air */}
+          <div className="dash-ctrl-card">
+            <p className="dash-ctrl-label">On Air</p>
             <OnAirToggle initialPublished={profile?.is_published ?? false} slug={profile?.slug} />
+          </div>
+
+          {/* Status Tags */}
+          <div className="dash-ctrl-card">
+            <p className="dash-ctrl-label">Status Tags</p>
+            <StatusTagPicker
+              initialTags={profile?.status_tags || []}
+              initialColor={profile?.status_tag_color}
+              isPaid={planStatus.isPaid}
+            />
+          </div>
+
+          {/* Views */}
+          <div className="dash-ctrl-card">
+            <p className="dash-ctrl-label">Views</p>
+            <p className="dash-ctrl-value">{analytics.total_views}</p>
+            <p className="dash-ctrl-sublabel">Total profile views</p>
+          </div>
+
+          {/* My URLs */}
+          <div className="dash-ctrl-card">
+            <p className="dash-ctrl-label">My URLs</p>
+            {profile ? (
+              <MyUrlsCard slug={profile.slug} redirectId={profile.redirect_id} />
+            ) : (
+              <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>—</span>
+            )}
           </div>
         </div>
 
@@ -179,63 +193,48 @@ export default async function DashboardPage({
             <span className="dash-nav-arrow">&rarr;</span>
           </a>
 
-          {/* Analytics */}
-          {planStatus.isPaid ? (
-            <a href="/dashboard/analytics" className="dash-nav-card">
+          {/* Analytics + Account side-by-side */}
+          <div className="dash-nav-pair">
+            {planStatus.isPaid ? (
+              <a href="/dashboard/analytics" className="dash-nav-card">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <IconAnalytics />
+                  <div>
+                    <h3 className="dash-nav-title">Analytics</h3>
+                    <p className="dash-nav-desc">
+                      {parseInt(analytics.total_views) > 0
+                        ? `${analytics.total_views} views · Engagement`
+                        : 'View engagement data'}
+                    </p>
+                  </div>
+                </div>
+                <span className="dash-nav-arrow">&rarr;</span>
+              </a>
+            ) : (
+              <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <IconAnalytics />
+                  <div>
+                    <h3 className="dash-nav-title">Analytics</h3>
+                    <p className="dash-nav-desc">Upgrade to unlock</p>
+                  </div>
+                </div>
+                <span className="dash-nav-arrow"><IconLock /></span>
+              </a>
+            )}
+
+            <a href="/dashboard/account" className="dash-nav-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <IconAnalytics />
+                <IconAccount />
                 <div>
-                  <h3 className="dash-nav-title">Analytics</h3>
+                  <h3 className="dash-nav-title">Account</h3>
                   <p className="dash-nav-desc">
-                    {parseInt(analytics.total_views) > 0
-                      ? `${analytics.total_views} total views · Engagement tracking`
-                      : 'View engagement data and link clicks'}
+                    Email, password, billing
                   </p>
                 </div>
               </div>
               <span className="dash-nav-arrow">&rarr;</span>
             </a>
-          ) : (
-            <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <IconAnalytics />
-                <div>
-                  <h3 className="dash-nav-title">Analytics</h3>
-                  <p className="dash-nav-desc">Upgrade to unlock</p>
-                </div>
-              </div>
-              <span className="dash-nav-arrow"><IconLock /></span>
-            </a>
-          )}
-
-          {/* Account */}
-          <a href="/dashboard/account" className="dash-nav-card">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <IconAccount />
-              <div>
-                <h3 className="dash-nav-title">Account Settings</h3>
-                <p className="dash-nav-desc">
-                  Email, password, subscription, billing
-                </p>
-              </div>
-            </div>
-            <span className="dash-nav-arrow">&rarr;</span>
-          </a>
-
-          {/* Status Tags */}
-          <div className="dash-nav-card" style={{ cursor: 'default' }}>
-            <div style={{ width: '100%' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                <IconStatus />
-                <div>
-                  <h3 className="dash-nav-title">Status Tags</h3>
-                  <p className="dash-nav-desc">
-                    Add badges to your public profile
-                  </p>
-                </div>
-              </div>
-              <StatusTagPicker initialTags={profile?.status_tags || []} initialColor={profile?.status_tag_color} isPaid={planStatus.isPaid} />
-            </div>
           </div>
         </div>
       </main>

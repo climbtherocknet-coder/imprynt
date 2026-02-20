@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { THEMES } from '@/lib/themes';
+import { THEMES, getTheme } from '@/lib/themes';
 import PodEditor from '@/components/pods/PodEditor';
 import ProfileTemplate from '@/components/templates/ProfileTemplate';
 import ToggleSwitch from '@/components/ToggleSwitch';
@@ -1220,7 +1220,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
                 return (
                   <button
                     key={t.id}
-                    onClick={() => { setTemplate(t.id); onTemplateChange?.(t.id, accentColor); }}
+                    onClick={() => { setTemplate(t.id); setAccentColor(''); onTemplateChange?.(t.id, ''); }}
                     style={{
                       padding: 0,
                       border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
@@ -1259,47 +1259,56 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
               })}
             </div>
 
-            <label style={labelStyle}>Accent color</label>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', marginTop: '-0.125rem', marginBottom: '0.5rem' }}>
-              Uses the template&apos;s accent by default. Pick a color to override.
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <label style={labelStyle}>Accent color</label>
               <button
-                onClick={() => { setAccentColor(''); onTemplateChange?.(template, ''); }}
+                onClick={() => {
+                  const next = accentColor ? '' : getTheme(template).colors.accent;
+                  setAccentColor(next);
+                  onTemplateChange?.(template, next);
+                }}
                 style={{
-                  height: 28, borderRadius: '9999px', padding: '0 0.625rem',
                   fontSize: '0.6875rem', fontWeight: 500, fontFamily: 'inherit',
-                  border: !accentColor ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
-                  backgroundColor: !accentColor ? 'rgba(232,168,73,0.1)' : 'var(--surface, #161c28)',
-                  color: !accentColor ? 'var(--accent, #e8a849)' : 'var(--text-muted, #5d6370)',
+                  padding: '0.25rem 0.625rem', borderRadius: '9999px', border: '1px solid',
+                  borderColor: accentColor ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
+                  backgroundColor: accentColor ? 'rgba(232,168,73,0.1)' : 'transparent',
+                  color: accentColor ? 'var(--accent, #e8a849)' : 'var(--text-muted, #5d6370)',
                   cursor: 'pointer', transition: 'all 0.15s',
                 }}
               >
-                Theme default
+                {accentColor ? 'Custom' : 'Theme default'}
               </button>
-              {COLOR_PRESETS.map(c => (
-                <button
-                  key={c}
-                  onClick={() => { setAccentColor(c); onTemplateChange?.(template, c); }}
-                  style={{
-                    width: 28, height: 28, borderRadius: '50%',
-                    backgroundColor: c,
-                    border: accentColor === c ? '3px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
-                    cursor: 'pointer', padding: 0,
-                    outline: accentColor === c ? '2px solid var(--bg, #0c1017)' : 'none',
-                    outlineOffset: -3,
-                    transform: accentColor === c ? 'scale(1.1)' : 'scale(1)',
-                    transition: 'transform 0.1s',
-                  }}
-                />
-              ))}
-              <input
-                type="color"
-                value={accentColor || '#e8a849'}
-                onChange={e => { setAccentColor(e.target.value); onTemplateChange?.(template, e.target.value); }}
-                style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-light, #283042)', cursor: 'pointer', padding: 0 }}
-              />
             </div>
+            {accentColor ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
+                {COLOR_PRESETS.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => { setAccentColor(c); onTemplateChange?.(template, c); }}
+                    style={{
+                      width: 28, height: 28, borderRadius: '50%',
+                      backgroundColor: c,
+                      border: accentColor === c ? '3px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                      cursor: 'pointer', padding: 0,
+                      outline: accentColor === c ? '2px solid var(--bg, #0c1017)' : 'none',
+                      outlineOffset: -3,
+                      transform: accentColor === c ? 'scale(1.1)' : 'scale(1)',
+                      transition: 'transform 0.1s',
+                    }}
+                  />
+                ))}
+                <input
+                  type="color"
+                  value={accentColor}
+                  onChange={e => { setAccentColor(e.target.value); onTemplateChange?.(template, e.target.value); }}
+                  style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-light, #283042)', cursor: 'pointer', padding: 0 }}
+                />
+              </div>
+            ) : (
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
+                Using {getTheme(template).name}&apos;s default accent color.
+              </p>
+            )}
           </div>
         </div>
 
@@ -1473,7 +1482,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
                     }}
                     title="Show on portfolio page"
                   >
-                    SHOWCASE
+                    PORTFOLIO
                   </button>
                 </div>
               </div>

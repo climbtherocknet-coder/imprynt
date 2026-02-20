@@ -2,6 +2,7 @@ import React from 'react';
 import '@/styles/profile.css';
 import { getTheme, getThemeCSSVars, getTemplateDataAttrs, getAccentOverrideVars, isDarkTemplate, LINK_ICONS } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
+import SaveContactButton from '@/components/templates/SaveContactButton';
 
 interface ProtectedPagePreviewProps {
   mode: 'personal' | 'portfolio';
@@ -21,6 +22,7 @@ interface ProtectedPagePreviewProps {
   photoPositionX?: number;
   photoPositionY?: number;
   photoAnimation?: string;
+  profileId?: string;
 }
 
 function getPhotoStyles(shape: string, radius: number, size: string, posX: number, posY: number): React.CSSProperties {
@@ -70,6 +72,7 @@ export default function ProtectedPagePreview({
   photoSize = 'medium',
   photoPositionX = 50,
   photoPositionY = 50,
+  profileId,
 }: ProtectedPagePreviewProps) {
   const theme = getTheme(template);
   const accent = accentOverride || theme.colors.accent;
@@ -196,6 +199,13 @@ export default function ProtectedPagePreview({
                 {link.label || link.linkType}
               </a>
             ))}
+          </div>
+        )}
+
+        {/* Save Contact */}
+        {profileId && (
+          <div style={{ marginTop: links.length > 0 ? '1.5rem' : '0' }}>
+            <SaveContactButton profileId={profileId} pinProtected={false} />
           </div>
         )}
 

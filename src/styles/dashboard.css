@@ -13,12 +13,17 @@
 
 /* ── Header ── */
 .dash-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
   padding: 0.75rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border, #1e2535);
   background-color: var(--bg, #0c1017);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .dash-logo {
@@ -155,6 +160,53 @@
 
 .dash-stat-status--draft {
   color: var(--accent, #e8a849);
+}
+
+/* ── Control grid (replaces stats row) ── */
+.dash-control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.dash-ctrl-card {
+  background: var(--surface, #161c28);
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border, #1e2535);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dash-ctrl-label {
+  font-size: 0.6875rem;
+  color: var(--text-muted, #5d6370);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin: 0 0 0.125rem;
+  letter-spacing: 0.08em;
+}
+
+.dash-ctrl-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text, #eceef2);
+}
+
+.dash-ctrl-sublabel {
+  font-size: 0.6875rem;
+  color: var(--text-muted, #5d6370);
+  margin: 0.125rem 0 0;
+}
+
+/* Pair of nav cards side-by-side */
+.dash-nav-pair {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
 }
 
 /* ── Navigation cards ── */
@@ -600,6 +652,14 @@
 /* ── Responsive ── */
 @media (max-width: 640px) {
   .dash-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-control-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-nav-pair {
     grid-template-columns: 1fr;
   }
 

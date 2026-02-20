@@ -19,6 +19,7 @@ export default function HomePage() {
           <div className="lp-nav-links">
             <a href="#compare" className="lp-nav-link hide-m">Why Imprynt</a>
             <a href="#pricing" className="lp-nav-link hide-m">Pricing</a>
+            <Link href="/demo" className="lp-nav-link hide-m">Demo</Link>
             <ThemeToggle />
             <Link href="/login" className="lp-nav-link">Sign in</Link>
             <WaitlistButton className="lp-nav-cta">Join waitlist</WaitlistButton>
