@@ -66,12 +66,12 @@
 .demo-main {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 3rem 2rem 6rem;
+  padding: 3.5rem 3rem 7rem;
 }
 
 /* ── Hero ── */
 .demo-hero {
-  margin-bottom: 2.5rem;
+  margin-bottom: 3rem;
 }
 
 .demo-headline {
@@ -124,7 +124,7 @@
 /* ── Persona selector ── */
 .demo-personas-wrap {
   position: relative;
-  margin-bottom: 2.5rem;
+  margin-bottom: 3.5rem;
 }
 
 .demo-personas {
@@ -147,12 +147,12 @@
 /* ── Persona card ── */
 .demo-persona-card {
   flex-shrink: 0;
-  width: 108px;
+  width: 124px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.75rem 0.5rem 0.625rem;
+  padding: 0.875rem 0.625rem 0.75rem;
   border-radius: 0.875rem;
   border: 2px solid var(--border, #1e2535);
   background: var(--surface, #161c28);
@@ -171,8 +171,8 @@
 
 /* Photo */
 .demo-persona-photo {
-  width: 52px;
-  height: 52px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
@@ -187,8 +187,8 @@
 }
 
 .demo-persona-initials {
-  width: 52px;
-  height: 52px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -235,21 +235,21 @@
 /* ── Split layout ── */
 .demo-split {
   display: flex;
-  gap: 3rem;
+  gap: 4.5rem;
   align-items: flex-start;
 }
 
 /* ── Phone frame ── */
 .demo-phone-wrap {
   flex-shrink: 0;
-  width: 410px;
+  width: 380px;
   height: calc(812px + 24px);
   position: relative;
 }
 
 .demo-phone {
   position: relative;
-  width: 410px;
+  width: 380px;
   height: 812px;
   border-radius: 3rem;
   background: #1a1a1a;
@@ -494,28 +494,29 @@
 
 /* ── Responsive ── */
 @media (max-width: 1024px) {
+  .demo-split { gap: 3rem; }
   .demo-phone {
-    transform: scale(0.75);
+    transform: scale(0.78);
     transform-origin: top left;
   }
   .demo-phone-wrap {
-    width: calc(410px * 0.75);
-    height: calc(812px * 0.75 + 24px);
+    width: calc(380px * 0.78);
+    height: calc(812px * 0.78 + 24px);
     overflow: visible;
   }
 }
 
 @media (max-width: 768px) {
-  .demo-main { padding: 2rem 1.25rem 5rem; }
+  .demo-main { padding: 2rem 1.75rem 5rem; }
   .demo-headline { font-size: 1.75rem; }
-  .demo-split { flex-direction: column; }
+  .demo-split { flex-direction: column; gap: 2.5rem; }
   .demo-phone {
-    transform: scale(0.65);
+    transform: scale(0.62);
     transform-origin: top center;
   }
   .demo-phone-wrap {
     width: 100%;
-    height: calc(812px * 0.65 + 12px);
+    height: calc(812px * 0.62 + 12px);
     display: flex;
     justify-content: center;
     overflow: visible;
@@ -523,12 +524,13 @@
 }
 
 @media (max-width: 480px) {
+  .demo-main { padding: 1.75rem 1.25rem 4rem; }
   .demo-header { padding: 0.75rem 1rem; }
   .demo-phone {
-    transform: scale(0.55);
+    transform: scale(0.5);
     transform-origin: top center;
   }
   .demo-phone-wrap {
-    height: calc(812px * 0.55 + 12px);
+    height: calc(812px * 0.5 + 12px);
   }
 }
