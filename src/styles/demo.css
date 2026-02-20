@@ -243,8 +243,8 @@
 .demo-phone-wrap {
   flex-shrink: 0;
   width: 380px;
-  height: calc(812px + 24px);
   position: relative;
+  overflow: visible; /* never clip the box-shadow */
 }
 
 .demo-phone {
@@ -492,45 +492,82 @@
 
 .demo-cta-btn:hover { background: var(--accent-hover, #f0b85e); }
 
-/* ── Responsive ── */
+/* ── Responsive ──
+   No transform: scale() — direct sizing avoids the layout/shadow clipping
+   issue where transform doesn't affect flow but clips box-shadow.
+   Phone aspect ratio: 380 × 812 ≈ 0.468 : 1
+   ────────────────────────────────────────────────── */
+
 @media (max-width: 1024px) {
-  .demo-split { gap: 3rem; }
+  .demo-split { gap: 2.5rem; }
+
+  .demo-phone-wrap { width: 300px; }
+
   .demo-phone {
-    transform: scale(0.78);
-    transform-origin: top left;
+    width: 300px;
+    height: 641px;
+    border-radius: 2.5rem;
+    padding: 10px;
   }
-  .demo-phone-wrap {
-    width: calc(380px * 0.78);
-    height: calc(812px * 0.78 + 24px);
-    overflow: visible;
+
+  .demo-phone::before {
+    width: 79px;
+    height: 22px;
+    border-radius: 11px;
+    top: 11px;
   }
+
+  .demo-phone-screen { border-radius: 1.875rem; }
+  .demo-phone-loading { border-radius: 1.875rem; }
 }
 
 @media (max-width: 768px) {
   .demo-main { padding: 2rem 1.75rem 5rem; }
   .demo-headline { font-size: 1.75rem; }
   .demo-split { flex-direction: column; gap: 2.5rem; }
-  .demo-phone {
-    transform: scale(0.62);
-    transform-origin: top center;
-  }
+
   .demo-phone-wrap {
     width: 100%;
-    height: calc(812px * 0.62 + 12px);
     display: flex;
     justify-content: center;
-    overflow: visible;
   }
+
+  .demo-phone {
+    width: 260px;
+    height: 555px;
+    border-radius: 2rem;
+    padding: 9px;
+  }
+
+  .demo-phone::before {
+    width: 68px;
+    height: 19px;
+    border-radius: 9px;
+    top: 10px;
+  }
+
+  .demo-phone-screen { border-radius: 1.5rem; }
+  .demo-phone-loading { border-radius: 1.5rem; }
 }
 
 @media (max-width: 480px) {
   .demo-main { padding: 1.75rem 1.25rem 4rem; }
   .demo-header { padding: 0.75rem 1rem; }
+
   .demo-phone {
-    transform: scale(0.5);
-    transform-origin: top center;
+    width: 210px;
+    height: 449px;
+    border-radius: 1.75rem;
+    padding: 7px;
   }
-  .demo-phone-wrap {
-    height: calc(812px * 0.5 + 12px);
+
+  .demo-phone::before {
+    width: 55px;
+    height: 15px;
+    border-radius: 7px;
+    top: 8px;
   }
+
+  .demo-phone-screen { border-radius: 1.25rem; }
+  .demo-phone-loading { border-radius: 1.25rem; }
 }
