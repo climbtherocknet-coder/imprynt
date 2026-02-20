@@ -89,7 +89,7 @@ INSERT INTO profiles (id, user_id, slug, redirect_id, title, company, tagline, b
    'Senior Product Manager', 'Meridian Tech',
    'Building products people love',
    'PM at Meridian Tech with 10+ years shipping B2B SaaS. Previously at Dropbox and HubSpot. I love talking roadmap strategy, user research, and the messy middle of product decisions.',
-   'clean', '#4f46e5', true, 'medium', 'circle', 'none'),
+   'clean', '#3B82F6', true, 'medium', 'circle', 'none'),
 
   -- 2. warm — Sarah Chen
   ('b2000000-0000-0000-0000-000000000002',
@@ -98,7 +98,7 @@ INSERT INTO profiles (id, user_id, slug, redirect_id, title, company, tagline, b
    'Certified Life Coach', 'Inner Growth LLC',
    'Helping you live with intention',
    'I work with high-achievers navigating transitions — career pivots, burnout recovery, and what comes next. 200+ clients across 4 continents. Certified through ICF. Former tech lead turned coach.',
-   'warm', '#d97706', true, 'medium', 'circle', 'none'),
+   'warm', '#c2703e', true, 'medium', 'circle', 'none'),
 
   -- 3. classic — Robert Evans
   ('b2000000-0000-0000-0000-000000000003',
@@ -107,7 +107,7 @@ INSERT INTO profiles (id, user_id, slug, redirect_id, title, company, tagline, b
    'Managing Partner', 'Evans & Partners LLP',
    'Trusted corporate and real estate counsel',
    'Managing Partner at Evans & Partners. Corporate law, M&A, and complex real estate transactions. Former federal prosecutor (SDNY). Admitted NY, NJ, and DC bars. 25 years in practice.',
-   'classic', '#1e40af', true, 'medium', 'circle', 'none'),
+   'classic', '#1e3a5f', true, 'medium', 'circle', 'none'),
 
   -- 4. soft — Emma Patel
   ('b2000000-0000-0000-0000-000000000004',
@@ -116,7 +116,7 @@ INSERT INTO profiles (id, user_id, slug, redirect_id, title, company, tagline, b
    'Portrait & Brand Photographer', NULL,
    'Light, story, connection',
    'Brooklyn-based photographer specializing in portrait and brand work. I shoot the moments between poses — real emotion, real light. Available for editorial, personal branding, and events.',
-   'soft', '#db2777', true, 'medium', 'circle', 'none'),
+   'soft', '#5b8a72', true, 'medium', 'circle', 'none'),
 
   -- 5. midnight — Marcus Knight
   ('b2000000-0000-0000-0000-000000000005',
@@ -125,7 +125,7 @@ INSERT INTO profiles (id, user_id, slug, redirect_id, title, company, tagline, b
    'DJ & Music Producer', 'Night Records',
    'Making rooms move since 2015',
    'Residencies in NYC and Berlin. Deep house, techno, Afrobeats. Available for clubs, events, and private bookings. Studio work and original productions released on Night Records.',
-   'midnight', '#7c3aed', true, 'medium', 'circle', 'none'),
+   'midnight', '#c8ff00', true, 'medium', 'circle', 'none'),
 
   -- 6. editorial — Isabelle Durant
   ('b2000000-0000-0000-0000-000000000006',
@@ -134,7 +134,7 @@ INSERT INTO profiles (id, user_id, slug, redirect_id, title, company, tagline, b
    'Senior Correspondent', 'The Tribune',
    'Reporting what matters',
    'Covering politics, climate policy, and social justice for The Tribune. Bylines in The Atlantic, NYT, and Foreign Affairs. Based in Washington, D.C. Fluent in English and French.',
-   'editorial', '#b45309', true, 'medium', 'circle', 'none'),
+   'editorial', '#b8860b', true, 'medium', 'circle', 'none'),
 
   -- 7. noir — Jake Torres
   ('b2000000-0000-0000-0000-000000000007',
@@ -143,7 +143,7 @@ INSERT INTO profiles (id, user_id, slug, redirect_id, title, company, tagline, b
    'Licensed Private Investigator', 'Torres Consulting',
    'Find what others miss',
    '15 years law enforcement, 8 years private practice. Specializing in forensic interviews, asset investigation, and corporate due diligence. Licensed in NY, NJ, CT. Discretion guaranteed.',
-   'noir', '#374151', true, 'medium', 'circle', 'none'),
+   'noir', '#f5f0e8', true, 'medium', 'circle', 'none'),
 
   -- 8. signal — Nia Williams
   ('b2000000-0000-0000-0000-000000000008',
@@ -152,7 +152,7 @@ INSERT INTO profiles (id, user_id, slug, redirect_id, title, company, tagline, b
    'Senior Cybersecurity Engineer', 'CipherCore',
    'Securing systems, not just screens',
    'Red team ops, threat modeling, zero-trust architecture. OSCP, CISSP certified. Previously: CISA audit team, DARPA contractor. I speak at DEF CON. Open to advisory roles.',
-   'signal', '#059669', true, 'medium', 'circle', 'none'),
+   'signal', '#e8553d', true, 'medium', 'circle', 'none'),
 
   -- 9. studio — Felix Yamamoto
   ('b2000000-0000-0000-0000-000000000009',
@@ -161,7 +161,7 @@ INSERT INTO profiles (id, user_id, slug, redirect_id, title, company, tagline, b
    'Principal Architect', 'Studio FY',
    'Space that shapes experience',
    'Award-winning residential and hospitality architecture across Japan and the Pacific Northwest. Founder of Studio FY. AIA Fellow. Passionate about biophilic design and adaptive reuse.',
-   'studio', '#dc2626', true, 'medium', 'circle', 'none'),
+   'studio', '#8b9cf7', true, 'medium', 'circle', 'none'),
 
   -- 10. dusk — Luna Rivera
   ('b2000000-0000-0000-0000-000000000010',
@@ -170,7 +170,7 @@ INSERT INTO profiles (id, user_id, slug, redirect_id, title, company, tagline, b
    'Yoga & Wellness Coach', 'Bloom Wellness',
    'Breathe. Move. Return to yourself.',
    '500-hour certified yoga instructor. Rooftop vinyasa, sound healing, and one-on-one coaching in LA and online. Founder of Bloom Wellness. Retreats in Tulum and Bali annually.',
-   'dusk', '#7e22ce', true, 'medium', 'circle', 'none');
+   'dusk', '#e8a849', true, 'medium', 'circle', 'none');
 
 -- ─── LINKS ───────────────────────────────────────────────────────────────────
 INSERT INTO links (user_id, profile_id, link_type, label, url, display_order, show_business) VALUES
