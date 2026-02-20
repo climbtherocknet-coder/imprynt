@@ -182,20 +182,24 @@
   display: flex;
   gap: 4.5rem;
   align-items: flex-start;
+  overflow: hidden;
 }
 
 /* ── Phone frame ── */
 .demo-phone-wrap {
   flex-shrink: 0;
   width: 380px;
+  height: fit-content;
   position: relative;
-  overflow: visible; /* never clip the box-shadow */
+  overflow: hidden;
 }
 
 .demo-phone {
   position: relative;
   width: 380px;
-  height: 812px;
+  height: 75vh;
+  max-height: 812px;
+  min-height: 500px;
   border-radius: 3rem;
   background: #1a1a1a;
   padding: 12px;
@@ -424,7 +428,8 @@
 
   .demo-phone {
     width: 300px;
-    height: 641px;
+    height: 65vh;
+    max-height: 641px;
     border-radius: 2.5rem;
     padding: 10px;
   }
