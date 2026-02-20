@@ -89,6 +89,25 @@ const smallBtnStyle: React.CSSProperties = {
   lineHeight: 1,
 };
 
+// ── Upload helper ──────────────────────────────────────
+
+async function uploadPodImage(file: File): Promise<string | null> {
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const res = await fetch('/api/upload/file', { method: 'POST', body: formData });
+    if (!res.ok) {
+      const data = await res.json();
+      console.warn('Upload failed:', data.error);
+      return null;
+    }
+    const data = await res.json();
+    return data.url;
+  } catch {
+    return null;
+  }
+}
+
 // ── Component ──────────────────────────────────────────
 
 export default function PodEditor({ parentType, parentId, isPaid, visibilityMode, onError, onPodsChange }: PodEditorProps) {
@@ -449,14 +468,28 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                   {pod.podType === 'text_image' && (
                     <>
                       <div style={{ marginBottom: '0.625rem' }}>
-                        <label style={labelStyle}>Image URL</label>
-                        <input
-                          type="text"
-                          value={pod.imageUrl}
-                          onChange={e => updatePodField(pod.id, 'imageUrl', e.target.value.slice(0, 500))}
-                          placeholder="https://..."
-                          style={inputStyle}
-                        />
+                        <label style={labelStyle}>Image</label>
+                        <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            value={pod.imageUrl}
+                            onChange={e => updatePodField(pod.id, 'imageUrl', e.target.value.slice(0, 500))}
+                            placeholder="https://... or upload"
+                            style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+                          />
+                          <label
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                          >
+                            Upload
+                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const url = await uploadPodImage(file); if (url) updatePodField(pod.id, 'imageUrl', url); e.target.value = ''; }} />
+                          </label>
+                        </div>
+                        {pod.imageUrl && (
+                          <div style={{ marginTop: '0.375rem', position: 'relative', display: 'inline-block' }}>
+                            <img src={pod.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: 120, borderRadius: '0.375rem', border: '1px solid var(--border, #1e2535)', objectFit: 'cover' }} />
+                            <button type="button" onClick={() => updatePodField(pod.id, 'imageUrl', '')} style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.625rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Remove image">✕</button>
+                          </div>
+                        )}
                       </div>
                       <div style={{ marginBottom: '0.625rem' }}>
                         <label style={labelStyle}>Image position</label>
@@ -625,14 +658,28 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                         />
                       </div>
                       <div style={{ marginBottom: '0.625rem' }}>
-                        <label style={labelStyle}>Image URL</label>
-                        <input
-                          type="text"
-                          value={pod.imageUrl}
-                          onChange={e => updatePodField(pod.id, 'imageUrl', e.target.value.slice(0, 1000))}
-                          placeholder="https://..."
-                          style={inputStyle}
-                        />
+                        <label style={labelStyle}>Image</label>
+                        <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            value={pod.imageUrl}
+                            onChange={e => updatePodField(pod.id, 'imageUrl', e.target.value.slice(0, 1000))}
+                            placeholder="https://... or upload"
+                            style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+                          />
+                          <label
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                          >
+                            Upload
+                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const url = await uploadPodImage(file); if (url) updatePodField(pod.id, 'imageUrl', url); e.target.value = ''; }} />
+                          </label>
+                        </div>
+                        {pod.imageUrl && (
+                          <div style={{ marginTop: '0.375rem', position: 'relative', display: 'inline-block' }}>
+                            <img src={pod.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: 120, borderRadius: '0.375rem', border: '1px solid var(--border, #1e2535)', objectFit: 'cover' }} />
+                            <button type="button" onClick={() => updatePodField(pod.id, 'imageUrl', '')} style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.625rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Remove image">✕</button>
+                          </div>
+                        )}
                       </div>
                     </>
                   )}
@@ -661,14 +708,28 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                         />
                       </div>
                       <div style={{ marginBottom: '0.625rem' }}>
-                        <label style={labelStyle}>Image URL</label>
-                        <input
-                          type="text"
-                          value={pod.imageUrl}
-                          onChange={e => updatePodField(pod.id, 'imageUrl', e.target.value.slice(0, 500))}
-                          placeholder="https://example.com/image.jpg"
-                          style={inputStyle}
-                        />
+                        <label style={labelStyle}>Image</label>
+                        <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            value={pod.imageUrl}
+                            onChange={e => updatePodField(pod.id, 'imageUrl', e.target.value.slice(0, 500))}
+                            placeholder="https://... or upload"
+                            style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+                          />
+                          <label
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                          >
+                            Upload
+                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const url = await uploadPodImage(file); if (url) updatePodField(pod.id, 'imageUrl', url); e.target.value = ''; }} />
+                          </label>
+                        </div>
+                        {pod.imageUrl && (
+                          <div style={{ marginTop: '0.375rem', position: 'relative', display: 'inline-block' }}>
+                            <img src={pod.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: 120, borderRadius: '0.375rem', border: '1px solid var(--border, #1e2535)', objectFit: 'cover' }} />
+                            <button type="button" onClick={() => updatePodField(pod.id, 'imageUrl', '')} style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.625rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Remove image">✕</button>
+                          </div>
+                        )}
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.625rem' }}>
                         <div style={{ flex: '0 0 40%' }}>
