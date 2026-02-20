@@ -89,22 +89,56 @@ const smallBtnStyle: React.CSSProperties = {
   lineHeight: 1,
 };
 
-// ── Upload helper ──────────────────────────────────────
+// ── Upload helpers ─────────────────────────────────────
 
-async function uploadPodImage(file: File): Promise<string | null> {
+async function compressImage(file: File): Promise<File> {
+  if (file.type === 'image/gif') return file;
+  if (file.size < 500 * 1024) return file;
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1920;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width > height) { height = Math.round((height * MAX) / width); width = MAX; }
+          else { width = Math.round((width * MAX) / height); height = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) { resolve(file); return; }
+            resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+          },
+          'image/jpeg', 0.85
+        );
+      };
+      img.src = e.target!.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadPodImage(file: File): Promise<{ url: string } | { error: string }> {
+  const compressed = await compressImage(file);
+  if (compressed.size > 10 * 1024 * 1024) {
+    return { error: 'Image is too large (max 10MB). Try a smaller file.' };
+  }
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', compressed);
   try {
     const res = await fetch('/api/upload/file', { method: 'POST', body: formData });
     if (!res.ok) {
       const data = await res.json();
-      console.warn('Upload failed:', data.error);
-      return null;
+      return { error: data.error || 'Upload failed. Please try again.' };
     }
     const data = await res.json();
-    return data.url;
+    return { url: data.url };
   } catch {
-    return null;
+    return { error: 'Upload failed. Check your connection and try again.' };
   }
 }
 
@@ -116,6 +150,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
   const [podSaving, setPodSaving] = useState<string | null>(null);
   const [podSaved, setPodSaved] = useState<string | null>(null);
   const [fetchingPreview, setFetchingPreview] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<Record<string, string>>({});
 
   const maxPods = parentType === 'profile' ? (isPaid ? 6 : 2) : 6;
   const apiBase = parentType === 'profile' ? '/api/pods' : '/api/protected-pages/pods';
@@ -481,9 +516,12 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                             style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
                           >
                             Upload
-                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const url = await uploadPodImage(file); if (url) updatePodField(pod.id, 'imageUrl', url); e.target.value = ''; }} />
+                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const result = await uploadPodImage(file); if ('url' in result) { updatePodField(pod.id, 'imageUrl', result.url); setUploadError(prev => { const n = { ...prev }; delete n[pod.id]; return n; }); } else { setUploadError(prev => ({ ...prev, [pod.id]: result.error })); } e.target.value = ''; }} />
                           </label>
                         </div>
+                        {uploadError[pod.id] && (
+                          <p style={{ fontSize: '0.75rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{uploadError[pod.id]}</p>
+                        )}
                         {pod.imageUrl && (
                           <div style={{ marginTop: '0.375rem', position: 'relative', display: 'inline-block' }}>
                             <img src={pod.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: 120, borderRadius: '0.375rem', border: '1px solid var(--border, #1e2535)', objectFit: 'cover' }} />
@@ -671,9 +709,12 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                             style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
                           >
                             Upload
-                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const url = await uploadPodImage(file); if (url) updatePodField(pod.id, 'imageUrl', url); e.target.value = ''; }} />
+                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const result = await uploadPodImage(file); if ('url' in result) { updatePodField(pod.id, 'imageUrl', result.url); setUploadError(prev => { const n = { ...prev }; delete n[pod.id]; return n; }); } else { setUploadError(prev => ({ ...prev, [pod.id]: result.error })); } e.target.value = ''; }} />
                           </label>
                         </div>
+                        {uploadError[pod.id] && (
+                          <p style={{ fontSize: '0.75rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{uploadError[pod.id]}</p>
+                        )}
                         {pod.imageUrl && (
                           <div style={{ marginTop: '0.375rem', position: 'relative', display: 'inline-block' }}>
                             <img src={pod.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: 120, borderRadius: '0.375rem', border: '1px solid var(--border, #1e2535)', objectFit: 'cover' }} />
@@ -721,9 +762,12 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                             style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
                           >
                             Upload
-                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const url = await uploadPodImage(file); if (url) updatePodField(pod.id, 'imageUrl', url); e.target.value = ''; }} />
+                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const result = await uploadPodImage(file); if ('url' in result) { updatePodField(pod.id, 'imageUrl', result.url); setUploadError(prev => { const n = { ...prev }; delete n[pod.id]; return n; }); } else { setUploadError(prev => ({ ...prev, [pod.id]: result.error })); } e.target.value = ''; }} />
                           </label>
                         </div>
+                        {uploadError[pod.id] && (
+                          <p style={{ fontSize: '0.75rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{uploadError[pod.id]}</p>
+                        )}
                         {pod.imageUrl && (
                           <div style={{ marginTop: '0.375rem', position: 'relative', display: 'inline-block' }}>
                             <img src={pod.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: 120, borderRadius: '0.375rem', border: '1px solid var(--border, #1e2535)', objectFit: 'cover' }} />
