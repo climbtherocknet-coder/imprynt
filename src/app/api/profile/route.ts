@@ -24,7 +24,7 @@ export async function GET() {
 
   const profileResult = await query(
     `SELECT id, slug, redirect_id, title, company, tagline, bio_heading, bio,
-            photo_url, template, primary_color, accent_color, font_pair, link_display, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback, show_qr_button, photo_shape, photo_radius, photo_size, photo_position_x, photo_position_y, photo_animation, photo_align
+            photo_url, template, primary_color, accent_color, font_pair, link_display, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback, show_qr_button, photo_shape, photo_radius, photo_size, photo_position_x, photo_position_y, photo_animation
      FROM profiles WHERE user_id = $1`,
     [userId]
   );
@@ -39,6 +39,13 @@ export async function GET() {
     const pinResult = await query('SELECT vcard_pin_hash FROM profiles WHERE id = $1', [profile.id]);
     vcardPinHash = pinResult.rows[0]?.vcard_pin_hash || null;
   } catch { /* column doesn't exist yet */ }
+
+  // Fetch photo_align separately (migration 035 may not be run yet)
+  let photoAlign = 'left';
+  try {
+    const alignResult = await query('SELECT photo_align FROM profiles WHERE id = $1', [profile.id]);
+    photoAlign = alignResult.rows[0]?.photo_align || 'left';
+  } catch { /* column doesn't exist yet — default to left */ }
 
   const linksResult = await query(
     `SELECT id, link_type, label, url, display_order, show_business, show_personal, show_showcase
@@ -83,7 +90,7 @@ export async function GET() {
       photoPositionX: profile.photo_position_x ?? 50,
       photoPositionY: profile.photo_position_y ?? 50,
       photoAnimation: profile.photo_animation || 'none',
-      photoAlign: profile.photo_align || 'left',
+      photoAlign,
       vcardPinEnabled: !!vcardPinHash,
     },
     links: linksResult.rows.map((l: Record<string, unknown>) => ({
@@ -196,12 +203,17 @@ export async function PUT(req: NextRequest) {
           photo_size = COALESCE($8, photo_size),
           photo_position_x = COALESCE($9, photo_position_x),
           photo_position_y = COALESCE($10, photo_position_y),
-          photo_animation = COALESCE($11, photo_animation),
-          photo_align = COALESCE($13, photo_align)
+          photo_animation = COALESCE($11, photo_animation)
          WHERE user_id = $5`,
         [template, primaryColor, accentVal === null ? '__clear__' : accentColor, fontPair, userId,
-         shapeVal, radiusVal, sizeVal, posX, posY, animVal, displayVal, alignVal]
+         shapeVal, radiusVal, sizeVal, posX, posY, animVal, displayVal]
       );
+      // photo_align requires migration 035 — update separately so saves don't fail before migration
+      if (alignVal) {
+        try {
+          await query('UPDATE profiles SET photo_align = $1 WHERE user_id = $2', [alignVal, userId]);
+        } catch { /* column doesn't exist yet */ }
+      }
     } else if (section === 'statusTags') {
       const { statusTags } = body;
       const presetSlugs = ['open_to_network', 'open_to_work', 'hiring', 'open_to_collaborate', 'consulting', 'mentoring'];
@@ -308,8 +320,7 @@ export async function PUT(req: NextRequest) {
           photo_size = COALESCE($11, photo_size),
           photo_position_x = COALESCE($12, photo_position_x),
           photo_position_y = COALESCE($13, photo_position_y),
-          photo_animation = COALESCE($14, photo_animation),
-          photo_align = COALESCE($16, photo_align)
+          photo_animation = COALESCE($14, photo_animation)
          WHERE user_id = $8`,
         [
           title?.trim()?.slice(0, 100) || null,
@@ -321,9 +332,15 @@ export async function PUT(req: NextRequest) {
           fontPair,
           userId,
           shapeVal, radiusVal, sizeVal, posX, posY, animVal,
-          displayValP, alignVal,
+          displayValP,
         ]
       );
+      // photo_align requires migration 035 — update separately so saves don't fail before migration
+      if (alignVal) {
+        try {
+          await query('UPDATE profiles SET photo_align = $1 WHERE user_id = $2', [alignVal, userId]);
+        } catch { /* column doesn't exist yet */ }
+      }
     } else if (section === 'vcardPin') {
       const { vcardPin } = body;
       if (vcardPin === null || vcardPin === '') {

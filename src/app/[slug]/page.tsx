@@ -100,7 +100,7 @@ async function getProfileAny(slug: string) {
   const result = await query(
     `SELECT p.id as profile_id, p.user_id, u.first_name, u.last_name, p.title, p.company,
             p.tagline, p.bio_heading, p.bio, p.photo_url, p.template,
-            p.primary_color, p.accent_color, p.font_pair, p.link_display, u.plan, p.status_tags, p.is_published, p.allow_sharing, p.allow_feedback, p.show_qr_button, p.status_tag_color, p.photo_shape, p.photo_radius, p.photo_size, p.photo_position_x, p.photo_position_y, p.photo_animation, p.photo_align
+            p.primary_color, p.accent_color, p.font_pair, p.link_display, u.plan, p.status_tags, p.is_published, p.allow_sharing, p.allow_feedback, p.show_qr_button, p.status_tag_color, p.photo_shape, p.photo_radius, p.photo_size, p.photo_position_x, p.photo_position_y, p.photo_animation
      FROM profiles p
      JOIN users u ON u.id = p.user_id
      WHERE p.slug = $1 AND u.account_status = 'active'`,
@@ -113,6 +113,11 @@ async function getProfileAny(slug: string) {
       const pinResult = await query('SELECT vcard_pin_hash FROM profiles WHERE id = $1', [profile.profile_id]);
       profile.vcard_pin_hash = pinResult.rows[0]?.vcard_pin_hash || null;
     } catch { profile.vcard_pin_hash = null; }
+    // Fetch photo_align separately (migration 035 may not be run yet)
+    try {
+      const alignResult = await query('SELECT photo_align FROM profiles WHERE id = $1', [profile.profile_id]);
+      profile.photo_align = alignResult.rows[0]?.photo_align || 'left';
+    } catch { profile.photo_align = 'left'; }
   }
   return profile;
 }
