@@ -43,22 +43,31 @@ export default function HeroPhone() {
     <>
       <div className="lp-phone">
         <div className="lp-phone-screen">
-          <iframe
-            key={currentIndex}
-            src={`/${DEMO_SLUGS[currentIndex]}`}
-            title="Live Imprynt profile preview"
-            tabIndex={-1}
-            sandbox="allow-same-origin allow-scripts"
-            style={{
-              width: '100%',
-              height: '100%',
-              border: 'none',
-              display: 'block',
-              opacity: fading ? 0 : 1,
-              transition: 'opacity 0.3s ease',
-              pointerEvents: 'none',
-            }}
-          />
+          {/*
+            Scale wrapper: renders iframe at 375px mobile width then scales
+            it down to fill the 256px screen container (scale = 256/375 ≈ 0.683).
+            Opacity lives on the wrapper (not the iframe) so the transition
+            survives the key-based iframe remount on profile switch.
+          */}
+          <div
+            className="lp-phone-iframe-scale"
+            style={{ opacity: fading ? 0 : 1, transition: 'opacity 0.3s ease' }}
+          >
+            <iframe
+              key={currentIndex}
+              src={`/${DEMO_SLUGS[currentIndex]}`}
+              title="Live Imprynt profile preview"
+              tabIndex={-1}
+              sandbox="allow-same-origin allow-scripts"
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                display: 'block',
+                pointerEvents: 'none',
+              }}
+            />
+          </div>
           {/* Overlay — catches clicks, links to /demo */}
           <a
             href="/demo"

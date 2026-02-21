@@ -326,6 +326,29 @@
   position: relative;
 }
 
+/*
+  Scale wrapper: iframe renders at 375px (real mobile viewport) and is
+  scaled down by 256/375 ≈ 0.683 to fill the 256px phone-screen container.
+  transform-origin: top left keeps it flush with the top-left corner.
+  Width/height are the unscaled real dimensions; transform shrinks the visual.
+*/
+.lp-phone-iframe-scale {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 375px;
+  height: 800px;
+  transform: scale(0.683);
+  transform-origin: top left;
+}
+
+.lp-phone-iframe-scale iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
 /* Overlay link — covers iframe so clicks go to /demo */
 .lp-phone-link {
   position: absolute;
