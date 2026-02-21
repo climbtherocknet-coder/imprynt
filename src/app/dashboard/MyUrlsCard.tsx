@@ -182,7 +182,7 @@ export default function MyUrlsCard({ slug: initialSlug, redirectId }: Props) {
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text, #eceef2)' }}>
-                My URLs
+                My Links
               </h3>
               <button
                 onClick={() => setOpen(false)}

@@ -3,14 +3,12 @@ import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
 import { getPlanStatus } from '@/lib/plan';
 import SignOutButton from './SignOutButton';
-import StatusTagPicker from './StatusTagPicker';
+import DashboardOnAir from './DashboardOnAir';
 import MyUrlsCard from './MyUrlsCard';
-import OnAirToggle from '@/components/OnAirToggle';
 import ThemeToggle from '@/components/ThemeToggle';
 import CheckoutToast from './CheckoutToast';
 import VerificationBanner from './VerificationBanner';
 import DashboardPreview from './DashboardPreview';
-import Breadcrumbs from '@/components/Breadcrumbs';
 import '@/styles/dashboard.css';
 
 interface ProfileRow {
@@ -70,6 +68,13 @@ function IconLock() {
   );
 }
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -87,7 +92,7 @@ export default async function DashboardPage({
 
   // Gate: redirect to setup if not completed
   const userCheck = await query(
-    'SELECT setup_completed, email_verified, plan, trial_started_at, trial_ends_at FROM users WHERE id = $1',
+    'SELECT setup_completed, email_verified, plan, trial_started_at, trial_ends_at, first_name FROM users WHERE id = $1',
     [userId]
   );
   if (!userCheck.rows[0]?.setup_completed) {
@@ -95,6 +100,7 @@ export default async function DashboardPage({
   }
   const emailVerified = !!userCheck.rows[0]?.email_verified;
   const planStatus = getPlanStatus(userCheck.rows[0]);
+  const firstName = userCheck.rows[0]?.first_name || session.user.name?.split(' ')[0] || '';
 
   // Fetch profile
   const profileResult = await query(
@@ -136,6 +142,8 @@ export default async function DashboardPage({
     }
   } catch { /* protected_pages table may not exist yet */ }
 
+  const viewCount = parseInt(analytics.total_views);
+
   return (
     <div className="dash-page">
       {/* Header */}
@@ -161,107 +169,93 @@ export default async function DashboardPage({
       {checkoutStatus && <CheckoutToast status={checkoutStatus} />}
 
       <main className="dash-main">
-        <Breadcrumbs items={[{ label: 'Dashboard' }]} />
         {!emailVerified && <VerificationBanner email={session.user.email || ''} />}
+
+        {/* Welcome header */}
+        <div className="dash-welcome">
+          <h1 className="dash-welcome-greeting">{getGreeting()}, {firstName}.</h1>
+          <p className="dash-welcome-views">
+            {viewCount > 0
+              ? `${analytics.total_views} profile view${viewCount !== 1 ? 's' : ''}`
+              : 'No profile views yet'}
+          </p>
+        </div>
 
         <div className="dash-split">
           {/* Left column — controls + nav */}
           <div className="dash-left">
-            {/* Control Grid — 2×2 */}
-            <div className="dash-control-grid">
-              {/* On Air */}
-              <div className="dash-ctrl-card">
-                <p className="dash-ctrl-label">On Air</p>
-                <OnAirToggle initialPublished={profile?.is_published ?? false} slug={profile?.slug} />
-              </div>
+            {/* On Air + Status consolidated */}
+            <DashboardOnAir
+              initialPublished={profile?.is_published ?? false}
+              slug={profile?.slug}
+              initialTags={profile?.status_tags || []}
+              initialColor={profile?.status_tag_color}
+              isPaid={planStatus.isPaid}
+            />
 
-              {/* Status Tags */}
-              <div className="dash-ctrl-card">
-                <p className="dash-ctrl-label">Status Tags</p>
-                <StatusTagPicker
-                  initialTags={profile?.status_tags || []}
-                  initialColor={profile?.status_tag_color}
-                  isPaid={planStatus.isPaid}
-                />
-              </div>
-
-              {/* Views */}
-              <div className="dash-ctrl-card">
-                <p className="dash-ctrl-label">Views</p>
-                <p className="dash-ctrl-value">{analytics.total_views}</p>
-                <p className="dash-ctrl-sublabel">Total profile views</p>
-              </div>
-
-              {/* My URLs */}
-              <div className="dash-ctrl-card">
-                <p className="dash-ctrl-label">My URLs</p>
-                {profile ? (
-                  <MyUrlsCard slug={profile.slug} redirectId={profile.redirect_id} />
-                ) : (
-                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>—</span>
-                )}
-              </div>
+            {/* My Links */}
+            <div className="dash-card">
+              <span className="dash-card-label">MY LINKS</span>
+              {profile ? (
+                <MyUrlsCard slug={profile.slug} redirectId={profile.redirect_id} />
+              ) : (
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
+                  Set up your profile to get your links.
+                </p>
+              )}
             </div>
 
-            {/* Navigation Cards */}
-            <div className="dash-nav-list">
-              {/* My Page — hero card, full width */}
-              <a href="/dashboard/page-editor" className="dash-nav-card dash-nav-card--hero">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {/* Navigation — 3-column grid */}
+            <div className="dash-nav-grid">
+              <a href="/dashboard/page-editor" className="dash-nav-card">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                   <IconMyPage />
-                  <div>
-                    <h3 className="dash-nav-title">My Page</h3>
-                    <p className="dash-nav-desc">
-                      Edit your profile, personal page, and portfolio.
-                    </p>
-                  </div>
+                  <span className="dash-nav-arrow">&rarr;</span>
                 </div>
-                <span className="dash-nav-arrow">&rarr;</span>
+                <div>
+                  <h3 className="dash-nav-title">My Page</h3>
+                  <p className="dash-nav-desc">Edit profile, pages, portfolio</p>
+                </div>
               </a>
 
-              {/* Analytics + Account side-by-side */}
-              <div className="dash-nav-pair">
-                {planStatus.isPaid ? (
-                  <a href="/dashboard/analytics" className="dash-nav-card">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <IconAnalytics />
-                      <div>
-                        <h3 className="dash-nav-title">Analytics</h3>
-                        <p className="dash-nav-desc">
-                          {parseInt(analytics.total_views) > 0
-                            ? `${analytics.total_views} views · Engagement`
-                            : 'View engagement data'}
-                        </p>
-                      </div>
-                    </div>
+              {planStatus.isPaid ? (
+                <a href="/dashboard/analytics" className="dash-nav-card">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                    <IconAnalytics />
                     <span className="dash-nav-arrow">&rarr;</span>
-                  </a>
-                ) : (
-                  <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <IconAnalytics />
-                      <div>
-                        <h3 className="dash-nav-title">Analytics</h3>
-                        <p className="dash-nav-desc">Upgrade to unlock</p>
-                      </div>
-                    </div>
-                    <span className="dash-nav-arrow"><IconLock /></span>
-                  </a>
-                )}
-
-                <a href="/dashboard/account" className="dash-nav-card">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <IconAccount />
-                    <div>
-                      <h3 className="dash-nav-title">Account</h3>
-                      <p className="dash-nav-desc">
-                        Email, password, billing
-                      </p>
-                    </div>
                   </div>
-                  <span className="dash-nav-arrow">&rarr;</span>
+                  <div>
+                    <h3 className="dash-nav-title">Analytics</h3>
+                    <p className="dash-nav-desc">
+                      {viewCount > 0
+                        ? `${analytics.total_views} views`
+                        : 'View engagement data'}
+                    </p>
+                  </div>
                 </a>
-              </div>
+              ) : (
+                <a href="/dashboard/account#upgrade" className="dash-nav-card dash-nav-card--locked">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                    <IconAnalytics />
+                    <span className="dash-nav-arrow"><IconLock /></span>
+                  </div>
+                  <div>
+                    <h3 className="dash-nav-title">Analytics</h3>
+                    <p className="dash-nav-desc">Upgrade to unlock</p>
+                  </div>
+                </a>
+              )}
+
+              <a href="/dashboard/account" className="dash-nav-card">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  <IconAccount />
+                  <span className="dash-nav-arrow">&rarr;</span>
+                </div>
+                <div>
+                  <h3 className="dash-nav-title">Account</h3>
+                  <p className="dash-nav-desc">Email, password, billing</p>
+                </div>
+              </a>
             </div>
           </div>
 
@@ -269,24 +263,27 @@ export default async function DashboardPage({
           {profile && (
             <div className="dash-preview">
               <div className="dash-pin-status">
-                <div className="dash-pin-row">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <a href="/dashboard/page-editor?tab=personal" className="dash-pin-link">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ color: personalIconColor || 'var(--accent, #e8a849)', flexShrink: 0 }}>
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" fill="none"/>
+                    <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
                   </svg>
                   <span>Personal</span>
                   <span className={`dash-pin-badge ${personalPinSet ? 'dash-pin-badge--set' : ''}`}>
                     {personalPinSet ? 'PIN set' : 'No PIN'}
                   </span>
-                </div>
-                <div className="dash-pin-row">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                </a>
+                <a href="/dashboard/page-editor?tab=portfolio" className="dash-pin-link">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ flexShrink: 0 }}>
                     <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                   </svg>
                   <span>Portfolio</span>
                   <span className={`dash-pin-badge ${portfolioPinSet ? 'dash-pin-badge--set' : ''}`}>
                     {portfolioPinSet ? 'PIN set' : 'No PIN'}
                   </span>
-                </div>
+                </a>
               </div>
               <div className="dash-phone">
                 <div className="dash-phone-screen">

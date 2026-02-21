@@ -5,9 +5,11 @@ import { useState } from 'react';
 interface Props {
   initialPublished: boolean;
   slug?: string;
+  onToggle?: (published: boolean) => void;
+  minimal?: boolean;
 }
 
-export default function OnAirToggle({ initialPublished, slug }: Props) {
+export default function OnAirToggle({ initialPublished, slug, onToggle, minimal }: Props) {
   const [published, setPublished] = useState(initialPublished);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -24,6 +26,7 @@ export default function OnAirToggle({ initialPublished, slug }: Props) {
       if (res.ok) {
         const data = await res.json();
         setPublished(data.isPublished);
+        onToggle?.(data.isPublished);
         setMessage(data.isPublished ? 'Your profile is now live' : 'Your profile is now off air');
         setTimeout(() => setMessage(''), 2500);
       }
@@ -32,6 +35,44 @@ export default function OnAirToggle({ initialPublished, slug }: Props) {
     } finally {
       setLoading(false);
     }
+  }
+
+  const toggleSwitch = (
+    <button
+      onClick={toggle}
+      disabled={loading}
+      aria-label={published ? 'Take profile off air' : 'Put profile on air'}
+      style={{
+        position: 'relative',
+        width: 36,
+        height: 20,
+        borderRadius: 10,
+        border: 'none',
+        cursor: loading ? 'wait' : 'pointer',
+        backgroundColor: published ? '#22c55e' : 'var(--border-light, #283042)',
+        transition: 'background-color 0.2s',
+        padding: 0,
+        flexShrink: 0,
+      }}
+    >
+      <span
+        style={{
+          position: 'absolute',
+          top: 2,
+          left: published ? 18 : 2,
+          width: 16,
+          height: 16,
+          borderRadius: '50%',
+          backgroundColor: '#fff',
+          transition: 'left 0.2s',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+        }}
+      />
+    </button>
+  );
+
+  if (minimal) {
+    return toggleSwitch;
   }
 
   return (
@@ -62,38 +103,7 @@ export default function OnAirToggle({ initialPublished, slug }: Props) {
           {published ? 'On Air' : 'Off Air'}
         </span>
 
-        {/* Toggle switch */}
-        <button
-          onClick={toggle}
-          disabled={loading}
-          aria-label={published ? 'Take profile off air' : 'Put profile on air'}
-          style={{
-            position: 'relative',
-            width: 36,
-            height: 20,
-            borderRadius: 10,
-            border: 'none',
-            cursor: loading ? 'wait' : 'pointer',
-            backgroundColor: published ? '#22c55e' : 'var(--border-light, #283042)',
-            transition: 'background-color 0.2s',
-            padding: 0,
-            flexShrink: 0,
-          }}
-        >
-          <span
-            style={{
-              position: 'absolute',
-              top: 2,
-              left: published ? 18 : 2,
-              width: 16,
-              height: 16,
-              borderRadius: '50%',
-              backgroundColor: '#fff',
-              transition: 'left 0.2s',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-            }}
-          />
-        </button>
+        {toggleSwitch}
 
         {/* View live profile link */}
         {published && slug && (
