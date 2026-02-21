@@ -403,8 +403,8 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
         <div style={{ marginBottom: '1.25rem', padding: '1.25rem', backgroundColor: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
             {/* Impression icon visual */}
-            <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: '50%', border: `1.5px solid ${iconColor || 'var(--text-muted, #5d6370)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.6, marginTop: 2 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: iconColor || 'var(--text-muted, #5d6370)' }} />
+            <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: '50%', border: `1.5px solid ${iconColor || currentAccentColor || 'var(--accent, #e8a849)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.6, marginTop: 2 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: iconColor || currentAccentColor || 'var(--accent, #e8a849)' }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text, #eceef2)' }}>
@@ -437,8 +437,8 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
             onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent, #e8a849)'}
             onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border, #1e2535)'}
           >
-            <div style={{ width: 24, height: 24, borderRadius: '50%', border: `1.5px solid ${iconColor || 'var(--accent, #e8a849)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: iconColor || 'var(--accent, #e8a849)' }} />
+            <div style={{ width: 24, height: 24, borderRadius: '50%', border: `1.5px solid ${iconColor || currentAccentColor || 'var(--accent, #e8a849)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: iconColor || currentAccentColor || 'var(--accent, #e8a849)' }} />
             </div>
             <div>
               <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text, #eceef2)', display: 'block' }}>{!isNew ? 'Change PIN' : 'Set PIN'}</span>
