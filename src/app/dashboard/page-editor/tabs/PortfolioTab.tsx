@@ -107,6 +107,13 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
   const [isNew, setIsNew] = useState(true);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
 
+  // PIN modal state
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [modalPin, setModalPin] = useState('');
+  const [modalPinConfirm, setModalPinConfirm] = useState('');
+  const [modalPinError, setModalPinError] = useState('');
+  const [pinDirty, setPinDirty] = useState(false);
+
   // Profile data for preview
   const [profileData, setProfileData] = useState<{
     firstName: string; lastName: string; photoUrl: string;
@@ -345,17 +352,6 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
       <div className="editor-split">
       <main className="editor-panel" style={{ paddingBottom: '4rem' }}>
 
-        {/* ─── Sticky Save Bar ─────────────────────── */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'var(--bg, #0c1017)', padding: '0.75rem 0', borderBottom: '1px solid var(--border, #1e2535)', marginBottom: '1rem' }}>
-          <button
-            onClick={savePage}
-            disabled={saving}
-            style={{ ...saveBtnStyle, opacity: saving ? 0.6 : 1, width: '100%' }}
-          >
-            {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Portfolio' : 'Save Changes'}
-          </button>
-        </div>
-
         {/* ─── Info Box ────────────────────────────── */}
         <div style={{ marginBottom: '1.25rem', padding: '1rem 1.25rem', backgroundColor: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
           <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 0.375rem', color: 'var(--text, #eceef2)' }}>
@@ -364,6 +360,54 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
             A PIN-protected page for selective sharing — client work, investor decks, project galleries, or anything you want to gate behind a PIN.
           </p>
+        </div>
+
+        {/* ─── On Air + PIN/Save Control Cards ─────── */}
+        <div className="page-controls" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
+          {/* On Air Card */}
+          <div style={{ background: 'var(--surface, #161c28)', border: '1px solid var(--border, #1e2535)', borderRadius: '0.75rem', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: isNew ? 'var(--text-muted, #5d6370)' : isActive ? '#22c55e' : 'var(--text-muted, #5d6370)', flexShrink: 0 }} />
+              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text, #eceef2)' }}>On Air</span>
+            </div>
+            {isNew ? (
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>Create your page first</p>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <ToggleSwitch checked={isActive} onChange={setIsActive} label="" />
+                {slug && (
+                  <a href={`/${slug}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--accent, #e8a849)', textDecoration: 'none' }}>
+                    View Page →
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* PIN / Save Card */}
+          <div style={{ background: 'var(--surface, #161c28)', border: '1px solid var(--border, #1e2535)', borderRadius: '0.75rem', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-mid, #a8adb8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text, #eceef2)' }}>
+                  PIN: {isNew ? <span style={{ color: 'var(--text-muted, #5d6370)', fontWeight: 400 }}>Not set</span> : pinDirty ? '•'.repeat(pin.length || 4) : '••••'}
+                </span>
+              </div>
+              {!isNew && (
+                <button onClick={() => { setModalPin(''); setModalPinConfirm(''); setModalPinError(''); setShowPinModal(true); }}
+                  style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent, #e8a849)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+                  Change
+                </button>
+              )}
+            </div>
+            <button
+              onClick={savePage}
+              disabled={saving}
+              style={{ ...saveBtnStyle, borderRadius: '0.5rem', color: '#fff', opacity: saving ? 0.6 : 1, width: '100%' }}
+            >
+              {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Portfolio' : 'Save Changes'}
+            </button>
+          </div>
         </div>
 
         {/* ─── Always-visible: Page title + button label ── */}
@@ -443,14 +487,6 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
               </div>
             )}
           </div>
-          {!isNew && (
-            <ToggleSwitch
-              checked={showResume}
-              onChange={setShowResume}
-              label="Show resume on page"
-              description="Display a resume download button on your portfolio page."
-            />
-          )}
         </CollapsibleSection>
 
         {/* ─── Content Blocks (only after created) ─── */}
@@ -470,55 +506,54 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
         {/* ─── Privacy & Security ──────────────────── */}
         <CollapsibleSection title="Privacy & Security">
           {!isNew && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1rem' }}>
-              <ToggleSwitch
-                checked={isActive}
-                onChange={setIsActive}
-                label="Show button on profile"
-                description="Displays your Portfolio button on your public profile page."
-              />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               <ToggleSwitch
                 checked={allowRemember}
                 onChange={setAllowRemember}
                 label="Allow visitors to remember access"
                 description="Lets visitors skip the PIN on return visits."
               />
+              <ToggleSwitch
+                checked={showResume}
+                onChange={setShowResume}
+                label="Show resume on page"
+                description="Display a resume download button on your portfolio page."
+              />
             </div>
           )}
-
-          <div style={{ borderTop: isNew ? 'none' : '1px solid var(--border, #1e2535)', paddingTop: isNew ? 0 : '0.875rem' }}>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
-              {isNew
-                ? 'Choose a 4-6 digit PIN. Share it with people you want to see your work.'
-                : 'Leave blank to keep your current PIN.'}
-            </p>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>{isNew ? 'PIN' : 'New PIN'}</label>
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={pin}
-                  onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder={isNew ? '••••' : 'Leave blank to keep'}
-                  style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center' }}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Confirm PIN</label>
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={pinConfirm}
-                  onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="••••"
-                  style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center' }}
-                />
+          {isNew && (
+            <div>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
+                Choose a 4-6 digit PIN. Share it with people you want to see your work.
+              </p>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>PIN</label>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={pin}
+                    onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="••••"
+                    style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center' }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>Confirm PIN</label>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={pinConfirm}
+                    onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="••••"
+                    style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center' }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </CollapsibleSection>
 
       </main>
@@ -533,6 +568,51 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
         </div>
       </aside>
       </div>
+
+      {/* ─── PIN Change Modal ────────────────────────── */}
+      {showPinModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 300, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={() => setShowPinModal(false)}>
+          <div style={{ background: 'var(--surface, #161c28)', border: '1px solid var(--border, #1e2535)', borderRadius: '1rem', padding: '2rem', width: '100%', maxWidth: 360 }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text, #eceef2)', margin: '0 0 1.25rem', textAlign: 'center' }}>Change Your PIN</h3>
+            {modalPinError && (
+              <p style={{ fontSize: '0.8125rem', color: '#f87171', marginBottom: '0.75rem', textAlign: 'center' }}>{modalPinError}</p>
+            )}
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={labelStyle}>Enter PIN</label>
+              <input
+                type="text" inputMode="numeric" maxLength={6} value={modalPin}
+                onChange={e => { setModalPin(e.target.value.replace(/\D/g, '').slice(0, 6)); setModalPinError(''); }}
+                placeholder="• • • •"
+                style={{ ...inputStyle, letterSpacing: '0.5em', textAlign: 'center', fontFamily: 'ui-monospace, SFMono-Regular, monospace', fontSize: '1.25rem', fontWeight: 700, padding: '0.75rem' }}
+                autoFocus
+              />
+            </div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={labelStyle}>Confirm PIN</label>
+              <input
+                type="text" inputMode="numeric" maxLength={6} value={modalPinConfirm}
+                onChange={e => { setModalPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6)); setModalPinError(''); }}
+                placeholder="• • • •"
+                style={{ ...inputStyle, letterSpacing: '0.5em', textAlign: 'center', fontFamily: 'ui-monospace, SFMono-Regular, monospace', fontSize: '1.25rem', fontWeight: 700, padding: '0.75rem' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button onClick={() => setShowPinModal(false)}
+                style={{ flex: 1, padding: '0.625rem', borderRadius: '0.5rem', border: '1px solid var(--border-light, #283042)', background: 'transparent', color: 'var(--text-mid, #a8adb8)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Cancel
+              </button>
+              <button onClick={() => {
+                if (modalPin.length < 4 || modalPin.length > 6) { setModalPinError('PIN must be 4-6 digits'); return; }
+                if (modalPin !== modalPinConfirm) { setModalPinError('PINs don\'t match'); return; }
+                setPin(modalPin); setPinConfirm(modalPin); setPinDirty(true); setShowPinModal(false);
+              }}
+                style={{ flex: 1, padding: '0.625rem', borderRadius: '0.5rem', border: 'none', backgroundColor: 'var(--accent, #e8a849)', color: '#fff', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Save PIN
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── Mobile Preview Button ──────────────────── */}
       <button

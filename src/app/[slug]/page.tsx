@@ -367,7 +367,6 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         photoAlign={profile.photo_align || 'left'}
         vcardPinEnabled={!!profile.vcard_pin_hash}
         customTheme={profile.template === 'custom' ? (profile.custom_theme || undefined) : undefined}
-        photoPosition={profile.photo_position !== null ? profile.photo_position : undefined}
         coverUrl={profile.cover_url || undefined}
         coverPositionY={profile.cover_position_y ?? 50}
         coverOpacity={profile.cover_opacity ?? 70}

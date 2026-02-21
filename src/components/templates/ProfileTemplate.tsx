@@ -32,7 +32,6 @@ export interface ProfileTemplateProps {
   photoPositionX?: number;
   photoPositionY?: number;
   photoAnimation?: string;
-  photoPosition?: number; // 0-100 slider (new); zones: 0-33=left, 34-66=center, 67-100=right
   vcardPinEnabled?: boolean;
   accentColor?: string;
   linkDisplay?: string;
@@ -60,13 +59,6 @@ function getLinkTarget(linkType: string) {
   return ['email', 'phone'].includes(linkType) ? undefined : '_blank';
 }
 
-// Derive left/center/right from a 0-100 numeric position
-function getPhotoAlignFromPosition(pos: number): string {
-  if (pos <= 33) return 'left';
-  if (pos <= 66) return 'center';
-  return 'right';
-}
-
 export default function ProfileTemplate({
   profileId,
   template,
@@ -87,7 +79,6 @@ export default function ProfileTemplate({
   photoPositionX,
   photoPositionY,
   photoAnimation,
-  photoPosition,
   vcardPinEnabled = false,
   accentColor,
   linkDisplay = 'default',
@@ -112,15 +103,9 @@ export default function ProfileTemplate({
   if (photoAnimation && photoAnimation !== 'none') {
     dataAttrs['data-photo-anim'] = photoAnimation;
   }
-  // Derive effective photo alignment: numeric position takes priority over string align
-  const effectivePhotoAlign = photoPosition !== undefined
-    ? getPhotoAlignFromPosition(photoPosition)
-    : (photoAlign || 'left');
-  if (effectivePhotoAlign === 'right') {
-    dataAttrs['data-photo-align'] = 'right';
-  } else if (effectivePhotoAlign === 'center') {
-    dataAttrs['data-photo-align'] = 'center';
-  }
+  // Always set data-photo-align so CSS rules apply consistently
+  const effectivePhotoAlign = photoAlign || 'left';
+  dataAttrs['data-photo-align'] = effectivePhotoAlign;
   const googleFontsUrl = getGoogleFontsUrl(theme);
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
   const subtitle = [title, company].filter(Boolean).join(' · ');

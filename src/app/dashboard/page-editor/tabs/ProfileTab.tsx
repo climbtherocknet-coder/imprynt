@@ -75,7 +75,6 @@ interface ProfileData {
     bgImageUrl: string | null;
     bgImageOpacity: number;
     bgImagePositionY: number;
-    photoPosition: number | null;
   };
   links: LinkItem[];
 }
@@ -199,7 +198,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
   const [photoPositionY, setPhotoPositionY] = useState(50);
   const [photoAnimation, setPhotoAnimation] = useState('none');
   const [photoAlign, setPhotoAlign] = useState('left');
-  const [photoPosition, setPhotoPosition] = useState(0); // 0-100 slider
   const [customTheme, setCustomTheme] = useState<CustomThemeData>({});
   const [previewKey, setPreviewKey] = useState(0);
   const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
@@ -291,9 +289,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
         setPhotoPositionY(d.profile.photoPositionY ?? 50);
         setPhotoAnimation(d.profile.photoAnimation || 'none');
         setPhotoAlign(d.profile.photoAlign || 'left');
-        // Init numeric position from photoPosition or derive from align
-        const posFromAlign = d.profile.photoAlign === 'right' ? 100 : d.profile.photoAlign === 'center' ? 50 : 0;
-        setPhotoPosition(d.profile.photoPosition ?? posFromAlign);
         setCustomTheme(d.profile.customTheme || {});
         setCoverUrl(d.profile.coverUrl || '');
         setCoverPositionY(d.profile.coverPositionY ?? 50);
@@ -406,8 +401,8 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
   const handleSaveProfile = useCallback(() => {
     const themeAccent = getTheme(template).colors.accent;
     const accentToSave = (accentColor && accentColor !== themeAccent) ? accentColor : null;
-    saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor: accentToSave, fontPair, linkDisplay, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, photoPosition, customTheme: template === 'custom' ? customTheme : null, coverUrl: coverUrl || null, coverPositionY, coverOpacity, bgImageUrl: bgImageUrl || null, bgImageOpacity, bgImagePositionY });
-  }, [template, accentColor, firstName, lastName, title, company, tagline, primaryColor, fontPair, linkDisplay, photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, photoPosition, customTheme, coverUrl, coverPositionY, coverOpacity, bgImageUrl, bgImageOpacity, bgImagePositionY, saveSection]);
+    saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor: accentToSave, fontPair, linkDisplay, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, customTheme: template === 'custom' ? customTheme : null, coverUrl: coverUrl || null, coverPositionY, coverOpacity, bgImageUrl: bgImageUrl || null, bgImageOpacity, bgImagePositionY });
+  }, [template, accentColor, firstName, lastName, title, company, tagline, primaryColor, fontPair, linkDisplay, photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, customTheme, coverUrl, coverPositionY, coverOpacity, bgImageUrl, bgImageOpacity, bgImagePositionY, saveSection]);
 
   // Floating save button — appears when the always-visible fields scroll off screen
   useEffect(() => {
@@ -694,7 +689,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
         bgImageUrl={bgImageUrl || undefined}
         bgImageOpacity={bgImageOpacity}
         bgImagePositionY={bgImagePositionY}
-        photoPosition={photoPosition}
         contained={true}
       />
     );
@@ -713,14 +707,14 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
       <div className="editor-split">
       <main className="editor-panel" style={{ paddingBottom: '4rem' }}>
 
-        {/* ─── Sticky Save Bar ─────────────────────── */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'var(--bg, #0c1017)', padding: '0.75rem 0', borderBottom: '1px solid var(--border, #1e2535)', marginBottom: '1rem' }}>
+        {/* ─── Sticky Save Button (top-right) ────────── */}
+        <div style={{ position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'flex-end', backgroundColor: 'var(--bg, #0c1017)', padding: '0.75rem 0', borderBottom: '1px solid var(--border, #1e2535)', marginBottom: '1rem' }}>
           <button
             onClick={handleSaveProfile}
             disabled={saving === 'profile'}
-            style={{ ...saveBtnStyle, opacity: saving === 'profile' ? 0.6 : 1, width: '100%' }}
+            style={{ padding: '0.5rem 1rem', fontSize: '0.8125rem', fontWeight: 600, borderRadius: '0.5rem', border: 'none', cursor: saving === 'profile' ? 'not-allowed' : 'pointer', fontFamily: 'inherit', backgroundColor: saved === 'profile' ? '#059669' : 'var(--accent, #e8a849)', color: 'var(--bg, #0c1017)', opacity: saving === 'profile' ? 0.6 : 1, transition: 'background-color 0.2s' }}
           >
-            {saving === 'profile' ? 'Saving...' : saved === 'profile' ? '\u2713 Saved' : 'Save Changes'}
+            {saving === 'profile' ? 'Saving...' : saved === 'profile' ? '\u2713 Saved' : 'Save'}
           </button>
         </div>
 
@@ -1059,31 +1053,35 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
               </div>
             </div>
 
-            {/* Photo position slider */}
+            {/* Photo alignment — 3 buttons */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Photo Position</label>
-                <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>
-                  {photoPosition <= 33 ? 'Left' : photoPosition <= 66 ? 'Center' : 'Right'}
-                </span>
-              </div>
-              <input
-                type="range" min={0} max={100} value={photoPosition}
-                onChange={e => { const v = Number(e.target.value); setPhotoPosition(v); setPhotoAlign(v <= 33 ? 'left' : v <= 66 ? 'center' : 'right'); }}
-                style={{ width: '100%', accentColor: 'var(--accent, #e8a849)' }}
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
-                {([['Left', 0], ['Center', 50], ['Right', 100]] as [string, number][]).map(([label, val]) => (
-                  <button
-                    key={label}
-                    onClick={() => { setPhotoPosition(val); setPhotoAlign(val === 0 ? 'left' : val === 50 ? 'center' : 'right'); }}
-                    style={{
-                      fontSize: '0.625rem', fontWeight: 500, padding: '0.125rem 0.5rem',
-                      borderRadius: '9999px', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                      backgroundColor: 'var(--border, #1e2535)', color: 'var(--text-muted, #5d6370)',
-                    }}
-                  >{label}</button>
-                ))}
+              <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: '0.375rem' }}>Photo Alignment</label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {([['left', 'Left', 'M4 6h6M4 10h8M4 14h6M4 18h4'], ['center', 'Center', 'M4 6h16M6 10h12M4 14h16M6 18h12'], ['right', 'Right', 'M14 6h6M12 10h8M14 14h6M16 18h4']] as [string, string, string][]).map(([val, label, iconPath]) => {
+                  const isActive = photoAlign === val;
+                  return (
+                    <button
+                      key={val}
+                      onClick={() => setPhotoAlign(val)}
+                      style={{
+                        flex: 1,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem',
+                        padding: '0.5rem 0.25rem',
+                        borderRadius: '0.5rem',
+                        border: isActive ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                        backgroundColor: isActive ? 'rgba(232, 168, 73, 0.08)' : 'var(--surface, #161c28)',
+                        color: isActive ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                        cursor: 'pointer', fontFamily: 'inherit',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <path d={iconPath} />
+                      </svg>
+                      <span style={{ fontSize: '0.625rem', fontWeight: 600 }}>{label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
             </>)}
@@ -1942,17 +1940,22 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           title="Save changes"
           style={{
             position: 'fixed', bottom: '5rem', right: '1.25rem', zIndex: 200,
-            width: 48, height: 48, borderRadius: '50%',
+            width: 36, height: 36, borderRadius: '50%',
             backgroundColor: saving === 'profile' ? 'var(--border-light, #283042)' : saved === 'profile' ? '#059669' : 'var(--accent, #e8a849)',
             color: 'var(--bg, #0c1017)',
             border: 'none', cursor: saving === 'profile' ? 'not-allowed' : 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-            fontSize: '1.1rem', fontWeight: 700, fontFamily: 'inherit',
-            transition: 'background-color 0.2s',
+            transition: 'background-color 0.2s', padding: 0,
           }}
         >
-          {saving === 'profile' ? '…' : saved === 'profile' ? '✓' : '↑'}
+          {saving === 'profile' ? (
+            <span style={{ fontSize: '0.875rem', fontWeight: 700 }}>…</span>
+          ) : saved === 'profile' ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          )}
         </button>
       )}
     </>

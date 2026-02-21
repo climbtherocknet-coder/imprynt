@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { getTheme, FREE_TEMPLATES } from '@/lib/themes';
 import type { DemoProfile } from './page';
 
@@ -142,6 +142,16 @@ export default function DemoShowcase({ profiles }: Props) {
   const [selectedSlug, setSelectedSlug] = useState(profiles[0]?.slug ?? '');
   const [iframeKey, setIframeKey] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [autoRotate, setAutoRotate] = useState(true);
+  const [filterTier, setFilterTier] = useState<'all' | 'free' | 'premium'>('all');
+
+  const filteredProfiles = useMemo(() => {
+    if (filterTier === 'all') return profiles;
+    return profiles.filter((p) => {
+      const free = (FREE_TEMPLATES as readonly string[]).includes(p.template);
+      return filterTier === 'free' ? free : !free;
+    });
+  }, [profiles, filterTier]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -154,8 +164,9 @@ export default function DemoShowcase({ profiles }: Props) {
   const swipeTouchY = useRef(0);
 
   const selectProfile = useCallback(
-    (slug: string) => {
+    (slug: string, manual = true) => {
       if (slug === selectedSlug) return;
+      if (manual) setAutoRotate(false);
       setLoading(true);
       setSelectedSlug(slug);
       setIframeKey((k) => k + 1);
@@ -163,16 +174,31 @@ export default function DemoShowcase({ profiles }: Props) {
     [selectedSlug]
   );
 
+  // Auto-rotate every 10s — stops on first manual click
+  useEffect(() => {
+    if (!autoRotate || filteredProfiles.length < 2) return;
+    const timer = setInterval(() => {
+      setSelectedSlug((cur) => {
+        const idx = filteredProfiles.findIndex((p) => p.slug === cur);
+        const next = filteredProfiles[(idx + 1) % filteredProfiles.length];
+        setLoading(true);
+        setIframeKey((k) => k + 1);
+        return next.slug;
+      });
+    }, 10000);
+    return () => clearInterval(timer);
+  }, [autoRotate, filteredProfiles]);
+
   // Phone nav — prev/next profile
   function goPrev() {
-    const idx = profiles.findIndex((p) => p.slug === selectedSlug);
-    const prev = profiles[(idx - 1 + profiles.length) % profiles.length];
+    const idx = filteredProfiles.findIndex((p) => p.slug === selectedSlug);
+    const prev = filteredProfiles[(idx - 1 + filteredProfiles.length) % filteredProfiles.length];
     if (prev) selectProfile(prev.slug);
   }
 
   function goNext() {
-    const idx = profiles.findIndex((p) => p.slug === selectedSlug);
-    const next = profiles[(idx + 1) % profiles.length];
+    const idx = filteredProfiles.findIndex((p) => p.slug === selectedSlug);
+    const next = filteredProfiles[(idx + 1) % filteredProfiles.length];
     if (next) selectProfile(next.slug);
   }
 
@@ -247,14 +273,14 @@ export default function DemoShowcase({ profiles }: Props) {
     const dy = e.changedTouches[0].clientY - swipeTouchY.current;
     // Only fire if clearly horizontal (dx > 50px, more horizontal than vertical)
     if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
-    const idx = profiles.findIndex((p) => p.slug === selectedSlug);
+    const idx = filteredProfiles.findIndex((p) => p.slug === selectedSlug);
     if (dx < 0) {
       // Swipe left → next
-      const next = profiles[(idx + 1) % profiles.length];
+      const next = filteredProfiles[(idx + 1) % filteredProfiles.length];
       if (next) selectProfile(next.slug);
     } else {
       // Swipe right → prev
-      const prev = profiles[(idx - 1 + profiles.length) % profiles.length];
+      const prev = filteredProfiles[(idx - 1 + filteredProfiles.length) % filteredProfiles.length];
       if (prev) selectProfile(prev.slug);
     }
   }
@@ -304,8 +330,33 @@ export default function DemoShowcase({ profiles }: Props) {
           </p>
         </div>
 
-        {/* Carousel: arrow — cards — arrow */}
+        {/* Filter chips */}
         {profiles.length > 0 && (
+          <div className="demo-filter-chips">
+            {(['all', 'free', 'premium'] as const).map((tier) => (
+              <button
+                key={tier}
+                className={`demo-chip${filterTier === tier ? ' demo-chip--active' : ''}`}
+                onClick={() => {
+                  setFilterTier(tier);
+                  // If current selection isn't in the new filter, select first match
+                  const newFiltered = tier === 'all' ? profiles : profiles.filter((p) => {
+                    const free = (FREE_TEMPLATES as readonly string[]).includes(p.template);
+                    return tier === 'free' ? free : !free;
+                  });
+                  if (newFiltered.length > 0 && !newFiltered.some((p) => p.slug === selectedSlug)) {
+                    selectProfile(newFiltered[0].slug, false);
+                  }
+                }}
+              >
+                {tier === 'all' ? 'All templates' : tier === 'free' ? 'Free' : 'Premium'}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Carousel: arrow — cards — arrow */}
+        {filteredProfiles.length > 0 && (
           <div className="demo-carousel-outer">
             <button
               className="demo-carousel-arrow"
@@ -337,7 +388,7 @@ export default function DemoShowcase({ profiles }: Props) {
               onTouchStart={onStripTouchStart}
               onTouchMove={onStripTouchMove}
             >
-              {profiles.map((p) => (
+              {filteredProfiles.map((p) => (
                 <PersonaCard
                   key={p.slug}
                   profile={p}
@@ -467,6 +518,20 @@ export default function DemoShowcase({ profiles }: Props) {
                   {isFree ? 'Free' : 'Premium'}
                 </span>
               </div>
+
+              {meta?.features && meta.features.length > 0 && (
+                <div className="demo-info-section">
+                  <p className="demo-info-label">Features in this profile</p>
+                  <ul className="demo-feature-list">
+                    {meta.features.map((f) => (
+                      <li key={f}>{f}</li>
+                    ))}
+                    {selectedProfile.showQrButton && (
+                      <li>QR code button</li>
+                    )}
+                  </ul>
+                </div>
+              )}
 
               {meta?.pin && (
                 <div className="demo-info-section">
