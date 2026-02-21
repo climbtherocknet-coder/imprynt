@@ -130,6 +130,7 @@ export default function DemoShowcase({ profiles }: Props) {
   const [selectedSlug, setSelectedSlug] = useState(profiles[0]?.slug ?? '');
   const [iframeKey, setIframeKey] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -295,7 +296,7 @@ export default function DemoShowcase({ profiles }: Props) {
           </p>
         )}
 
-        {/* Mobile-only info bar: template + PIN + open link (info panel hidden on mobile) */}
+        {/* Mobile-only info bar: template + PIN + preview toggle + open link */}
         {selectedProfile && (
           <div className="demo-mobile-info">
             <div className="demo-mobile-info-left">
@@ -310,20 +311,42 @@ export default function DemoShowcase({ profiles }: Props) {
                 </span>
               )}
             </div>
-            <a
-              href={`/${selectedProfile.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="demo-mobile-open"
-            >
-              Open ↗
-            </a>
+            <div className="demo-mobile-actions">
+              <button
+                className={`demo-preview-btn${mobilePreviewOpen ? ' demo-preview-btn--open' : ''}`}
+                onClick={() => setMobilePreviewOpen((o) => !o)}
+              >
+                {mobilePreviewOpen ? (
+                  <>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
+                      <polyline points="18 15 12 9 6 15" />
+                    </svg>
+                    Close
+                  </>
+                ) : (
+                  <>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                    Preview
+                  </>
+                )}
+              </button>
+              <a
+                href={`/${selectedProfile.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="demo-mobile-open"
+              >
+                Open ↗
+              </a>
+            </div>
           </div>
         )}
 
         {/* Phone frame + Info panel */}
         {selectedProfile && (
-          <div className="demo-split">
+          <div className={`demo-split${mobilePreviewOpen ? ' demo-split--mobile-open' : ''}`}>
             <div className="demo-phone-wrap">
               <div className="demo-phone">
                 <div className="demo-phone-screen">

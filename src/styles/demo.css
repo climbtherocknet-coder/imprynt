@@ -486,8 +486,9 @@
   /* Hide arrows — touch scroll handles it */
   .demo-carousel-arrow { display: none; }
 
-  /* Stack but info panel hidden — phone is full-width hero */
-  .demo-split { display: block; }
+  /* Phone section hidden by default on mobile — Preview button reveals it */
+  .demo-split { display: none; }
+  .demo-split--mobile-open { display: block; }
 
   /* Break out of the page container padding — full-width iframe */
   .demo-phone-wrap {
@@ -547,12 +548,42 @@
     font-weight: 700;
   }
 
+  .demo-mobile-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-shrink: 0;
+  }
+
   .demo-mobile-open {
     font-size: 0.8125rem;
     font-weight: 600;
     color: var(--accent, #e8a849);
     white-space: nowrap;
-    flex-shrink: 0;
+  }
+
+  /* Preview toggle button */
+  .demo-preview-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--text-mid, #a8adb8);
+    background: var(--surface, #161c28);
+    border: 1px solid var(--border-light, #283042);
+    border-radius: 2rem;
+    padding: 0.3rem 0.625rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .demo-preview-btn:hover,
+  .demo-preview-btn--open {
+    color: var(--text, #eceef2);
+    border-color: var(--accent, #e8a849);
   }
 }
 
