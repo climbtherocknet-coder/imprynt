@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import '@/styles/dashboard.css';
 import ThemeToggle from '@/components/ThemeToggle';
+import Breadcrumbs from '@/components/Breadcrumbs';
 import ProfileTab from './tabs/ProfileTab';
 import PersonalTab from './tabs/PersonalTab';
 import PortfolioTab from './tabs/PortfolioTab';
@@ -104,13 +105,16 @@ export default function PageEditor({ userId, planStatus: initialPlanStatus, init
     <div className="dash-page">
       {/* Sticky header */}
       <header className="page-editor-header">
-        <div className="dash-logo">
-          <a href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: 'inherit' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <a href="https://imprynt.io" target="_blank" rel="noopener noreferrer" className="dash-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="dash-logo-mark" />
             <span className="dash-logo-text">Imprynt</span>
           </a>
-          <span style={{ color: 'var(--text-muted)', margin: '0 0.5rem' }}>/</span>
-          <span style={{ color: 'var(--text-mid)', fontSize: '0.875rem' }}>My Page</span>
+          <Breadcrumbs items={[
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'My Page', href: '/dashboard/page-editor' },
+            { label: activeTabDef.label },
+          ]} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <ThemeToggle />

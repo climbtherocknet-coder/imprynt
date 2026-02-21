@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
 import { validatePassword } from '@/lib/password-validation';
+import Breadcrumbs from '@/components/Breadcrumbs';
 import '@/styles/dashboard.css';
 
 interface AccountProps {
@@ -173,12 +174,14 @@ export default function AccountClient({ user, accessories }: AccountProps) {
 
       <header className="dash-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <a href="/dashboard" className="dash-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <a href="https://imprynt.io" target="_blank" rel="noopener noreferrer" className="dash-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="dash-logo-mark" />
             <span className="dash-logo-text">Imprynt</span>
           </a>
-          <span style={{ color: 'var(--border-light, #283042)' }}>/</span>
-          <span style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)' }}>Account</span>
+          <Breadcrumbs items={[
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'Account' },
+          ]} />
         </div>
         <a href="/dashboard" style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent, #e8a849)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted, #5d6370)')}>
           &#8592; Dashboard

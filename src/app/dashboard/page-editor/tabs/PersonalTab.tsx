@@ -399,14 +399,24 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
       <div className="editor-split">
       <main className="editor-panel" style={{ paddingBottom: '4rem' }}>
 
-        {/* ─── Info Box ────────────────────────────── */}
-        <div style={{ marginBottom: '1.25rem', padding: '1rem 1.25rem', backgroundColor: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 0.375rem', color: 'var(--text, #eceef2)' }}>
-            {isNew ? 'Create Your Personal Page' : 'Personal Page Settings'}
-          </h2>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
-            A hidden layer on your profile. Only people you share the PIN with can access it.
-          </p>
+        {/* ─── Info Box (consolidated) ────────────── */}
+        <div style={{ marginBottom: '1.25rem', padding: '1.25rem', backgroundColor: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+            {/* Impression icon visual */}
+            <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: '50%', border: `1.5px solid ${iconColor || 'var(--text-muted, #5d6370)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.6, marginTop: 2 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: iconColor || 'var(--text-muted, #5d6370)' }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text, #eceef2)' }}>
+                {isNew ? 'Create Your Personal Page' : 'Your Personal Page'}
+              </h2>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', lineHeight: 1.6 }}>
+                <p style={{ margin: '0 0 0.375rem' }}>A small, subtle icon appears in the corner of your public profile. It&rsquo;s intentionally hard to notice.</p>
+                <p style={{ margin: '0 0 0.375rem' }}>When someone you trust taps it, they&rsquo;re prompted for a PIN. The correct PIN loads your personal page with the links and message you set up here.</p>
+                <p style={{ margin: 0 }}>To share it: tell someone &ldquo;tap the small icon in the corner and enter your PIN.&rdquo;</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* ─── On Air + PIN/Save Control Cards ─────── */}
@@ -435,7 +445,10 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           <div style={{ background: 'var(--surface, #161c28)', border: '1px solid var(--border, #1e2535)', borderRadius: '0.75rem', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-mid, #a8adb8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                  <circle cx="14" cy="14" r="13" stroke={iconColor || 'var(--text-mid, #a8adb8)'} strokeWidth="1.5" fill="none" />
+                  <circle cx="14" cy="14" r="2.5" fill={iconColor || 'var(--text-mid, #a8adb8)'} />
+                </svg>
                 <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text, #eceef2)' }}>
                   PIN: {isNew ? <span style={{ color: 'var(--text-muted, #5d6370)', fontWeight: 400 }}>Not set</span> : pinDirty ? '•'.repeat(pin.length || 4) : '••••'}
                 </span>
@@ -865,15 +878,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           )}
         </CollapsibleSection>
 
-        {/* How it works */}
-        <div style={{ ...sectionStyle, backgroundColor: 'var(--bg, #0c1017)' }}>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-mid, #a8adb8)' }}>How your Personal page works</h3>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', lineHeight: 1.6 }}>
-            <p style={{ margin: '0 0 0.5rem' }}>A small, subtle icon appears in the bottom corner of your public profile. It is intentionally hard to notice.</p>
-            <p style={{ margin: '0 0 0.5rem' }}>When someone you trust taps it, they are prompted for a PIN. If they enter the correct PIN, your personal page loads with the links and message you configured above.</p>
-            <p style={{ margin: 0 }}>To share it: tell someone &ldquo;tap the small icon in the bottom-right corner and enter [your PIN].&rdquo;</p>
-          </div>
-        </div>
 
       </main>
 

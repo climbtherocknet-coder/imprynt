@@ -316,6 +316,30 @@
   color: var(--accent, #e8a849);
 }
 
+/* ── Breadcrumbs component ── */
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  font-size: 0.8125rem;
+  gap: 0;
+}
+.breadcrumb-link {
+  color: var(--text-muted, #5d6370);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.breadcrumb-link:hover {
+  color: var(--accent, #e8a849);
+}
+.breadcrumb-sep {
+  margin: 0 0.5rem;
+  color: var(--border-light, #283042);
+}
+.breadcrumb-current {
+  color: var(--text, #eceef2);
+  font-weight: 500;
+}
+
 /* ── Cards (used in sub-pages for sections) ── */
 .dash-card {
   background: var(--surface, #161c28);

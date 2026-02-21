@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Breadcrumbs from '@/components/Breadcrumbs';
 import '@/styles/dashboard.css';
 
 interface AnalyticsData {
@@ -54,9 +55,18 @@ export default function AnalyticsClient() {
     return (
       <div className="dash-page">
         <header className="dash-header">
-          <a href="/dashboard" className="dash-logo" style={{ textDecoration: 'none' }}>
-            <div className="dash-logo-mark" />
-            <span className="dash-logo-text">Analytics</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <a href="https://imprynt.io" target="_blank" rel="noopener noreferrer" className="dash-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <div className="dash-logo-mark" />
+              <span className="dash-logo-text">Imprynt</span>
+            </a>
+            <Breadcrumbs items={[
+              { label: 'Dashboard', href: '/dashboard' },
+              { label: 'Analytics' },
+            ]} />
+          </div>
+          <a href="/dashboard" style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', textDecoration: 'none', transition: 'color 0.15s' }}>
+            &#8592; Dashboard
           </a>
         </header>
         <main className="dash-main" style={{ textAlign: 'center', paddingTop: '4rem' }}>
@@ -70,9 +80,18 @@ export default function AnalyticsClient() {
     return (
       <div className="dash-page">
         <header className="dash-header">
-          <a href="/dashboard" className="dash-logo" style={{ textDecoration: 'none' }}>
-            <div className="dash-logo-mark" />
-            <span className="dash-logo-text">Analytics</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <a href="https://imprynt.io" target="_blank" rel="noopener noreferrer" className="dash-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <div className="dash-logo-mark" />
+              <span className="dash-logo-text">Imprynt</span>
+            </a>
+            <Breadcrumbs items={[
+              { label: 'Dashboard', href: '/dashboard' },
+              { label: 'Analytics' },
+            ]} />
+          </div>
+          <a href="/dashboard" style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', textDecoration: 'none', transition: 'color 0.15s' }}>
+            &#8592; Dashboard
           </a>
         </header>
         <main className="dash-main" style={{ textAlign: 'center', paddingTop: '4rem' }}>

@@ -10,6 +10,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import CheckoutToast from './CheckoutToast';
 import VerificationBanner from './VerificationBanner';
 import DashboardPreview from './DashboardPreview';
+import Breadcrumbs from '@/components/Breadcrumbs';
 import '@/styles/dashboard.css';
 
 interface ProfileRow {
@@ -138,17 +139,19 @@ export default async function DashboardPage({
       {/* Header */}
       <header className="dash-header">
         <div className="dash-logo">
-          <div className="dash-logo-mark" />
-          <span className="dash-logo-text">Imprynt</span>
+          <a href="https://imprynt.io" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: 'inherit' }}>
+            <div className="dash-logo-mark" />
+            <span className="dash-logo-text">Imprynt</span>
+          </a>
         </div>
         <div className="dash-header-right">
           <ThemeToggle />
           <span className={`dash-plan-badge ${planStatus.isPaid ? 'dash-plan-badge--paid' : 'dash-plan-badge--free'}`}>
             {planStatus.badgeLabel}
           </span>
-          <span className="dash-user-name">
+          <a href="/dashboard" className="dash-user-name" style={{ textDecoration: 'none', color: 'inherit' }}>
             {session.user.name || session.user.email}
-          </span>
+          </a>
           <SignOutButton />
         </div>
       </header>
@@ -156,6 +159,7 @@ export default async function DashboardPage({
       {checkoutStatus && <CheckoutToast status={checkoutStatus} />}
 
       <main className="dash-main">
+        <Breadcrumbs items={[{ label: 'Dashboard' }]} />
         {!emailVerified && <VerificationBanner email={session.user.email || ''} />}
 
         <div className="dash-split">
