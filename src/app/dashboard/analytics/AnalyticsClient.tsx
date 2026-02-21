@@ -43,12 +43,17 @@ export default function AnalyticsClient() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [iconColor, setIconColor] = useState('');
 
   useEffect(() => {
     fetch('/api/analytics')
       .then(res => res.json())
       .then(d => { setData(d); setLoading(false); })
       .catch(() => { setError('Failed to load analytics'); setLoading(false); });
+    fetch('/api/protected-pages?mode=hidden')
+      .then(r => r.json())
+      .then(d => { if (d.pages?.[0]?.iconColor) setIconColor(d.pages[0].iconColor); })
+      .catch(() => {});
   }, []);
 
   if (loading) {
@@ -57,7 +62,7 @@ export default function AnalyticsClient() {
         <header className="dash-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <a href="https://imprynt.io" target="_blank" rel="noopener noreferrer" className="dash-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className="dash-logo-mark" />
+              <div className="dash-logo-mark" style={iconColor ? { '--accent': iconColor } as React.CSSProperties : undefined} />
               <span className="dash-logo-text">Imprynt</span>
             </a>
             <Breadcrumbs items={[
@@ -82,7 +87,7 @@ export default function AnalyticsClient() {
         <header className="dash-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <a href="https://imprynt.io" target="_blank" rel="noopener noreferrer" className="dash-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className="dash-logo-mark" />
+              <div className="dash-logo-mark" style={iconColor ? { '--accent': iconColor } as React.CSSProperties : undefined} />
               <span className="dash-logo-text">Imprynt</span>
             </a>
             <Breadcrumbs items={[

@@ -47,7 +47,10 @@ export default function PageEditor({ userId, planStatus: initialPlanStatus, init
   const [currentAccentColor, setCurrentAccentColor] = useState('');
   const [templateLoaded, setTemplateLoaded] = useState(false);
 
-  // Fetch template once on mount so Personal/Portfolio tabs have it immediately
+  // Personal page icon color — shown in header logo mark for premium users
+  const [personalIconColor, setPersonalIconColor] = useState('');
+
+  // Fetch template + icon color once on mount
   useEffect(() => {
     fetch('/api/profile', { cache: 'no-store' })
       .then(r => r.json())
@@ -57,6 +60,10 @@ export default function PageEditor({ userId, planStatus: initialPlanStatus, init
         setTemplateLoaded(true);
       })
       .catch(() => setTemplateLoaded(true));
+    fetch('/api/protected-pages?mode=hidden')
+      .then(r => r.json())
+      .then(d => { if (d.pages?.[0]?.iconColor) setPersonalIconColor(d.pages[0].iconColor); })
+      .catch(() => {});
   }, []);
 
   const handleTemplateChange = useCallback((template: string, accentColor: string) => {
@@ -107,7 +114,7 @@ export default function PageEditor({ userId, planStatus: initialPlanStatus, init
       <header className="page-editor-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <a href="https://imprynt.io" target="_blank" rel="noopener noreferrer" className="dash-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div className="dash-logo-mark" />
+            <div className="dash-logo-mark" style={planStatus.isPaid && personalIconColor ? { '--accent': personalIconColor } as React.CSSProperties : undefined} />
             <span className="dash-logo-text">Imprynt</span>
           </a>
           <Breadcrumbs items={[

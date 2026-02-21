@@ -114,6 +114,9 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
   const [modalPinError, setModalPinError] = useState('');
   const [pinDirty, setPinDirty] = useState(false);
 
+  // Personal page icon color (shared across tabs)
+  const [personalIconColor, setPersonalIconColor] = useState('');
+
   // Profile data for preview
   const [profileData, setProfileData] = useState<{
     firstName: string; lastName: string; photoUrl: string;
@@ -173,6 +176,13 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
       })
       .catch(() => setError('Failed to load'))
       .finally(() => setLoading(false));
+    // Fetch personal page icon color for visual consistency
+    fetch('/api/protected-pages?mode=hidden')
+      .then(res => res.json())
+      .then(data => {
+        if (data.pages?.[0]?.iconColor) setPersonalIconColor(data.pages[0].iconColor);
+      })
+      .catch(() => {});
   }, []);
 
   // Save page settings
@@ -356,8 +366,8 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
         <div style={{ marginBottom: '1.25rem', padding: '1.25rem', backgroundColor: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
             {/* Impression icon visual */}
-            <div style={{ flexShrink: 0, width: 44, height: 44, borderRadius: '50%', border: `2px solid ${currentAccentColor || 'var(--accent, #e8a849)'}`, backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: currentAccentColor || 'var(--accent, #e8a849)' }} />
+            <div style={{ flexShrink: 0, width: 44, height: 44, borderRadius: '50%', border: `2px solid ${personalIconColor || currentAccentColor || 'var(--accent, #e8a849)'}`, backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: personalIconColor || currentAccentColor || 'var(--accent, #e8a849)' }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text, #eceef2)' }}>
@@ -388,8 +398,8 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
             onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent, #e8a849)'}
             onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border, #1e2535)'}
           >
-            <div style={{ width: 24, height: 24, borderRadius: '50%', border: `1.5px solid ${currentAccentColor || 'var(--accent, #e8a849)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: currentAccentColor || 'var(--accent, #e8a849)' }} />
+            <div style={{ width: 24, height: 24, borderRadius: '50%', border: `1.5px solid ${personalIconColor || currentAccentColor || 'var(--accent, #e8a849)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: personalIconColor || currentAccentColor || 'var(--accent, #e8a849)' }} />
             </div>
             <div>
               <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text, #eceef2)', display: 'block' }}>{!isNew ? 'Change PIN' : 'Set PIN'}</span>

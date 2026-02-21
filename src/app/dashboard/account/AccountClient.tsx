@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
 import { validatePassword } from '@/lib/password-validation';
@@ -54,7 +54,15 @@ const PRODUCT_LABELS: Record<string, string> = {
 
 export default function AccountClient({ user, accessories }: AccountProps) {
   const router = useRouter();
+  const [iconColor, setIconColor] = useState('');
   const [upgrading, setUpgrading] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/protected-pages?mode=hidden')
+      .then(r => r.json())
+      .then(d => { if (d.pages?.[0]?.iconColor) setIconColor(d.pages[0].iconColor); })
+      .catch(() => {});
+  }, []);
   const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -175,7 +183,7 @@ export default function AccountClient({ user, accessories }: AccountProps) {
       <header className="dash-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <a href="https://imprynt.io" target="_blank" rel="noopener noreferrer" className="dash-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div className="dash-logo-mark" />
+            <div className="dash-logo-mark" style={iconColor ? { '--accent': iconColor } as React.CSSProperties : undefined} />
             <span className="dash-logo-text">Imprynt</span>
           </a>
           <Breadcrumbs items={[

@@ -118,18 +118,20 @@ export default async function DashboardPage({
     }
   }
 
-  // Fetch PIN status for protected pages
+  // Fetch PIN status + icon color for protected pages
   let personalPinSet = false;
   let portfolioPinSet = false;
+  let personalIconColor = '';
   try {
     const pinResult = await query(
-      `SELECT visibility_mode, pin_hash IS NOT NULL as has_pin
+      `SELECT visibility_mode, pin_hash IS NOT NULL as has_pin, icon_color
        FROM protected_pages
        WHERE user_id = $1 AND is_active = true`,
       [userId]
     );
     for (const row of pinResult.rows) {
       if (row.visibility_mode === 'hidden' && row.has_pin) personalPinSet = true;
+      if (row.visibility_mode === 'hidden' && row.icon_color) personalIconColor = row.icon_color;
       if (row.visibility_mode === 'visible' && row.has_pin) portfolioPinSet = true;
     }
   } catch { /* protected_pages table may not exist yet */ }
@@ -140,7 +142,7 @@ export default async function DashboardPage({
       <header className="dash-header">
         <div className="dash-logo">
           <a href="https://imprynt.io" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: 'inherit' }}>
-            <div className="dash-logo-mark" />
+            <div className="dash-logo-mark" style={planStatus.isPaid && personalIconColor ? { '--accent': personalIconColor } as React.CSSProperties : undefined} />
             <span className="dash-logo-text">Imprynt</span>
           </a>
         </div>
