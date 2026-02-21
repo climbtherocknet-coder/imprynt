@@ -49,6 +49,10 @@
   margin-bottom: 1.25rem;
 }
 
+[data-photo-align="right"] .hero-top {
+  flex-direction: row-reverse;
+}
+
 .hero-identity { flex: 1; min-width: 0; }
 
 .hero-name {

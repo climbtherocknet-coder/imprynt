@@ -40,6 +40,7 @@ interface ProfileData {
   photo_position_x: number;
   photo_position_y: number;
   photo_animation: string;
+  photo_align: string;
   vcard_pin_hash: string | null;
   link_display: string;
 }
@@ -99,7 +100,7 @@ async function getProfileAny(slug: string) {
   const result = await query(
     `SELECT p.id as profile_id, p.user_id, u.first_name, u.last_name, p.title, p.company,
             p.tagline, p.bio_heading, p.bio, p.photo_url, p.template,
-            p.primary_color, p.accent_color, p.font_pair, p.link_display, u.plan, p.status_tags, p.is_published, p.allow_sharing, p.allow_feedback, p.show_qr_button, p.status_tag_color, p.photo_shape, p.photo_radius, p.photo_size, p.photo_position_x, p.photo_position_y, p.photo_animation
+            p.primary_color, p.accent_color, p.font_pair, p.link_display, u.plan, p.status_tags, p.is_published, p.allow_sharing, p.allow_feedback, p.show_qr_button, p.status_tag_color, p.photo_shape, p.photo_radius, p.photo_size, p.photo_position_x, p.photo_position_y, p.photo_animation, p.photo_align
      FROM profiles p
      JOIN users u ON u.id = p.user_id
      WHERE p.slug = $1 AND u.account_status = 'active'`,
@@ -316,6 +317,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         photoPositionX={profile.photo_position_x ?? 50}
         photoPositionY={profile.photo_position_y ?? 50}
         photoAnimation={profile.photo_animation || 'none'}
+        photoAlign={profile.photo_align || 'left'}
         vcardPinEnabled={!!profile.vcard_pin_hash}
       />
 

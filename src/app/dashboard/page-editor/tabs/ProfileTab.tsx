@@ -62,6 +62,7 @@ interface ProfileData {
     photoPositionX: number;
     photoPositionY: number;
     photoAnimation: string;
+    photoAlign: string;
     vcardPinEnabled: boolean;
     showQrButton: boolean;
     linkDisplay: string;
@@ -189,6 +190,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
   const [photoPositionX, setPhotoPositionX] = useState(50);
   const [photoPositionY, setPhotoPositionY] = useState(50);
   const [photoAnimation, setPhotoAnimation] = useState('none');
+  const [photoAlign, setPhotoAlign] = useState('left');
   const [previewKey, setPreviewKey] = useState(0);
   const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
@@ -259,6 +261,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
         setPhotoPositionX(d.profile.photoPositionX ?? 50);
         setPhotoPositionY(d.profile.photoPositionY ?? 50);
         setPhotoAnimation(d.profile.photoAnimation || 'none');
+        setPhotoAlign(d.profile.photoAlign || 'left');
         setLoading(false);
       })
       .catch(() => {
@@ -585,6 +588,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
         photoPositionX={photoPositionX}
         photoPositionY={photoPositionY}
         photoAnimation={photoAnimation}
+        photoAlign={photoAlign}
         vcardPinEnabled={vcardPinEnabled}
       />
     );
@@ -608,7 +612,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={sectionTitleStyle}>My Main Profile</h3>
             <button
-              onClick={() => saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor: accentColor || null, fontPair, linkDisplay, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation })}
+              onClick={() => saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor: accentColor || null, fontPair, linkDisplay, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign })}
               disabled={saving === 'profile'}
               style={{ ...saveBtnStyle, opacity: saving === 'profile' ? 0.6 : 1 }}
             >
@@ -888,6 +892,33 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
                       {isLocked && (
                         <span style={{ fontSize: '0.4375rem', fontWeight: 700, marginLeft: '0.25rem', color: 'var(--text-muted, #5d6370)' }}>PRO</span>
                       )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Photo position toggle */}
+            <div>
+              <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Photo Position</label>
+              <div style={{ display: 'flex', gap: '0.375rem' }}>
+                {(['left', 'right'] as const).map(side => {
+                  const isSelected = photoAlign === side;
+                  return (
+                    <button
+                      key={side}
+                      onClick={() => setPhotoAlign(side)}
+                      style={{
+                        padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.6875rem', fontWeight: 500,
+                        border: isSelected ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                        backgroundColor: isSelected ? 'rgba(232, 168, 73, 0.1)' : 'var(--surface, #161c28)',
+                        color: isSelected ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                        cursor: 'pointer', fontFamily: 'inherit',
+                        textTransform: 'capitalize',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {side}
                     </button>
                   );
                 })}

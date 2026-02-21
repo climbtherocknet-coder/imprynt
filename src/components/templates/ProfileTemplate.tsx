@@ -35,6 +35,7 @@ export interface ProfileTemplateProps {
   vcardPinEnabled?: boolean;
   accentColor?: string;
   linkDisplay?: string;
+  photoAlign?: string;
 }
 
 function getLinkHref(link: { link_type: string; url: string }) {
@@ -70,6 +71,7 @@ export default function ProfileTemplate({
   vcardPinEnabled = false,
   accentColor,
   linkDisplay = 'default',
+  photoAlign = 'left',
 }: ProfileTemplateProps) {
   const theme = getTheme(template);
   const cssVars = getThemeCSSVars(theme);
@@ -81,6 +83,9 @@ export default function ProfileTemplate({
   dataAttrs['data-photo-size'] = photoSize || 'medium';
   if (photoAnimation && photoAnimation !== 'none') {
     dataAttrs['data-photo-anim'] = photoAnimation;
+  }
+  if (photoAlign === 'right') {
+    dataAttrs['data-photo-align'] = 'right';
   }
   const googleFontsUrl = getGoogleFontsUrl(theme);
   const fullName = [firstName, lastName].filter(Boolean).join(' ');

@@ -24,7 +24,7 @@ export async function GET() {
 
   const profileResult = await query(
     `SELECT id, slug, redirect_id, title, company, tagline, bio_heading, bio,
-            photo_url, template, primary_color, accent_color, font_pair, link_display, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback, show_qr_button, photo_shape, photo_radius, photo_size, photo_position_x, photo_position_y, photo_animation
+            photo_url, template, primary_color, accent_color, font_pair, link_display, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback, show_qr_button, photo_shape, photo_radius, photo_size, photo_position_x, photo_position_y, photo_animation, photo_align
      FROM profiles WHERE user_id = $1`,
     [userId]
   );
@@ -83,6 +83,7 @@ export async function GET() {
       photoPositionX: profile.photo_position_x ?? 50,
       photoPositionY: profile.photo_position_y ?? 50,
       photoAnimation: profile.photo_animation || 'none',
+      photoAlign: profile.photo_align || 'left',
       vcardPinEnabled: !!vcardPinHash,
     },
     links: linksResult.rows.map((l: Record<string, unknown>) => ({
@@ -140,13 +141,14 @@ export async function PUT(req: NextRequest) {
       );
     } else if (section === 'appearance') {
       const { template, primaryColor, accentColor, fontPair, linkDisplay,
-              photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation } = body;
+              photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign } = body;
 
       const validFonts = ['default', 'serif', 'mono'];
       const hexRegex = /^#[0-9a-fA-F]{6}$/;
       const validShapes = ['circle', 'rounded', 'soft', 'square', 'hexagon', 'diamond', 'custom'];
       const validSizes = ['small', 'medium', 'large'];
       const validAnimations = ['none', 'fade', 'slide-left', 'slide-right', 'scale', 'pop'];
+      const validAligns = ['left', 'right'];
 
       if (template && !isValidTemplate(template)) {
         return NextResponse.json({ error: 'Invalid template' }, { status: 400 });
@@ -180,6 +182,7 @@ export async function PUT(req: NextRequest) {
       const posX = typeof photoPositionX === 'number' ? Math.max(0, Math.min(100, photoPositionX)) : null;
       const posY = typeof photoPositionY === 'number' ? Math.max(0, Math.min(100, photoPositionY)) : null;
       const animVal = photoAnimation && validAnimations.includes(photoAnimation) ? photoAnimation : null;
+      const alignVal = photoAlign && validAligns.includes(photoAlign) ? photoAlign : null;
 
       await query(
         `UPDATE profiles SET
@@ -193,10 +196,11 @@ export async function PUT(req: NextRequest) {
           photo_size = COALESCE($8, photo_size),
           photo_position_x = COALESCE($9, photo_position_x),
           photo_position_y = COALESCE($10, photo_position_y),
-          photo_animation = COALESCE($11, photo_animation)
+          photo_animation = COALESCE($11, photo_animation),
+          photo_align = COALESCE($13, photo_align)
          WHERE user_id = $5`,
         [template, primaryColor, accentVal === null ? '__clear__' : accentColor, fontPair, userId,
-         shapeVal, radiusVal, sizeVal, posX, posY, animVal, displayVal]
+         shapeVal, radiusVal, sizeVal, posX, posY, animVal, displayVal, alignVal]
       );
     } else if (section === 'statusTags') {
       const { statusTags } = body;
@@ -243,7 +247,7 @@ export async function PUT(req: NextRequest) {
       // Combined identity + appearance save
       const { firstName, lastName, title, company, tagline,
               template, primaryColor, accentColor, fontPair, linkDisplay,
-              photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation } = body;
+              photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign } = body;
 
       // Update user name
       await query(
@@ -257,6 +261,7 @@ export async function PUT(req: NextRequest) {
       const validShapes = ['circle', 'rounded', 'soft', 'square', 'hexagon', 'diamond', 'custom'];
       const validSizes = ['small', 'medium', 'large'];
       const validAnimations = ['none', 'fade', 'slide-left', 'slide-right', 'scale', 'pop'];
+      const validAligns = ['left', 'right'];
 
       if (template && !isValidTemplate(template)) {
         return NextResponse.json({ error: 'Invalid template' }, { status: 400 });
@@ -288,6 +293,7 @@ export async function PUT(req: NextRequest) {
       const posX = typeof photoPositionX === 'number' ? Math.max(0, Math.min(100, photoPositionX)) : null;
       const posY = typeof photoPositionY === 'number' ? Math.max(0, Math.min(100, photoPositionY)) : null;
       const animVal = photoAnimation && validAnimations.includes(photoAnimation) ? photoAnimation : null;
+      const alignVal = photoAlign && validAligns.includes(photoAlign) ? photoAlign : null;
 
       await query(
         `UPDATE profiles SET
@@ -302,7 +308,8 @@ export async function PUT(req: NextRequest) {
           photo_size = COALESCE($11, photo_size),
           photo_position_x = COALESCE($12, photo_position_x),
           photo_position_y = COALESCE($13, photo_position_y),
-          photo_animation = COALESCE($14, photo_animation)
+          photo_animation = COALESCE($14, photo_animation),
+          photo_align = COALESCE($16, photo_align)
          WHERE user_id = $8`,
         [
           title?.trim()?.slice(0, 100) || null,
@@ -314,7 +321,7 @@ export async function PUT(req: NextRequest) {
           fontPair,
           userId,
           shapeVal, radiusVal, sizeVal, posX, posY, animVal,
-          displayValP,
+          displayValP, alignVal,
         ]
       );
     } else if (section === 'vcardPin') {

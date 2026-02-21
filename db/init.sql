@@ -59,6 +59,7 @@ CREATE TABLE profiles (
     photo_position_x INTEGER NOT NULL DEFAULT 50,
     photo_position_y INTEGER NOT NULL DEFAULT 50,
     photo_animation VARCHAR(20) NOT NULL DEFAULT 'none',
+    photo_align     VARCHAR(10) NOT NULL DEFAULT 'left' CHECK (photo_align IN ('left', 'right')),
     status_tags     TEXT[] DEFAULT '{}',              -- e.g. {'open_to_network','hiring'}
     slug_rotated_at TIMESTAMPTZ DEFAULT NOW(),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
