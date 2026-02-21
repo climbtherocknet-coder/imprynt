@@ -4,6 +4,7 @@ import WaitlistBanner from '@/components/WaitlistBanner';
 import { WaitlistProvider, WaitlistButton } from '@/components/WaitlistCTA';
 import MobileNav from '@/components/MobileNav';
 import HeroPhone from '@/components/HeroPhone';
+import HeroPreviewButton from '@/components/HeroPreviewButton';
 import '@/styles/landing.css';
 
 export default function HomePage() {
@@ -46,6 +47,7 @@ export default function HomePage() {
               <a href="#how" className="lp-btn-ghost">See how it works</a>
             </div>
             <p className="lp-hero-proof">Free forever. No credit card. Set up in 5 minutes.</p>
+            <HeroPreviewButton />
           </div>
           <div className="lp-hero-visual">
             <HeroPhone />

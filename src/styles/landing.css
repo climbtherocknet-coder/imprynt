@@ -294,6 +294,79 @@
   color: var(--text-muted);
 }
 
+/* ── Mobile preview trigger (phone icon button, hidden on desktop) ── */
+.lp-preview-trigger {
+  display: none; /* shown only below 800px */
+}
+
+@media (max-width: 800px) {
+  .lp-preview-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--text-mid);
+    background: var(--surface, #161c28);
+    border: 1px solid var(--border-light, #283042);
+    border-radius: 2rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .lp-preview-trigger:hover {
+    color: var(--text);
+    border-color: var(--accent, #e8a849);
+  }
+}
+
+/* ── Preview modal overlay ── */
+.lp-preview-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+}
+
+.lp-preview-modal-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: lpFadeIn 0.2s ease-out;
+}
+
+.lp-preview-close {
+  position: absolute;
+  top: -2.5rem;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border-light, #283042);
+  background: var(--surface, #161c28);
+  color: var(--text-mid);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.lp-preview-close:hover {
+  color: var(--text);
+  border-color: var(--accent, #e8a849);
+}
+
 /* ── Phone mockup ── */
 .lp-hero-visual {
   flex-shrink: 0;
