@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'See Imprynt in Action — Live Demo',
   description:
-    'Explore 10 live demo profiles. Pick a template, try the PIN unlock, and see every Imprynt feature in action.',
+    'Explore 12 live demo profiles. Pick a template, try the PIN unlock, and see every Imprynt feature in action.',
   robots: { index: true, follow: true },
 };
 

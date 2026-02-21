@@ -19,48 +19,18 @@ const RightArrow = () => (
 // ── Static demo metadata (PINs are hardcoded — known demo accounts) ──
 
 const DEMO_META: Record<string, { pin?: string; pinLabel?: string; features: string[] }> = {
-  'demo-alex': {
-    pin: '8008',
-    pinLabel: 'Case Studies',
-    features: ['Label-style links', 'Text pod', 'Full contact card'],
-  },
-  'demo-sarah': {
-    features: ['Booking link', 'Text pod', 'Status: Available'],
-  },
-  'demo-robert': {
-    features: ['Large rounded photo', 'Full contact card', 'Text pod'],
-  },
-  'demo-emma': {
-    pin: '7007',
-    pinLabel: 'Client Portfolio',
-    features: ['Icon-style links', 'Text pod', 'Fade animation'],
-  },
-  'demo-marcus': {
-    pin: '3003',
-    pinLabel: 'Hidden personal page',
-    features: ['Icon-only links', 'Custom accent color', 'Pop animation'],
-  },
-  'demo-isabelle': {
-    features: ['Serif typography', 'Square large photo', 'Text pod'],
-  },
-  'demo-jake': {
-    features: ['Diamond photo', 'Scale animation', 'Luxury aesthetic'],
-  },
-  'demo-nia': {
-    pin: '4004',
-    pinLabel: 'Research Portfolio',
-    features: ['Full contact card', 'Text pod', 'Status: Open to Network'],
-  },
-  'demo-felix': {
-    pin: '6006',
-    pinLabel: 'Selected Works',
-    features: ['Text pod', 'Slide animation', 'Status: Available'],
-  },
-  'demo-luna': {
-    pin: '5005',
-    pinLabel: 'Hidden personal page',
-    features: ['Booking link', 'Text pod', 'Status: Hiring'],
-  },
+  'demo-alex':     { features: ['Label-style links', 'Text pod', 'Status: networker'] },
+  'demo-sarah':    { pin: '1111', pinLabel: 'Hidden personal page', features: ['Booking link', 'Text pod', 'Warm wellness aesthetic'] },
+  'demo-robert':   { features: ['Full contact card', 'Text pod', 'Classic professional'] },
+  'demo-daniela':  { pin: '2024', pinLabel: 'Current Listings', features: ['Cover photo', 'Booking link', 'Real estate showcase'] },
+  'demo-jordan':   { pin: '4040', pinLabel: 'Pitch Deck', features: ['Clean minimal', 'Founder profile', 'Investor materials'] },
+  'demo-emma':     { pin: '3030', pinLabel: 'Client Gallery', features: ['Icon-style links', 'Text pod', 'Creative portfolio'] },
+  'demo-marcus':   { pin: '8080', pinLabel: 'Hidden personal page', features: ['Cover photo', 'Moody nightlife aesthetic', 'DJ booking'] },
+  'demo-ava':      { pin: '2222', pinLabel: 'Hidden personal page', features: ['Content creator hub', 'Gen Z aesthetic', 'Close friends page'] },
+  'demo-felix':    { pin: '5050', pinLabel: 'Current Projects', features: ['Architecture portfolio', 'Slide animation', 'NDA-protected work'] },
+  'demo-chris':    { features: ['Phone-first layout', 'Service menu', 'Micro-storefront'] },
+  'demo-brianna':  { features: ['Before/after showcase', 'Payment links', 'Mobile detailing'] },
+  'demo-darius':   { pin: '9090', pinLabel: 'Hidden personal page', features: ['Fitness professional', 'Booking + payment', 'Personal vinyl page'] },
 };
 
 // ── Persona Card ───────────────────────────────────────────────────────────────
