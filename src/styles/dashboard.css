@@ -741,25 +741,27 @@
   flex-shrink: 0;
 }
 
-.dash-phone-notch {
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 70px;
-  height: 22px;
-  background: #000;
-  border-radius: 11px;
-  z-index: 2;
-}
-
 .dash-phone-screen {
   width: 100%;
   height: 100%;
   border-radius: 1.75rem;
   overflow: hidden;
-  background: #000;
+  background: #0c1017;
   position: relative;
+}
+
+/* Notch floats over the iframe content */
+.dash-phone-screen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70px;
+  height: 22px;
+  background: #1a1a1a;
+  border-radius: 0 0 11px 11px;
+  z-index: 3;
 }
 
 /* Render iframe at native mobile size, scale down to fit frame.

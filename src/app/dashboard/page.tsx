@@ -283,7 +283,6 @@ export default async function DashboardPage({
                 </div>
               </div>
               <div className="dash-phone">
-                <div className="dash-phone-notch" />
                 <div className="dash-phone-screen">
                   <iframe
                     src={`/${profile.slug}`}
