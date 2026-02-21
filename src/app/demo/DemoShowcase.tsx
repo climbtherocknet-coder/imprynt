@@ -4,6 +4,18 @@ import { useState, useRef, useCallback } from 'react';
 import { getTheme, FREE_TEMPLATES } from '@/lib/themes';
 import type { DemoProfile } from './page';
 
+const LeftArrow = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+);
+
+const RightArrow = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 6 15 12 9 18" />
+  </svg>
+);
+
 // ── Static demo metadata (PINs are hardcoded — known demo accounts) ──
 
 const DEMO_META: Record<string, { pin?: string; pinLabel?: string; features: string[] }> = {
@@ -130,13 +142,16 @@ export default function DemoShowcase({ profiles }: Props) {
   const [selectedSlug, setSelectedSlug] = useState(profiles[0]?.slug ?? '');
   const [iframeKey, setIframeKey] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const dragStartX = useRef(0);
   const dragScrollLeft = useRef(0);
   const didDrag = useRef(false);
+
+  // Touch swipe — phone frame (mobile profile navigation)
+  const swipeTouchX = useRef(0);
+  const swipeTouchY = useRef(0);
 
   const selectProfile = useCallback(
     (slug: string) => {
@@ -147,6 +162,19 @@ export default function DemoShowcase({ profiles }: Props) {
     },
     [selectedSlug]
   );
+
+  // Phone nav — prev/next profile
+  function goPrev() {
+    const idx = profiles.findIndex((p) => p.slug === selectedSlug);
+    const prev = profiles[(idx - 1 + profiles.length) % profiles.length];
+    if (prev) selectProfile(prev.slug);
+  }
+
+  function goNext() {
+    const idx = profiles.findIndex((p) => p.slug === selectedSlug);
+    const next = profiles[(idx + 1) % profiles.length];
+    if (next) selectProfile(next.slug);
+  }
 
   // Arrow button scroll — one card width per click
   function scrollCarousel(dir: 'left' | 'right') {
@@ -177,6 +205,58 @@ export default function DemoShowcase({ profiles }: Props) {
   function onMouseUp() {
     isDragging.current = false;
     scrollRef.current?.classList.remove('demo-personas--dragging');
+  }
+
+  // Persona strip touch scroll — prevent page-scroll fighting on mobile
+  const stripTouchX = useRef(0);
+  const stripTouchY = useRef(0);
+  const stripScrollLeft = useRef(0);
+  const stripIsHoriz = useRef<boolean | null>(null);
+
+  function onStripTouchStart(e: React.TouchEvent) {
+    const el = scrollRef.current;
+    if (!el) return;
+    stripTouchX.current = e.touches[0].clientX;
+    stripTouchY.current = e.touches[0].clientY;
+    stripScrollLeft.current = el.scrollLeft;
+    stripIsHoriz.current = null;
+  }
+
+  function onStripTouchMove(e: React.TouchEvent) {
+    const el = scrollRef.current;
+    if (!el) return;
+    const dx = e.touches[0].clientX - stripTouchX.current;
+    const dy = e.touches[0].clientY - stripTouchY.current;
+    if (stripIsHoriz.current === null) {
+      stripIsHoriz.current = Math.abs(dx) > Math.abs(dy);
+    }
+    if (stripIsHoriz.current) {
+      e.preventDefault();
+      el.scrollLeft = stripScrollLeft.current - dx;
+    }
+  }
+
+  // Phone frame swipe — navigate prev/next profile on mobile
+  function onPhoneTouchStart(e: React.TouchEvent) {
+    swipeTouchX.current = e.touches[0].clientX;
+    swipeTouchY.current = e.touches[0].clientY;
+  }
+
+  function onPhoneTouchEnd(e: React.TouchEvent) {
+    const dx = e.changedTouches[0].clientX - swipeTouchX.current;
+    const dy = e.changedTouches[0].clientY - swipeTouchY.current;
+    // Only fire if clearly horizontal (dx > 50px, more horizontal than vertical)
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+    const idx = profiles.findIndex((p) => p.slug === selectedSlug);
+    if (dx < 0) {
+      // Swipe left → next
+      const next = profiles[(idx + 1) % profiles.length];
+      if (next) selectProfile(next.slug);
+    } else {
+      // Swipe right → prev
+      const prev = profiles[(idx - 1 + profiles.length) % profiles.length];
+      if (prev) selectProfile(prev.slug);
+    }
   }
 
   const selectedProfile =
@@ -254,6 +334,8 @@ export default function DemoShowcase({ profiles }: Props) {
               onMouseMove={onMouseMove}
               onMouseUp={onMouseUp}
               onMouseLeave={onMouseUp}
+              onTouchStart={onStripTouchStart}
+              onTouchMove={onStripTouchMove}
             >
               {profiles.map((p) => (
                 <PersonaCard
@@ -311,43 +393,28 @@ export default function DemoShowcase({ profiles }: Props) {
                 </span>
               )}
             </div>
-            <div className="demo-mobile-actions">
-              <button
-                className={`demo-preview-btn${mobilePreviewOpen ? ' demo-preview-btn--open' : ''}`}
-                onClick={() => setMobilePreviewOpen((o) => !o)}
-              >
-                {mobilePreviewOpen ? (
-                  <>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
-                      <polyline points="18 15 12 9 6 15" />
-                    </svg>
-                    Close
-                  </>
-                ) : (
-                  <>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                    Preview
-                  </>
-                )}
-              </button>
-              <a
-                href={`/${selectedProfile.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="demo-mobile-open"
-              >
-                Open ↗
-              </a>
-            </div>
+            <a
+              href={`/${selectedProfile.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="demo-mobile-open"
+            >
+              Open ↗
+            </a>
           </div>
         )}
 
         {/* Phone frame + Info panel */}
         {selectedProfile && (
-          <div className={`demo-split${mobilePreviewOpen ? ' demo-split--mobile-open' : ''}`}>
-            <div className="demo-phone-wrap">
+          <div className="demo-split">
+            <div
+              className="demo-phone-wrap"
+              onTouchStart={onPhoneTouchStart}
+              onTouchEnd={onPhoneTouchEnd}
+            >
+              <button className="phone-nav-arrow phone-nav-arrow--left" onClick={goPrev} aria-label="Previous profile">
+                <LeftArrow />
+              </button>
               <div className="demo-phone">
                 <div className="demo-phone-screen">
                   {loading && (
@@ -370,6 +437,9 @@ export default function DemoShowcase({ profiles }: Props) {
                   />
                 </div>
               </div>
+              <button className="phone-nav-arrow phone-nav-arrow--right" onClick={goNext} aria-label="Next profile">
+                <RightArrow />
+              </button>
             </div>
 
             {/* Info panel — key triggers fade animation on profile switch */}

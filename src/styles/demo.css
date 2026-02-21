@@ -296,6 +296,33 @@
 
 @keyframes demoSpin { to { transform: rotate(360deg); } }
 
+/* ── Phone nav arrows (prev/next) ── */
+.phone-nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background 0.15s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  padding: 0;
+}
+
+.phone-nav-arrow:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.phone-nav-arrow--left { left: -18px; }
+.phone-nav-arrow--right { right: -18px; }
+
 /* ── Info panel ── */
 .demo-info {
   flex: 1;
@@ -486,9 +513,8 @@
   /* Hide arrows — touch scroll handles it */
   .demo-carousel-arrow { display: none; }
 
-  /* Phone section hidden by default on mobile — Preview button reveals it */
-  .demo-split { display: none; }
-  .demo-split--mobile-open { display: block; }
+  /* Switch split to block so negative-margin bleed works correctly */
+  .demo-split { display: block; }
 
   /* Break out of the page container padding — full-width iframe */
   .demo-phone-wrap {
@@ -548,13 +574,6 @@
     font-weight: 700;
   }
 
-  .demo-mobile-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    flex-shrink: 0;
-  }
-
   .demo-mobile-open {
     font-size: 0.8125rem;
     font-weight: 600;
@@ -562,29 +581,15 @@
     white-space: nowrap;
   }
 
-  /* Preview toggle button */
-  .demo-preview-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    font-family: inherit;
-    color: var(--text-mid, #a8adb8);
-    background: var(--surface, #161c28);
-    border: 1px solid var(--border-light, #283042);
-    border-radius: 2rem;
-    padding: 0.3rem 0.625rem;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: color 0.15s, border-color 0.15s;
+  /* Phone nav arrows — move inside the frame on mobile */
+  .phone-nav-arrow {
+    width: 32px;
+    height: 32px;
+    background: rgba(0, 0, 0, 0.25);
   }
+  .phone-nav-arrow--left { left: 8px; }
+  .phone-nav-arrow--right { right: 8px; }
 
-  .demo-preview-btn:hover,
-  .demo-preview-btn--open {
-    color: var(--text, #eceef2);
-    border-color: var(--accent, #e8a849);
-  }
 }
 
 @media (max-width: 480px) {

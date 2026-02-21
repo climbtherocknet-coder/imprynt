@@ -379,6 +379,12 @@
   .lp-hero-visual { display: block; }
 }
 
+/* Outer wrapper — position: relative so arrows can be placed half-outside the phone */
+.lp-phone-outer {
+  position: relative;
+  display: inline-block;
+}
+
 .lp-phone {
   width: 280px;
   height: 570px;
@@ -475,6 +481,43 @@
 .lp-phone-dot--active {
   width: 1.25rem;
   background: var(--accent, #e8a849);
+}
+
+/* ── Phone nav arrows (prev/next) ── */
+.phone-nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background 0.15s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  padding: 0;
+}
+
+.phone-nav-arrow:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.phone-nav-arrow--left { left: -18px; }
+.phone-nav-arrow--right { right: -18px; }
+
+@media (max-width: 768px) {
+  .phone-nav-arrow {
+    width: 32px;
+    height: 32px;
+    background: rgba(0, 0, 0, 0.25);
+  }
+  .phone-nav-arrow--left { left: 8px; }
+  .phone-nav-arrow--right { right: 8px; }
 }
 
 .m-row { display: flex; align-items: center; gap: 0.5rem; }
