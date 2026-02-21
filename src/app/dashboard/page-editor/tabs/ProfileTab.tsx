@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { THEMES, getTheme } from '@/lib/themes';
+import { THEMES, getTheme, type CustomThemeData } from '@/lib/themes';
+import { COLOR_PRESETS as CUSTOM_COLOR_PRESETS, deriveAccentVars } from '@/lib/color-presets';
 import PodEditor from '@/components/pods/PodEditor';
 import ProfileTemplate from '@/components/templates/ProfileTemplate';
 import ToggleSwitch from '@/components/ToggleSwitch';
@@ -66,6 +67,7 @@ interface ProfileData {
     vcardPinEnabled: boolean;
     showQrButton: boolean;
     linkDisplay: string;
+    customTheme: CustomThemeData | null;
   };
   links: LinkItem[];
 }
@@ -191,6 +193,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
   const [photoPositionY, setPhotoPositionY] = useState(50);
   const [photoAnimation, setPhotoAnimation] = useState('none');
   const [photoAlign, setPhotoAlign] = useState('left');
+  const [customTheme, setCustomTheme] = useState<CustomThemeData>({});
   const [previewKey, setPreviewKey] = useState(0);
   const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
@@ -262,6 +265,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
         setPhotoPositionY(d.profile.photoPositionY ?? 50);
         setPhotoAnimation(d.profile.photoAnimation || 'none');
         setPhotoAlign(d.profile.photoAlign || 'left');
+        setCustomTheme(d.profile.customTheme || {});
         setLoading(false);
       })
       .catch(() => {
@@ -590,6 +594,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
         photoAnimation={photoAnimation}
         photoAlign={photoAlign}
         vcardPinEnabled={vcardPinEnabled}
+        customTheme={template === 'custom' ? customTheme : undefined}
       />
     );
   }
@@ -612,7 +617,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={sectionTitleStyle}>My Main Profile</h3>
             <button
-              onClick={() => saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor: accentColor || null, fontPair, linkDisplay, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign })}
+              onClick={() => saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor: accentColor || null, fontPair, linkDisplay, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, customTheme: template === 'custom' ? customTheme : null })}
               disabled={saving === 'profile'}
               style={{ ...saveBtnStyle, opacity: saving === 'profile' ? 0.6 : 1 }}
             >
@@ -1290,8 +1295,136 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
                   </button>
                 );
               })}
+              {/* Custom template card (premium) */}
+              {(() => {
+                const isSelected = template === 'custom';
+                const previewAccent = customTheme.accent || '#e8a849';
+                const previewBg = customTheme.bg || '#0c1017';
+                const previewText = customTheme.text || '#eceef2';
+                return (
+                  <button
+                    key="custom"
+                    onClick={() => { setTemplate('custom'); setAccentColor(''); onTemplateChange?.('custom', ''); }}
+                    style={{
+                      padding: 0,
+                      border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                      borderRadius: '0.5rem',
+                      cursor: 'pointer',
+                      overflow: 'hidden',
+                      background: 'none',
+                      transition: 'border-color 0.15s',
+                      position: 'relative',
+                    }}
+                  >
+                    <div style={{
+                      backgroundColor: previewBg,
+                      padding: '0.75rem 0.5rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      minHeight: 60,
+                    }}>
+                      <div style={{
+                        width: 18, height: 18, borderRadius: '50%',
+                        background: `linear-gradient(135deg, ${previewAccent}, #ec4899)`,
+                        opacity: 0.85,
+                      }} />
+                      <div style={{ width: '60%', height: 5, borderRadius: 3, backgroundColor: previewText, opacity: 0.7 }} />
+                      <div style={{ width: '70%', height: 14, borderRadius: 4, background: `linear-gradient(90deg, ${previewAccent}, #ec4899)`, marginTop: 2 }} />
+                    </div>
+                    <div style={{ padding: '0.375rem', backgroundColor: 'var(--surface, #161c28)', borderTop: '1px solid var(--border, #1e2535)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
+                      <p style={{ fontSize: '0.6875rem', fontWeight: 600, margin: 0, color: 'var(--text, #eceef2)' }}>Custom</p>
+                      <span style={{ fontSize: '0.5rem', fontWeight: 700, padding: '1px 4px', borderRadius: '3px', backgroundColor: 'rgba(232,168,73,0.15)', color: 'var(--accent, #e8a849)', letterSpacing: '0.04em' }}>PRO</span>
+                    </div>
+                  </button>
+                );
+              })()}
             </div>
 
+            {/* Custom theme editor — shown only when template === 'custom' */}
+            {template === 'custom' && (
+              <div style={{ marginBottom: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+                <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.75rem' }}>Color Preset</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '1rem' }}>
+                  {CUSTOM_COLOR_PRESETS.map(preset => {
+                    const isActive = customTheme.accent === preset.colors.accent && customTheme.bg === preset.colors.bg;
+                    return (
+                      <button
+                        key={preset.id}
+                        title={preset.name}
+                        onClick={() => setCustomTheme(preset.colors)}
+                        style={{
+                          width: 32, height: 32, borderRadius: '50%', padding: 0,
+                          border: isActive ? '3px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                          outline: isActive ? '2px solid var(--bg, #0c1017)' : 'none',
+                          outlineOffset: -3,
+                          cursor: 'pointer',
+                          background: `linear-gradient(135deg, ${preset.colors.bg} 50%, ${preset.colors.accent} 50%)`,
+                          transform: isActive ? 'scale(1.15)' : 'scale(1)',
+                          transition: 'transform 0.1s',
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.625rem' }}>Colors</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  {(
+                    [
+                      ['bg', 'Background'],
+                      ['text', 'Text'],
+                      ['surface', 'Card surface'],
+                      ['border', 'Border'],
+                      ['accent', 'Accent'],
+                      ['textMid', 'Text (mid)'],
+                    ] as [keyof CustomThemeData, string][]
+                  ).map(([key, label]) => (
+                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                      <input
+                        type="color"
+                        value={(customTheme[key] as string) || '#000000'}
+                        onChange={e => {
+                          const hex = e.target.value;
+                          if (key === 'accent') {
+                            const derived = deriveAccentVars(hex);
+                            setCustomTheme(prev => ({ ...prev, accent: hex, ...derived }));
+                          } else {
+                            setCustomTheme(prev => ({ ...prev, [key]: hex }));
+                          }
+                        }}
+                        style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-light, #283042)', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+                      />
+                      <span style={{ fontSize: '0.6875rem', color: 'var(--text-mid, #a8adb8)' }}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: '0.875rem' }}>
+                  <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.5rem' }}>Link Style</p>
+                  <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
+                    {(['pills', 'stacked', 'full-width-pills'] as const).map(style => {
+                      const label = style === 'full-width-pills' ? 'Full width' : style.charAt(0).toUpperCase() + style.slice(1);
+                      return (
+                        <button
+                          key={style}
+                          onClick={() => setCustomTheme(prev => ({ ...prev, linkStyle: style }))}
+                          style={{
+                            padding: '0.25rem 0.625rem', borderRadius: '9999px', fontSize: '0.6875rem',
+                            border: customTheme.linkStyle === style ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                            backgroundColor: customTheme.linkStyle === style ? 'rgba(232,168,73,0.1)' : 'var(--surface, #161c28)',
+                            color: customTheme.linkStyle === style ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                            cursor: 'pointer', fontFamily: 'inherit',
+                          }}
+                        >{label}</button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Accent color override — shown for non-custom templates */}
+            {template !== 'custom' && (<>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <label style={labelStyle}>Accent color</label>
               <button
@@ -1342,6 +1475,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
                 Using {getTheme(template).name}&apos;s default accent color.
               </p>
             )}
+            </>)}
           </div>
         </div>
 

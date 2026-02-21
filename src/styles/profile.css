@@ -327,7 +327,9 @@
   width: 20px;
   height: 20px;
 }
-.link-icon-btn .icon svg { width: 20px; height: 20px; }
+.link-icon-btn .icon svg { width: 20px; height: 20px; color: var(--accent); }
+.link-icon-btn .icon svg[fill='currentColor'] { fill: var(--accent); }
+.link-icon-btn .icon svg[stroke='currentColor'] { stroke: var(--accent); }
 
 /* ── Save Contact Button ── */
 .save-row { margin-bottom: 2.5rem; }

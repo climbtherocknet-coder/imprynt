@@ -463,17 +463,81 @@ export const THEMES: Record<string, TemplateTheme> = {
 };
 
 export const FREE_TEMPLATES = ['clean', 'warm', 'classic', 'soft'] as const;
-export const PREMIUM_TEMPLATES = ['midnight', 'editorial', 'noir', 'signal', 'studio', 'dusk'] as const;
+export const PREMIUM_TEMPLATES = ['midnight', 'editorial', 'noir', 'signal', 'studio', 'dusk', 'custom'] as const;
 export const ALL_TEMPLATES = [...FREE_TEMPLATES, ...PREMIUM_TEMPLATES] as const;
+
+// ─── Custom Theme ─────────────────────────────────────────────
+
+/** Shape of the JSONB stored in profiles.custom_theme when template = 'custom' */
+export interface CustomThemeData {
+  // Colors (13 vars)
+  bg?: string;
+  bgAlt?: string;
+  surface?: string;
+  surface2?: string;
+  text?: string;
+  textMid?: string;
+  textMuted?: string;
+  accent?: string;
+  accentSoft?: string;
+  accentBorder?: string;
+  accentHover?: string;
+  border?: string;
+  borderHover?: string;
+  // Layout modifiers
+  photoShape?: 'circle' | 'rounded';
+  linkStyle?: 'pills' | 'stacked' | 'full-width-pills';
+  buttonStyle?: 'pill' | 'rounded' | 'sharp';
+  radiusBase?: string;
+}
+
+/** Build a TemplateTheme from custom JSONB data, falling back to 'clean' defaults */
+export function getCustomTheme(data: CustomThemeData | null | undefined): TemplateTheme {
+  const base = THEMES.clean;
+  const d = data || {};
+  return {
+    id: 'custom',
+    name: 'Custom',
+    description: 'Your custom theme',
+    tier: 'premium',
+    fonts: base.fonts,
+    colors: {
+      bg:           d.bg           || base.colors.bg,
+      bgAlt:        d.bgAlt        || base.colors.bgAlt,
+      surface:      d.surface      || base.colors.surface,
+      surface2:     d.surface2     || base.colors.surface2,
+      text:         d.text         || base.colors.text,
+      textMid:      d.textMid      || base.colors.textMid,
+      textMuted:    d.textMuted    || base.colors.textMuted,
+      accent:       d.accent       || base.colors.accent,
+      accentSoft:   d.accentSoft   || base.colors.accentSoft,
+      accentBorder: d.accentBorder || base.colors.accentBorder,
+      accentHover:  d.accentHover  || base.colors.accentHover,
+      border:       d.border       || base.colors.border,
+      borderHover:  d.borderHover  || base.colors.borderHover,
+    },
+    modifiers: {
+      photoShape:     d.photoShape    || base.modifiers.photoShape,
+      linkStyle:      d.linkStyle     || base.modifiers.linkStyle,
+      buttonStyle:    d.buttonStyle   || base.modifiers.buttonStyle,
+      cardStyle:      base.modifiers.cardStyle,
+      statStyle:      base.modifiers.statStyle,
+      radiusBase:     d.radiusBase    || base.modifiers.radiusBase,
+      radiusLg:       base.modifiers.radiusLg,
+      spacingDensity: base.modifiers.spacingDensity,
+    },
+  };
+}
 
 // ─── Helpers ─────────────────────────────────────────────────
 
 export function getTheme(templateId: string): TemplateTheme {
+  if (templateId === 'custom') return getCustomTheme(null);
   return THEMES[templateId] || THEMES.clean;
 }
 
 export function isValidTemplate(templateId: string): boolean {
-  return templateId in THEMES;
+  return templateId === 'custom' || templateId in THEMES;
 }
 
 export function isFreeTier(templateId: string): boolean {

@@ -43,6 +43,7 @@ interface ProfileData {
   photo_align: string;
   vcard_pin_hash: string | null;
   link_display: string;
+  custom_theme: Record<string, string> | null;
 }
 
 interface LinkData {
@@ -118,6 +119,11 @@ async function getProfileAny(slug: string) {
       const alignResult = await query('SELECT photo_align FROM profiles WHERE id = $1', [profile.profile_id]);
       profile.photo_align = alignResult.rows[0]?.photo_align || 'left';
     } catch { profile.photo_align = 'left'; }
+    // Fetch custom_theme separately (migration 036 may not be run yet)
+    try {
+      const ctResult = await query('SELECT custom_theme FROM profiles WHERE id = $1', [profile.profile_id]);
+      profile.custom_theme = ctResult.rows[0]?.custom_theme || null;
+    } catch { profile.custom_theme = null; }
   }
   return profile;
 }
@@ -324,6 +330,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         photoAnimation={profile.photo_animation || 'none'}
         photoAlign={profile.photo_align || 'left'}
         vcardPinEnabled={!!profile.vcard_pin_hash}
+        customTheme={profile.template === 'custom' ? (profile.custom_theme || undefined) : undefined}
       />
 
       {/* Client-side interactive elements (PIN modal, protected pages) */}

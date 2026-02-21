@@ -60,6 +60,7 @@ CREATE TABLE profiles (
     photo_position_y INTEGER NOT NULL DEFAULT 50,
     photo_animation VARCHAR(20) NOT NULL DEFAULT 'none',
     photo_align     VARCHAR(10) NOT NULL DEFAULT 'left' CHECK (photo_align IN ('left', 'right')),
+    custom_theme    JSONB DEFAULT NULL,               -- custom template config (only when template = 'custom')
     status_tags     TEXT[] DEFAULT '{}',              -- e.g. {'open_to_network','hiring'}
     slug_rotated_at TIMESTAMPTZ DEFAULT NOW(),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),

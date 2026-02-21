@@ -24,7 +24,7 @@ export async function GET() {
 
   const profileResult = await query(
     `SELECT id, slug, redirect_id, title, company, tagline, bio_heading, bio,
-            photo_url, template, primary_color, accent_color, font_pair, link_display, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback, show_qr_button, photo_shape, photo_radius, photo_size, photo_position_x, photo_position_y, photo_animation
+            photo_url, template, primary_color, accent_color, font_pair, link_display, is_published, status_tags, status_tag_color, allow_sharing, allow_feedback, show_qr_button, photo_shape, photo_radius, photo_size, photo_position_x, photo_position_y, photo_animation, custom_theme
      FROM profiles WHERE user_id = $1`,
     [userId]
   );
@@ -92,6 +92,7 @@ export async function GET() {
       photoAnimation: profile.photo_animation || 'none',
       photoAlign,
       vcardPinEnabled: !!vcardPinHash,
+      customTheme: profile.custom_theme || null,
     },
     links: linksResult.rows.map((l: Record<string, unknown>) => ({
       id: l.id,
@@ -341,6 +342,26 @@ export async function PUT(req: NextRequest) {
           await query('UPDATE profiles SET photo_align = $1 WHERE user_id = $2', [alignVal, userId]);
         } catch { /* column doesn't exist yet */ }
       }
+      // custom_theme requires migration 036 — update separately
+      const { customTheme } = body;
+      if (template === 'custom' && customTheme && typeof customTheme === 'object') {
+        try {
+          await query('UPDATE profiles SET custom_theme = $1 WHERE user_id = $2', [JSON.stringify(customTheme), userId]);
+        } catch { /* column doesn't exist yet */ }
+      } else if (template !== 'custom') {
+        try {
+          await query('UPDATE profiles SET custom_theme = NULL WHERE user_id = $1', [userId]);
+        } catch { /* column doesn't exist yet */ }
+      }
+    } else if (section === 'customTheme') {
+      // Standalone custom_theme save (auto-save as user tweaks)
+      const { customTheme } = body;
+      if (!customTheme || typeof customTheme !== 'object') {
+        return NextResponse.json({ error: 'Invalid customTheme' }, { status: 400 });
+      }
+      try {
+        await query('UPDATE profiles SET custom_theme = $1 WHERE user_id = $2', [JSON.stringify(customTheme), userId]);
+      } catch { /* column doesn't exist yet */ }
     } else if (section === 'vcardPin') {
       const { vcardPin } = body;
       if (vcardPin === null || vcardPin === '') {

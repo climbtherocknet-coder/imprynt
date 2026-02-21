@@ -34,6 +34,13 @@ export async function GET(
 
   const page = pageResult.rows[0];
 
+  // Fetch custom_theme separately (migration 036 may not be run yet)
+  let customTheme: Record<string, string> | null = null;
+  try {
+    const ctResult = await query('SELECT custom_theme FROM profiles WHERE id = $1', [page.profile_id]);
+    customTheme = ctResult.rows[0]?.custom_theme || null;
+  } catch { /* column doesn't exist yet */ }
+
   // Fetch links based on visibility mode (personal for impression, showcase for visible)
   const visibilityFlag = page.visibility_mode === 'hidden' ? 'show_personal' : 'show_showcase';
   const linksResult = await query(
@@ -87,6 +94,7 @@ export async function GET(
       primaryColor: page.primary_color,
       accentColor: page.accent_color,
       fontPair: page.font_pair,
+      customTheme,
     },
     links: linksResult.rows.map((l: Record<string, unknown>) => ({
       id: l.id,

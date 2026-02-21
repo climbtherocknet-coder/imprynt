@@ -1,6 +1,6 @@
 import React from 'react';
 import '@/styles/profile.css';
-import { getTheme, getThemeCSSVars, getTemplateDataAttrs, getAccentOverrideVars, isDarkTemplate, LINK_ICONS } from '@/lib/themes';
+import { getTheme, getCustomTheme, getThemeCSSVars, getTemplateDataAttrs, getAccentOverrideVars, isDarkTemplate, LINK_ICONS, type CustomThemeData } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
 import SaveContactButton from '@/components/templates/SaveContactButton';
 
@@ -23,6 +23,7 @@ interface ProtectedPagePreviewProps {
   photoPositionY?: number;
   photoAnimation?: string;
   profileId?: string;
+  customTheme?: CustomThemeData | null;
 }
 
 function getPhotoStyles(shape: string, radius: number, size: string, posX: number, posY: number): React.CSSProperties {
@@ -73,8 +74,9 @@ export default function ProtectedPagePreview({
   photoPositionX = 50,
   photoPositionY = 50,
   profileId,
+  customTheme,
 }: ProtectedPagePreviewProps) {
-  const theme = getTheme(template);
+  const theme = template === 'custom' ? getCustomTheme(customTheme) : getTheme(template);
   const accent = accentOverride || theme.colors.accent;
   const isDark = isDarkTemplate(template);
   const cssVars = getThemeCSSVars(theme);

@@ -1,5 +1,5 @@
 import '@/styles/profile.css';
-import { getTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, getAccentOverrideVars, LINK_ICONS } from '@/lib/themes';
+import { getTheme, getCustomTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, getAccentOverrideVars, LINK_ICONS, type CustomThemeData } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
 import SaveContactButton from '@/components/templates/SaveContactButton';
 
@@ -36,6 +36,7 @@ export interface ProfileTemplateProps {
   accentColor?: string;
   linkDisplay?: string;
   photoAlign?: string;
+  customTheme?: CustomThemeData | Record<string, string>;
 }
 
 function getLinkHref(link: { link_type: string; url: string }) {
@@ -72,8 +73,9 @@ export default function ProfileTemplate({
   accentColor,
   linkDisplay = 'default',
   photoAlign = 'left',
+  customTheme,
 }: ProfileTemplateProps) {
-  const theme = getTheme(template);
+  const theme = template === 'custom' ? getCustomTheme(customTheme as CustomThemeData) : getTheme(template);
   const cssVars = getThemeCSSVars(theme);
   const accentOverrides = accentColor ? getAccentOverrideVars(accentColor) : {};
   const dataAttrs = getTemplateDataAttrs(theme);
