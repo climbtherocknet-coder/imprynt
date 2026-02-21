@@ -352,62 +352,73 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
       <div className="editor-split">
       <main className="editor-panel" style={{ paddingBottom: '4rem' }}>
 
-        {/* ─── Info Box ────────────────────────────── */}
-        <div style={{ marginBottom: '1.25rem', padding: '1rem 1.25rem', backgroundColor: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 0.375rem', color: 'var(--text, #eceef2)' }}>
-            {isNew ? 'Create Your Portfolio' : 'Portfolio Settings'}
-          </h2>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
-            A PIN-protected page for selective sharing — client work, investor decks, project galleries, or anything you want to gate behind a PIN.
-          </p>
+        {/* ─── Info Box (consolidated) ────────────── */}
+        <div style={{ marginBottom: '1.25rem', padding: '1.25rem', backgroundColor: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+            {/* Impression icon visual */}
+            <div style={{ flexShrink: 0, width: 44, height: 44, borderRadius: '50%', border: '2px solid var(--accent, #e8a849)', backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--accent, #e8a849)' }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text, #eceef2)' }}>
+                {isNew ? 'Create Your Portfolio Page' : 'Your Portfolio Page'}
+              </h2>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: 0, lineHeight: 1.6 }}>
+                Your portfolio page appears as a labeled button on your public profile. Visitors can see the button, but tapping it prompts for a PIN before they can access the content. Use it for project portfolios, investor decks, listings, or any gated professional content.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* ─── On Air + PIN/Save Control Cards ─────── */}
-        <div className="page-controls" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
-          {/* On Air Card */}
-          <div style={{ background: 'var(--surface, #161c28)', border: '1px solid var(--border, #1e2535)', borderRadius: '0.75rem', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        {/* ─── 2×2 Control Grid ────────────────────── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '1.25rem' }}>
+          {/* On Air */}
+          <div style={{ padding: '0.875rem 1rem', borderRadius: '0.625rem', backgroundColor: 'var(--surface, #161c28)', border: '1px solid var(--border, #1e2535)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: isNew ? 'var(--text-muted, #5d6370)' : isActive ? '#22c55e' : 'var(--text-muted, #5d6370)', flexShrink: 0 }} />
-              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text, #eceef2)' }}>On Air</span>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: isActive && !isNew ? '#22c55e' : 'var(--text-muted, #5d6370)', display: 'inline-block' }} />
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text, #eceef2)' }}>On Air</span>
             </div>
-            {isNew ? (
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>Create your page first</p>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <ToggleSwitch checked={isActive} onChange={setIsActive} label="" />
-                {slug && (
-                  <a href={`/${slug}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--accent, #e8a849)', textDecoration: 'none' }}>
-                    View Page →
-                  </a>
-                )}
-              </div>
-            )}
+            {!isNew && <ToggleSwitch checked={isActive} onChange={setIsActive} label="" />}
           </div>
 
-          {/* PIN / Save Card */}
-          <div style={{ background: 'var(--surface, #161c28)', border: '1px solid var(--border, #1e2535)', borderRadius: '0.75rem', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-mid, #a8adb8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text, #eceef2)' }}>
-                  PIN: {isNew ? <span style={{ color: 'var(--text-muted, #5d6370)', fontWeight: 400 }}>Not set</span> : pinDirty ? '•'.repeat(pin.length || 4) : '••••'}
-                </span>
-              </div>
-              {!isNew && (
-                <button onClick={() => { setModalPin(''); setModalPinConfirm(''); setModalPinError(''); setShowPinModal(true); }}
-                  style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent, #e8a849)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
-                  Change
-                </button>
-              )}
+          {/* Change PIN */}
+          <button
+            onClick={() => { setModalPin(''); setModalPinConfirm(''); setModalPinError(''); setShowPinModal(true); }}
+            style={{ padding: '0.875rem 1rem', borderRadius: '0.625rem', backgroundColor: 'var(--surface, #161c28)', border: '1px solid var(--border, #1e2535)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.625rem', fontFamily: 'inherit', textAlign: 'left' as const, transition: 'border-color 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent, #e8a849)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border, #1e2535)'}
+          >
+            <div style={{ width: 24, height: 24, borderRadius: '50%', border: '1.5px solid var(--accent, #e8a849)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: 'var(--accent, #e8a849)' }} />
             </div>
-            <button
-              onClick={savePage}
-              disabled={saving}
-              style={{ ...saveBtnStyle, borderRadius: '0.5rem', color: '#fff', opacity: saving ? 0.6 : 1, width: '100%' }}
-            >
-              {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Portfolio' : 'Save Changes'}
-            </button>
-          </div>
+            <div>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text, #eceef2)', display: 'block' }}>{!isNew ? 'Change PIN' : 'Set PIN'}</span>
+              <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', display: 'block' }}>{!isNew ? 'PIN: ••••' : 'Not set'}</span>
+            </div>
+          </button>
+
+          {/* View Page */}
+          <a
+            href={slug ? `/${slug}` : '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ padding: '0.875rem 1rem', borderRadius: '0.625rem', backgroundColor: 'var(--surface, #161c28)', border: '1px solid var(--border, #1e2535)', cursor: slug ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textDecoration: 'none', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-mid, #a8adb8)', transition: 'border-color 0.15s, color 0.15s', opacity: slug ? 1 : 0.4 }}
+            onMouseEnter={e => { if (slug) { e.currentTarget.style.borderColor = 'var(--accent, #e8a849)'; e.currentTarget.style.color = 'var(--accent, #e8a849)'; } }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border, #1e2535)'; e.currentTarget.style.color = 'var(--text-mid, #a8adb8)'; }}
+            onClick={e => { if (!slug) e.preventDefault(); }}
+          >
+            View Page
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+          </a>
+
+          {/* Save Changes */}
+          <button
+            onClick={savePage}
+            disabled={saving}
+            style={{ padding: '0.875rem 1rem', borderRadius: '0.625rem', backgroundColor: 'var(--accent, #e8a849)', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: '#fff', fontFamily: 'inherit', opacity: saving ? 0.6 : 1, transition: 'opacity 0.15s' }}
+          >
+            {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Portfolio' : 'Save Changes'}
+          </button>
         </div>
 
         {/* ─── Always-visible: Page title + button label ── */}
