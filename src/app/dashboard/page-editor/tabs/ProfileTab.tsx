@@ -156,6 +156,54 @@ const saveBtnStyle: React.CSSProperties = {
   fontFamily: 'inherit',
 };
 
+// ── CollapsibleSection ─────────────────────────────────
+
+function CollapsibleSection({
+  title,
+  defaultOpen = false,
+  badge,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  badge?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  return (
+    <div style={sectionStyle}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: 0,
+          color: 'inherit',
+          fontFamily: 'inherit',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{
+            display: 'inline-block',
+            transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s',
+            fontSize: '0.6875rem',
+            color: 'var(--text-muted, #5d6370)',
+          }}>&#9654;</span>
+          <h3 style={{ ...sectionTitleStyle, marginBottom: 0 }}>{title}</h3>
+          {badge}
+        </div>
+      </button>
+      {isOpen && <div style={{ marginTop: '1rem' }}>{children}</div>}
+    </div>
+  );
+}
+
 // ── Component ──────────────────────────────────────────
 
 export default function ProfileTab({ planStatus, onTemplateChange }: { planStatus: PlanStatusClient; onTemplateChange?: (template: string, accentColor: string) => void }) {
@@ -178,7 +226,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
   const [accentColor, setAccentColor] = useState('');
   const [fontPair, setFontPair] = useState('default');
   const [linkDisplay, setLinkDisplay] = useState('default');
-  const [showQrCode, setShowQrCode] = useState(false);
   const [qrLoaded, setQrLoaded] = useState(false);
   const [qrError, setQrError] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
@@ -194,7 +241,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
   const [photoRadius, setPhotoRadius] = useState<number>(50);
   const [showShapeSlider, setShowShapeSlider] = useState(false);
   const [showPhotoSettings, setShowPhotoSettings] = useState(false);
-  const [showSharingSettings, setShowSharingSettings] = useState(false);
   const [photoSize, setPhotoSize] = useState('medium');
   const [photoPositionX, setPhotoPositionX] = useState(50);
   const [photoPositionY, setPhotoPositionY] = useState(50);
@@ -229,8 +275,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
   const [bgImageUploading, setBgImageUploading] = useState(false);
   const bgImageFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Cover & Background collapsible
-  const [showCoverBg, setShowCoverBg] = useState(false);
 
   // Drag state (links)
   const dragItem = useRef<number | null>(null);
@@ -243,7 +287,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
   const isPaid = planStatus.isPaid;
 
   // Contact card state
-  const [showContactCard, setShowContactCard] = useState(false);
   const [contactFields, setContactFields] = useState<Record<string, { value: string; showBusiness: boolean; showPersonal: boolean }>>(() => {
     const map: Record<string, { value: string; showBusiness: boolean; showPersonal: boolean }> = {};
     for (const def of CONTACT_FIELD_DEFS) {
@@ -270,7 +313,10 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
         setBio(d.profile.bio);
         setTemplate(d.profile.template);
         setPrimaryColor(d.profile.primaryColor);
-        setAccentColor(d.profile.accentColor || '');
+        // If the saved accent matches the theme default, treat it as "no override"
+        const templateAccent = getTheme(d.profile.template).colors.accent;
+        const savedAccent = d.profile.accentColor || '';
+        setAccentColor(savedAccent === templateAccent ? '' : savedAccent);
         setFontPair(d.profile.fontPair);
         setLinkDisplay(d.profile.linkDisplay || 'default');
         setLinks(d.links);
@@ -376,14 +422,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
     } catch { /* silent */ }
     finally { setContactSaving(false); }
   }
-
-  // Reset QR load state when panel is closed so it reloads if reopened
-  useEffect(() => {
-    if (!showQrCode) {
-      setQrLoaded(false);
-      setQrError(false);
-    }
-  }, [showQrCode]);
 
   // Save helpers
   const saveSection = useCallback(async (section: string, body: Record<string, unknown>) => {
@@ -704,18 +742,23 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
       <div className="editor-split">
       <main className="editor-panel" style={{ paddingBottom: '4rem' }}>
 
-        {/* ─── My Main Profile Section ─────────── */}
-        <div style={sectionStyle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={sectionTitleStyle}>My Main Profile</h3>
-            <button
-              onClick={() => saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor: accentColor || null, fontPair, linkDisplay, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, photoPosition, customTheme: template === 'custom' ? customTheme : null, coverUrl: coverUrl || null, coverPositionY, coverOpacity, bgImageUrl: bgImageUrl || null, bgImageOpacity, bgImagePositionY })}
-              disabled={saving === 'profile'}
-              style={{ ...saveBtnStyle, opacity: saving === 'profile' ? 0.6 : 1 }}
-            >
-              {saving === 'profile' ? 'Saving...' : saved === 'profile' ? '\u2713 Saved' : 'Save'}
-            </button>
-          </div>
+        {/* ─── Sticky Save Bar ─────────────────────── */}
+        <div style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'var(--bg, #0c1017)', padding: '0.75rem 0', borderBottom: '1px solid var(--border, #1e2535)', marginBottom: '1rem' }}>
+          <button
+            onClick={() => {
+              const themeAccent = getTheme(template).colors.accent;
+              const accentToSave = (accentColor && accentColor !== themeAccent) ? accentColor : null;
+              saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor: accentToSave, fontPair, linkDisplay, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, photoPosition, customTheme: template === 'custom' ? customTheme : null, coverUrl: coverUrl || null, coverPositionY, coverOpacity, bgImageUrl: bgImageUrl || null, bgImageOpacity, bgImagePositionY });
+            }}
+            disabled={saving === 'profile'}
+            style={{ ...saveBtnStyle, opacity: saving === 'profile' ? 0.6 : 1, width: '100%' }}
+          >
+            {saving === 'profile' ? 'Saving...' : saved === 'profile' ? '\u2713 Saved' : 'Save Changes'}
+          </button>
+        </div>
+
+        {/* ─── Profile Section ─────────────────────── */}
+        <CollapsibleSection title="Profile" defaultOpen={true}>
 
           {/* Photo upload */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
@@ -1063,19 +1106,12 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
               style={inputStyle}
             />
           </div>
+        </CollapsibleSection>
 
-          {/* ── Contact Card (collapsible) ── */}
-          <div style={{ borderTop: '1px solid var(--border, #1e2535)', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
-            <div style={{ padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
-              <div
-                onClick={() => setShowContactCard(!showContactCard)}
-                className="collapsible-header"
-              >
-                <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showContactCard ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
-                <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>Contact Card</label>
-              </div>
-              {showContactCard && (<>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: '0.75rem 0 1rem' }}>
+        {/* ─── Contact Card Section ────────────────── */}
+        <CollapsibleSection title="Contact Card">
+          <>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 1rem' }}>
                   These fields are included when visitors save your contact. Toggle visibility for Business and Personal vCards.
                 </p>
 
@@ -1166,549 +1202,512 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
                   style={{ marginTop: '1rem', width: 'auto', padding: '0.625rem 1.25rem', backgroundColor: contactSaved ? '#059669' : undefined, cursor: contactSaving ? 'not-allowed' : 'pointer', transition: 'background-color 0.2s' }}>
                   {contactSaving ? 'Saving...' : contactSaved ? 'Saved!' : 'Save Contact Info'}
                 </button>
-              </>)}
-            </div>
-          </div>
-
-          {/* ── Cover & Background (collapsible) ── */}
-          <div style={{ borderTop: '1px solid var(--border, #1e2535)', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
-            <div style={{ padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
-              <div onClick={() => setShowCoverBg(!showCoverBg)} className="collapsible-header">
-                <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showCoverBg ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
-                <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>Cover & Background</label>
-                {!isPaid && <span style={{ fontSize: '0.5rem', fontWeight: 700, padding: '1px 5px', borderRadius: '3px', backgroundColor: 'rgba(232,168,73,0.15)', color: 'var(--accent, #e8a849)', letterSpacing: '0.04em' }}>PRO</span>}
-              </div>
-
-              {showCoverBg && (<>
-                {/* ── Cover Photo ── */}
-                <div style={{ marginTop: '1rem' }}>
-                  <label style={{ ...labelStyle, fontSize: '0.8125rem' }}>Cover Photo</label>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.75rem' }}>
-                    Appears behind your hero section with a gradient fade.
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {coverUrl ? (
-                      <div style={{ position: 'relative', width: '100%', height: 96, borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--border-light, #283042)' }}>
-                        <img src={coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `center ${coverPositionY}%` }} />
-                        <button onClick={() => setCoverUrl('')}
-                          style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
-                          aria-label="Remove cover photo">✕</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => { if (isPaid) coverFileInputRef.current?.click(); }} disabled={!isPaid || coverUploading}
-                        style={{ width: '100%', padding: '1rem', borderRadius: '0.5rem', fontSize: '0.8125rem', border: '2px dashed var(--border-light, #283042)', backgroundColor: 'var(--bg, #0c1017)', color: isPaid ? 'var(--text-mid, #a8adb8)' : 'var(--text-muted, #5d6370)', cursor: isPaid ? 'pointer' : 'not-allowed', fontFamily: 'inherit', opacity: isPaid ? 1 : 0.6 }}>
-                        {coverUploading ? 'Uploading…' : isPaid ? '+ Upload cover photo' : '🔒 Upgrade to Pro to add a cover'}
-                      </button>
-                    )}
-                    {coverUrl && (
-                      <button onClick={() => coverFileInputRef.current?.click()} disabled={!isPaid || coverUploading}
-                        style={{ padding: '0.375rem 0.75rem', borderRadius: '0.375rem', fontSize: '0.75rem', width: 'fit-content', backgroundColor: 'var(--border, #1e2535)', color: 'var(--text, #eceef2)', border: '1px solid var(--border-light, #283042)', cursor: 'pointer', fontFamily: 'inherit' }}>
-                        {coverUploading ? 'Uploading…' : 'Replace'}
-                      </button>
-                    )}
-                    {coverUrl && (
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                          <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Opacity</label>
-                          <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{coverOpacity}%</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Subtle</span>
-                          <input type="range" min={10} max={100} value={coverOpacity} onChange={e => setCoverOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }} />
-                          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Bold</span>
-                        </div>
-                      </div>
-                    )}
-                    {coverUrl && (
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                          <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Crop Position</label>
-                          <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{coverPositionY === 0 ? 'Top' : coverPositionY === 100 ? 'Bottom' : coverPositionY === 50 ? 'Center' : `${coverPositionY}%`}</span>
-                        </div>
-                        <input type="range" min={0} max={100} value={coverPositionY} onChange={e => setCoverPositionY(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--accent, #e8a849)' }} />
-                      </div>
-                    )}
-                  </div>
+          </>
+        </CollapsibleSection>
+        {/* ─── Template & Theme Section ────────────── */}
+        <CollapsibleSection title="Template & Theme">
+          {/* ── Cover Photo ── */}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={{ ...labelStyle, fontSize: '0.8125rem' }}>Cover Photo</label>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.75rem' }}>
+              Appears behind your hero section with a gradient fade.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {coverUrl ? (
+                <div style={{ position: 'relative', width: '100%', height: 96, borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--border-light, #283042)' }}>
+                  <img src={coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `center ${coverPositionY}%` }} />
+                  <button onClick={() => setCoverUrl('')}
+                    style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                    aria-label="Remove cover photo">✕</button>
                 </div>
-
-                <div style={{ borderTop: '1px solid var(--border, #1e2535)', margin: '1.25rem 0' }} />
-
-                {/* ── Background Photo ── */}
+              ) : (
+                <button onClick={() => { if (isPaid) coverFileInputRef.current?.click(); }} disabled={!isPaid || coverUploading}
+                  style={{ width: '100%', padding: '1rem', borderRadius: '0.5rem', fontSize: '0.8125rem', border: '2px dashed var(--border-light, #283042)', backgroundColor: 'var(--bg, #0c1017)', color: isPaid ? 'var(--text-mid, #a8adb8)' : 'var(--text-muted, #5d6370)', cursor: isPaid ? 'pointer' : 'not-allowed', fontFamily: 'inherit', opacity: isPaid ? 1 : 0.6 }}>
+                  {coverUploading ? 'Uploading…' : isPaid ? '+ Upload cover photo' : '🔒 Upgrade to Pro to add a cover'}
+                </button>
+              )}
+              {coverUrl && (
+                <button onClick={() => coverFileInputRef.current?.click()} disabled={!isPaid || coverUploading}
+                  style={{ padding: '0.375rem 0.75rem', borderRadius: '0.375rem', fontSize: '0.75rem', width: 'fit-content', backgroundColor: 'var(--border, #1e2535)', color: 'var(--text, #eceef2)', border: '1px solid var(--border-light, #283042)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  {coverUploading ? 'Uploading…' : 'Replace'}
+                </button>
+              )}
+              {coverUrl && (
                 <div>
-                  <label style={{ ...labelStyle, fontSize: '0.8125rem' }}>Background Photo</label>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.75rem' }}>
-                    A subtle full-page texture behind your entire profile.
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {bgImageUrl ? (
-                      <div style={{ position: 'relative', width: '100%', height: 96, borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--border-light, #283042)' }}>
-                        <img src={bgImageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `center ${bgImagePositionY}%` }} />
-                        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(12,16,23,0.7)' }} />
-                        <button onClick={() => setBgImageUrl('')}
-                          style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
-                          aria-label="Remove background photo">✕</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => { if (isPaid) bgImageFileInputRef.current?.click(); }} disabled={!isPaid || bgImageUploading}
-                        style={{ width: '100%', padding: '1rem', borderRadius: '0.5rem', fontSize: '0.8125rem', border: '2px dashed var(--border-light, #283042)', backgroundColor: 'var(--bg, #0c1017)', color: isPaid ? 'var(--text-mid, #a8adb8)' : 'var(--text-muted, #5d6370)', cursor: isPaid ? 'pointer' : 'not-allowed', fontFamily: 'inherit', opacity: isPaid ? 1 : 0.6 }}>
-                        {bgImageUploading ? 'Uploading…' : isPaid ? '+ Upload background photo' : '🔒 Upgrade to Pro to add a background'}
-                      </button>
-                    )}
-                    {bgImageUrl && (
-                      <button onClick={() => bgImageFileInputRef.current?.click()} disabled={!isPaid || bgImageUploading}
-                        style={{ padding: '0.375rem 0.75rem', borderRadius: '0.375rem', fontSize: '0.75rem', width: 'fit-content', backgroundColor: 'var(--border, #1e2535)', color: 'var(--text, #eceef2)', border: '1px solid var(--border-light, #283042)', cursor: 'pointer', fontFamily: 'inherit' }}>
-                        {bgImageUploading ? 'Uploading…' : 'Replace'}
-                      </button>
-                    )}
-                    {bgImageUrl && (
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                          <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Visibility</label>
-                          <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{bgImageOpacity}%</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Subtle</span>
-                          <input type="range" min={5} max={100} value={bgImageOpacity} onChange={e => setBgImageOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }} />
-                          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Bold</span>
-                        </div>
-                      </div>
-                    )}
-                    {bgImageUrl && (
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                          <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Crop Position</label>
-                          <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{bgImagePositionY === 0 ? 'Top' : bgImagePositionY === 100 ? 'Bottom' : bgImagePositionY === 50 ? 'Center' : `${bgImagePositionY}%`}</span>
-                        </div>
-                        <input type="range" min={0} max={100} value={bgImagePositionY} onChange={e => setBgImagePositionY(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--accent, #e8a849)' }} />
-                      </div>
-                    )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Opacity</label>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{coverOpacity}%</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Subtle</span>
+                    <input type="range" min={10} max={100} value={coverOpacity} onChange={e => setCoverOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }} />
+                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Bold</span>
                   </div>
                 </div>
-              </>)}
-            </div>
-          </div>
-
-          {/* ── Sharing & Privacy (collapsible) ── */}
-          <div style={{ borderTop: '1px solid var(--border, #1e2535)', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
-            <div style={{ padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
-              <div
-                onClick={() => setShowSharingSettings(!showSharingSettings)}
-                className="collapsible-header"
-              >
-                <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showSharingSettings ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
-                <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>Sharing & Privacy</label>
-              </div>
-
-              {showSharingSettings && (<>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginTop: '1rem' }}>
-                  <ToggleSwitch
-                    checked={allowSharing}
-                    onChange={async (val) => {
-                      setAllowSharing(val);
-                      try {
-                        await fetch('/api/profile', {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ section: 'sharing', allowSharing: val }),
-                        });
-                      } catch { /* silent */ }
-                    }}
-                    label="Allow visitors to share your profile"
-                    description="Shows a share button on your public profile page."
-                  />
-                  <ToggleSwitch
-                    checked={allowFeedback}
-                    onChange={async (val) => {
-                      setAllowFeedback(val);
-                      try {
-                        await fetch('/api/profile', {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ section: 'feedback', allowFeedback: val }),
-                        });
-                      } catch { /* silent */ }
-                    }}
-                    label="Show feedback button on your profile"
-                    description="Allows visitors to send feedback or report your profile."
-                  />
-                  <ToggleSwitch
-                    checked={showQrButton}
-                    onChange={async (val) => {
-                      setShowQrButton(val);
-                      try {
-                        await fetch('/api/profile', {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ section: 'qrButton', showQrButton: val }),
-                        });
-                      } catch { /* silent */ }
-                    }}
-                    label="Show QR code button on your profile"
-                    description="Adds a QR code icon visitors can tap to share your profile URL."
-                  />
-
-                  {/* vCard PIN protection */}
-                  <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
-                    <ToggleSwitch
-                      checked={vcardPinEnabled}
-                      onChange={async (val) => {
-                        if (!val) {
-                          setVcardPinEnabled(false);
-                          setVcardPinInput('');
-                          try {
-                            await fetch('/api/profile', {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ section: 'vcardPin', vcardPin: null }),
-                            });
-                          } catch { /* silent */ }
-                        } else {
-                          setVcardPinEnabled(true);
-                        }
-                      }}
-                      label="PIN-protect Save Contact"
-                      description="Require a PIN before visitors can download your contact card."
-                    />
-                    {vcardPinEnabled && (
-                      <div style={{ marginTop: '0.625rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <input
-                          type="password"
-                          inputMode="numeric"
-                          maxLength={8}
-                          value={vcardPinInput}
-                          onChange={e => { setVcardPinInput(e.target.value); setVcardPinSaved(false); }}
-                          placeholder="4-8 digit PIN"
-                          style={{
-                            ...inputStyle,
-                            width: 140,
-                            textAlign: 'center',
-                            letterSpacing: '0.15em',
-                          }}
-                        />
-                        <button
-                          onClick={async () => {
-                            if (vcardPinInput.length < 4) { setError('PIN must be at least 4 characters'); return; }
-                            setVcardPinSaving(true);
-                            try {
-                              const res = await fetch('/api/profile', {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ section: 'vcardPin', vcardPin: vcardPinInput }),
-                              });
-                              if (!res.ok) {
-                                const d = await res.json();
-                                setError(d.error || 'Failed to save PIN');
-                              } else {
-                                setVcardPinSaved(true);
-                                setTimeout(() => setVcardPinSaved(false), 2000);
-                              }
-                            } catch { setError('Failed to save PIN'); }
-                            finally { setVcardPinSaving(false); }
-                          }}
-                          disabled={vcardPinSaving || vcardPinInput.length < 4}
-                          style={{
-                            ...saveBtnStyle,
-                            padding: '0.5rem 0.75rem',
-                            fontSize: '0.8125rem',
-                            opacity: vcardPinSaving || vcardPinInput.length < 4 ? 0.5 : 1,
-                          }}
-                        >
-                          {vcardPinSaving ? '...' : vcardPinSaved ? '\u2713' : 'Set PIN'}
-                        </button>
-                      </div>
-                    )}
+              )}
+              {coverUrl && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Crop Position</label>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{coverPositionY === 0 ? 'Top' : coverPositionY === 100 ? 'Bottom' : coverPositionY === 50 ? 'Center' : `${coverPositionY}%`}</span>
                   </div>
-                </div>
-              </>)}
-            </div>
-          </div>
-
-          {/* ── QR Code (collapsible, near Sharing & Privacy) ── */}
-          <div style={{ borderTop: '1px solid var(--border, #1e2535)', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
-            <div style={{ padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
-              <div
-                onClick={() => setShowQrCode(!showQrCode)}
-                className="collapsible-header"
-              >
-                <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showQrCode ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
-                <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>QR Code</label>
-              </div>
-              {showQrCode && (
-                <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
-                    Share your profile without NFC. Print it, add it to slides, or show it on your phone.
-                  </p>
-                  {qrError ? (
-                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>
-                      Unable to generate QR code. Try refreshing the page.
-                    </p>
-                  ) : (
-                    <>
-                      {!qrLoaded && (
-                        <div style={{ padding: '2rem 0' }}>
-                          <div style={{ width: 24, height: 24, border: '2px solid var(--border-light)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
-                          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                        </div>
-                      )}
-                      <div style={{ display: qrLoaded ? 'block' : 'none' }}>
-                        <div style={{ display: 'inline-block', padding: '1rem', backgroundColor: '#fff', borderRadius: '0.75rem', marginBottom: '0.75rem' }}>
-                          <img
-                            src="/api/profile/qr"
-                            alt="QR code for your profile"
-                            width={180}
-                            height={180}
-                            style={{ display: 'block' }}
-                            onLoad={() => setQrLoaded(true)}
-                            onError={() => { setQrError(true); setQrLoaded(false); }}
-                          />
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                          <a href="/api/profile/qr?format=png" download="imprynt-qr.png" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download PNG</a>
-                          <a href="/api/profile/qr?format=svg" download="imprynt-qr.svg" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download SVG</a>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                  <input type="range" min={0} max={100} value={coverPositionY} onChange={e => setCoverPositionY(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--accent, #e8a849)' }} />
                 </div>
               )}
             </div>
           </div>
 
-          {/* ── Theme & Colors ── */}
-          <div style={{ borderTop: '1px solid var(--border, #1e2535)', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
-            <label style={labelStyle}>Template</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.5rem', marginBottom: '1.25rem' }}>
-              {TEMPLATE_LIST.map(t => {
-                const isSelected = template === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => { setTemplate(t.id); setAccentColor(''); onTemplateChange?.(t.id, ''); }}
-                    style={{
-                      padding: 0,
-                      border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
-                      borderRadius: '0.5rem',
-                      cursor: 'pointer',
-                      overflow: 'hidden',
-                      background: 'none',
-                      transition: 'border-color 0.15s',
-                      position: 'relative',
-                    }}
-                  >
-                    <div style={{
-                      backgroundColor: t.colors.bg,
-                      padding: '0.75rem 0.5rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      minHeight: 60,
-                    }}>
-                      <div style={{
-                        width: 18,
-                        height: 18,
-                        borderRadius: t.modifiers.photoShape === 'circle' ? '50%' : '4px',
-                        backgroundColor: t.colors.accent,
-                        opacity: 0.3,
-                      }} />
-                      <div style={{ width: '60%', height: 5, borderRadius: 3, backgroundColor: t.colors.text, opacity: 0.7 }} />
-                      <div style={{ width: '70%', height: 14, borderRadius: 4, backgroundColor: t.colors.accent, marginTop: 2 }} />
-                    </div>
-                    <div style={{ padding: '0.375rem', backgroundColor: 'var(--surface, #161c28)', borderTop: '1px solid var(--border, #1e2535)' }}>
-                      <p style={{ fontSize: '0.6875rem', fontWeight: 600, margin: 0, color: 'var(--text, #eceef2)' }}>{t.name}</p>
-                    </div>
-                  </button>
-                );
-              })}
-              {/* Custom template card (premium) */}
-              {(() => {
-                const isSelected = template === 'custom';
-                const previewAccent = customTheme.accent || '#e8a849';
-                const previewBg = customTheme.bg || '#0c1017';
-                const previewText = customTheme.text || '#eceef2';
-                return (
-                  <button
-                    key="custom"
-                    onClick={() => { setTemplate('custom'); setAccentColor(''); onTemplateChange?.('custom', ''); }}
-                    style={{
-                      padding: 0,
-                      border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
-                      borderRadius: '0.5rem',
-                      cursor: 'pointer',
-                      overflow: 'hidden',
-                      background: 'none',
-                      transition: 'border-color 0.15s',
-                      position: 'relative',
-                    }}
-                  >
-                    <div style={{
-                      backgroundColor: previewBg,
-                      padding: '0.75rem 0.5rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      minHeight: 60,
-                    }}>
-                      <div style={{
-                        width: 18, height: 18, borderRadius: '50%',
-                        background: `linear-gradient(135deg, ${previewAccent}, #ec4899)`,
-                        opacity: 0.85,
-                      }} />
-                      <div style={{ width: '60%', height: 5, borderRadius: 3, backgroundColor: previewText, opacity: 0.7 }} />
-                      <div style={{ width: '70%', height: 14, borderRadius: 4, background: `linear-gradient(90deg, ${previewAccent}, #ec4899)`, marginTop: 2 }} />
-                    </div>
-                    <div style={{ padding: '0.375rem', backgroundColor: 'var(--surface, #161c28)', borderTop: '1px solid var(--border, #1e2535)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
-                      <p style={{ fontSize: '0.6875rem', fontWeight: 600, margin: 0, color: 'var(--text, #eceef2)' }}>Custom</p>
-                      <span style={{ fontSize: '0.5rem', fontWeight: 700, padding: '1px 4px', borderRadius: '3px', backgroundColor: 'rgba(232,168,73,0.15)', color: 'var(--accent, #e8a849)', letterSpacing: '0.04em' }}>PRO</span>
-                    </div>
-                  </button>
-                );
-              })()}
-            </div>
+          <div style={{ borderTop: '1px solid var(--border, #1e2535)', margin: '1.25rem 0' }} />
 
-            {/* Custom theme editor — shown only when template === 'custom' */}
-            {template === 'custom' && (
-              <div style={{ marginBottom: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
-                <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.75rem' }}>Color Preset</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '1rem' }}>
-                  {CUSTOM_COLOR_PRESETS.map(preset => {
-                    const isActive = customTheme.accent === preset.colors.accent && customTheme.bg === preset.colors.bg;
+          {/* ── Background Photo ── */}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={{ ...labelStyle, fontSize: '0.8125rem' }}>Background Photo</label>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.75rem' }}>
+              A subtle full-page texture behind your entire profile.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {bgImageUrl ? (
+                <div style={{ position: 'relative', width: '100%', height: 96, borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--border-light, #283042)' }}>
+                  <img src={bgImageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `center ${bgImagePositionY}%` }} />
+                  <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(12,16,23,0.7)' }} />
+                  <button onClick={() => setBgImageUrl('')}
+                    style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                    aria-label="Remove background photo">✕</button>
+                </div>
+              ) : (
+                <button onClick={() => { if (isPaid) bgImageFileInputRef.current?.click(); }} disabled={!isPaid || bgImageUploading}
+                  style={{ width: '100%', padding: '1rem', borderRadius: '0.5rem', fontSize: '0.8125rem', border: '2px dashed var(--border-light, #283042)', backgroundColor: 'var(--bg, #0c1017)', color: isPaid ? 'var(--text-mid, #a8adb8)' : 'var(--text-muted, #5d6370)', cursor: isPaid ? 'pointer' : 'not-allowed', fontFamily: 'inherit', opacity: isPaid ? 1 : 0.6 }}>
+                  {bgImageUploading ? 'Uploading…' : isPaid ? '+ Upload background photo' : '🔒 Upgrade to Pro to add a background'}
+                </button>
+              )}
+              {bgImageUrl && (
+                <button onClick={() => bgImageFileInputRef.current?.click()} disabled={!isPaid || bgImageUploading}
+                  style={{ padding: '0.375rem 0.75rem', borderRadius: '0.375rem', fontSize: '0.75rem', width: 'fit-content', backgroundColor: 'var(--border, #1e2535)', color: 'var(--text, #eceef2)', border: '1px solid var(--border-light, #283042)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  {bgImageUploading ? 'Uploading…' : 'Replace'}
+                </button>
+              )}
+              {bgImageUrl && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Visibility</label>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{bgImageOpacity}%</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Subtle</span>
+                    <input type="range" min={5} max={100} value={bgImageOpacity} onChange={e => setBgImageOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }} />
+                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Bold</span>
+                  </div>
+                </div>
+              )}
+              {bgImageUrl && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Crop Position</label>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{bgImagePositionY === 0 ? 'Top' : bgImagePositionY === 100 ? 'Bottom' : bgImagePositionY === 50 ? 'Center' : `${bgImagePositionY}%`}</span>
+                  </div>
+                  <input type="range" min={0} max={100} value={bgImagePositionY} onChange={e => setBgImagePositionY(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--accent, #e8a849)' }} />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div style={{ borderTop: '1px solid var(--border, #1e2535)', margin: '1.25rem 0' }} />
+
+          {/* ── Template Grid ── */}
+          <label style={labelStyle}>Template</label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.5rem', marginBottom: '1.25rem' }}>
+            {TEMPLATE_LIST.map(t => {
+              const isSelected = template === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => { setTemplate(t.id); setAccentColor(''); onTemplateChange?.(t.id, ''); }}
+                  style={{
+                    padding: 0,
+                    border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                    borderRadius: '0.5rem',
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    background: 'none',
+                    transition: 'border-color 0.15s',
+                    position: 'relative',
+                  }}
+                >
+                  <div style={{
+                    backgroundColor: t.colors.bg,
+                    padding: '0.75rem 0.5rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    minHeight: 60,
+                  }}>
+                    <div style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: t.modifiers.photoShape === 'circle' ? '50%' : '4px',
+                      backgroundColor: t.colors.accent,
+                      opacity: 0.3,
+                    }} />
+                    <div style={{ width: '60%', height: 5, borderRadius: 3, backgroundColor: t.colors.text, opacity: 0.7 }} />
+                    <div style={{ width: '70%', height: 14, borderRadius: 4, backgroundColor: t.colors.accent, marginTop: 2 }} />
+                  </div>
+                  <div style={{ padding: '0.375rem', backgroundColor: 'var(--surface, #161c28)', borderTop: '1px solid var(--border, #1e2535)' }}>
+                    <p style={{ fontSize: '0.6875rem', fontWeight: 600, margin: 0, color: 'var(--text, #eceef2)' }}>{t.name}</p>
+                  </div>
+                </button>
+              );
+            })}
+            {/* Custom template card (premium) */}
+            {(() => {
+              const isSelected = template === 'custom';
+              const previewAccent = customTheme.accent || '#e8a849';
+              const previewBg = customTheme.bg || '#0c1017';
+              const previewText = customTheme.text || '#eceef2';
+              return (
+                <button
+                  key="custom"
+                  onClick={() => { setTemplate('custom'); setAccentColor(''); onTemplateChange?.('custom', ''); }}
+                  style={{
+                    padding: 0,
+                    border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                    borderRadius: '0.5rem',
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    background: 'none',
+                    transition: 'border-color 0.15s',
+                    position: 'relative',
+                  }}
+                >
+                  <div style={{
+                    backgroundColor: previewBg,
+                    padding: '0.75rem 0.5rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    minHeight: 60,
+                  }}>
+                    <div style={{
+                      width: 18, height: 18, borderRadius: '50%',
+                      background: `linear-gradient(135deg, ${previewAccent}, #ec4899)`,
+                      opacity: 0.85,
+                    }} />
+                    <div style={{ width: '60%', height: 5, borderRadius: 3, backgroundColor: previewText, opacity: 0.7 }} />
+                    <div style={{ width: '70%', height: 14, borderRadius: 4, background: `linear-gradient(90deg, ${previewAccent}, #ec4899)`, marginTop: 2 }} />
+                  </div>
+                  <div style={{ padding: '0.375rem', backgroundColor: 'var(--surface, #161c28)', borderTop: '1px solid var(--border, #1e2535)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
+                    <p style={{ fontSize: '0.6875rem', fontWeight: 600, margin: 0, color: 'var(--text, #eceef2)' }}>Custom</p>
+                    <span style={{ fontSize: '0.5rem', fontWeight: 700, padding: '1px 4px', borderRadius: '3px', backgroundColor: 'rgba(232,168,73,0.15)', color: 'var(--accent, #e8a849)', letterSpacing: '0.04em' }}>PRO</span>
+                  </div>
+                </button>
+              );
+            })()}
+          </div>
+
+          {/* Custom theme editor — shown only when template === 'custom' */}
+          {template === 'custom' && (
+            <div style={{ marginBottom: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+              <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.75rem' }}>Color Preset</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '1rem' }}>
+                {CUSTOM_COLOR_PRESETS.map(preset => {
+                  const isActive = customTheme.accent === preset.colors.accent && customTheme.bg === preset.colors.bg;
+                  return (
+                    <button
+                      key={preset.id}
+                      title={preset.name}
+                      onClick={() => setCustomTheme(preset.colors)}
+                      style={{
+                        width: 32, height: 32, borderRadius: '50%', padding: 0,
+                        border: isActive ? '3px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                        outline: isActive ? '2px solid var(--bg, #0c1017)' : 'none',
+                        outlineOffset: -3,
+                        cursor: 'pointer',
+                        background: `linear-gradient(135deg, ${preset.colors.bg} 50%, ${preset.colors.accent} 50%)`,
+                        transform: isActive ? 'scale(1.15)' : 'scale(1)',
+                        transition: 'transform 0.1s',
+                      }}
+                    />
+                  );
+                })}
+              </div>
+              <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.625rem' }}>Colors</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                {(
+                  [
+                    ['bg', 'Background'],
+                    ['text', 'Text'],
+                    ['surface', 'Card surface'],
+                    ['border', 'Border'],
+                    ['accent', 'Accent'],
+                    ['textMid', 'Text (mid)'],
+                  ] as [keyof CustomThemeData, string][]
+                ).map(([key, label]) => (
+                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                    <input
+                      type="color"
+                      value={(customTheme[key] as string) || '#000000'}
+                      onChange={e => {
+                        const hex = e.target.value;
+                        if (key === 'accent') {
+                          const derived = deriveAccentVars(hex);
+                          setCustomTheme(prev => ({ ...prev, accent: hex, ...derived }));
+                        } else {
+                          setCustomTheme(prev => ({ ...prev, [key]: hex }));
+                        }
+                      }}
+                      style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-light, #283042)', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+                    />
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-mid, #a8adb8)' }}>{label}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: '0.875rem' }}>
+                <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.5rem' }}>Link Style</p>
+                <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
+                  {(['pills', 'stacked', 'full-width-pills'] as const).map(style => {
+                    const label = style === 'full-width-pills' ? 'Full width' : style.charAt(0).toUpperCase() + style.slice(1);
                     return (
                       <button
-                        key={preset.id}
-                        title={preset.name}
-                        onClick={() => setCustomTheme(preset.colors)}
+                        key={style}
+                        onClick={() => setCustomTheme(prev => ({ ...prev, linkStyle: style }))}
                         style={{
-                          width: 32, height: 32, borderRadius: '50%', padding: 0,
-                          border: isActive ? '3px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
-                          outline: isActive ? '2px solid var(--bg, #0c1017)' : 'none',
-                          outlineOffset: -3,
-                          cursor: 'pointer',
-                          background: `linear-gradient(135deg, ${preset.colors.bg} 50%, ${preset.colors.accent} 50%)`,
-                          transform: isActive ? 'scale(1.15)' : 'scale(1)',
-                          transition: 'transform 0.1s',
+                          padding: '0.25rem 0.625rem', borderRadius: '9999px', fontSize: '0.6875rem',
+                          border: customTheme.linkStyle === style ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                          backgroundColor: customTheme.linkStyle === style ? 'rgba(232,168,73,0.1)' : 'var(--surface, #161c28)',
+                          color: customTheme.linkStyle === style ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                          cursor: 'pointer', fontFamily: 'inherit',
                         }}
-                      />
+                      >{label}</button>
                     );
                   })}
                 </div>
-                <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.625rem' }}>Colors</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                  {(
-                    [
-                      ['bg', 'Background'],
-                      ['text', 'Text'],
-                      ['surface', 'Card surface'],
-                      ['border', 'Border'],
-                      ['accent', 'Accent'],
-                      ['textMid', 'Text (mid)'],
-                    ] as [keyof CustomThemeData, string][]
-                  ).map(([key, label]) => (
-                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                      <input
-                        type="color"
-                        value={(customTheme[key] as string) || '#000000'}
-                        onChange={e => {
-                          const hex = e.target.value;
-                          if (key === 'accent') {
-                            const derived = deriveAccentVars(hex);
-                            setCustomTheme(prev => ({ ...prev, accent: hex, ...derived }));
-                          } else {
-                            setCustomTheme(prev => ({ ...prev, [key]: hex }));
-                          }
-                        }}
-                        style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-light, #283042)', cursor: 'pointer', padding: 0, flexShrink: 0 }}
-                      />
-                      <span style={{ fontSize: '0.6875rem', color: 'var(--text-mid, #a8adb8)' }}>{label}</span>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ marginTop: '0.875rem' }}>
-                  <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.5rem' }}>Link Style</p>
-                  <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
-                    {(['pills', 'stacked', 'full-width-pills'] as const).map(style => {
-                      const label = style === 'full-width-pills' ? 'Full width' : style.charAt(0).toUpperCase() + style.slice(1);
-                      return (
-                        <button
-                          key={style}
-                          onClick={() => setCustomTheme(prev => ({ ...prev, linkStyle: style }))}
-                          style={{
-                            padding: '0.25rem 0.625rem', borderRadius: '9999px', fontSize: '0.6875rem',
-                            border: customTheme.linkStyle === style ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
-                            backgroundColor: customTheme.linkStyle === style ? 'rgba(232,168,73,0.1)' : 'var(--surface, #161c28)',
-                            color: customTheme.linkStyle === style ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
-                            cursor: 'pointer', fontFamily: 'inherit',
-                          }}
-                        >{label}</button>
-                      );
-                    })}
-                  </div>
-                </div>
               </div>
-            )}
-
-            {/* Accent color override — shown for non-custom templates */}
-            {template !== 'custom' && (<>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <label style={labelStyle}>Accent color</label>
-              <button
-                onClick={() => {
-                  const next = accentColor ? '' : getTheme(template).colors.accent;
-                  setAccentColor(next);
-                  onTemplateChange?.(template, next);
-                }}
-                style={{
-                  fontSize: '0.6875rem', fontWeight: 500, fontFamily: 'inherit',
-                  padding: '0.25rem 0.625rem', borderRadius: '9999px', border: '1px solid',
-                  borderColor: accentColor ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
-                  backgroundColor: accentColor ? 'rgba(232,168,73,0.1)' : 'transparent',
-                  color: accentColor ? 'var(--accent, #e8a849)' : 'var(--text-muted, #5d6370)',
-                  cursor: 'pointer', transition: 'all 0.15s',
-                }}
-              >
-                {accentColor ? 'Custom' : 'Theme default'}
-              </button>
             </div>
-            {accentColor ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
-                {COLOR_PRESETS.map(c => (
-                  <button
-                    key={c}
-                    onClick={() => { setAccentColor(c); onTemplateChange?.(template, c); }}
+          )}
+
+          {/* Accent color override — shown for non-custom templates */}
+          {template !== 'custom' && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <label style={labelStyle}>Accent color</label>
+                <button
+                  onClick={() => {
+                    const next = accentColor ? '' : getTheme(template).colors.accent;
+                    setAccentColor(next);
+                    onTemplateChange?.(template, next);
+                  }}
+                  style={{
+                    fontSize: '0.6875rem', fontWeight: 500, fontFamily: 'inherit',
+                    padding: '0.25rem 0.625rem', borderRadius: '9999px', border: '1px solid',
+                    borderColor: accentColor ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
+                    backgroundColor: accentColor ? 'rgba(232,168,73,0.1)' : 'transparent',
+                    color: accentColor ? 'var(--accent, #e8a849)' : 'var(--text-muted, #5d6370)',
+                    cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                >
+                  {accentColor ? 'Custom' : 'Theme default'}
+                </button>
+              </div>
+              {accentColor ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
+                  {COLOR_PRESETS.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => { setAccentColor(c); onTemplateChange?.(template, c); }}
+                      style={{
+                        width: 28, height: 28, borderRadius: '50%',
+                        backgroundColor: c,
+                        border: accentColor === c ? '3px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                        cursor: 'pointer', padding: 0,
+                        outline: accentColor === c ? '2px solid var(--bg, #0c1017)' : 'none',
+                        outlineOffset: -3,
+                        transform: accentColor === c ? 'scale(1.1)' : 'scale(1)',
+                        transition: 'transform 0.1s',
+                      }}
+                    />
+                  ))}
+                  <input
+                    type="color"
+                    value={accentColor}
+                    onChange={e => { setAccentColor(e.target.value); onTemplateChange?.(template, e.target.value); }}
+                    style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-light, #283042)', cursor: 'pointer', padding: 0 }}
+                  />
+                </div>
+              ) : (
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
+                  Using {getTheme(template).name}&apos;s default accent color.
+                </p>
+              )}
+            </>
+          )}
+        </CollapsibleSection>
+
+        {/* ─── Sharing & Privacy Section ────────────── */}
+        <CollapsibleSection title="Sharing & Privacy">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            <ToggleSwitch
+              checked={allowSharing}
+              onChange={async (val) => {
+                setAllowSharing(val);
+                try {
+                  await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ section: 'sharing', allowSharing: val }),
+                  });
+                } catch { /* silent */ }
+              }}
+              label="Allow visitors to share your profile"
+              description="Shows a share button on your public profile page."
+            />
+            <ToggleSwitch
+              checked={allowFeedback}
+              onChange={async (val) => {
+                setAllowFeedback(val);
+                try {
+                  await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ section: 'feedback', allowFeedback: val }),
+                  });
+                } catch { /* silent */ }
+              }}
+              label="Show feedback button on your profile"
+              description="Allows visitors to send feedback or report your profile."
+            />
+            <ToggleSwitch
+              checked={showQrButton}
+              onChange={async (val) => {
+                setShowQrButton(val);
+                try {
+                  await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ section: 'qrButton', showQrButton: val }),
+                  });
+                } catch { /* silent */ }
+              }}
+              label="Show QR code button on your profile"
+              description="Adds a QR code icon visitors can tap to share your profile URL."
+            />
+
+            {/* vCard PIN protection */}
+            <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
+              <ToggleSwitch
+                checked={vcardPinEnabled}
+                onChange={async (val) => {
+                  if (!val) {
+                    setVcardPinEnabled(false);
+                    setVcardPinInput('');
+                    try {
+                      await fetch('/api/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ section: 'vcardPin', vcardPin: null }),
+                      });
+                    } catch { /* silent */ }
+                  } else {
+                    setVcardPinEnabled(true);
+                  }
+                }}
+                label="PIN-protect Save Contact"
+                description="Require a PIN before visitors can download your contact card."
+              />
+              {vcardPinEnabled && (
+                <div style={{ marginTop: '0.625rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={8}
+                    value={vcardPinInput}
+                    onChange={e => { setVcardPinInput(e.target.value); setVcardPinSaved(false); }}
+                    placeholder="4-8 digit PIN"
                     style={{
-                      width: 28, height: 28, borderRadius: '50%',
-                      backgroundColor: c,
-                      border: accentColor === c ? '3px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
-                      cursor: 'pointer', padding: 0,
-                      outline: accentColor === c ? '2px solid var(--bg, #0c1017)' : 'none',
-                      outlineOffset: -3,
-                      transform: accentColor === c ? 'scale(1.1)' : 'scale(1)',
-                      transition: 'transform 0.1s',
+                      ...inputStyle,
+                      width: 140,
+                      textAlign: 'center',
+                      letterSpacing: '0.15em',
                     }}
                   />
-                ))}
-                <input
-                  type="color"
-                  value={accentColor}
-                  onChange={e => { setAccentColor(e.target.value); onTemplateChange?.(template, e.target.value); }}
-                  style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-light, #283042)', cursor: 'pointer', padding: 0 }}
-                />
-              </div>
-            ) : (
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
-                Using {getTheme(template).name}&apos;s default accent color.
-              </p>
-            )}
-            </>)}
-          </div>
-        </div>
+                  <button
+                    onClick={async () => {
+                      if (vcardPinInput.length < 4) { setError('PIN must be at least 4 characters'); return; }
+                      setVcardPinSaving(true);
+                      try {
+                        const res = await fetch('/api/profile', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ section: 'vcardPin', vcardPin: vcardPinInput }),
+                        });
+                        if (!res.ok) {
+                          const d = await res.json();
+                          setError(d.error || 'Failed to save PIN');
+                        } else {
+                          setVcardPinSaved(true);
+                          setTimeout(() => setVcardPinSaved(false), 2000);
+                        }
+                      } catch { setError('Failed to save PIN'); }
+                      finally { setVcardPinSaving(false); }
+                    }}
+                    disabled={vcardPinSaving || vcardPinInput.length < 4}
+                    style={{
+                      ...saveBtnStyle,
+                      padding: '0.5rem 0.75rem',
+                      fontSize: '0.8125rem',
+                      opacity: vcardPinSaving || vcardPinInput.length < 4 ? 0.5 : 1,
+                    }}
+                  >
+                    {vcardPinSaving ? '...' : vcardPinSaved ? '\u2713' : 'Set PIN'}
+                  </button>
+                </div>
+              )}
+            </div>
 
-        {/* ─── The Nexus (Links) Section ─────────── */}
-        <div style={sectionStyle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
-            <h3 style={sectionTitleStyle}>Links</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+            {/* QR Code download */}
+            <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
+              <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.625rem' }}>QR Code</p>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
+                Share your profile without NFC. Print it, add it to slides, or show it on your phone.
+              </p>
+              {qrError ? (
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>
+                  Unable to generate QR code. Try refreshing the page.
+                </p>
+              ) : (
+                <>
+                  {!qrLoaded && (
+                    <div style={{ padding: '2rem 0' }}>
+                      <div style={{ width: 24, height: 24, border: '2px solid var(--border-light)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+                      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                    </div>
+                  )}
+                  <div style={{ display: qrLoaded ? 'block' : 'none', textAlign: 'center' }}>
+                    <div style={{ display: 'inline-block', padding: '1rem', backgroundColor: '#fff', borderRadius: '0.75rem', marginBottom: '0.75rem' }}>
+                      <img
+                        src="/api/profile/qr"
+                        alt="QR code for your profile"
+                        width={180}
+                        height={180}
+                        style={{ display: 'block' }}
+                        onLoad={() => setQrLoaded(true)}
+                        onError={() => { setQrError(true); setQrLoaded(false); }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      <a href="/api/profile/qr?format=png" download="imprynt-qr.png" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download PNG</a>
+                      <a href="/api/profile/qr?format=svg" download="imprynt-qr.svg" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download SVG</a>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </CollapsibleSection>
+
+        {/* ─── Links Section ─────────────────────── */}
+        <CollapsibleSection title="Links">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.75rem' }}>
               <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', marginRight: '0.125rem' }}>Display:</span>
               {(['default', 'icons'] as const).map(mode => (
                 <button
@@ -1727,7 +1726,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
                 </button>
               ))}
             </div>
-          </div>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem', marginTop: '0.25rem' }}>
             Your social links, contact info, and web presence. Drag to reorder. Toggle visibility for your Business, Personal, and Portfolio pages.
           </p>
@@ -1908,10 +1906,10 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
             </select>
           )}
 
-        </div>
+        </CollapsibleSection>
 
-        {/* ─── First Impressions (Pods) Section ───── */}
-        <div style={sectionStyle}>
+        {/* ─── Content Boxes Section ──────────────── */}
+        <CollapsibleSection title="Content Boxes">
           <PodEditor
             parentType="profile"
             parentId={data.profile.id}
@@ -1919,7 +1917,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
             onError={setError}
             onPodsChange={handlePodsChange}
           />
-        </div>
+        </CollapsibleSection>
 
       </main>
 

@@ -145,6 +145,7 @@ export default function ProfileTemplate({
         })), ...accentOverrides } as React.CSSProperties}
         {...dataAttrs}
         {...(contained ? { 'data-contained': 'true' } : {})}
+        {...(bgImageUrl ? { 'data-has-bg': 'true' } : {})}
       >
         {/* ─── Background Photo (fixed, full page) ─── */}
         {bgImageUrl && (
@@ -167,7 +168,7 @@ export default function ProfileTemplate({
           style={coverUrl ? {
             '--cover-url': `url('${coverUrl}')`,
             '--cover-opacity': `${coverOpacity / 100}`,
-            '--cover-pos-y': `${coverPositionY}%`,
+            '--cover-pos': `center ${coverPositionY}%`,
           } as React.CSSProperties : undefined}
         >
 

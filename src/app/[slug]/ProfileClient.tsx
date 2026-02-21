@@ -794,18 +794,6 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
   const feedbackCorner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' =
     iconCorner === 'top-right' ? 'top-left' : 'top-right';
 
-  // Cover photo parallax scroll effect
-  useEffect(() => {
-    const top = document.querySelector('.profile-top[data-has-cover]') as HTMLElement | null;
-    if (!top) return;
-    function handleScroll() {
-      if (!top) return;
-      top.style.setProperty('--cover-scroll', `${window.scrollY * 0.3}px`);
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   // Check for remembered pages on mount
   const loadPageContent = useCallback(async (pageId: string) => {
     try {

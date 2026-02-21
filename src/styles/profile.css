@@ -967,7 +967,7 @@
   inset: 0;
   background-image: var(--cover-url);
   background-size: cover;
-  background-position: center calc(var(--cover-pos-y, 50%) + var(--cover-scroll, 0px));
+  background-position: var(--cover-pos, center 50%);
   opacity: var(--cover-opacity, 0.7);
   z-index: 0;
   pointer-events: none;
@@ -1001,6 +1001,12 @@
   z-index: -1;
   pointer-events: none;
   overflow: hidden;
+}
+
+/* When a bg image is present, the .profile-page opaque background would cover
+   the fixed z-index:-1 bg image. Make it transparent so the bg image shows through. */
+[data-has-bg="true"] {
+  background: transparent;
 }
 
 /* In editor preview: contain the bg image within the phone frame */
