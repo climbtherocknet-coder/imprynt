@@ -50,14 +50,23 @@ export async function GET() {
   // Fetch cover photo fields (migration 037)
   let coverUrl: string | null = null;
   let coverPositionY = 50;
+  let coverOpacity = 70;
   try {
     const coverResult = await query(
-      'SELECT cover_url, cover_position_y FROM profiles WHERE id = $1',
+      'SELECT cover_url, cover_position_y, cover_opacity FROM profiles WHERE id = $1',
       [profile.id]
     );
     const r = coverResult.rows[0];
     coverUrl = r?.cover_url || null;
     coverPositionY = r?.cover_position_y ?? 50;
+    coverOpacity = r?.cover_opacity ?? 70;
+  } catch { /* column doesn't exist yet */ }
+
+  // Fetch photo_position (migration 039)
+  let photoPosition: number | null = null;
+  try {
+    const posResult = await query('SELECT photo_position FROM profiles WHERE id = $1', [profile.id]);
+    photoPosition = posResult.rows[0]?.photo_position ?? null;
   } catch { /* column doesn't exist yet */ }
 
   // Fetch background photo fields (migration 038)
@@ -119,10 +128,12 @@ export async function GET() {
       photoPositionY: profile.photo_position_y ?? 50,
       photoAnimation: profile.photo_animation || 'none',
       photoAlign,
+      photoPosition,
       vcardPinEnabled: !!vcardPinHash,
       customTheme: profile.custom_theme || null,
       coverUrl,
       coverPositionY,
+      coverOpacity,
       bgImageUrl,
       bgImageOpacity,
       bgImagePositionY,
@@ -386,14 +397,27 @@ export async function PUT(req: NextRequest) {
         } catch { /* column doesn't exist yet */ }
       }
       // cover photo — update separately (migration 037)
-      const { coverUrl: cUrl, coverPositionY: cPosY } = body;
+      const { coverUrl: cUrl, coverPositionY: cPosY, coverOpacity: cOpacity } = body;
       const coverPosYVal = typeof cPosY === 'number' ? Math.max(0, Math.min(100, Math.round(cPosY))) : null;
+      const coverOpacityVal = typeof cOpacity === 'number' ? Math.max(10, Math.min(100, Math.round(cOpacity))) : null;
       try {
         await query(
-          `UPDATE profiles SET cover_url = $1, cover_position_y = COALESCE($2, cover_position_y) WHERE user_id = $3`,
-          [cUrl ?? null, coverPosYVal, userId]
+          `UPDATE profiles SET cover_url = $1, cover_position_y = COALESCE($2, cover_position_y), cover_opacity = COALESCE($3, cover_opacity) WHERE user_id = $4`,
+          [cUrl ?? null, coverPosYVal, coverOpacityVal, userId]
         );
       } catch { /* column doesn't exist yet */ }
+      // photo_position — update separately (migration 039)
+      const { photoPosition: pPos } = body;
+      if (typeof pPos === 'number') {
+        const pPosVal = Math.max(0, Math.min(100, Math.round(pPos)));
+        const derivedAlign = pPosVal <= 33 ? 'left' : pPosVal <= 66 ? 'center' : 'right';
+        try {
+          await query('UPDATE profiles SET photo_position = $1 WHERE user_id = $2', [pPosVal, userId]);
+        } catch { /* column doesn't exist yet */ }
+        try {
+          await query('UPDATE profiles SET photo_align = $1 WHERE user_id = $2', [derivedAlign, userId]);
+        } catch { /* column doesn't exist yet */ }
+      }
       // background photo — update separately (migration 038)
       const { bgImageUrl: bUrl, bgImageOpacity: bOpacity, bgImagePositionY: bPosY } = body;
       const bgOpacityVal = typeof bOpacity === 'number' ? Math.max(5, Math.min(100, Math.round(bOpacity))) : null;
@@ -419,12 +443,13 @@ export async function PUT(req: NextRequest) {
       } catch { /* column doesn't exist yet */ }
     } else if (section === 'cover') {
       // Standalone cover photo save
-      const { coverUrl: cUrl, coverPositionY: cPosY } = body;
+      const { coverUrl: cUrl, coverPositionY: cPosY, coverOpacity: cOpacity } = body;
       const coverPosYVal = typeof cPosY === 'number' ? Math.max(0, Math.min(100, Math.round(cPosY))) : 50;
+      const coverOpacityVal = typeof cOpacity === 'number' ? Math.max(10, Math.min(100, Math.round(cOpacity))) : 70;
       try {
         await query(
-          `UPDATE profiles SET cover_url = $1, cover_position_y = $2 WHERE user_id = $3`,
-          [cUrl ?? null, coverPosYVal, userId]
+          `UPDATE profiles SET cover_url = $1, cover_position_y = $2, cover_opacity = $3 WHERE user_id = $4`,
+          [cUrl ?? null, coverPosYVal, coverOpacityVal, userId]
         );
       } catch { /* column doesn't exist yet */ }
     } else if (section === 'bgImage') {

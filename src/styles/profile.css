@@ -955,28 +955,27 @@
    COVER / BACKGROUND PHOTO
    ═══════════════════════════════════════════ */
 
-/* ── Cover Photo — banner behind hero ── */
-.cover-wrapper {
+/* ── Profile Top: wrapper that holds cover + status tags + hero ── */
+.profile-top {
   position: relative;
-  width: 100%;
-  overflow: hidden;
 }
 
-.cover-image {
-  width: 100%;
-  height: 240px;
-  object-fit: cover;
-  display: block;
+/* Cover photo as a CSS background behind all hero content */
+.profile-top[data-has-cover]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--cover-url);
+  background-size: cover;
+  background-position: center calc(var(--cover-pos-y, 50%) + var(--cover-scroll, 0px));
+  opacity: var(--cover-opacity, 0.7);
+  z-index: 0;
+  pointer-events: none;
 }
 
-@media (min-width: 768px) {
-  .cover-image {
-    height: 300px;
-  }
-}
-
-/* Gradient: transparent top → theme bg at bottom for seamless text readability */
-.cover-overlay {
+/* Gradient: transparent top → theme bg at bottom */
+.profile-top[data-has-cover]::after {
+  content: '';
   position: absolute;
   inset: 0;
   background: linear-gradient(
@@ -985,20 +984,14 @@
     transparent 30%,
     var(--bg) 100%
   );
+  z-index: 1;
   pointer-events: none;
 }
 
-/* Hero overlaps the bottom edge of the cover */
-.cover-first {
+/* All direct children of profile-top sit above the cover */
+.profile-top > * {
   position: relative;
-  margin-top: -100px;
   z-index: 2;
-}
-
-@media (min-width: 768px) {
-  .cover-first {
-    margin-top: -120px;
-  }
 }
 
 /* ── Background Photo — full page behind everything ── */
@@ -1008,6 +1001,16 @@
   z-index: -1;
   pointer-events: none;
   overflow: hidden;
+}
+
+/* In editor preview: contain the bg image within the phone frame */
+[data-contained="true"] {
+  position: relative;
+  overflow: hidden;
+}
+
+[data-contained="true"] .profile-bg-image {
+  position: absolute;
 }
 
 .profile-bg-image img {

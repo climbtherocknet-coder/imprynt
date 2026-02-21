@@ -32,18 +32,22 @@ export interface ProfileTemplateProps {
   photoPositionX?: number;
   photoPositionY?: number;
   photoAnimation?: string;
+  photoPosition?: number; // 0-100 slider (new); zones: 0-33=left, 34-66=center, 67-100=right
   vcardPinEnabled?: boolean;
   accentColor?: string;
   linkDisplay?: string;
   photoAlign?: string;
   customTheme?: CustomThemeData | Record<string, string>;
-  // Cover photo (banner behind hero with gradient overlay)
+  // Cover photo (background of hero section, content on top)
   coverUrl?: string;
   coverPositionY?: number;
+  coverOpacity?: number; // 10-100, default 70
   // Background photo (full page behind profile)
   bgImageUrl?: string;
   bgImageOpacity?: number;
   bgImagePositionY?: number;
+  // Editor preview containment (prevent position:fixed from escaping preview)
+  contained?: boolean;
 }
 
 function getLinkHref(link: { link_type: string; url: string }) {
@@ -54,6 +58,13 @@ function getLinkHref(link: { link_type: string; url: string }) {
 
 function getLinkTarget(linkType: string) {
   return ['email', 'phone'].includes(linkType) ? undefined : '_blank';
+}
+
+// Derive left/center/right from a 0-100 numeric position
+function getPhotoAlignFromPosition(pos: number): string {
+  if (pos <= 33) return 'left';
+  if (pos <= 66) return 'center';
+  return 'right';
 }
 
 export default function ProfileTemplate({
@@ -76,6 +87,7 @@ export default function ProfileTemplate({
   photoPositionX,
   photoPositionY,
   photoAnimation,
+  photoPosition,
   vcardPinEnabled = false,
   accentColor,
   linkDisplay = 'default',
@@ -83,9 +95,11 @@ export default function ProfileTemplate({
   customTheme,
   coverUrl,
   coverPositionY = 50,
+  coverOpacity = 70,
   bgImageUrl,
   bgImageOpacity = 20,
   bgImagePositionY = 50,
+  contained = false,
 }: ProfileTemplateProps) {
   const theme = template === 'custom' ? getCustomTheme(customTheme as CustomThemeData) : getTheme(template);
   const cssVars = getThemeCSSVars(theme);
@@ -98,20 +112,19 @@ export default function ProfileTemplate({
   if (photoAnimation && photoAnimation !== 'none') {
     dataAttrs['data-photo-anim'] = photoAnimation;
   }
-  if (photoAlign === 'right') {
+  // Derive effective photo alignment: numeric position takes priority over string align
+  const effectivePhotoAlign = photoPosition !== undefined
+    ? getPhotoAlignFromPosition(photoPosition)
+    : (photoAlign || 'left');
+  if (effectivePhotoAlign === 'right') {
     dataAttrs['data-photo-align'] = 'right';
-  } else if (photoAlign === 'center') {
+  } else if (effectivePhotoAlign === 'center') {
     dataAttrs['data-photo-align'] = 'center';
   }
   const googleFontsUrl = getGoogleFontsUrl(theme);
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
   const subtitle = [title, company].filter(Boolean).join(' · ');
   const linkStyle = theme.modifiers.linkStyle;
-
-  // Which hero div gets the cover-overlap class (only the first one rendered)
-  // If status tags present → they are the first hero. If not → main hero is first.
-  const coverFirstOnStatusTags = !!coverUrl && statusTags.length > 0;
-  const coverFirstOnHero = !!coverUrl && statusTags.length === 0;
 
   return (
     <>
@@ -131,6 +144,7 @@ export default function ProfileTemplate({
           return [key, rest.join(': ')];
         })), ...accentOverrides } as React.CSSProperties}
         {...dataAttrs}
+        {...(contained ? { 'data-contained': 'true' } : {})}
       >
         {/* ─── Background Photo (fixed, full page) ─── */}
         {bgImageUrl && (
@@ -146,22 +160,20 @@ export default function ProfileTemplate({
           </div>
         )}
 
-        {/* ─── Cover Photo (banner, hero overlaps via negative margin) ─── */}
-        {coverUrl && (
-          <div className="cover-wrapper">
-            <img
-              className="cover-image"
-              src={coverUrl}
-              alt=""
-              style={{ objectPosition: `center ${coverPositionY}%` }}
-            />
-            <div className="cover-overlay" />
-          </div>
-        )}
+        {/* ─── Profile Top: cover photo + status tags + hero ─── */}
+        <div
+          className="profile-top"
+          {...(coverUrl ? { 'data-has-cover': 'true' } : {})}
+          style={coverUrl ? {
+            '--cover-url': `url('${coverUrl}')`,
+            '--cover-opacity': `${coverOpacity / 100}`,
+            '--cover-pos-y': `${coverPositionY}%`,
+          } as React.CSSProperties : undefined}
+        >
 
         {/* ─── Status Tags ─── */}
         {statusTags.length > 0 && (
-          <div className={`hero${coverFirstOnStatusTags ? ' cover-first' : ''}`} style={{ paddingBottom: 0 }}>
+          <div className="hero" style={{ paddingBottom: 0 }}>
             <div
               className="status-tags fade-in d1"
               style={statusTagColor ? {
@@ -180,7 +192,7 @@ export default function ProfileTemplate({
         )}
 
         {/* ─── Hero ─── */}
-        <div className={`hero${coverFirstOnHero ? ' cover-first' : ''}`}>
+        <div className="hero">
           {/* Soft: hero card wrap */}
           {theme.effects?.heroCardWrap ? (
             <div className="hero-card fade-in d1">
@@ -277,6 +289,7 @@ export default function ProfileTemplate({
             <SaveContactButton profileId={profileId} pinProtected={vcardPinEnabled} iconOnly={false} />
           )}
         </div>
+        </div>{/* end .profile-top */}
 
         {/* ─── Pods ─── */}
         {pods.map((pod, i) => (

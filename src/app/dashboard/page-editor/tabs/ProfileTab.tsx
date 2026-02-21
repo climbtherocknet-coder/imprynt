@@ -70,9 +70,11 @@ interface ProfileData {
     customTheme: CustomThemeData | null;
     coverUrl: string | null;
     coverPositionY: number;
+    coverOpacity: number;
     bgImageUrl: string | null;
     bgImageOpacity: number;
     bgImagePositionY: number;
+    photoPosition: number | null;
   };
   links: LinkItem[];
 }
@@ -198,6 +200,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
   const [photoPositionY, setPhotoPositionY] = useState(50);
   const [photoAnimation, setPhotoAnimation] = useState('none');
   const [photoAlign, setPhotoAlign] = useState('left');
+  const [photoPosition, setPhotoPosition] = useState(0); // 0-100 slider
   const [customTheme, setCustomTheme] = useState<CustomThemeData>({});
   const [previewKey, setPreviewKey] = useState(0);
   const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
@@ -215,6 +218,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
   // Cover photo
   const [coverUrl, setCoverUrl] = useState('');
   const [coverPositionY, setCoverPositionY] = useState(50);
+  const [coverOpacity, setCoverOpacity] = useState(70);
   const [coverUploading, setCoverUploading] = useState(false);
   const coverFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -224,6 +228,9 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
   const [bgImagePositionY, setBgImagePositionY] = useState(50);
   const [bgImageUploading, setBgImageUploading] = useState(false);
   const bgImageFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Cover & Background collapsible
+  const [showCoverBg, setShowCoverBg] = useState(false);
 
   // Drag state (links)
   const dragItem = useRef<number | null>(null);
@@ -283,9 +290,13 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
         setPhotoPositionY(d.profile.photoPositionY ?? 50);
         setPhotoAnimation(d.profile.photoAnimation || 'none');
         setPhotoAlign(d.profile.photoAlign || 'left');
+        // Init numeric position from photoPosition or derive from align
+        const posFromAlign = d.profile.photoAlign === 'right' ? 100 : d.profile.photoAlign === 'center' ? 50 : 0;
+        setPhotoPosition(d.profile.photoPosition ?? posFromAlign);
         setCustomTheme(d.profile.customTheme || {});
         setCoverUrl(d.profile.coverUrl || '');
         setCoverPositionY(d.profile.coverPositionY ?? 50);
+        setCoverOpacity(d.profile.coverOpacity ?? 70);
         setBgImageUrl(d.profile.bgImageUrl || '');
         setBgImageOpacity(d.profile.bgImageOpacity ?? 20);
         setBgImagePositionY(d.profile.bgImagePositionY ?? 50);
@@ -670,9 +681,12 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
         customTheme={template === 'custom' ? customTheme : undefined}
         coverUrl={coverUrl || undefined}
         coverPositionY={coverPositionY}
+        coverOpacity={coverOpacity}
         bgImageUrl={bgImageUrl || undefined}
         bgImageOpacity={bgImageOpacity}
         bgImagePositionY={bgImagePositionY}
+        photoPosition={photoPosition}
+        contained={true}
       />
     );
   }
@@ -695,7 +709,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={sectionTitleStyle}>My Main Profile</h3>
             <button
-              onClick={() => saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor: accentColor || null, fontPair, linkDisplay, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, customTheme: template === 'custom' ? customTheme : null, coverUrl: coverUrl || null, coverPositionY, bgImageUrl: bgImageUrl || null, bgImageOpacity, bgImagePositionY })}
+              onClick={() => saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor: accentColor || null, fontPair, linkDisplay, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, photoPosition, customTheme: template === 'custom' ? customTheme : null, coverUrl: coverUrl || null, coverPositionY, coverOpacity, bgImageUrl: bgImageUrl || null, bgImageOpacity, bgImagePositionY })}
               disabled={saving === 'profile'}
               style={{ ...saveBtnStyle, opacity: saving === 'profile' ? 0.6 : 1 }}
             >
@@ -995,30 +1009,31 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
               </div>
             </div>
 
-            {/* Photo position toggle */}
+            {/* Photo position slider */}
             <div>
-              <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Photo Position</label>
-              <div style={{ display: 'flex', gap: '0.375rem' }}>
-                {(['left', 'center', 'right'] as const).map(side => {
-                  const isSelected = photoAlign === side;
-                  return (
-                    <button
-                      key={side}
-                      onClick={() => setPhotoAlign(side)}
-                      style={{
-                        padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.6875rem', fontWeight: 500,
-                        border: isSelected ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
-                        backgroundColor: isSelected ? 'rgba(232, 168, 73, 0.1)' : 'var(--surface, #161c28)',
-                        color: isSelected ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
-                        cursor: 'pointer', fontFamily: 'inherit',
-                        textTransform: 'capitalize',
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      {side}
-                    </button>
-                  );
-                })}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Photo Position</label>
+                <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>
+                  {photoPosition <= 33 ? 'Left' : photoPosition <= 66 ? 'Center' : 'Right'}
+                </span>
+              </div>
+              <input
+                type="range" min={0} max={100} value={photoPosition}
+                onChange={e => { const v = Number(e.target.value); setPhotoPosition(v); setPhotoAlign(v <= 33 ? 'left' : v <= 66 ? 'center' : 'right'); }}
+                style={{ width: '100%', accentColor: 'var(--accent, #e8a849)' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                {([['Left', 0], ['Center', 50], ['Right', 100]] as [string, number][]).map(([label, val]) => (
+                  <button
+                    key={label}
+                    onClick={() => { setPhotoPosition(val); setPhotoAlign(val === 0 ? 'left' : val === 50 ? 'center' : 'right'); }}
+                    style={{
+                      fontSize: '0.625rem', fontWeight: 500, padding: '0.125rem 0.5rem',
+                      borderRadius: '9999px', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                      backgroundColor: 'var(--border, #1e2535)', color: 'var(--text-muted, #5d6370)',
+                    }}
+                  >{label}</button>
+                ))}
               </div>
             </div>
             </>)}
@@ -1151,6 +1166,124 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
                   style={{ marginTop: '1rem', width: 'auto', padding: '0.625rem 1.25rem', backgroundColor: contactSaved ? '#059669' : undefined, cursor: contactSaving ? 'not-allowed' : 'pointer', transition: 'background-color 0.2s' }}>
                   {contactSaving ? 'Saving...' : contactSaved ? 'Saved!' : 'Save Contact Info'}
                 </button>
+              </>)}
+            </div>
+          </div>
+
+          {/* ── Cover & Background (collapsible) ── */}
+          <div style={{ borderTop: '1px solid var(--border, #1e2535)', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
+            <div style={{ padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+              <div onClick={() => setShowCoverBg(!showCoverBg)} className="collapsible-header">
+                <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showCoverBg ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
+                <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>Cover & Background</label>
+                {!isPaid && <span style={{ fontSize: '0.5rem', fontWeight: 700, padding: '1px 5px', borderRadius: '3px', backgroundColor: 'rgba(232,168,73,0.15)', color: 'var(--accent, #e8a849)', letterSpacing: '0.04em' }}>PRO</span>}
+              </div>
+
+              {showCoverBg && (<>
+                {/* ── Cover Photo ── */}
+                <div style={{ marginTop: '1rem' }}>
+                  <label style={{ ...labelStyle, fontSize: '0.8125rem' }}>Cover Photo</label>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.75rem' }}>
+                    Appears behind your hero section with a gradient fade.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {coverUrl ? (
+                      <div style={{ position: 'relative', width: '100%', height: 96, borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--border-light, #283042)' }}>
+                        <img src={coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `center ${coverPositionY}%` }} />
+                        <button onClick={() => setCoverUrl('')}
+                          style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                          aria-label="Remove cover photo">✕</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => { if (isPaid) coverFileInputRef.current?.click(); }} disabled={!isPaid || coverUploading}
+                        style={{ width: '100%', padding: '1rem', borderRadius: '0.5rem', fontSize: '0.8125rem', border: '2px dashed var(--border-light, #283042)', backgroundColor: 'var(--bg, #0c1017)', color: isPaid ? 'var(--text-mid, #a8adb8)' : 'var(--text-muted, #5d6370)', cursor: isPaid ? 'pointer' : 'not-allowed', fontFamily: 'inherit', opacity: isPaid ? 1 : 0.6 }}>
+                        {coverUploading ? 'Uploading…' : isPaid ? '+ Upload cover photo' : '🔒 Upgrade to Pro to add a cover'}
+                      </button>
+                    )}
+                    {coverUrl && (
+                      <button onClick={() => coverFileInputRef.current?.click()} disabled={!isPaid || coverUploading}
+                        style={{ padding: '0.375rem 0.75rem', borderRadius: '0.375rem', fontSize: '0.75rem', width: 'fit-content', backgroundColor: 'var(--border, #1e2535)', color: 'var(--text, #eceef2)', border: '1px solid var(--border-light, #283042)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        {coverUploading ? 'Uploading…' : 'Replace'}
+                      </button>
+                    )}
+                    {coverUrl && (
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                          <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Opacity</label>
+                          <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{coverOpacity}%</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Subtle</span>
+                          <input type="range" min={10} max={100} value={coverOpacity} onChange={e => setCoverOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }} />
+                          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Bold</span>
+                        </div>
+                      </div>
+                    )}
+                    {coverUrl && (
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                          <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Crop Position</label>
+                          <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{coverPositionY === 0 ? 'Top' : coverPositionY === 100 ? 'Bottom' : coverPositionY === 50 ? 'Center' : `${coverPositionY}%`}</span>
+                        </div>
+                        <input type="range" min={0} max={100} value={coverPositionY} onChange={e => setCoverPositionY(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--accent, #e8a849)' }} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid var(--border, #1e2535)', margin: '1.25rem 0' }} />
+
+                {/* ── Background Photo ── */}
+                <div>
+                  <label style={{ ...labelStyle, fontSize: '0.8125rem' }}>Background Photo</label>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.75rem' }}>
+                    A subtle full-page texture behind your entire profile.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {bgImageUrl ? (
+                      <div style={{ position: 'relative', width: '100%', height: 96, borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--border-light, #283042)' }}>
+                        <img src={bgImageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `center ${bgImagePositionY}%` }} />
+                        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(12,16,23,0.7)' }} />
+                        <button onClick={() => setBgImageUrl('')}
+                          style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                          aria-label="Remove background photo">✕</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => { if (isPaid) bgImageFileInputRef.current?.click(); }} disabled={!isPaid || bgImageUploading}
+                        style={{ width: '100%', padding: '1rem', borderRadius: '0.5rem', fontSize: '0.8125rem', border: '2px dashed var(--border-light, #283042)', backgroundColor: 'var(--bg, #0c1017)', color: isPaid ? 'var(--text-mid, #a8adb8)' : 'var(--text-muted, #5d6370)', cursor: isPaid ? 'pointer' : 'not-allowed', fontFamily: 'inherit', opacity: isPaid ? 1 : 0.6 }}>
+                        {bgImageUploading ? 'Uploading…' : isPaid ? '+ Upload background photo' : '🔒 Upgrade to Pro to add a background'}
+                      </button>
+                    )}
+                    {bgImageUrl && (
+                      <button onClick={() => bgImageFileInputRef.current?.click()} disabled={!isPaid || bgImageUploading}
+                        style={{ padding: '0.375rem 0.75rem', borderRadius: '0.375rem', fontSize: '0.75rem', width: 'fit-content', backgroundColor: 'var(--border, #1e2535)', color: 'var(--text, #eceef2)', border: '1px solid var(--border-light, #283042)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        {bgImageUploading ? 'Uploading…' : 'Replace'}
+                      </button>
+                    )}
+                    {bgImageUrl && (
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                          <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Visibility</label>
+                          <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{bgImageOpacity}%</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Subtle</span>
+                          <input type="range" min={5} max={100} value={bgImageOpacity} onChange={e => setBgImageOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }} />
+                          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Bold</span>
+                        </div>
+                      </div>
+                    )}
+                    {bgImageUrl && (
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                          <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Crop Position</label>
+                          <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{bgImagePositionY === 0 ? 'Top' : bgImagePositionY === 100 ? 'Bottom' : bgImagePositionY === 50 ? 'Center' : `${bgImagePositionY}%`}</span>
+                        </div>
+                        <input type="range" min={0} max={100} value={bgImagePositionY} onChange={e => setBgImagePositionY(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--accent, #e8a849)' }} />
+                      </div>
+                    )}
+                  </div>
+                </div>
               </>)}
             </div>
           </div>
@@ -1336,186 +1469,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
                       </div>
                     </>
                   )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* ── Cover Photo ── */}
-          <div style={{ borderTop: '1px solid var(--border, #1e2535)', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <label style={{ ...labelStyle, marginBottom: 0 }}>Cover Photo</label>
-              {!isPaid && (
-                <span style={{ fontSize: '0.5rem', fontWeight: 700, padding: '1px 5px', borderRadius: '3px', backgroundColor: 'rgba(232,168,73,0.15)', color: 'var(--accent, #e8a849)', letterSpacing: '0.04em' }}>PRO</span>
-              )}
-            </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.875rem' }}>
-              Appears behind your hero section with a gradient fade into your profile.
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {/* Image preview + upload */}
-              {coverUrl ? (
-                <div style={{ position: 'relative', width: '100%', height: 96, borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--border-light, #283042)' }}>
-                  <img src={coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `center ${coverPositionY}%` }} />
-                  <button
-                    onClick={() => setCoverUrl('')}
-                    style={{
-                      position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%',
-                      backgroundColor: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer',
-                      color: '#fff', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      lineHeight: 1,
-                    }}
-                    aria-label="Remove cover photo"
-                  >✕</button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => { if (isPaid) coverFileInputRef.current?.click(); }}
-                  disabled={!isPaid || coverUploading}
-                  style={{
-                    width: '100%', padding: '1rem', borderRadius: '0.5rem', fontSize: '0.8125rem',
-                    border: '2px dashed var(--border-light, #283042)',
-                    backgroundColor: 'var(--bg, #0c1017)', color: isPaid ? 'var(--text-mid, #a8adb8)' : 'var(--text-muted, #5d6370)',
-                    cursor: isPaid ? 'pointer' : 'not-allowed', fontFamily: 'inherit',
-                    opacity: isPaid ? 1 : 0.6, transition: 'border-color 0.15s',
-                  }}
-                >
-                  {coverUploading ? 'Uploading…' : isPaid ? '+ Upload cover photo' : '🔒 Upgrade to Pro to add a cover'}
-                </button>
-              )}
-
-              {coverUrl && (
-                <button
-                  onClick={() => coverFileInputRef.current?.click()}
-                  disabled={!isPaid || coverUploading}
-                  style={{
-                    padding: '0.375rem 0.75rem', borderRadius: '0.375rem', fontSize: '0.75rem', width: 'fit-content',
-                    backgroundColor: 'var(--border, #1e2535)', color: 'var(--text, #eceef2)',
-                    border: '1px solid var(--border-light, #283042)', cursor: 'pointer', fontFamily: 'inherit',
-                  }}
-                >
-                  {coverUploading ? 'Uploading…' : 'Replace'}
-                </button>
-              )}
-
-              {/* Crop position */}
-              {coverUrl && (
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Crop Position</label>
-                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>
-                      {coverPositionY === 0 ? 'Top' : coverPositionY === 100 ? 'Bottom' : coverPositionY === 50 ? 'Center' : `${coverPositionY}%`}
-                    </span>
-                  </div>
-                  <input
-                    type="range" min={0} max={100} value={coverPositionY}
-                    onChange={e => setCoverPositionY(Number(e.target.value))}
-                    style={{ width: '100%', accentColor: 'var(--accent, #e8a849)' }}
-                  />
-                  <p style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', margin: '0.25rem 0 0' }}>
-                    Drag to adjust which part of the image shows.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* ── Background Photo ── */}
-          <div style={{ borderTop: '1px solid var(--border, #1e2535)', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <label style={{ ...labelStyle, marginBottom: 0 }}>Background Photo</label>
-              {!isPaid && (
-                <span style={{ fontSize: '0.5rem', fontWeight: 700, padding: '1px 5px', borderRadius: '3px', backgroundColor: 'rgba(232,168,73,0.15)', color: 'var(--accent, #e8a849)', letterSpacing: '0.04em' }}>PRO</span>
-              )}
-            </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.875rem' }}>
-              A subtle full-page texture or image behind your entire profile. Low visibility = premium look.
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {/* Image preview + upload */}
-              {bgImageUrl ? (
-                <div style={{ position: 'relative', width: '100%', height: 96, borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--border-light, #283042)' }}>
-                  <img src={bgImageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `center ${bgImagePositionY}%` }} />
-                  <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(12,16,23,0.7)' }} />
-                  <button
-                    onClick={() => setBgImageUrl('')}
-                    style={{
-                      position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%',
-                      backgroundColor: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer',
-                      color: '#fff', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      lineHeight: 1,
-                    }}
-                    aria-label="Remove background photo"
-                  >✕</button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => { if (isPaid) bgImageFileInputRef.current?.click(); }}
-                  disabled={!isPaid || bgImageUploading}
-                  style={{
-                    width: '100%', padding: '1rem', borderRadius: '0.5rem', fontSize: '0.8125rem',
-                    border: '2px dashed var(--border-light, #283042)',
-                    backgroundColor: 'var(--bg, #0c1017)', color: isPaid ? 'var(--text-mid, #a8adb8)' : 'var(--text-muted, #5d6370)',
-                    cursor: isPaid ? 'pointer' : 'not-allowed', fontFamily: 'inherit',
-                    opacity: isPaid ? 1 : 0.6, transition: 'border-color 0.15s',
-                  }}
-                >
-                  {bgImageUploading ? 'Uploading…' : isPaid ? '+ Upload background photo' : '🔒 Upgrade to Pro to add a background'}
-                </button>
-              )}
-
-              {bgImageUrl && (
-                <button
-                  onClick={() => bgImageFileInputRef.current?.click()}
-                  disabled={!isPaid || bgImageUploading}
-                  style={{
-                    padding: '0.375rem 0.75rem', borderRadius: '0.375rem', fontSize: '0.75rem', width: 'fit-content',
-                    backgroundColor: 'var(--border, #1e2535)', color: 'var(--text, #eceef2)',
-                    border: '1px solid var(--border-light, #283042)', cursor: 'pointer', fontFamily: 'inherit',
-                  }}
-                >
-                  {bgImageUploading ? 'Uploading…' : 'Replace'}
-                </button>
-              )}
-
-              {/* Visibility (opacity) slider */}
-              {bgImageUrl && (
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Visibility</label>
-                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{bgImageOpacity}%</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Subtle</span>
-                    <input
-                      type="range" min={5} max={100} value={bgImageOpacity}
-                      onChange={e => setBgImageOpacity(Number(e.target.value))}
-                      style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }}
-                    />
-                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Bold</span>
-                  </div>
-                  <p style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', margin: '0.25rem 0 0' }}>
-                    Lower = more subtle, higher = more visible.
-                  </p>
-                </div>
-              )}
-
-              {/* Crop position */}
-              {bgImageUrl && (
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Crop Position</label>
-                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>
-                      {bgImagePositionY === 0 ? 'Top' : bgImagePositionY === 100 ? 'Bottom' : bgImagePositionY === 50 ? 'Center' : `${bgImagePositionY}%`}
-                    </span>
-                  </div>
-                  <input
-                    type="range" min={0} max={100} value={bgImagePositionY}
-                    onChange={e => setBgImagePositionY(Number(e.target.value))}
-                    style={{ width: '100%', accentColor: 'var(--accent, #e8a849)' }}
-                  />
                 </div>
               )}
             </div>

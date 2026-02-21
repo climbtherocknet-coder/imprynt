@@ -41,11 +41,13 @@ interface ProfileData {
   photo_position_y: number;
   photo_animation: string;
   photo_align: string;
+  photo_position: number | null;
   vcard_pin_hash: string | null;
   link_display: string;
   custom_theme: Record<string, string> | null;
   cover_url: string | null;
   cover_position_y: number;
+  cover_opacity: number;
   bg_image_url: string | null;
   bg_image_opacity: number;
   bg_image_position_y: number;
@@ -131,14 +133,21 @@ async function getProfileAny(slug: string) {
     } catch { profile.custom_theme = null; }
     // Fetch cover fields separately (migration 037 may not be run yet)
     try {
-      const coverResult = await query('SELECT cover_url, cover_position_y FROM profiles WHERE id = $1', [profile.profile_id]);
+      const coverResult = await query('SELECT cover_url, cover_position_y, cover_opacity FROM profiles WHERE id = $1', [profile.profile_id]);
       const cr = coverResult.rows[0];
       profile.cover_url = cr?.cover_url || null;
       profile.cover_position_y = cr?.cover_position_y ?? 50;
+      profile.cover_opacity = cr?.cover_opacity ?? 70;
     } catch {
       profile.cover_url = null;
       profile.cover_position_y = 50;
+      profile.cover_opacity = 70;
     }
+    // Fetch photo_position separately (migration 039 may not be run yet)
+    try {
+      const posResult = await query('SELECT photo_position FROM profiles WHERE id = $1', [profile.profile_id]);
+      profile.photo_position = posResult.rows[0]?.photo_position ?? null;
+    } catch { profile.photo_position = null; }
     // Fetch background image fields separately (migration 038 may not be run yet)
     try {
       const bgResult = await query('SELECT bg_image_url, bg_image_opacity, bg_image_position_y FROM profiles WHERE id = $1', [profile.profile_id]);
@@ -358,8 +367,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         photoAlign={profile.photo_align || 'left'}
         vcardPinEnabled={!!profile.vcard_pin_hash}
         customTheme={profile.template === 'custom' ? (profile.custom_theme || undefined) : undefined}
+        photoPosition={profile.photo_position !== null ? profile.photo_position : undefined}
         coverUrl={profile.cover_url || undefined}
         coverPositionY={profile.cover_position_y ?? 50}
+        coverOpacity={profile.cover_opacity ?? 70}
         bgImageUrl={profile.bg_image_url || undefined}
         bgImageOpacity={profile.bg_image_opacity ?? 20}
         bgImagePositionY={profile.bg_image_position_y ?? 50}
