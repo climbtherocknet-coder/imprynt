@@ -37,6 +37,13 @@ export interface ProfileTemplateProps {
   linkDisplay?: string;
   photoAlign?: string;
   customTheme?: CustomThemeData | Record<string, string>;
+  // Cover photo (banner behind hero with gradient overlay)
+  coverUrl?: string;
+  coverPositionY?: number;
+  // Background photo (full page behind profile)
+  bgImageUrl?: string;
+  bgImageOpacity?: number;
+  bgImagePositionY?: number;
 }
 
 function getLinkHref(link: { link_type: string; url: string }) {
@@ -74,6 +81,11 @@ export default function ProfileTemplate({
   linkDisplay = 'default',
   photoAlign = 'left',
   customTheme,
+  coverUrl,
+  coverPositionY = 50,
+  bgImageUrl,
+  bgImageOpacity = 20,
+  bgImagePositionY = 50,
 }: ProfileTemplateProps) {
   const theme = template === 'custom' ? getCustomTheme(customTheme as CustomThemeData) : getTheme(template);
   const cssVars = getThemeCSSVars(theme);
@@ -88,11 +100,18 @@ export default function ProfileTemplate({
   }
   if (photoAlign === 'right') {
     dataAttrs['data-photo-align'] = 'right';
+  } else if (photoAlign === 'center') {
+    dataAttrs['data-photo-align'] = 'center';
   }
   const googleFontsUrl = getGoogleFontsUrl(theme);
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
   const subtitle = [title, company].filter(Boolean).join(' · ');
   const linkStyle = theme.modifiers.linkStyle;
+
+  // Which hero div gets the cover-overlap class (only the first one rendered)
+  // If status tags present → they are the first hero. If not → main hero is first.
+  const coverFirstOnStatusTags = !!coverUrl && statusTags.length > 0;
+  const coverFirstOnHero = !!coverUrl && statusTags.length === 0;
 
   return (
     <>
@@ -113,9 +132,36 @@ export default function ProfileTemplate({
         })), ...accentOverrides } as React.CSSProperties}
         {...dataAttrs}
       >
+        {/* ─── Background Photo (fixed, full page) ─── */}
+        {bgImageUrl && (
+          <div
+            className="profile-bg-image"
+            style={{ '--bg-overlay-opacity': `${(100 - bgImageOpacity) / 100}` } as React.CSSProperties}
+          >
+            <img
+              src={bgImageUrl}
+              alt=""
+              style={{ objectPosition: `center ${bgImagePositionY}%` }}
+            />
+          </div>
+        )}
+
+        {/* ─── Cover Photo (banner, hero overlaps via negative margin) ─── */}
+        {coverUrl && (
+          <div className="cover-wrapper">
+            <img
+              className="cover-image"
+              src={coverUrl}
+              alt=""
+              style={{ objectPosition: `center ${coverPositionY}%` }}
+            />
+            <div className="cover-overlay" />
+          </div>
+        )}
+
         {/* ─── Status Tags ─── */}
         {statusTags.length > 0 && (
-          <div className="hero" style={{ paddingBottom: 0 }}>
+          <div className={`hero${coverFirstOnStatusTags ? ' cover-first' : ''}`} style={{ paddingBottom: 0 }}>
             <div
               className="status-tags fade-in d1"
               style={statusTagColor ? {
@@ -134,7 +180,7 @@ export default function ProfileTemplate({
         )}
 
         {/* ─── Hero ─── */}
-        <div className="hero">
+        <div className={`hero${coverFirstOnHero ? ' cover-first' : ''}`}>
           {/* Soft: hero card wrap */}
           {theme.effects?.heroCardWrap ? (
             <div className="hero-card fade-in d1">
@@ -168,8 +214,6 @@ export default function ProfileTemplate({
 
           {/* Hero rule (Classic, Editorial) */}
           <div className="hero-rule" />
-
-          {/* Bio (from profile, not pods) — pods replace this for pod-enabled profiles */}
 
           {/* Links */}
           {links.length > 0 && (

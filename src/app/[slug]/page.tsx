@@ -44,6 +44,11 @@ interface ProfileData {
   vcard_pin_hash: string | null;
   link_display: string;
   custom_theme: Record<string, string> | null;
+  cover_url: string | null;
+  cover_position_y: number;
+  bg_image_url: string | null;
+  bg_image_opacity: number;
+  bg_image_position_y: number;
 }
 
 interface LinkData {
@@ -124,6 +129,28 @@ async function getProfileAny(slug: string) {
       const ctResult = await query('SELECT custom_theme FROM profiles WHERE id = $1', [profile.profile_id]);
       profile.custom_theme = ctResult.rows[0]?.custom_theme || null;
     } catch { profile.custom_theme = null; }
+    // Fetch cover fields separately (migration 037 may not be run yet)
+    try {
+      const coverResult = await query('SELECT cover_url, cover_position_y FROM profiles WHERE id = $1', [profile.profile_id]);
+      const cr = coverResult.rows[0];
+      profile.cover_url = cr?.cover_url || null;
+      profile.cover_position_y = cr?.cover_position_y ?? 50;
+    } catch {
+      profile.cover_url = null;
+      profile.cover_position_y = 50;
+    }
+    // Fetch background image fields separately (migration 038 may not be run yet)
+    try {
+      const bgResult = await query('SELECT bg_image_url, bg_image_opacity, bg_image_position_y FROM profiles WHERE id = $1', [profile.profile_id]);
+      const br = bgResult.rows[0];
+      profile.bg_image_url = br?.bg_image_url || null;
+      profile.bg_image_opacity = br?.bg_image_opacity ?? 20;
+      profile.bg_image_position_y = br?.bg_image_position_y ?? 50;
+    } catch {
+      profile.bg_image_url = null;
+      profile.bg_image_opacity = 20;
+      profile.bg_image_position_y = 50;
+    }
   }
   return profile;
 }
@@ -331,6 +358,11 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         photoAlign={profile.photo_align || 'left'}
         vcardPinEnabled={!!profile.vcard_pin_hash}
         customTheme={profile.template === 'custom' ? (profile.custom_theme || undefined) : undefined}
+        coverUrl={profile.cover_url || undefined}
+        coverPositionY={profile.cover_position_y ?? 50}
+        bgImageUrl={profile.bg_image_url || undefined}
+        bgImageOpacity={profile.bg_image_opacity ?? 20}
+        bgImagePositionY={profile.bg_image_position_y ?? 50}
       />
 
       {/* Client-side interactive elements (PIN modal, protected pages) */}

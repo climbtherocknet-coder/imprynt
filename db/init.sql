@@ -59,8 +59,15 @@ CREATE TABLE profiles (
     photo_position_x INTEGER NOT NULL DEFAULT 50,
     photo_position_y INTEGER NOT NULL DEFAULT 50,
     photo_animation VARCHAR(20) NOT NULL DEFAULT 'none',
-    photo_align     VARCHAR(10) NOT NULL DEFAULT 'left' CHECK (photo_align IN ('left', 'right')),
+    photo_align     VARCHAR(10) NOT NULL DEFAULT 'left' CHECK (photo_align IN ('left', 'center', 'right')),
     custom_theme    JSONB DEFAULT NULL,               -- custom template config (only when template = 'custom')
+    cover_url       VARCHAR(500),                     -- cover photo (banner behind hero)
+    cover_style     VARCHAR(20) NOT NULL DEFAULT 'none' CHECK (cover_style IN ('none', 'banner', 'fullpage')), -- legacy
+    cover_opacity   SMALLINT NOT NULL DEFAULT 30 CHECK (cover_opacity BETWEEN 10 AND 100),                    -- legacy
+    cover_position_y INTEGER NOT NULL DEFAULT 50 CHECK (cover_position_y BETWEEN 0 AND 100),
+    bg_image_url    VARCHAR(500),                     -- background photo (full page behind profile)
+    bg_image_opacity SMALLINT NOT NULL DEFAULT 20 CHECK (bg_image_opacity BETWEEN 5 AND 100),
+    bg_image_position_y INTEGER NOT NULL DEFAULT 50 CHECK (bg_image_position_y BETWEEN 0 AND 100),
     status_tags     TEXT[] DEFAULT '{}',              -- e.g. {'open_to_network','hiring'}
     slug_rotated_at TIMESTAMPTZ DEFAULT NOW(),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),

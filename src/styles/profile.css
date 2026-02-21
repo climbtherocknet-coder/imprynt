@@ -53,6 +53,15 @@
   flex-direction: row-reverse;
 }
 
+[data-photo-align="center"] .hero-top {
+  flex-direction: column;
+  align-items: center;
+}
+
+[data-photo-align="center"] .hero-identity {
+  text-align: center;
+}
+
 .hero-identity { flex: 1; min-width: 0; }
 
 .hero-name {
@@ -941,6 +950,81 @@
   background: var(--accent);
 }
 .impression-icon:hover { opacity: 0.5; }
+
+/* ═══════════════════════════════════════════
+   COVER / BACKGROUND PHOTO
+   ═══════════════════════════════════════════ */
+
+/* ── Cover Photo — banner behind hero ── */
+.cover-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.cover-image {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .cover-image {
+    height: 300px;
+  }
+}
+
+/* Gradient: transparent top → theme bg at bottom for seamless text readability */
+.cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 30%,
+    var(--bg) 100%
+  );
+  pointer-events: none;
+}
+
+/* Hero overlaps the bottom edge of the cover */
+.cover-first {
+  position: relative;
+  margin-top: -100px;
+  z-index: 2;
+}
+
+@media (min-width: 768px) {
+  .cover-first {
+    margin-top: -120px;
+  }
+}
+
+/* ── Background Photo — full page behind everything ── */
+.profile-bg-image {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.profile-bg-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-bg-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  opacity: var(--bg-overlay-opacity, 0.8);
+  pointer-events: none;
+}
 
 /* ═══════════════════════════════════════════
    TEMPLATE-SPECIFIC OVERRIDES

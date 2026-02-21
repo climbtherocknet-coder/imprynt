@@ -47,6 +47,34 @@ export async function GET() {
     photoAlign = alignResult.rows[0]?.photo_align || 'left';
   } catch { /* column doesn't exist yet — default to left */ }
 
+  // Fetch cover photo fields (migration 037)
+  let coverUrl: string | null = null;
+  let coverPositionY = 50;
+  try {
+    const coverResult = await query(
+      'SELECT cover_url, cover_position_y FROM profiles WHERE id = $1',
+      [profile.id]
+    );
+    const r = coverResult.rows[0];
+    coverUrl = r?.cover_url || null;
+    coverPositionY = r?.cover_position_y ?? 50;
+  } catch { /* column doesn't exist yet */ }
+
+  // Fetch background photo fields (migration 038)
+  let bgImageUrl: string | null = null;
+  let bgImageOpacity = 20;
+  let bgImagePositionY = 50;
+  try {
+    const bgResult = await query(
+      'SELECT bg_image_url, bg_image_opacity, bg_image_position_y FROM profiles WHERE id = $1',
+      [profile.id]
+    );
+    const r = bgResult.rows[0];
+    bgImageUrl = r?.bg_image_url || null;
+    bgImageOpacity = r?.bg_image_opacity ?? 20;
+    bgImagePositionY = r?.bg_image_position_y ?? 50;
+  } catch { /* column doesn't exist yet */ }
+
   const linksResult = await query(
     `SELECT id, link_type, label, url, display_order, show_business, show_personal, show_showcase
      FROM links
@@ -93,6 +121,11 @@ export async function GET() {
       photoAlign,
       vcardPinEnabled: !!vcardPinHash,
       customTheme: profile.custom_theme || null,
+      coverUrl,
+      coverPositionY,
+      bgImageUrl,
+      bgImageOpacity,
+      bgImagePositionY,
     },
     links: linksResult.rows.map((l: Record<string, unknown>) => ({
       id: l.id,
@@ -156,7 +189,7 @@ export async function PUT(req: NextRequest) {
       const validShapes = ['circle', 'rounded', 'soft', 'square', 'hexagon', 'diamond', 'custom'];
       const validSizes = ['small', 'medium', 'large'];
       const validAnimations = ['none', 'fade', 'slide-left', 'slide-right', 'scale', 'pop'];
-      const validAligns = ['left', 'right'];
+      const validAligns = ['left', 'center', 'right'];
 
       if (template && !isValidTemplate(template)) {
         return NextResponse.json({ error: 'Invalid template' }, { status: 400 });
@@ -209,7 +242,7 @@ export async function PUT(req: NextRequest) {
         [template, primaryColor, accentVal === null ? '__clear__' : accentColor, fontPair, userId,
          shapeVal, radiusVal, sizeVal, posX, posY, animVal, displayVal]
       );
-      // photo_align requires migration 035 — update separately so saves don't fail before migration
+      // photo_align update separately (migration 035)
       if (alignVal) {
         try {
           await query('UPDATE profiles SET photo_align = $1 WHERE user_id = $2', [alignVal, userId]);
@@ -221,7 +254,6 @@ export async function PUT(req: NextRequest) {
       if (!Array.isArray(statusTags)) {
         return NextResponse.json({ error: 'Invalid statusTags' }, { status: 400 });
       }
-      // Allow preset slugs + custom strings (max 30 chars, sanitized)
       const filtered = statusTags
         .filter((t: string) => typeof t === 'string' && t.trim().length > 0)
         .map((t: string) => t.trim().slice(0, 30))
@@ -274,7 +306,7 @@ export async function PUT(req: NextRequest) {
       const validShapes = ['circle', 'rounded', 'soft', 'square', 'hexagon', 'diamond', 'custom'];
       const validSizes = ['small', 'medium', 'large'];
       const validAnimations = ['none', 'fade', 'slide-left', 'slide-right', 'scale', 'pop'];
-      const validAligns = ['left', 'right'];
+      const validAligns = ['left', 'center', 'right'];
 
       if (template && !isValidTemplate(template)) {
         return NextResponse.json({ error: 'Invalid template' }, { status: 400 });
@@ -336,13 +368,13 @@ export async function PUT(req: NextRequest) {
           displayValP,
         ]
       );
-      // photo_align requires migration 035 — update separately so saves don't fail before migration
+      // photo_align — update separately (migration 035)
       if (alignVal) {
         try {
           await query('UPDATE profiles SET photo_align = $1 WHERE user_id = $2', [alignVal, userId]);
         } catch { /* column doesn't exist yet */ }
       }
-      // custom_theme requires migration 036 — update separately
+      // custom_theme — update separately (migration 036)
       const { customTheme } = body;
       if (template === 'custom' && customTheme && typeof customTheme === 'object') {
         try {
@@ -353,6 +385,29 @@ export async function PUT(req: NextRequest) {
           await query('UPDATE profiles SET custom_theme = NULL WHERE user_id = $1', [userId]);
         } catch { /* column doesn't exist yet */ }
       }
+      // cover photo — update separately (migration 037)
+      const { coverUrl: cUrl, coverPositionY: cPosY } = body;
+      const coverPosYVal = typeof cPosY === 'number' ? Math.max(0, Math.min(100, Math.round(cPosY))) : null;
+      try {
+        await query(
+          `UPDATE profiles SET cover_url = $1, cover_position_y = COALESCE($2, cover_position_y) WHERE user_id = $3`,
+          [cUrl ?? null, coverPosYVal, userId]
+        );
+      } catch { /* column doesn't exist yet */ }
+      // background photo — update separately (migration 038)
+      const { bgImageUrl: bUrl, bgImageOpacity: bOpacity, bgImagePositionY: bPosY } = body;
+      const bgOpacityVal = typeof bOpacity === 'number' ? Math.max(5, Math.min(100, Math.round(bOpacity))) : null;
+      const bgPosYVal = typeof bPosY === 'number' ? Math.max(0, Math.min(100, Math.round(bPosY))) : null;
+      try {
+        await query(
+          `UPDATE profiles SET
+            bg_image_url = $1,
+            bg_image_opacity = COALESCE($2, bg_image_opacity),
+            bg_image_position_y = COALESCE($3, bg_image_position_y)
+           WHERE user_id = $4`,
+          [bUrl ?? null, bgOpacityVal, bgPosYVal, userId]
+        );
+      } catch { /* column doesn't exist yet */ }
     } else if (section === 'customTheme') {
       // Standalone custom_theme save (auto-save as user tweaks)
       const { customTheme } = body;
@@ -361,6 +416,27 @@ export async function PUT(req: NextRequest) {
       }
       try {
         await query('UPDATE profiles SET custom_theme = $1 WHERE user_id = $2', [JSON.stringify(customTheme), userId]);
+      } catch { /* column doesn't exist yet */ }
+    } else if (section === 'cover') {
+      // Standalone cover photo save
+      const { coverUrl: cUrl, coverPositionY: cPosY } = body;
+      const coverPosYVal = typeof cPosY === 'number' ? Math.max(0, Math.min(100, Math.round(cPosY))) : 50;
+      try {
+        await query(
+          `UPDATE profiles SET cover_url = $1, cover_position_y = $2 WHERE user_id = $3`,
+          [cUrl ?? null, coverPosYVal, userId]
+        );
+      } catch { /* column doesn't exist yet */ }
+    } else if (section === 'bgImage') {
+      // Standalone background photo save
+      const { bgImageUrl: bUrl, bgImageOpacity: bOpacity, bgImagePositionY: bPosY } = body;
+      const bgOpacityVal = typeof bOpacity === 'number' ? Math.max(5, Math.min(100, Math.round(bOpacity))) : 20;
+      const bgPosYVal = typeof bPosY === 'number' ? Math.max(0, Math.min(100, Math.round(bPosY))) : 50;
+      try {
+        await query(
+          `UPDATE profiles SET bg_image_url = $1, bg_image_opacity = $2, bg_image_position_y = $3 WHERE user_id = $4`,
+          [bUrl ?? null, bgOpacityVal, bgPosYVal, userId]
+        );
       } catch { /* column doesn't exist yet */ }
     } else if (section === 'vcardPin') {
       const { vcardPin } = body;
