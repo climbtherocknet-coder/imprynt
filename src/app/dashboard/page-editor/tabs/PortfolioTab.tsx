@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import PodEditor from '@/components/pods/PodEditor';
 import ToggleSwitch from '@/components/ToggleSwitch';
+import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import ProtectedPagePreview from '@/components/templates/ProtectedPagePreview';
 import type { PodData } from '@/components/pods/PodRenderer';
 import type { PlanStatusClient } from '../PageEditor';
@@ -60,6 +61,18 @@ const sectionStyle: React.CSSProperties = {
   border: '1px solid var(--border, #1e2535)',
   padding: '1.5rem',
   marginBottom: '1.25rem',
+};
+
+const saveBtnStyle: React.CSSProperties = {
+  padding: '0.5rem 1.25rem',
+  backgroundColor: 'var(--accent, #e8a849)',
+  color: 'var(--bg, #0c1017)',
+  border: 'none',
+  borderRadius: '2rem',
+  fontSize: '0.8125rem',
+  fontWeight: 600,
+  cursor: 'pointer',
+  fontFamily: 'inherit',
 };
 
 // ── Component ──────────────────────────────────────────
@@ -125,7 +138,6 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
           firstName: d.user.firstName || '',
           lastName: d.user.lastName || '',
           photoUrl: d.profile.photoUrl || '',
-          // Prefer parent-passed template (reflects unsaved profile tab picks)
           template: currentTemplate || d.profile.template || 'clean',
           accentColor: currentAccentColor !== undefined ? currentAccentColor : (d.profile.accentColor || ''),
           photoShape: d.profile.photoShape || 'circle',
@@ -195,17 +207,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
           throw new Error(d.error || 'Failed to create');
         }
         const result = await res.json();
-        setPage({
-          id: result.id,
-          pageTitle,
-          visibilityMode: 'visible',
-          bioText,
-          buttonLabel,
-          resumeUrl,
-          showResume,
-          isActive: true,
-          allowRemember: true,
-        });
+        setPage({ id: result.id, pageTitle, visibilityMode: 'visible', bioText, buttonLabel, resumeUrl, showResume, isActive: true, allowRemember: true });
         setIsNew(false);
         setPin('');
         setPinConfirm('');
@@ -310,8 +312,6 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
     );
   }
 
-  // ── Render ───────────────────────────────────────────
-
   if (loading) {
     return <p style={{ color: 'var(--text-muted)', padding: '2rem' }}>Loading...</p>;
   }
@@ -329,12 +329,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
         <div className="trial-prompt">
           <h3>Try Premium free for 14 days</h3>
           <p>Portfolio is a PIN-protected page for selectively sharing your work — client samples, project galleries, investor decks, and more.</p>
-          <button
-            onClick={handleStartTrial}
-            disabled={startingTrial}
-            className="dash-btn"
-            style={{ marginTop: '0.75rem' }}
-          >
+          <button onClick={handleStartTrial} disabled={startingTrial} className="dash-btn" style={{ marginTop: '0.75rem' }}>
             {startingTrial ? 'Activating...' : 'Activate Free Trial'}
           </button>
         </div>
@@ -350,20 +345,29 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
       <div className="editor-split">
       <main className="editor-panel" style={{ paddingBottom: '4rem' }}>
 
-        {/* Intro */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.375rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text, #eceef2)', fontFamily: 'var(--serif, Georgia, serif)' }}>
+        {/* ─── Sticky Save Bar ─────────────────────── */}
+        <div style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'var(--bg, #0c1017)', padding: '0.75rem 0', borderBottom: '1px solid var(--border, #1e2535)', marginBottom: '1rem' }}>
+          <button
+            onClick={savePage}
+            disabled={saving}
+            style={{ ...saveBtnStyle, opacity: saving ? 0.6 : 1, width: '100%' }}
+          >
+            {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Portfolio' : 'Save Changes'}
+          </button>
+        </div>
+
+        {/* ─── Info Box ────────────────────────────── */}
+        <div style={{ marginBottom: '1.25rem', padding: '1rem 1.25rem', backgroundColor: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 0.375rem', color: 'var(--text, #eceef2)' }}>
             {isNew ? 'Create Your Portfolio' : 'Portfolio Settings'}
           </h2>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
-            A PIN-protected portfolio page for selective sharing. Use it for client work samples, investor decks, project galleries, real estate listings, or anything you want to gate behind a PIN. A labeled button appears on your public profile for visitors to find it.
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
+            A PIN-protected page for selective sharing — client work, investor decks, project galleries, or anything you want to gate behind a PIN.
           </p>
         </div>
 
-        {/* Page Settings */}
-        <div style={sectionStyle}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text, #eceef2)' }}>Page Settings</h3>
-
+        {/* ─── Always-visible: Page title + button label ── */}
+        <div style={{ ...sectionStyle, marginBottom: '1rem' }}>
           <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Page title</label>
@@ -386,8 +390,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
               />
             </div>
           </div>
-
-          <div style={{ marginBottom: '0.75rem' }}>
+          <div>
             <label style={labelStyle}>
               Page description
               <span style={{ fontWeight: 400, color: 'var(--text-muted, #5d6370)', marginLeft: '0.5rem' }}>{bioText.length}/500</span>
@@ -400,7 +403,10 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
               style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }}
             />
           </div>
+        </div>
 
+        {/* ─── Resume ──────────────────────────────── */}
+        <CollapsibleSection title="Resume">
           <div style={{ marginBottom: '0.75rem' }}>
             <label style={labelStyle}>Resume / CV</label>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -430,27 +436,41 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
             {resumeUrl && resumeUrl.startsWith('/uploads/') && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
                 <span style={{ fontSize: '0.8125rem', color: 'var(--text-mid, #a8adb8)' }}>Uploaded: {resumeUrl.split('/').pop()}</span>
-                <button
-                  onClick={() => setResumeUrl('')}
-                  style={{
-                    padding: '0.25rem 0.5rem', backgroundColor: 'transparent', border: '1px solid var(--border-light, #283042)',
-                    borderRadius: '0.375rem', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted, #5d6370)',
-                  }}
-                >
+                <button onClick={() => setResumeUrl('')}
+                  style={{ padding: '0.25rem 0.5rem', backgroundColor: 'transparent', border: '1px solid var(--border-light, #283042)', borderRadius: '0.375rem', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted, #5d6370)' }}>
                   Remove
                 </button>
               </div>
             )}
           </div>
-
           {!isNew && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-              <ToggleSwitch
-                checked={showResume}
-                onChange={setShowResume}
-                label="Show resume on page"
-                description="Display a resume download button on your portfolio page."
-              />
+            <ToggleSwitch
+              checked={showResume}
+              onChange={setShowResume}
+              label="Show resume on page"
+              description="Display a resume download button on your portfolio page."
+            />
+          )}
+        </CollapsibleSection>
+
+        {/* ─── Content Blocks (only after created) ─── */}
+        {!isNew && page && (
+          <CollapsibleSection title="Content Blocks">
+            <PodEditor
+              parentType="protected_page"
+              parentId={page.id}
+              isPaid={planStatus.isPaid}
+              visibilityMode="visible"
+              onError={setError}
+              onPodsChange={handlePodsChange}
+            />
+          </CollapsibleSection>
+        )}
+
+        {/* ─── Privacy & Security ──────────────────── */}
+        <CollapsibleSection title="Privacy & Security">
+          {!isNew && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1rem' }}>
               <ToggleSwitch
                 checked={isActive}
                 onChange={setIsActive}
@@ -465,75 +485,41 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
               />
             </div>
           )}
-        </div>
 
-        {/* PIN */}
-        <div style={sectionStyle}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>
-            {isNew ? 'Set Your PIN' : 'Change PIN'}
-          </h3>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
-            {isNew
-              ? 'Choose a 4-6 digit PIN. Share it with people you want to see your work.'
-              : 'Leave blank to keep your current PIN.'}
-          </p>
-
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>{isNew ? 'PIN' : 'New PIN'}</label>
-              <input
-                type="password"
-                inputMode="numeric"
-                maxLength={6}
-                value={pin}
-                onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder={isNew ? '••••' : 'Leave blank to keep'}
-                style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center' }}
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Confirm PIN</label>
-              <input
-                type="password"
-                inputMode="numeric"
-                maxLength={6}
-                value={pinConfirm}
-                onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="••••"
-                style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center' }}
-              />
+          <div style={{ borderTop: isNew ? 'none' : '1px solid var(--border, #1e2535)', paddingTop: isNew ? 0 : '0.875rem' }}>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
+              {isNew
+                ? 'Choose a 4-6 digit PIN. Share it with people you want to see your work.'
+                : 'Leave blank to keep your current PIN.'}
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>{isNew ? 'PIN' : 'New PIN'}</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={pin}
+                  onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder={isNew ? '••••' : 'Leave blank to keep'}
+                  style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center' }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Confirm PIN</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={pinConfirm}
+                  onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="••••"
+                  style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center' }}
+                />
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Save page button */}
-        <button
-          onClick={savePage}
-          disabled={saving}
-          className="dash-btn"
-          style={{
-            width: '100%',
-            marginBottom: '1.5rem',
-            opacity: saving ? 0.6 : 1,
-            cursor: saving ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Portfolio' : 'Save Settings'}
-        </button>
-
-        {/* Content Blocks (only after page is created) */}
-        {!isNew && page && (
-          <div style={sectionStyle}>
-            <PodEditor
-              parentType="protected_page"
-              parentId={page.id}
-              isPaid={planStatus.isPaid}
-              visibilityMode="visible"
-              onError={setError}
-              onPodsChange={handlePodsChange}
-            />
-          </div>
-        )}
+        </CollapsibleSection>
 
       </main>
 

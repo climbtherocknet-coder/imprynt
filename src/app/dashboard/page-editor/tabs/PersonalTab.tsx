@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import PodEditor from '@/components/pods/PodEditor';
 import ToggleSwitch from '@/components/ToggleSwitch';
+import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import ProtectedPagePreview from '@/components/templates/ProtectedPagePreview';
 import type { PodData } from '@/components/pods/PodRenderer';
 import type { PlanStatusClient } from '../PageEditor';
@@ -59,6 +60,18 @@ const sectionStyle: React.CSSProperties = {
   border: '1px solid var(--border, #1e2535)',
   padding: '1.5rem',
   marginBottom: '1.25rem',
+};
+
+const saveBtnStyle: React.CSSProperties = {
+  padding: '0.5rem 1.25rem',
+  backgroundColor: 'var(--accent, #e8a849)',
+  color: 'var(--bg, #0c1017)',
+  border: 'none',
+  borderRadius: '2rem',
+  fontSize: '0.8125rem',
+  fontWeight: 600,
+  cursor: 'pointer',
+  fontFamily: 'inherit',
 };
 
 // ── Component ──────────────────────────────────────────
@@ -139,7 +152,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           firstName: d.user.firstName || '',
           lastName: d.user.lastName || '',
           photoUrl: d.profile.photoUrl || '',
-          // Prefer parent-passed template (reflects unsaved profile tab picks)
           template: currentTemplate || d.profile.template || 'clean',
           accentColor: currentAccentColor !== undefined ? currentAccentColor : (d.profile.accentColor || ''),
           plan: d.user.plan || 'free',
@@ -151,7 +163,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           photoAnimation: d.profile.photoAnimation || 'none',
           profileId: d.profile.id || '',
         });
-        // Populate local photo settings state
         setPhotoShape(d.profile.photoShape || 'circle');
         const r = d.profile.photoRadius;
         if (r != null) setPhotoRadius(r);
@@ -196,7 +207,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
     setSaving(true);
     setSaved(false);
 
-    // Validate PIN on create or when changing
     if (isNew || pin) {
       if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
         setError('PIN must be 4-6 digits');
@@ -212,7 +222,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
 
     try {
       if (isNew) {
-        // Create
         const res = await fetch('/api/protected-pages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -233,7 +242,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
         setPin('');
         setPinConfirm('');
       } else {
-        // Update
         const body: Record<string, unknown> = {
           id: page!.id,
           pageTitle: pageTitle.trim() || 'Personal',
@@ -348,8 +356,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
     );
   }
 
-  // ── Render ───────────────────────────────────────────
-
   async function handleStartTrial() {
     setStartingTrial(true);
     try {
@@ -386,20 +392,29 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
       <div className="editor-split">
       <main className="editor-panel" style={{ paddingBottom: '4rem' }}>
 
-        {/* Intro */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.375rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text, #eceef2)', fontFamily: 'var(--serif, Georgia, serif)' }}>
+        {/* ─── Sticky Save Bar ─────────────────────── */}
+        <div style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'var(--bg, #0c1017)', padding: '0.75rem 0', borderBottom: '1px solid var(--border, #1e2535)', marginBottom: '1rem' }}>
+          <button
+            onClick={savePage}
+            disabled={saving}
+            style={{ ...saveBtnStyle, opacity: saving ? 0.6 : 1, width: '100%' }}
+          >
+            {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Personal Page' : 'Save Changes'}
+          </button>
+        </div>
+
+        {/* ─── Info Box ────────────────────────────── */}
+        <div style={{ marginBottom: '1.25rem', padding: '1rem 1.25rem', backgroundColor: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 0.375rem', color: 'var(--text, #eceef2)' }}>
             {isNew ? 'Create Your Personal Page' : 'Personal Page Settings'}
           </h2>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
-            Your Personal page is a hidden layer on your profile. Only people you tell about it, and give the PIN to, can find and access it.
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
+            A hidden layer on your profile. Only people you share the PIN with can access it.
           </p>
         </div>
 
-        {/* Page Settings */}
-        <div style={sectionStyle}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text, #eceef2)' }}>Page Settings</h3>
-
+        {/* ─── Always-visible: Page title + message ── */}
+        <div style={{ ...sectionStyle, marginBottom: '1rem' }}>
           <div style={{ marginBottom: '0.75rem' }}>
             <label style={labelStyle}>Page title (only you see this)</label>
             <input
@@ -410,8 +425,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
               style={inputStyle}
             />
           </div>
-
-          <div style={{ marginBottom: '0.75rem' }}>
+          <div>
             <label style={labelStyle}>
               Personal message
               <span style={{ fontWeight: 400, color: 'var(--text-muted, #5d6370)', marginLeft: '0.5rem' }}>{bioText.length}/500</span>
@@ -424,29 +438,11 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
               style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }}
             />
           </div>
-
-          {!isNew && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-              <ToggleSwitch
-                checked={isActive}
-                onChange={setIsActive}
-                label="Personal page is active"
-              />
-              <ToggleSwitch
-                checked={allowRemember}
-                onChange={setAllowRemember}
-                label="Allow visitors to remember access"
-                description="Lets visitors skip the PIN on return visits."
-              />
-            </div>
-          )}
         </div>
 
-        {/* Photo Section (only after created) */}
+        {/* ─── Photo & Icon Settings (only after created) ── */}
         {!isNew && (
-          <div style={sectionStyle}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>Photo & Icon</h3>
-
+          <CollapsibleSection title="Photo & Icon Settings">
             {/* Impression-specific photo */}
             <div>
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
@@ -495,22 +491,22 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                     }}
                   >
                     {photoUploading ? 'Uploading...' : photoUrl ? 'Change' : 'Upload photo'}
-                </button>
-                {photoUrl && (
-                  <button
-                    onClick={() => { setPhotoUrl(''); setPhotoMode('profile'); }}
-                    style={{
-                      padding: '0.375rem 0.75rem', backgroundColor: 'transparent', border: '1px solid var(--border-light, #283042)',
-                      borderRadius: '0.375rem', fontSize: '0.8125rem', fontWeight: 500,
-                      cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted, #5d6370)',
-                    }}
-                  >
-                    Remove
                   </button>
-                )}
-                <input ref={photoRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoUpload} style={{ display: 'none' }} />
-              </div>
-            )}
+                  {photoUrl && (
+                    <button
+                      onClick={() => { setPhotoUrl(''); setPhotoMode('profile'); }}
+                      style={{
+                        padding: '0.375rem 0.75rem', backgroundColor: 'transparent', border: '1px solid var(--border-light, #283042)',
+                        borderRadius: '0.375rem', fontSize: '0.8125rem', fontWeight: 500,
+                        cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted, #5d6370)',
+                      }}
+                    >
+                      Remove
+                    </button>
+                  )}
+                  <input ref={photoRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoUpload} style={{ display: 'none' }} />
+                </div>
+              )}
             </div>
 
             {/* ── Photo Settings (collapsible) ── */}
@@ -673,10 +669,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                         return (
                           <button
                             key={anim.id}
-                            onClick={() => {
-                              if (isLocked) return;
-                              setPhotoAnimation(anim.id);
-                            }}
+                            onClick={() => { if (isLocked) return; setPhotoAnimation(anim.id); }}
                             style={{
                               padding: '0.25rem 0.5rem', borderRadius: '9999px', fontSize: '0.6875rem', fontWeight: 500,
                               border: isSelected ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
@@ -725,174 +718,53 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                 Customize the circle-dot icon on your public profile. Only those you tell will know to tap it.
               </p>
 
-              {/* Preview */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border-light, #283042)' }}>
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: '50%',
-                    border: `1.5px solid ${iconColor || 'var(--accent, #e8a849)'}`,
-                    backgroundColor: 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    opacity: iconOpacity,
-                    flexShrink: 0,
-                  }}
-                >
+                <div style={{ width: 36, height: 36, borderRadius: '50%', border: `1.5px solid ${iconColor || 'var(--accent, #e8a849)'}`, backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: iconOpacity, flexShrink: 0 }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: iconColor || 'var(--accent, #e8a849)', display: 'block' }} />
                 </div>
                 <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>Preview at current opacity</span>
               </div>
 
-              {/* Color */}
               <div style={{ marginBottom: '0.75rem' }}>
                 <label style={labelStyle}>Icon color</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input
-                    type="color"
-                    value={iconColor || '#e8a849'}
-                    onChange={e => setIconColor(e.target.value)}
-                    style={{ width: 36, height: 36, padding: 0, border: '1px solid var(--border-light, #283042)', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--bg, #0c1017)' }}
-                  />
-                  <input
-                    type="text"
-                    value={iconColor}
-                    onChange={e => setIconColor(e.target.value)}
-                    placeholder="#e8a849 (default: accent)"
-                    style={{ ...inputStyle, flex: 1 }}
-                  />
+                  <input type="color" value={iconColor || '#e8a849'} onChange={e => setIconColor(e.target.value)}
+                    style={{ width: 36, height: 36, padding: 0, border: '1px solid var(--border-light, #283042)', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--bg, #0c1017)' }} />
+                  <input type="text" value={iconColor} onChange={e => setIconColor(e.target.value)}
+                    placeholder="#e8a849 (default: accent)" style={{ ...inputStyle, flex: 1 }} />
                 </div>
               </div>
 
-              {/* Opacity */}
               <div style={{ marginBottom: '0.75rem' }}>
                 <label style={labelStyle}>Opacity — {Math.round(iconOpacity * 100)}%</label>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {[
-                    { label: 'Subtle', value: 0.15 },
-                    { label: 'Low', value: 0.25 },
-                    { label: 'Medium', value: 0.35 },
-                    { label: 'Visible', value: 0.55 },
-                    { label: 'Bold', value: 0.80 },
-                  ].map(opt => (
-                    <button
-                      key={opt.label}
-                      type="button"
-                      onClick={() => setIconOpacity(opt.value)}
-                      style={{
-                        padding: '0.375rem 0.75rem',
-                        borderRadius: '2rem',
-                        border: '1px solid',
-                        borderColor: iconOpacity === opt.value ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
-                        backgroundColor: iconOpacity === opt.value ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
-                        color: iconOpacity === opt.value ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
-                        fontSize: '0.8125rem',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                      }}
-                    >
+                  {[{ label: 'Subtle', value: 0.15 }, { label: 'Low', value: 0.25 }, { label: 'Medium', value: 0.35 }, { label: 'Visible', value: 0.55 }, { label: 'Bold', value: 0.80 }].map(opt => (
+                    <button key={opt.label} type="button" onClick={() => setIconOpacity(opt.value)}
+                      style={{ padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid', borderColor: iconOpacity === opt.value ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)', backgroundColor: iconOpacity === opt.value ? 'rgba(232, 168, 73, 0.1)' : 'transparent', color: iconOpacity === opt.value ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                       {opt.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Corner */}
               <div>
                 <label style={labelStyle}>Corner placement</label>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {[
-                    { label: 'Bottom Right', value: 'bottom-right' },
-                    { label: 'Bottom Left', value: 'bottom-left' },
-                    { label: 'Top Right', value: 'top-right' },
-                    { label: 'Top Left', value: 'top-left' },
-                  ].map(opt => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setIconCorner(opt.value)}
-                      style={{
-                        padding: '0.375rem 0.75rem',
-                        borderRadius: '2rem',
-                        border: '1px solid',
-                        borderColor: iconCorner === opt.value ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
-                        backgroundColor: iconCorner === opt.value ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
-                        color: iconCorner === opt.value ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
-                        fontSize: '0.8125rem',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                      }}
-                    >
+                  {[{ label: 'Bottom Right', value: 'bottom-right' }, { label: 'Bottom Left', value: 'bottom-left' }, { label: 'Top Right', value: 'top-right' }, { label: 'Top Left', value: 'top-left' }].map(opt => (
+                    <button key={opt.value} type="button" onClick={() => setIconCorner(opt.value)}
+                      style={{ padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid', borderColor: iconCorner === opt.value ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)', backgroundColor: iconCorner === opt.value ? 'rgba(232, 168, 73, 0.1)' : 'transparent', color: iconCorner === opt.value ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                       {opt.label}
                     </button>
                   ))}
                 </div>
               </div>
             </div>
-          </div>
+          </CollapsibleSection>
         )}
 
-        {/* PIN */}
-        <div style={sectionStyle}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text, #eceef2)' }}>
-            {isNew ? 'Set Your PIN' : 'Change PIN'}
-          </h3>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
-            {isNew
-              ? 'Choose a 4-6 digit PIN. This is what you share with people to unlock your personal page.'
-              : 'Leave blank to keep your current PIN. Enter a new one to change it.'}
-          </p>
-
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>{isNew ? 'PIN' : 'New PIN'}</label>
-              <input
-                type="password"
-                inputMode="numeric"
-                maxLength={6}
-                value={pin}
-                onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder={isNew ? '••••' : 'Leave blank to keep'}
-                style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center' }}
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Confirm PIN</label>
-              <input
-                type="password"
-                inputMode="numeric"
-                maxLength={6}
-                value={pinConfirm}
-                onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="••••"
-                style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center' }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Save button */}
-        <button
-          onClick={savePage}
-          disabled={saving}
-          className="dash-btn"
-          style={{
-            width: '100%',
-            marginBottom: '1.5rem',
-            opacity: saving ? 0.6 : 1,
-            cursor: saving ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Personal Page' : 'Save Changes'}
-        </button>
-
-        {/* Content Blocks (only after page is created) */}
+        {/* ─── Content Blocks (only after created) ─── */}
         {!isNew && page && (
-          <div style={sectionStyle}>
+          <CollapsibleSection title="Content Blocks">
             <PodEditor
               parentType="protected_page"
               parentId={page.id}
@@ -901,8 +773,61 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
               onError={setError}
               onPodsChange={handlePodsChange}
             />
-          </div>
+          </CollapsibleSection>
         )}
+
+        {/* ─── Privacy & Security ──────────────────── */}
+        <CollapsibleSection title="Privacy & Security">
+          {!isNew && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1rem' }}>
+              <ToggleSwitch
+                checked={isActive}
+                onChange={setIsActive}
+                label="Personal page is active"
+              />
+              <ToggleSwitch
+                checked={allowRemember}
+                onChange={setAllowRemember}
+                label="Allow visitors to remember access"
+                description="Lets visitors skip the PIN on return visits."
+              />
+            </div>
+          )}
+
+          <div style={{ borderTop: isNew ? 'none' : '1px solid var(--border, #1e2535)', paddingTop: isNew ? 0 : '0.875rem' }}>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
+              {isNew
+                ? 'Choose a 4-6 digit PIN. This is what you share with people to unlock your personal page.'
+                : 'Leave blank to keep your current PIN. Enter a new one to change it.'}
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>{isNew ? 'PIN' : 'New PIN'}</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={pin}
+                  onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder={isNew ? '••••' : 'Leave blank to keep'}
+                  style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center' }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Confirm PIN</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={pinConfirm}
+                  onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="••••"
+                  style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center' }}
+                />
+              </div>
+            </div>
+          </div>
+        </CollapsibleSection>
 
         {/* How it works */}
         <div style={{ ...sectionStyle, backgroundColor: 'var(--bg, #0c1017)' }}>

@@ -6,6 +6,7 @@ import { COLOR_PRESETS as CUSTOM_COLOR_PRESETS, deriveAccentVars } from '@/lib/c
 import PodEditor from '@/components/pods/PodEditor';
 import ProfileTemplate from '@/components/templates/ProfileTemplate';
 import ToggleSwitch from '@/components/ToggleSwitch';
+import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import type { PlanStatusClient } from '../PageEditor';
 import '@/styles/dashboard.css';
 import '@/styles/profile.css';
@@ -156,54 +157,6 @@ const saveBtnStyle: React.CSSProperties = {
   fontFamily: 'inherit',
 };
 
-// ── CollapsibleSection ─────────────────────────────────
-
-function CollapsibleSection({
-  title,
-  defaultOpen = false,
-  badge,
-  children,
-}: {
-  title: string;
-  defaultOpen?: boolean;
-  badge?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  return (
-    <div style={sectionStyle}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: 0,
-          color: 'inherit',
-          fontFamily: 'inherit',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{
-            display: 'inline-block',
-            transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s',
-            fontSize: '0.6875rem',
-            color: 'var(--text-muted, #5d6370)',
-          }}>&#9654;</span>
-          <h3 style={{ ...sectionTitleStyle, marginBottom: 0 }}>{title}</h3>
-          {badge}
-        </div>
-      </button>
-      {isOpen && <div style={{ marginTop: '1rem' }}>{children}</div>}
-    </div>
-  );
-}
-
 // ── Component ──────────────────────────────────────────
 
 export default function ProfileTab({ planStatus, onTemplateChange }: { planStatus: PlanStatusClient; onTemplateChange?: (template: string, accentColor: string) => void }) {
@@ -254,6 +207,8 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
   const [showUrlPopup, setShowUrlPopup] = useState(false);
   const [nfcCopied, setNfcCopied] = useState(false);
   const urlPopupRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [floatSave, setFloatSave] = useState(false);
   const [previewPods, setPreviewPods] = useState<{ id: string; podType: string; label: string; title: string; body: string; imageUrl: string; stats: { num: string; label: string }[]; ctaLabel: string; ctaUrl: string; tags?: string; imagePosition?: string }[]>([]);
 
   // Photo upload
@@ -445,6 +400,22 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
     } finally {
       setSaving(null);
     }
+  }, []);
+
+  // Profile save helper
+  const handleSaveProfile = useCallback(() => {
+    const themeAccent = getTheme(template).colors.accent;
+    const accentToSave = (accentColor && accentColor !== themeAccent) ? accentColor : null;
+    saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor: accentToSave, fontPair, linkDisplay, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, photoPosition, customTheme: template === 'custom' ? customTheme : null, coverUrl: coverUrl || null, coverPositionY, coverOpacity, bgImageUrl: bgImageUrl || null, bgImageOpacity, bgImagePositionY });
+  }, [template, accentColor, firstName, lastName, title, company, tagline, primaryColor, fontPair, linkDisplay, photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, photoPosition, customTheme, coverUrl, coverPositionY, coverOpacity, bgImageUrl, bgImageOpacity, bgImagePositionY, saveSection]);
+
+  // Floating save button — appears when the always-visible fields scroll off screen
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => setFloatSave(!entry.isIntersecting), { threshold: 0 });
+    obs.observe(el);
+    return () => obs.disconnect();
   }, []);
 
   // ── Link CRUD ──────────────────────────────────────────
@@ -745,11 +716,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
         {/* ─── Sticky Save Bar ─────────────────────── */}
         <div style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'var(--bg, #0c1017)', padding: '0.75rem 0', borderBottom: '1px solid var(--border, #1e2535)', marginBottom: '1rem' }}>
           <button
-            onClick={() => {
-              const themeAccent = getTheme(template).colors.accent;
-              const accentToSave = (accentColor && accentColor !== themeAccent) ? accentColor : null;
-              saveSection('profile', { firstName, lastName, title, company, tagline, template, primaryColor, accentColor: accentToSave, fontPair, linkDisplay, photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, photoPosition, customTheme: template === 'custom' ? customTheme : null, coverUrl: coverUrl || null, coverPositionY, coverOpacity, bgImageUrl: bgImageUrl || null, bgImageOpacity, bgImagePositionY });
-            }}
+            onClick={handleSaveProfile}
             disabled={saving === 'profile'}
             style={{ ...saveBtnStyle, opacity: saving === 'profile' ? 0.6 : 1, width: '100%' }}
           >
@@ -757,8 +724,48 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           </button>
         </div>
 
-        {/* ─── Profile Section ─────────────────────── */}
-        <CollapsibleSection title="Profile" defaultOpen={true}>
+        {/* ─── Always-visible: Name + Tagline ──────── */}
+        <div style={{ ...sectionStyle, marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>First name</label>
+              <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} style={inputStyle} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Last name</label>
+              <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Title</label>
+              <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Product Designer" style={inputStyle} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Company</label>
+              <input type="text" value={company} onChange={e => setCompany(e.target.value)} placeholder="Acme Inc." style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ marginTop: '0.75rem' }}>
+            <label style={labelStyle}>
+              Tagline
+              <span style={{ fontWeight: 400, color: 'var(--text-muted, #5d6370)', marginLeft: '0.5rem' }}>{tagline.length}/100</span>
+            </label>
+            <input
+              type="text"
+              value={tagline}
+              onChange={e => setTagline(e.target.value.slice(0, 100))}
+              placeholder="A short headline that appears under your name"
+              style={inputStyle}
+            />
+          </div>
+        </div>
+
+        {/* Sentinel: floating save button appears when this scrolls off screen */}
+        <div ref={sentinelRef} style={{ height: 1 }} />
+
+        {/* ─── Profile Photo & Position ─────────────── */}
+        <CollapsibleSection title="Profile Photo & Position" defaultOpen={true}>
 
           {/* Photo upload */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
@@ -1082,30 +1089,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
             </>)}
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>First name</label>
-              <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} style={inputStyle} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Last name</label>
-              <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} style={inputStyle} />
-            </div>
-          </div>
-
-          <div>
-            <label style={labelStyle}>
-              Tagline
-              <span style={{ fontWeight: 400, color: 'var(--text-muted, #5d6370)', marginLeft: '0.5rem' }}>{tagline.length}/100</span>
-            </label>
-            <input
-              type="text"
-              value={tagline}
-              onChange={e => setTagline(e.target.value.slice(0, 100))}
-              placeholder="A short headline that appears under your name"
-              style={inputStyle}
-            />
-          </div>
         </CollapsibleSection>
 
         {/* ─── Contact Card Section ────────────────── */}
@@ -1114,18 +1097,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
                 <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 1rem' }}>
                   These fields are included when visitors save your contact. Toggle visibility for Business and Personal vCards.
                 </p>
-
-                {/* Title + Company (profile fields, saved together with contact info) */}
-                <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.875rem' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={labelStyle}>Title</label>
-                    <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Product Designer" style={inputStyle} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={labelStyle}>Company</label>
-                    <input type="text" value={company} onChange={e => setCompany(e.target.value)} placeholder="Acme Inc." style={inputStyle} />
-                  </div>
-                </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
                   {CONTACT_FIELD_DEFS.map(def => {
@@ -1543,168 +1514,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           )}
         </CollapsibleSection>
 
-        {/* ─── Sharing & Privacy Section ────────────── */}
-        <CollapsibleSection title="Sharing & Privacy">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-            <ToggleSwitch
-              checked={allowSharing}
-              onChange={async (val) => {
-                setAllowSharing(val);
-                try {
-                  await fetch('/api/profile', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ section: 'sharing', allowSharing: val }),
-                  });
-                } catch { /* silent */ }
-              }}
-              label="Allow visitors to share your profile"
-              description="Shows a share button on your public profile page."
-            />
-            <ToggleSwitch
-              checked={allowFeedback}
-              onChange={async (val) => {
-                setAllowFeedback(val);
-                try {
-                  await fetch('/api/profile', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ section: 'feedback', allowFeedback: val }),
-                  });
-                } catch { /* silent */ }
-              }}
-              label="Show feedback button on your profile"
-              description="Allows visitors to send feedback or report your profile."
-            />
-            <ToggleSwitch
-              checked={showQrButton}
-              onChange={async (val) => {
-                setShowQrButton(val);
-                try {
-                  await fetch('/api/profile', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ section: 'qrButton', showQrButton: val }),
-                  });
-                } catch { /* silent */ }
-              }}
-              label="Show QR code button on your profile"
-              description="Adds a QR code icon visitors can tap to share your profile URL."
-            />
-
-            {/* vCard PIN protection */}
-            <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
-              <ToggleSwitch
-                checked={vcardPinEnabled}
-                onChange={async (val) => {
-                  if (!val) {
-                    setVcardPinEnabled(false);
-                    setVcardPinInput('');
-                    try {
-                      await fetch('/api/profile', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ section: 'vcardPin', vcardPin: null }),
-                      });
-                    } catch { /* silent */ }
-                  } else {
-                    setVcardPinEnabled(true);
-                  }
-                }}
-                label="PIN-protect Save Contact"
-                description="Require a PIN before visitors can download your contact card."
-              />
-              {vcardPinEnabled && (
-                <div style={{ marginTop: '0.625rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <input
-                    type="password"
-                    inputMode="numeric"
-                    maxLength={8}
-                    value={vcardPinInput}
-                    onChange={e => { setVcardPinInput(e.target.value); setVcardPinSaved(false); }}
-                    placeholder="4-8 digit PIN"
-                    style={{
-                      ...inputStyle,
-                      width: 140,
-                      textAlign: 'center',
-                      letterSpacing: '0.15em',
-                    }}
-                  />
-                  <button
-                    onClick={async () => {
-                      if (vcardPinInput.length < 4) { setError('PIN must be at least 4 characters'); return; }
-                      setVcardPinSaving(true);
-                      try {
-                        const res = await fetch('/api/profile', {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ section: 'vcardPin', vcardPin: vcardPinInput }),
-                        });
-                        if (!res.ok) {
-                          const d = await res.json();
-                          setError(d.error || 'Failed to save PIN');
-                        } else {
-                          setVcardPinSaved(true);
-                          setTimeout(() => setVcardPinSaved(false), 2000);
-                        }
-                      } catch { setError('Failed to save PIN'); }
-                      finally { setVcardPinSaving(false); }
-                    }}
-                    disabled={vcardPinSaving || vcardPinInput.length < 4}
-                    style={{
-                      ...saveBtnStyle,
-                      padding: '0.5rem 0.75rem',
-                      fontSize: '0.8125rem',
-                      opacity: vcardPinSaving || vcardPinInput.length < 4 ? 0.5 : 1,
-                    }}
-                  >
-                    {vcardPinSaving ? '...' : vcardPinSaved ? '\u2713' : 'Set PIN'}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* QR Code download */}
-            <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
-              <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.625rem' }}>QR Code</p>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
-                Share your profile without NFC. Print it, add it to slides, or show it on your phone.
-              </p>
-              {qrError ? (
-                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>
-                  Unable to generate QR code. Try refreshing the page.
-                </p>
-              ) : (
-                <>
-                  {!qrLoaded && (
-                    <div style={{ padding: '2rem 0' }}>
-                      <div style={{ width: 24, height: 24, border: '2px solid var(--border-light)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
-                      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                    </div>
-                  )}
-                  <div style={{ display: qrLoaded ? 'block' : 'none', textAlign: 'center' }}>
-                    <div style={{ display: 'inline-block', padding: '1rem', backgroundColor: '#fff', borderRadius: '0.75rem', marginBottom: '0.75rem' }}>
-                      <img
-                        src="/api/profile/qr"
-                        alt="QR code for your profile"
-                        width={180}
-                        height={180}
-                        style={{ display: 'block' }}
-                        onLoad={() => setQrLoaded(true)}
-                        onError={() => { setQrError(true); setQrLoaded(false); }}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                      <a href="/api/profile/qr?format=png" download="imprynt-qr.png" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download PNG</a>
-                      <a href="/api/profile/qr?format=svg" download="imprynt-qr.svg" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download SVG</a>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </CollapsibleSection>
-
         {/* ─── Links Section ─────────────────────── */}
         <CollapsibleSection title="Links">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.75rem' }}>
@@ -1919,6 +1728,168 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           />
         </CollapsibleSection>
 
+        {/* ─── Sharing & Privacy Section ────────────── */}
+        <CollapsibleSection title="Sharing & Privacy">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            <ToggleSwitch
+              checked={allowSharing}
+              onChange={async (val) => {
+                setAllowSharing(val);
+                try {
+                  await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ section: 'sharing', allowSharing: val }),
+                  });
+                } catch { /* silent */ }
+              }}
+              label="Allow visitors to share your profile"
+              description="Shows a share button on your public profile page."
+            />
+            <ToggleSwitch
+              checked={allowFeedback}
+              onChange={async (val) => {
+                setAllowFeedback(val);
+                try {
+                  await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ section: 'feedback', allowFeedback: val }),
+                  });
+                } catch { /* silent */ }
+              }}
+              label="Show feedback button on your profile"
+              description="Allows visitors to send feedback or report your profile."
+            />
+            <ToggleSwitch
+              checked={showQrButton}
+              onChange={async (val) => {
+                setShowQrButton(val);
+                try {
+                  await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ section: 'qrButton', showQrButton: val }),
+                  });
+                } catch { /* silent */ }
+              }}
+              label="Show QR code button on your profile"
+              description="Adds a QR code icon visitors can tap to share your profile URL."
+            />
+
+            {/* vCard PIN protection */}
+            <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
+              <ToggleSwitch
+                checked={vcardPinEnabled}
+                onChange={async (val) => {
+                  if (!val) {
+                    setVcardPinEnabled(false);
+                    setVcardPinInput('');
+                    try {
+                      await fetch('/api/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ section: 'vcardPin', vcardPin: null }),
+                      });
+                    } catch { /* silent */ }
+                  } else {
+                    setVcardPinEnabled(true);
+                  }
+                }}
+                label="PIN-protect Save Contact"
+                description="Require a PIN before visitors can download your contact card."
+              />
+              {vcardPinEnabled && (
+                <div style={{ marginTop: '0.625rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={8}
+                    value={vcardPinInput}
+                    onChange={e => { setVcardPinInput(e.target.value); setVcardPinSaved(false); }}
+                    placeholder="4-8 digit PIN"
+                    style={{
+                      ...inputStyle,
+                      width: 140,
+                      textAlign: 'center',
+                      letterSpacing: '0.15em',
+                    }}
+                  />
+                  <button
+                    onClick={async () => {
+                      if (vcardPinInput.length < 4) { setError('PIN must be at least 4 characters'); return; }
+                      setVcardPinSaving(true);
+                      try {
+                        const res = await fetch('/api/profile', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ section: 'vcardPin', vcardPin: vcardPinInput }),
+                        });
+                        if (!res.ok) {
+                          const d = await res.json();
+                          setError(d.error || 'Failed to save PIN');
+                        } else {
+                          setVcardPinSaved(true);
+                          setTimeout(() => setVcardPinSaved(false), 2000);
+                        }
+                      } catch { setError('Failed to save PIN'); }
+                      finally { setVcardPinSaving(false); }
+                    }}
+                    disabled={vcardPinSaving || vcardPinInput.length < 4}
+                    style={{
+                      ...saveBtnStyle,
+                      padding: '0.5rem 0.75rem',
+                      fontSize: '0.8125rem',
+                      opacity: vcardPinSaving || vcardPinInput.length < 4 ? 0.5 : 1,
+                    }}
+                  >
+                    {vcardPinSaving ? '...' : vcardPinSaved ? '\u2713' : 'Set PIN'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* QR Code download */}
+            <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
+              <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.625rem' }}>QR Code</p>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
+                Share your profile without NFC. Print it, add it to slides, or show it on your phone.
+              </p>
+              {qrError ? (
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>
+                  Unable to generate QR code. Try refreshing the page.
+                </p>
+              ) : (
+                <>
+                  {!qrLoaded && (
+                    <div style={{ padding: '2rem 0' }}>
+                      <div style={{ width: 24, height: 24, border: '2px solid var(--border-light)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+                      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                    </div>
+                  )}
+                  <div style={{ display: qrLoaded ? 'block' : 'none', textAlign: 'center' }}>
+                    <div style={{ display: 'inline-block', padding: '1rem', backgroundColor: '#fff', borderRadius: '0.75rem', marginBottom: '0.75rem' }}>
+                      <img
+                        src="/api/profile/qr"
+                        alt="QR code for your profile"
+                        width={180}
+                        height={180}
+                        style={{ display: 'block' }}
+                        onLoad={() => setQrLoaded(true)}
+                        onError={() => { setQrError(true); setQrLoaded(false); }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      <a href="/api/profile/qr?format=png" download="imprynt-qr.png" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download PNG</a>
+                      <a href="/api/profile/qr?format=svg" download="imprynt-qr.svg" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download SVG</a>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </CollapsibleSection>
+
       </main>
 
       {/* ─── Live Preview Panel (desktop only) ──────── */}
@@ -1961,6 +1932,28 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
             </div>
           </div>
         </div>
+      )}
+
+      {/* ─── Floating Save Button (appears when top bar scrolled out) ── */}
+      {floatSave && (
+        <button
+          onClick={handleSaveProfile}
+          disabled={saving === 'profile'}
+          title="Save changes"
+          style={{
+            position: 'fixed', bottom: '5rem', right: '1.25rem', zIndex: 200,
+            width: 48, height: 48, borderRadius: '50%',
+            backgroundColor: saving === 'profile' ? 'var(--border-light, #283042)' : saved === 'profile' ? '#059669' : 'var(--accent, #e8a849)',
+            color: 'var(--bg, #0c1017)',
+            border: 'none', cursor: saving === 'profile' ? 'not-allowed' : 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+            fontSize: '1.1rem', fontWeight: 700, fontFamily: 'inherit',
+            transition: 'background-color 0.2s',
+          }}
+        >
+          {saving === 'profile' ? '…' : saved === 'profile' ? '✓' : '↑'}
+        </button>
       )}
     </>
   );

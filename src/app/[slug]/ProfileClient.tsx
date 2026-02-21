@@ -66,51 +66,30 @@ function PinModal({
   onSuccess: (pageId: string, downloadToken?: string) => void;
   accent: string;
 }) {
-  const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
+  const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [verifying, setVerifying] = useState(false);
-  const [remaining, setRemaining] = useState<number | null>(null);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const pinInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    inputRefs.current[0]?.focus();
+    pinInputRef.current?.focus();
   }, []);
 
-  function handleInput(index: number, value: string) {
-    if (!/^\d?$/.test(value)) return;
-
-    const newDigits = [...digits];
-    newDigits[index] = value;
-    setDigits(newDigits);
+  function handlePinChange(value: string) {
+    const cleaned = value.replace(/\D/g, '').slice(0, 8);
+    setPin(cleaned);
     setError('');
-
-    // Auto-advance
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-
-    // Auto-submit when 4+ digits filled
-    const pin = newDigits.join('');
-    if (pin.length >= 4 && value && (index >= 3)) {
-      const contiguous = newDigits.findIndex(d => d === '');
-      if (contiguous === -1 || contiguous >= 4) {
-        submitPin(pin.slice(0, contiguous === -1 ? 6 : contiguous));
-      }
+    if (cleaned.length >= 4) {
+      submitPin(cleaned);
     }
   }
 
-  function handleKeyDown(index: number, e: React.KeyboardEvent) {
-    if (e.key === 'Backspace' && !digits[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-    if (e.key === 'Enter') {
-      const pin = digits.join('');
-      if (pin.length >= 4) submitPin(pin);
-    }
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' && pin.length >= 4) submitPin(pin);
     if (e.key === 'Escape') onClose();
   }
 
-  async function submitPin(pin: string) {
+  async function submitPin(pinValue: string) {
     setVerifying(true);
     setError('');
 
@@ -118,7 +97,7 @@ function PinModal({
       const res = await fetch('/api/pin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId, pin }),
+        body: JSON.stringify({ profileId, pin: pinValue }),
       });
 
       const data = await res.json();
@@ -132,13 +111,12 @@ function PinModal({
         setError('Too many attempts. Try again later.');
       } else if (data.remainingAttempts !== undefined) {
         setError(`Wrong PIN. ${data.remainingAttempts} attempt${data.remainingAttempts !== 1 ? 's' : ''} left.`);
-        setRemaining(data.remainingAttempts);
       } else {
         setError(data.error || 'Invalid PIN');
       }
 
-      setDigits(['', '', '', '', '', '']);
-      inputRefs.current[0]?.focus();
+      setPin('');
+      setTimeout(() => pinInputRef.current?.focus(), 50);
     } catch {
       setError('Something went wrong');
     } finally {
@@ -190,34 +168,32 @@ function PinModal({
           This content is PIN-protected
         </p>
 
-        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginBottom: '1rem' }}>
-          {digits.map((digit, i) => (
-            <input
-              key={i}
-              ref={el => { inputRefs.current[i] = el; }}
-              type="text"
-              inputMode="numeric"
-              maxLength={1}
-              value={digit}
-              onChange={e => handleInput(i, e.target.value)}
-              onKeyDown={e => handleKeyDown(i, e)}
-              disabled={verifying}
-              style={{
-                width: 42,
-                height: 48,
-                textAlign: 'center',
-                fontSize: '1.25rem',
-                fontWeight: 700,
-                border: error ? '2px solid #fca5a5' : digit ? `2px solid ${accent}` : '2px solid #d1d5db',
-                borderRadius: '0.5rem',
-                outline: 'none',
-                fontFamily: 'ui-monospace, monospace',
-                transition: 'border-color 0.15s',
-                backgroundColor: verifying ? '#f9fafb' : '#fff',
-              }}
-            />
-          ))}
-        </div>
+        <input
+          ref={pinInputRef}
+          type="text"
+          inputMode="numeric"
+          value={pin}
+          onChange={e => handlePinChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={verifying}
+          placeholder="• • • •"
+          style={{
+            width: '100%',
+            height: 56,
+            textAlign: 'center',
+            fontSize: '1.75rem',
+            fontWeight: 700,
+            letterSpacing: '0.5em',
+            border: error ? '2px solid #fca5a5' : pin ? `2px solid ${accent}` : '2px solid #d1d5db',
+            borderRadius: '0.75rem',
+            outline: 'none',
+            fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+            transition: 'border-color 0.15s',
+            backgroundColor: verifying ? '#f9fafb' : '#fff',
+            marginBottom: '1rem',
+            boxSizing: 'border-box',
+          }}
+        />
 
         {error && (
           <p style={{ fontSize: '0.8125rem', color: '#dc2626', margin: '0 0 0.75rem' }}>

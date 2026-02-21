@@ -215,7 +215,7 @@ export async function PUT(req: NextRequest) {
       if (primaryColor && !hexRegex.test(primaryColor)) {
         return NextResponse.json({ error: 'Invalid primary color' }, { status: 400 });
       }
-      const accentVal = accentColor === '' ? null : (accentColor || undefined);
+      const accentVal = (accentColor === null || accentColor === '') ? null : (accentColor || undefined);
       if (accentVal && !hexRegex.test(accentVal)) {
         return NextResponse.json({ error: 'Invalid accent color' }, { status: 400 });
       }
@@ -331,7 +331,7 @@ export async function PUT(req: NextRequest) {
       if (primaryColor && !hexRegex.test(primaryColor)) {
         return NextResponse.json({ error: 'Invalid primary color' }, { status: 400 });
       }
-      const accentValP = accentColor === '' ? null : (accentColor || undefined);
+      const accentValP = (accentColor === null || accentColor === '') ? null : (accentColor || undefined);
       if (accentValP && !hexRegex.test(accentValP)) {
         return NextResponse.json({ error: 'Invalid accent color' }, { status: 400 });
       }
