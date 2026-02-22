@@ -12,6 +12,8 @@ import LinkTracker from './LinkTracker';
 import OffAirBanner from './OffAirBanner';
 import type { PodData } from '@/components/pods/PodRenderer';
 
+export const dynamic = 'force-dynamic';
+
 interface ProfileData {
   profile_id: string;
   user_id: string;
