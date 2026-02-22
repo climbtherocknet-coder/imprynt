@@ -445,7 +445,7 @@ export default function DemoShowcase({ profiles }: Props) {
                   )}
                   <iframe
                     key={iframeKey}
-                    src={`/${selectedProfile.slug}`}
+                    src={`/${selectedProfile.slug}?v=${iframeKey}`}
                     title={`${selectedProfile.firstName} ${selectedProfile.lastName} — live profile`}
                     onLoad={() => setLoading(false)}
                     sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
