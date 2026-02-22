@@ -69,18 +69,20 @@ interface TemplatePick {
   tier: 'free' | 'premium';
 }
 
-const TEMPLATE_PICKS: TemplatePick[] = ALL_TEMPLATES.map((id) => {
-  const t = THEMES[id];
-  return {
-    id: t.id,
-    name: t.name,
-    desc: t.description,
-    bg: t.colors.bg,
-    text: t.colors.text,
-    accent: t.colors.accent,
-    tier: t.tier,
-  };
-});
+const TEMPLATE_PICKS: TemplatePick[] = ALL_TEMPLATES
+  .filter((id) => id in THEMES)
+  .map((id) => {
+    const t = THEMES[id];
+    return {
+      id: t.id,
+      name: t.name,
+      desc: t.description,
+      bg: t.colors.bg,
+      text: t.colors.text,
+      accent: t.colors.accent,
+      tier: t.tier,
+    };
+  });
 
 // ── Link type definitions ──────────────────────────────
 
