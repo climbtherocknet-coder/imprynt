@@ -6,13 +6,15 @@ const DEMO_SLUGS = [
   'demo-alex',
   'demo-sarah',
   'demo-robert',
+  'demo-daniela',
+  'demo-jordan',
   'demo-emma',
   'demo-marcus',
-  'demo-isabelle',
-  'demo-jake',
-  'demo-nia',
+  'demo-ava',
   'demo-felix',
-  'demo-luna',
+  'demo-chris',
+  'demo-brianna',
+  'demo-darius',
 ];
 
 const LeftArrow = () => (
