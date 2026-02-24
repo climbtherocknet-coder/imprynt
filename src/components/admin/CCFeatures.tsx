@@ -175,6 +175,10 @@ export default function CCFeatures({ accessLevel, currentUserId }: {
         )}
       </div>
 
+      <p className="cc-advisory-blurb">
+        Upvote the features that matter most to you — your votes shape what we build next. Have an idea or feedback? Drop a comment on any feature.
+      </p>
+
       <div className="cc-filter-bar">
         <button className={`cc-filter-pill ${!filterStatus ? 'cc-filter-pill--active' : ''}`} onClick={() => setFilterStatus('')}>All</button>
         {STATUSES.map(s => (

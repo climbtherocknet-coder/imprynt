@@ -212,6 +212,10 @@ export default function CCRoadmap({ accessLevel, currentUserId }: {
         )}
       </div>
 
+      <p className="cc-advisory-blurb">
+        Upvote the items you want to see shipped sooner — your votes drive our priorities. Have thoughts or suggestions? Leave a comment on any item.
+      </p>
+
       <div className="cc-kanban">
         {PHASES.map(phase => {
           const col = byPhase(phase);
