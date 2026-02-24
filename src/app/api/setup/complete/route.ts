@@ -24,14 +24,17 @@ export async function POST() {
       [userId]
     );
 
-    // Get the slug for redirect
+    // Get the slug for redirect + launch screen
     const profileResult = await query(
       'SELECT slug FROM profiles WHERE user_id = $1',
       [userId]
     );
     const slug = profileResult.rows[0]?.slug;
 
-    return NextResponse.json({ success: true, slug });
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://imprynt.io';
+    const profileUrl = `${baseUrl}/${slug}`;
+
+    return NextResponse.json({ success: true, slug, profileUrl });
   } catch (error) {
     console.error('Setup complete error:', error);
     return NextResponse.json({ error: 'Failed to complete setup' }, { status: 500 });

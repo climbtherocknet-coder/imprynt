@@ -15,6 +15,14 @@ interface ContactFieldRow {
   field_value: string;
 }
 
+interface ProtectedPageRow {
+  id: string;
+  page_title: string;
+  visibility_mode: string;
+  bio_text: string;
+  button_label: string;
+}
+
 export default async function SetupPage() {
   const session = await auth();
 
@@ -26,7 +34,7 @@ export default async function SetupPage() {
 
   // Check if setup is already completed
   const userResult = await query(
-    'SELECT first_name, last_name, setup_completed, plan FROM users WHERE id = $1',
+    'SELECT first_name, last_name, setup_completed, plan, setup_step FROM users WHERE id = $1',
     [userId]
   );
   const user = userResult.rows[0];
@@ -39,9 +47,11 @@ export default async function SetupPage() {
     redirect('/dashboard');
   }
 
-  // Load existing profile data
+  // Load existing profile data (including cover/bg fields)
   const profileResult = await query(
-    `SELECT slug, title, company, bio, photo_url, template, primary_color, accent_color, font_pair
+    `SELECT slug, title, company, bio, photo_url, template, primary_color, accent_color, font_pair,
+            cover_url, cover_position_x, cover_position_y, cover_opacity, cover_zoom,
+            bg_image_url, bg_image_position_x, bg_image_position_y, bg_image_opacity, bg_image_zoom
      FROM profiles WHERE user_id = $1`,
     [userId]
   );
@@ -63,6 +73,20 @@ export default async function SetupPage() {
     [userId]
   );
 
+  // Load pod count
+  const podResult = await query(
+    `SELECT count(*) as cnt FROM pods
+     WHERE profile_id = (SELECT id FROM profiles WHERE user_id = $1) AND is_active = true`,
+    [userId]
+  );
+
+  // Load protected pages
+  const pagesResult = await query(
+    `SELECT id, page_title, visibility_mode, bio_text, button_label FROM protected_pages
+     WHERE user_id = $1 AND is_active = true ORDER BY display_order`,
+    [userId]
+  );
+
   const isPaid = user.plan !== 'free';
 
   const initialData = {
@@ -77,6 +101,16 @@ export default async function SetupPage() {
     accentColor: profile?.accent_color || '#3B82F6',
     fontPair: profile?.font_pair || 'default',
     slug: profile?.slug || '',
+    coverUrl: profile?.cover_url || '',
+    coverPositionX: profile?.cover_position_x ?? 50,
+    coverPositionY: profile?.cover_position_y ?? 50,
+    coverOpacity: profile?.cover_opacity ?? 70,
+    coverZoom: profile?.cover_zoom ?? 100,
+    bgImageUrl: profile?.bg_image_url || '',
+    bgImagePositionX: profile?.bg_image_position_x ?? 50,
+    bgImagePositionY: profile?.bg_image_position_y ?? 50,
+    bgImageOpacity: profile?.bg_image_opacity ?? 20,
+    bgImageZoom: profile?.bg_image_zoom ?? 100,
     links: linksResult.rows.map((l: LinkRow) => ({
       linkType: l.link_type,
       label: l.label || '',
@@ -86,6 +120,15 @@ export default async function SetupPage() {
       fieldType: r.field_type,
       fieldValue: r.field_value,
     })),
+    podCount: parseInt(podResult.rows[0]?.cnt || '0'),
+    protectedPages: pagesResult.rows.map((p: ProtectedPageRow) => ({
+      id: p.id,
+      pageTitle: p.page_title,
+      visibilityMode: p.visibility_mode,
+      bioText: p.bio_text || '',
+      buttonLabel: p.button_label || '',
+    })),
+    setupStep: user.setup_step || 1,
   };
 
   return <SetupWizard initialData={initialData} isPaid={isPaid} />;
