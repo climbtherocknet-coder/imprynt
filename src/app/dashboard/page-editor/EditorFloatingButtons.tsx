@@ -6,9 +6,11 @@ interface Props {
   saved: boolean;
   onSave: () => void;
   slug?: string;
+  onPreview?: () => void;
+  showPreview?: boolean;
 }
 
-export default function EditorFloatingButtons({ isDirty, saving, saved, onSave, slug }: Props) {
+export default function EditorFloatingButtons({ isDirty, saving, saved, onSave, slug, onPreview, showPreview }: Props) {
   return (
     <div
       style={{
@@ -92,6 +94,36 @@ export default function EditorFloatingButtons({ isDirty, saving, saved, onSave, 
           </svg>
           <span className="editor-float-label">View</span>
         </a>
+      )}
+
+      {/* Preview button — mobile only, replaces the old standalone .mobile-preview-btn */}
+      {showPreview && onPreview && (
+        <button
+          className="editor-float-preview"
+          onClick={onPreview}
+          style={{
+            display: 'none', /* shown via CSS media query */
+            alignItems: 'center',
+            gap: '0.375rem',
+            padding: '0.625rem 1rem',
+            borderRadius: '9999px',
+            border: '1px solid var(--accent-border, rgba(232, 168, 73, 0.3))',
+            background: 'var(--surface, #161c28)',
+            color: 'var(--accent, #e8a849)',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
+            transition: 'transform 0.15s',
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+            <rect x="5" y="2" width="14" height="20" rx="2" />
+            <path d="M12 18h.01" />
+          </svg>
+          <span className="editor-float-label">Preview</span>
+        </button>
       )}
     </div>
   );

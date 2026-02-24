@@ -2040,19 +2040,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
       </aside>
       </div>
 
-      {/* ─── Mobile Preview Button ──────────────────── */}
-      <button
-        className="mobile-preview-btn"
-        onClick={() => setShowMobilePreview(true)}
-        aria-label="Preview profile"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-          <rect x="5" y="2" width="14" height="20" rx="2" />
-          <path d="M12 18h.01" />
-        </svg>
-        Preview
-      </button>
-
       {/* ─── Mobile Preview Overlay ─────────────────── */}
       {showMobilePreview && (
         <div className="mobile-preview-overlay" onClick={() => setShowMobilePreview(false)}>
@@ -2077,6 +2064,8 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
         saved={!!saved}
         onSave={handleSaveAll}
         slug={data?.profile?.slug}
+        showPreview={true}
+        onPreview={() => setShowMobilePreview(true)}
       />
 
     </>

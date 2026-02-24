@@ -1366,8 +1366,11 @@
     grid-template-columns: 1fr !important;
   }
 
-  /* Editor floating buttons — collapse labels on mobile */
+  /* Editor floating buttons — collapse labels on mobile, show preview */
   .editor-float-label {
     display: none;
+  }
+  .editor-float-preview {
+    display: flex !important;
   }
 }

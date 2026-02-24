@@ -177,7 +177,7 @@ export default function ProtectedPagePreview({
             alt=""
             style={{
               objectPosition: `${bgImagePositionX}% ${bgImagePositionY}%`,
-              transform: bgImageZoom > 100 ? `scale(${bgImageZoom / 100})` : undefined,
+              transform: `scale(${Math.max(bgImageZoom, 105) / 100})`,
             }}
           />
         </div>
@@ -191,7 +191,7 @@ export default function ProtectedPagePreview({
           '--cover-url': `url('${coverUrl}')`,
           '--cover-opacity': `${coverOpacity / 100}`,
           '--cover-pos': `${coverPositionX}% ${coverPositionY}%`,
-          '--cover-zoom': coverZoom > 100 ? `${coverZoom}%` : 'cover',
+          '--cover-zoom': coverZoom > 100 ? `${coverZoom}%` : '105%',
         } as React.CSSProperties : undefined}
       >
         <div style={{
