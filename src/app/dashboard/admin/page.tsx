@@ -12,7 +12,7 @@ import '@/styles/cc.css';
 
 type TabKey = 'overview' | 'features' | 'roadmap' | 'changelog' | 'docs';
 
-const TABS: { key: TabKey; label: string }[] = [
+const ALL_TABS: { key: TabKey; label: string }[] = [
   { key: 'overview', label: 'Overview' },
   { key: 'features', label: 'Features' },
   { key: 'roadmap', label: 'Roadmap' },
@@ -20,13 +20,13 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'docs', label: 'Docs' },
 ];
 
+const ADVISORY_TABS: TabKey[] = ['features', 'roadmap'];
+
 function CommandCenterInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tabParam = searchParams.get('tab') as TabKey | null;
-  const [activeTab, setActiveTab] = useState<TabKey>(
-    tabParam && TABS.some(t => t.key === tabParam) ? tabParam : 'overview'
-  );
+  const [activeTab, setActiveTab] = useState<TabKey>(tabParam || 'overview');
 
   const [accessLevel, setAccessLevel] = useState<'admin' | 'advisory' | null>(null);
   const [currentUserId, setCurrentUserId] = useState('');
@@ -54,6 +54,17 @@ function CommandCenterInner() {
       })
       .catch(() => setError('Failed to load'));
   }, []);
+
+  const visibleTabs = accessLevel === 'admin'
+    ? ALL_TABS
+    : ALL_TABS.filter(t => ADVISORY_TABS.includes(t.key));
+
+  // Correct active tab if advisory user landed on a restricted tab
+  useEffect(() => {
+    if (accessLevel === 'advisory' && !ADVISORY_TABS.includes(activeTab)) {
+      setActiveTab('features');
+    }
+  }, [accessLevel, activeTab]);
 
   const switchTab = (tab: TabKey) => {
     setActiveTab(tab);
@@ -114,7 +125,7 @@ function CommandCenterInner() {
 
       {/* Tab bar */}
       <div className="cc-tabs">
-        {TABS.map(tab => (
+        {visibleTabs.map(tab => (
           <button
             key={tab.key}
             className={`cc-tab ${activeTab === tab.key ? 'cc-tab--active' : ''}`}
