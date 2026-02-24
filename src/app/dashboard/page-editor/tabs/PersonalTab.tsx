@@ -4,10 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import PodEditor from '@/components/pods/PodEditor';
 import ToggleSwitch from '@/components/ToggleSwitch';
 import CollapsibleSection from '@/components/ui/CollapsibleSection';
-import ImageCropper from '@/components/ui/ImageCropper';
-import GalleryPicker from '@/components/ui/GalleryPicker';
 import ProtectedPagePreview from '@/components/templates/ProtectedPagePreview';
-import EditorFloatingButtons from '../EditorFloatingButtons';
 import type { PodData } from '@/components/pods/PodRenderer';
 import type { PlanStatusClient } from '../PageEditor';
 import '@/styles/dashboard.css';
@@ -21,7 +18,6 @@ interface LinkItem {
   label: string;
   url: string;
   displayOrder: number;
-  buttonColor?: string | null;
 }
 
 interface PageData {
@@ -86,9 +82,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-  const [isDirty, setIsDirty] = useState(false);
-  const [saveBarHidden, setSaveBarHidden] = useState(false);
-  const saveBarRef = useRef<HTMLDivElement>(null);
 
   // Page state
   const [page, setPage] = useState<PageData | null>(null);
@@ -121,10 +114,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
     photoShape: string; photoRadius: number; photoSize: string;
     photoPositionX: number; photoPositionY: number; photoAnimation: string;
     profileId: string;
-    linkDisplay: string;
-    linkSize: string;
-    linkShape: string;
-    linkButtonColor: string | null;
   } | null>(null);
   const [previewPods, setPreviewPods] = useState<PodData[]>([]);
 
@@ -135,28 +124,11 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
   const [photoPositionX, setPhotoPositionX] = useState(50);
   const [photoPositionY, setPhotoPositionY] = useState(50);
   const [photoAnimation, setPhotoAnimation] = useState('none');
-  const [photoAlign, setPhotoAlign] = useState('center');
   const [showPhotoSettings, setShowPhotoSettings] = useState(false);
   const [showShapeSlider, setShowShapeSlider] = useState(false);
+  const [photoSettingsSaving, setPhotoSettingsSaving] = useState(false);
+  const [photoSettingsSaved, setPhotoSettingsSaved] = useState(false);
   const isPaid = planStatus.isPaid;
-
-  // Cover & background photo (per-page)
-  const [coverUrl, setCoverUrl] = useState('');
-  const [coverOpacity, setCoverOpacity] = useState(30);
-  const [coverPositionY, setCoverPositionY] = useState(50);
-  const [coverUploading, setCoverUploading] = useState(false);
-  const coverFileInputRef = useRef<HTMLInputElement>(null);
-  const [bgImageUrl, setBgImageUrl] = useState('');
-  const [bgImageOpacity, setBgImageOpacity] = useState(20);
-  const [bgImagePositionY, setBgImagePositionY] = useState(50);
-  const [bgImageUploading, setBgImageUploading] = useState(false);
-  const bgImageFileInputRef = useRef<HTMLInputElement>(null);
-  const [photoZoom, setPhotoZoom] = useState(100);
-  const [coverPositionX, setCoverPositionX] = useState(50);
-  const [coverZoom, setCoverZoom] = useState(100);
-  const [bgImagePositionX, setBgImagePositionX] = useState(50);
-  const [bgImageZoom, setBgImageZoom] = useState(100);
-  const [showGallery, setShowGallery] = useState<'cover' | 'background' | null>(null);
 
   // Creating vs editing
   const [isNew, setIsNew] = useState(true);
@@ -197,12 +169,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           photoPositionY: d.profile.photoPositionY ?? 50,
           photoAnimation: d.profile.photoAnimation || 'none',
           profileId: d.profile.id || '',
-          linkDisplay: d.profile.linkDisplay || 'default',
-          linkSize: d.profile.linkSize || 'medium',
-          linkShape: d.profile.linkShape || 'pill',
-          linkButtonColor: d.profile.linkButtonColor || null,
         });
-        // Set profile photo settings as defaults (will be overridden by page data if it exists)
         setPhotoShape(d.profile.photoShape || 'circle');
         const r = d.profile.photoRadius;
         if (r != null) setPhotoRadius(r);
@@ -231,30 +198,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           setAllowRemember(p.allowRemember !== false);
           setPhotoUrl(p.photoUrl || '');
           setPhotoMode(p.photoUrl ? 'custom' : 'profile');
-          // Load per-page photo settings (override profile defaults)
-          if (p.photoShape) setPhotoShape(p.photoShape);
-          if (p.photoRadius != null) setPhotoRadius(p.photoRadius);
-          else {
-            const map: Record<string, number> = { circle: 50, rounded: 32, soft: 16, square: 0 };
-            setPhotoRadius(map[p.photoShape] ?? 50);
-          }
-          if (p.photoSize) setPhotoSize(p.photoSize);
-          if (p.photoPositionX != null) setPhotoPositionX(p.photoPositionX);
-          if (p.photoPositionY != null) setPhotoPositionY(p.photoPositionY);
-          if (p.photoAnimation) setPhotoAnimation(p.photoAnimation);
-          if (p.photoAlign) setPhotoAlign(p.photoAlign);
-          // Load per-page cover/bg settings
-          setCoverUrl(p.coverUrl || '');
-          setCoverOpacity(p.coverOpacity ?? 30);
-          setCoverPositionY(p.coverPositionY ?? 50);
-          setBgImageUrl(p.bgImageUrl || '');
-          setBgImageOpacity(p.bgImageOpacity ?? 20);
-          setBgImagePositionY(p.bgImagePositionY ?? 50);
-          setPhotoZoom(p.photoZoom ?? 100);
-          setCoverPositionX(p.coverPositionX ?? 50);
-          setCoverZoom(p.coverZoom ?? 100);
-          setBgImagePositionX(p.bgImagePositionX ?? 50);
-          setBgImageZoom(p.bgImageZoom ?? 100);
           setIsNew(false);
         }
         setLoading(false);
@@ -263,38 +206,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
         setError('Failed to load');
         setLoading(false);
       });
-  }, []);
-
-  // Floating save — appears when save bar is no longer visible
-  useEffect(() => {
-    const el = saveBarRef.current;
-    if (!el) return;
-
-    const check = () => {
-      const rect = el.getBoundingClientRect();
-      setSaveBarHidden(rect.top < 60);
-    };
-
-    window.addEventListener('scroll', check, { passive: true });
-
-    let scrollParent: HTMLElement | null = el.parentElement;
-    while (scrollParent) {
-      const style = getComputedStyle(scrollParent);
-      if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
-        scrollParent.addEventListener('scroll', check, { passive: true });
-        break;
-      }
-      scrollParent = scrollParent.parentElement;
-    }
-
-    check();
-
-    return () => {
-      window.removeEventListener('scroll', check);
-      if (scrollParent) {
-        scrollParent.removeEventListener('scroll', check);
-      }
-    };
   }, []);
 
   // Save page
@@ -348,13 +259,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           iconCorner,
           allowRemember,
           photoUrl: photoMode === 'custom' ? photoUrl : '',
-          // Per-page photo settings
-          photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize,
-          photoPositionX, photoPositionY, photoAnimation, photoAlign,
-          // Per-page cover/bg
-          coverUrl: coverUrl || null, coverOpacity, coverPositionY,
-          bgImageUrl: bgImageUrl || null, bgImageOpacity, bgImagePositionY,
-          photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom,
         };
         if (pin) body.pin = pin;
 
@@ -372,54 +276,36 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
       }
 
       setSaved(true);
-      setIsDirty(false);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
       setSaving(false);
     }
-  }, [isNew, page, pageTitle, bioText, pin, pinConfirm, isActive, iconColor, iconOpacity, iconCorner, allowRemember, photoMode, photoUrl, photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, coverUrl, coverOpacity, coverPositionY, bgImageUrl, bgImageOpacity, bgImagePositionY, photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom]);
+  }, [isNew, page, pageTitle, bioText, pin, pinConfirm, isActive, iconColor, iconOpacity, iconCorner, allowRemember, photoMode, photoUrl]);
 
-  // Cover photo upload
-  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setCoverUploading(true);
+  // Save photo settings to profile
+  async function savePhotoSettings() {
+    setPhotoSettingsSaving(true);
+    setPhotoSettingsSaved(false);
     setError('');
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch('/api/upload/file', { method: 'POST', body: formData });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Upload failed'); }
-      const { url } = await res.json();
-      setCoverUrl(url);
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          section: 'appearance',
+          photoShape, photoRadius, photoSize,
+          photoPositionX, photoPositionY, photoAnimation,
+        }),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to save'); }
+      setPhotoSettingsSaved(true);
+      setTimeout(() => setPhotoSettingsSaved(false), 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      setError(err instanceof Error ? err.message : 'Failed to save photo settings');
     } finally {
-      setCoverUploading(false);
-      if (coverFileInputRef.current) coverFileInputRef.current.value = '';
-    }
-  }
-
-  // Background photo upload
-  async function handleBgImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setBgImageUploading(true);
-    setError('');
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch('/api/upload/file', { method: 'POST', body: formData });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Upload failed'); }
-      const { url } = await res.json();
-      setBgImageUrl(url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
-    } finally {
-      setBgImageUploading(false);
-      if (bgImageFileInputRef.current) bgImageFileInputRef.current.value = '';
+      setPhotoSettingsSaving(false);
     }
   }
 
@@ -445,8 +331,8 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
     }
   }
 
-  const handlePodsChange = useCallback((updatedPods: { id: string; isActive: boolean; podType: string; label: string; title: string; body: string; imageUrl: string; stats: { num: string; label: string }[]; ctaLabel: string; ctaUrl: string; tags?: string; imagePosition?: string }[]) => {
-    setPreviewPods(updatedPods.filter(p => p.isActive).map(p => ({
+  const handlePodsChange = useCallback((updatedPods: { id: string; podType: string; label: string; title: string; body: string; imageUrl: string; stats: { num: string; label: string }[]; ctaLabel: string; ctaUrl: string; tags?: string; imagePosition?: string }[]) => {
+    setPreviewPods(updatedPods.map(p => ({
       id: p.id, podType: p.podType, label: p.label, title: p.title, body: p.body,
       imageUrl: p.imageUrl, stats: p.stats, ctaLabel: p.ctaLabel, ctaUrl: p.ctaUrl,
       tags: p.tags || '', imagePosition: p.imagePosition || 'left',
@@ -464,7 +350,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
         template={profileData.template}
         accentColor={profileData.accentColor}
         bioText={bioText}
-        links={links.map(l => ({ id: l.id || '', linkType: l.linkType, label: l.label, url: l.url, buttonColor: l.buttonColor || null }))}
+        links={links.map(l => ({ id: l.id || '', linkType: l.linkType, label: l.label, url: l.url }))}
         pods={previewPods}
         profileId={profileData.profileId}
         photoShape={photoShape}
@@ -473,22 +359,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
         photoPositionX={photoPositionX}
         photoPositionY={photoPositionY}
         photoAnimation={photoAnimation}
-        photoAlign={photoAlign}
-        coverUrl={coverUrl || undefined}
-        coverOpacity={coverOpacity}
-        coverPositionY={coverPositionY}
-        bgImageUrl={bgImageUrl || undefined}
-        bgImageOpacity={bgImageOpacity}
-        bgImagePositionY={bgImagePositionY}
-        photoZoom={photoZoom}
-        coverPositionX={coverPositionX}
-        coverZoom={coverZoom}
-        bgImagePositionX={bgImagePositionX}
-        bgImageZoom={bgImageZoom}
-        linkDisplay={profileData.linkDisplay}
-        linkSize={profileData.linkSize}
-        linkShape={profileData.linkShape}
-        linkButtonColor={profileData.linkButtonColor}
       />
     );
   }
@@ -527,63 +397,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
       )}
 
       <div className="editor-split">
-      <main className="editor-panel" style={{ paddingBottom: '4rem' }} onChangeCapture={() => setIsDirty(true)} onClickCapture={(e) => { const t = e.target as HTMLElement; if (t.tagName === 'BUTTON' && !t.closest('[data-save-bar]')) setIsDirty(true); }}>
-
-        {/* ─── Save Bar + Floating Save ────────── */}
-        {!isNew && (
-          <div ref={saveBarRef} data-save-bar style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 0', borderBottom: '1px solid var(--border, #1e2535)', marginBottom: '1rem' }}>
-            {isDirty && !saving && !saved && (
-              <span style={{ fontSize: '0.6875rem', color: 'var(--accent, #e8a849)', marginRight: 'auto' }}>Unsaved changes</span>
-            )}
-            <a
-              href={slug ? `/${slug}` : '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={e => { if (!slug) e.preventDefault(); }}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.8125rem', fontWeight: 500, borderRadius: '0.5rem', border: '1px solid var(--border-light, #283042)', cursor: slug ? 'pointer' : 'default', fontFamily: 'inherit', backgroundColor: 'transparent', color: 'var(--text-mid, #a8adb8)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.375rem', opacity: slug ? 1 : 0.4 }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              View Page
-            </a>
-            <button
-              data-save-bar
-              onClick={savePage}
-              disabled={saving}
-              style={{ padding: '0.5rem 1.25rem', fontSize: '0.8125rem', fontWeight: 600, borderRadius: '0.5rem', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', backgroundColor: saved ? '#059669' : isDirty ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)', color: saved ? '#fff' : 'var(--bg, #0c1017)', opacity: saving ? 0.6 : 1, transition: 'background-color 0.2s' }}
-            >
-              {saving ? 'Saving...' : saved ? '\u2713 Saved' : 'Save Changes'}
-            </button>
-          </div>
-        )}
-        {/* Floating circular icons when save bar scrolled out of view */}
-        {!isNew && saveBarHidden && (
-          <div style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 200, display: 'flex', flexDirection: 'column', gap: '0.5rem', animation: 'float-in 0.2s ease-out' }}>
-            {isDirty && (
-              <button
-                onClick={savePage}
-                disabled={saving}
-                title={saving ? 'Saving...' : saved ? 'Saved!' : 'Save changes'}
-                style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', backgroundColor: saved ? '#059669' : 'var(--accent, #e8a849)', color: 'var(--bg, #0c1017)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', opacity: saving ? 0.6 : 1, transition: 'background-color 0.2s' }}
-              >
-                {saved ? (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                )}
-              </button>
-            )}
-            <a
-              href={slug ? `/${slug}` : '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={e => { if (!slug) e.preventDefault(); }}
-              title="View Page"
-              style={{ width: 44, height: 44, borderRadius: '50%', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', textDecoration: 'none' }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </a>
-          </div>
-        )}
+      <main className="editor-panel" style={{ paddingBottom: '4rem' }}>
 
         {/* ─── Info Box (consolidated) ────────────── */}
         <div style={{ marginBottom: '1.25rem', padding: '1.25rem', backgroundColor: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
@@ -646,16 +460,14 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
           </a>
 
-          {/* Create button only shown for new pages; Save moved to sticky bar */}
-          {isNew && (
-            <button
-              onClick={savePage}
-              disabled={saving}
-              style={{ padding: '0.875rem 1rem', borderRadius: '0.625rem', backgroundColor: 'var(--accent, #e8a849)', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: '#fff', fontFamily: 'inherit', opacity: saving ? 0.6 : 1, transition: 'opacity 0.15s' }}
-            >
-              {saving ? 'Creating...' : 'Create Personal Page'}
-            </button>
-          )}
+          {/* Save Changes */}
+          <button
+            onClick={savePage}
+            disabled={saving}
+            style={{ padding: '0.875rem 1rem', borderRadius: '0.625rem', backgroundColor: 'var(--accent, #e8a849)', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: '#fff', fontFamily: 'inherit', opacity: saving ? 0.6 : 1, transition: 'opacity 0.15s' }}
+          >
+            {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Personal Page' : 'Save Changes'}
+          </button>
         </div>
 
         {/* ─── Always-visible: Page title + message ── */}
@@ -685,24 +497,10 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           </div>
         </div>
 
-        {/* ─── Content Blocks (only after created) ─── */}
-        {!isNew && page && (
-          <CollapsibleSection title="Content Blocks" defaultOpen>
-            <PodEditor
-              parentType="protected_page"
-              parentId={page.id}
-              isPaid={true}
-              visibilityMode="hidden"
-              onError={setError}
-              onPodsChange={handlePodsChange}
-            />
-          </CollapsibleSection>
-        )}
-
-        {/* ─── Visuals (only after created) ── */}
+        {/* ─── Photo & Icon Settings (only after created) ── */}
         {!isNew && (
-          <CollapsibleSection title="Visuals">
-            {/* ── Profile Photo ── */}
+          <CollapsibleSection title="Photo & Icon Settings">
+            {/* Impression-specific photo */}
             <div>
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
                 Optionally use a different photo for your Personal page.
@@ -736,7 +534,10 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
               </div>
 
               {photoMode === 'custom' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  {photoUrl && (
+                    <img src={photoUrl} alt="Personal" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-light, #283042)' }} />
+                  )}
                   <button
                     onClick={() => photoRef.current?.click()}
                     disabled={photoUploading}
@@ -746,7 +547,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                       cursor: photoUploading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: 'var(--text, #eceef2)',
                     }}
                   >
-                    {photoUploading ? 'Uploading...' : photoUrl ? 'Replace' : 'Upload photo'}
+                    {photoUploading ? 'Uploading...' : photoUrl ? 'Change' : 'Upload photo'}
                   </button>
                   {photoUrl && (
                     <button
@@ -762,23 +563,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                   )}
                   <input ref={photoRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoUpload} style={{ display: 'none' }} />
                 </div>
-              )}
-              <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.75rem' }}>
-                JPEG, PNG, or WebP. Max 10MB.
-              </p>
-
-              {(photoMode === 'custom' ? photoUrl : profileData?.photoUrl) && (
-                <ImageCropper
-                  src={(photoMode === 'custom' && photoUrl) ? photoUrl : (profileData?.photoUrl || '')}
-                  frameShape="circle"
-                  positionX={photoPositionX}
-                  positionY={photoPositionY}
-                  zoom={photoZoom}
-                  onPositionChange={(x, y) => { setPhotoPositionX(x); setPhotoPositionY(y); }}
-                  onZoomChange={setPhotoZoom}
-                  photoShape={photoShape}
-                  photoRadius={photoRadius}
-                />
               )}
             </div>
 
@@ -902,6 +686,29 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                     )}
                   </div>
 
+                  {/* Position display */}
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Position</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-mid, #a8adb8)' }}>X: {photoPositionX}%</span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-mid, #a8adb8)' }}>Y: {photoPositionY}%</span>
+                      {(photoPositionX !== 50 || photoPositionY !== 50) && (
+                        <button
+                          onClick={() => { setPhotoPositionX(50); setPhotoPositionY(50); }}
+                          style={{
+                            background: 'none', border: '1px solid var(--border-light, #283042)', borderRadius: '0.25rem',
+                            fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', cursor: 'pointer', padding: '0.125rem 0.375rem', fontFamily: 'inherit',
+                          }}
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                    <p style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', margin: '0.25rem 0 0' }}>
+                      Drag the photo on your profile editor to reposition.
+                    </p>
+                  </div>
+
                   {/* Animation picker */}
                   <div style={{ marginBottom: '0.75rem' }}>
                     <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Animation</label>
@@ -940,231 +747,89 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                     </div>
                   </div>
 
-                  {/* Photo alignment -- 3 buttons */}
-                  <div style={{ marginBottom: '0.75rem' }}>
-                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: '0.375rem' }}>Photo Alignment</label>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      {([['left', 'Left', 'M4 6h6M4 10h8M4 14h6M4 18h4'], ['center', 'Center', 'M4 6h16M6 10h12M4 14h16M6 18h12'], ['right', 'Right', 'M14 6h6M12 10h8M14 14h6M16 18h4']] as [string, string, string][]).map(([val, label, iconPath]) => {
-                        const isActive = photoAlign === val;
-                        return (
-                          <button
-                            key={val}
-                            onClick={() => setPhotoAlign(val)}
-                            style={{
-                              flex: 1,
-                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem',
-                              padding: '0.5rem 0.25rem',
-                              borderRadius: '0.5rem',
-                              border: isActive ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
-                              backgroundColor: isActive ? 'rgba(232, 168, 73, 0.08)' : 'var(--surface, #161c28)',
-                              color: isActive ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
-                              cursor: 'pointer', fontFamily: 'inherit',
-                              transition: 'all 0.15s',
-                            }}
-                          >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                              <path d={iconPath} />
-                            </svg>
-                            <span style={{ fontSize: '0.625rem', fontWeight: 600 }}>{label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', margin: '0.5rem 0 0', fontStyle: 'italic' }}>
-                    Photo settings save with the main &ldquo;Save Changes&rdquo; button above.
-                  </p>
+                  {/* Save photo settings */}
+                  <button
+                    onClick={savePhotoSettings}
+                    disabled={photoSettingsSaving}
+                    style={{
+                      padding: '0.375rem 1rem',
+                      backgroundColor: photoSettingsSaved ? '#22c55e' : 'var(--accent, #e8a849)',
+                      color: 'var(--bg, #0c1017)',
+                      border: 'none', borderRadius: '2rem',
+                      fontSize: '0.75rem', fontWeight: 600,
+                      cursor: photoSettingsSaving ? 'not-allowed' : 'pointer',
+                      fontFamily: 'inherit', opacity: photoSettingsSaving ? 0.6 : 1,
+                      transition: 'background-color 0.2s',
+                    }}
+                  >
+                    {photoSettingsSaving ? 'Saving...' : photoSettingsSaved ? 'Saved!' : 'Save Photo Settings'}
+                  </button>
                 </>)}
               </div>
             </div>
 
-            <div style={{ borderTop: '1px solid var(--border, #1e2535)', margin: '1.25rem 0' }} />
+            {/* ── Hidden Tap Icon ── */}
+            <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '1rem', marginTop: '1rem' }}>
+              <label style={{ ...labelStyle, fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Hidden Tap Icon</label>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
+                Customize the circle-dot icon on your public profile. Only those you tell will know to tap it.
+              </p>
 
-            {/* ── Cover Photo ── */}
-            <CollapsibleSection title="Cover Photo" flat defaultOpen={!!coverUrl}>
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                <button
-                  onClick={() => coverFileInputRef.current?.click()}
-                  disabled={!isPaid || coverUploading}
-                  style={{
-                    padding: '0.375rem 0.75rem',
-                    backgroundColor: 'var(--border, #1e2535)',
-                    border: '1px solid var(--border-light, #283042)',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.8125rem',
-                    fontWeight: 500,
-                    cursor: !isPaid || coverUploading ? 'not-allowed' : 'pointer',
-                    fontFamily: 'inherit',
-                    color: isPaid ? 'var(--text, #eceef2)' : 'var(--text-muted, #5d6370)',
-                    opacity: isPaid ? 1 : 0.6,
-                  }}
-                >
-                  {coverUploading ? 'Uploading...' : coverUrl ? 'Replace' : 'Upload'}
-                </button>
-                {coverUrl && (
-                  <button
-                    onClick={() => setCoverUrl('')}
-                    style={{
-                      padding: '0.375rem 0.75rem',
-                      backgroundColor: 'transparent',
-                      border: '1px solid var(--border-light, #283042)',
-                      borderRadius: '0.375rem',
-                      fontSize: '0.8125rem',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      color: 'var(--text-muted, #5d6370)',
-                    }}
-                  >
-                    Remove
-                  </button>
-                )}
-                <button
-                  onClick={() => setShowGallery('cover')}
-                  disabled={!isPaid}
-                  style={{
-                    padding: '0.375rem 0.75rem',
-                    backgroundColor: 'transparent',
-                    border: '1px solid var(--border-light, #283042)',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.8125rem',
-                    fontWeight: 500,
-                    cursor: isPaid ? 'pointer' : 'not-allowed',
-                    fontFamily: 'inherit',
-                    color: isPaid ? 'var(--text-mid, #a8adb8)' : 'var(--text-muted, #5d6370)',
-                    opacity: isPaid ? 1 : 0.6,
-                  }}
-                >
-                  Browse Gallery
-                </button>
-              </div>
-              {coverUrl && (
-                <ImageCropper
-                  src={coverUrl}
-                  frameShape="banner"
-                  positionX={coverPositionX}
-                  positionY={coverPositionY}
-                  zoom={coverZoom}
-                  onPositionChange={(x, y) => { setCoverPositionX(x); setCoverPositionY(y); }}
-                  onZoomChange={setCoverZoom}
-                />
-              )}
-              {coverUrl && (
-                <div style={{ marginTop: '0.75rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Opacity</label>
-                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{coverOpacity}%</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Subtle</span>
-                    <input type="range" min={10} max={100} value={coverOpacity} onChange={e => setCoverOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }} />
-                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Bold</span>
-                  </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border-light, #283042)' }}>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', border: `1.5px solid ${iconColor || 'var(--accent, #e8a849)'}`, backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: iconOpacity, flexShrink: 0 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: iconColor || 'var(--accent, #e8a849)', display: 'block' }} />
                 </div>
-              )}
-              <input ref={coverFileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleCoverUpload} style={{ display: 'none' }} />
-            </CollapsibleSection>
-
-            <div style={{ borderTop: '1px solid var(--border, #1e2535)', margin: '1.25rem 0' }} />
-
-            {/* ── Background Photo ── */}
-            <CollapsibleSection title="Background Photo" flat defaultOpen={!!bgImageUrl}>
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                <button
-                  onClick={() => bgImageFileInputRef.current?.click()}
-                  disabled={!isPaid || bgImageUploading}
-                  style={{
-                    padding: '0.375rem 0.75rem',
-                    backgroundColor: 'var(--border, #1e2535)',
-                    border: '1px solid var(--border-light, #283042)',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.8125rem',
-                    fontWeight: 500,
-                    cursor: !isPaid || bgImageUploading ? 'not-allowed' : 'pointer',
-                    fontFamily: 'inherit',
-                    color: isPaid ? 'var(--text, #eceef2)' : 'var(--text-muted, #5d6370)',
-                    opacity: isPaid ? 1 : 0.6,
-                  }}
-                >
-                  {bgImageUploading ? 'Uploading...' : bgImageUrl ? 'Replace' : 'Upload'}
-                </button>
-                {bgImageUrl && (
-                  <button
-                    onClick={() => setBgImageUrl('')}
-                    style={{
-                      padding: '0.375rem 0.75rem',
-                      backgroundColor: 'transparent',
-                      border: '1px solid var(--border-light, #283042)',
-                      borderRadius: '0.375rem',
-                      fontSize: '0.8125rem',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      color: 'var(--text-muted, #5d6370)',
-                    }}
-                  >
-                    Remove
-                  </button>
-                )}
-                <button
-                  onClick={() => setShowGallery('background')}
-                  disabled={!isPaid}
-                  style={{
-                    padding: '0.375rem 0.75rem',
-                    backgroundColor: 'transparent',
-                    border: '1px solid var(--border-light, #283042)',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.8125rem',
-                    fontWeight: 500,
-                    cursor: isPaid ? 'pointer' : 'not-allowed',
-                    fontFamily: 'inherit',
-                    color: isPaid ? 'var(--text-mid, #a8adb8)' : 'var(--text-muted, #5d6370)',
-                    opacity: isPaid ? 1 : 0.6,
-                  }}
-                >
-                  Browse Gallery
-                </button>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>Preview at current opacity</span>
               </div>
-              {bgImageUrl && (
-                <ImageCropper
-                  src={bgImageUrl}
-                  frameShape="portrait"
-                  positionX={bgImagePositionX}
-                  positionY={bgImagePositionY}
-                  zoom={bgImageZoom}
-                  onPositionChange={(x, y) => { setBgImagePositionX(x); setBgImagePositionY(y); }}
-                  onZoomChange={setBgImageZoom}
-                />
-              )}
-              {bgImageUrl && (
-                <div style={{ marginTop: '0.75rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Visibility</label>
-                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{bgImageOpacity}%</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Subtle</span>
-                    <input type="range" min={5} max={100} value={bgImageOpacity} onChange={e => setBgImageOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }} />
-                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Bold</span>
-                  </div>
-                </div>
-              )}
-              <input ref={bgImageFileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleBgImageUpload} style={{ display: 'none' }} />
-            </CollapsibleSection>
 
-            {/* Gallery picker modal */}
-            {showGallery && (
-              <GalleryPicker
-                category={showGallery}
-                onSelect={(url) => {
-                  if (showGallery === 'cover') setCoverUrl(url);
-                  else setBgImageUrl(url);
-                  setShowGallery(null);
-                }}
-                onClose={() => setShowGallery(null)}
-              />
-            )}
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={labelStyle}>Icon color</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input type="color" value={iconColor || '#e8a849'} onChange={e => setIconColor(e.target.value)}
+                    style={{ width: 36, height: 36, padding: 0, border: '1px solid var(--border-light, #283042)', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--bg, #0c1017)' }} />
+                  <input type="text" value={iconColor} onChange={e => setIconColor(e.target.value)}
+                    placeholder="#e8a849 (default: accent)" style={{ ...inputStyle, flex: 1 }} />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={labelStyle}>Opacity — {Math.round(iconOpacity * 100)}%</label>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {[{ label: 'Subtle', value: 0.15 }, { label: 'Low', value: 0.25 }, { label: 'Medium', value: 0.35 }, { label: 'Visible', value: 0.55 }, { label: 'Bold', value: 0.80 }].map(opt => (
+                    <button key={opt.label} type="button" onClick={() => setIconOpacity(opt.value)}
+                      style={{ padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid', borderColor: iconOpacity === opt.value ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)', backgroundColor: iconOpacity === opt.value ? 'rgba(232, 168, 73, 0.1)' : 'transparent', color: iconOpacity === opt.value ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Corner placement</label>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {[{ label: 'Bottom Right', value: 'bottom-right' }, { label: 'Bottom Left', value: 'bottom-left' }, { label: 'Top Right', value: 'top-right' }, { label: 'Top Left', value: 'top-left' }].map(opt => (
+                    <button key={opt.value} type="button" onClick={() => setIconCorner(opt.value)}
+                      style={{ padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid', borderColor: iconCorner === opt.value ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)', backgroundColor: iconCorner === opt.value ? 'rgba(232, 168, 73, 0.1)' : 'transparent', color: iconCorner === opt.value ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CollapsibleSection>
+        )}
+
+        {/* ─── Content Blocks (only after created) ─── */}
+        {!isNew && page && (
+          <CollapsibleSection title="Content Blocks">
+            <PodEditor
+              parentType="protected_page"
+              parentId={page.id}
+              isPaid={true}
+              visibilityMode="hidden"
+              onError={setError}
+              onPodsChange={handlePodsChange}
+            />
           </CollapsibleSection>
         )}
 
@@ -1212,56 +877,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
             </div>
           )}
         </CollapsibleSection>
-
-        {/* ─── Hidden Tap Icon (only after created) ── */}
-        {!isNew && (
-          <CollapsibleSection title="Hidden Tap Icon">
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
-                Customize the circle-dot icon on your public profile. Only those you tell will know to tap it.
-              </p>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border-light, #283042)' }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', border: `1.5px solid ${iconColor || 'var(--accent, #e8a849)'}`, backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: iconOpacity, flexShrink: 0 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: iconColor || 'var(--accent, #e8a849)', display: 'block' }} />
-                </div>
-                <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>Preview at current opacity</span>
-              </div>
-
-              <div style={{ marginBottom: '0.75rem' }}>
-                <label style={labelStyle}>Icon color</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input type="color" value={iconColor || '#e8a849'} onChange={e => setIconColor(e.target.value)}
-                    style={{ width: 36, height: 36, padding: 0, border: '1px solid var(--border-light, #283042)', borderRadius: '0.375rem', cursor: 'pointer', backgroundColor: 'var(--bg, #0c1017)' }} />
-                  <input type="text" value={iconColor} onChange={e => setIconColor(e.target.value)}
-                    placeholder="#e8a849 (default: accent)" style={{ ...inputStyle, flex: 1 }} />
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '0.75rem' }}>
-                <label style={labelStyle}>Opacity — {Math.round(iconOpacity * 100)}%</label>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {[{ label: 'Subtle', value: 0.15 }, { label: 'Low', value: 0.25 }, { label: 'Medium', value: 0.35 }, { label: 'Visible', value: 0.55 }, { label: 'Bold', value: 0.80 }].map(opt => (
-                    <button key={opt.label} type="button" onClick={() => setIconOpacity(opt.value)}
-                      style={{ padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid', borderColor: iconOpacity === opt.value ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)', backgroundColor: iconOpacity === opt.value ? 'rgba(232, 168, 73, 0.1)' : 'transparent', color: iconOpacity === opt.value ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label style={labelStyle}>Corner placement</label>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {[{ label: 'Bottom Right', value: 'bottom-right' }, { label: 'Bottom Left', value: 'bottom-left' }, { label: 'Top Right', value: 'top-right' }, { label: 'Top Left', value: 'top-left' }].map(opt => (
-                    <button key={opt.value} type="button" onClick={() => setIconCorner(opt.value)}
-                      style={{ padding: '0.375rem 0.75rem', borderRadius: '2rem', border: '1px solid', borderColor: iconCorner === opt.value ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)', backgroundColor: iconCorner === opt.value ? 'rgba(232, 168, 73, 0.1)' : 'transparent', color: iconCorner === opt.value ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-          </CollapsibleSection>
-        )}
 
 
       </main>
@@ -1352,15 +967,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           </div>
         </div>
       )}
-
-      <EditorFloatingButtons
-        isDirty={isDirty}
-        saving={saving}
-        saved={saved}
-        onSave={savePage}
-        slug={slug}
-      />
-
     </>
   );
 }
