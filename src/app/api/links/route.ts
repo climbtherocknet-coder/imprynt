@@ -98,7 +98,7 @@ export async function PUT(req: NextRequest) {
   }
 
   // Single link update
-  const { id, linkType, label, url, showBusiness, showPersonal, showShowcase, buttonColor } = body;
+  const { id, linkType, label, url, showBusiness, showPersonal, showShowcase } = body;
   if (!id) {
     return NextResponse.json({ error: 'Link ID required' }, { status: 400 });
   }
@@ -116,11 +116,6 @@ export async function PUT(req: NextRequest) {
   if (showBusiness !== undefined) { updates.push(`show_business = $${p++}`); values.push(!!showBusiness); }
   if (showPersonal !== undefined) { updates.push(`show_personal = $${p++}`); values.push(!!showPersonal); }
   if (showShowcase !== undefined) { updates.push(`show_showcase = $${p++}`); values.push(!!showShowcase); }
-  if (buttonColor !== undefined) {
-    updates.push(`button_color = $${p++}`);
-    const hexRx = /^#[0-9a-fA-F]{6}$/;
-    values.push((typeof buttonColor === 'string' && hexRx.test(buttonColor)) ? buttonColor : null);
-  }
 
   if (updates.length === 0) {
     return NextResponse.json({ success: true });

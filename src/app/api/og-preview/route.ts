@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { parseListingUrl, extractPrice, extractDetails } from '@/lib/listing-parser';
 
 // GET /api/og-preview?url=https://...
 // Fetches Open Graph metadata from a URL
@@ -41,46 +40,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Only HTTP/HTTPS URLs supported' }, { status: 400 });
   }
 
-  const mode = req.nextUrl.searchParams.get('mode');
-
   // Strategy 1: Direct fetch with browser-like headers
   const directResult = await fetchDirect(url, parsed);
-
-  // Strategy 2: Fallback to microlink.io for bot-protected sites
-  const microlinkResult = !directResult ? await fetchViaMicrolink(url, parsed) : null;
-
-  const baseResult = directResult || microlinkResult;
-
-  // Listing mode: enrich with structured data from URL + HTML
-  if (mode === 'listing') {
-    const listingMeta = parseListingUrl(url);
-    const base = baseResult || { url, title: '', description: '', image: '', siteName: '', domain: parsed.hostname.replace(/^www\./, '') };
-
-    // Try to extract price/details from title+description
-    const combined = `${base.title} ${base.description}`;
-    const price = extractPrice(combined);
-    const details = extractDetails(combined);
-
-    // Use address from URL parser as fallback title
-    if (!base.title && listingMeta.address) {
-      base.title = listingMeta.address;
-    }
-
-    return NextResponse.json({
-      ...base,
-      listing: {
-        source: listingMeta.source,
-        address: listingMeta.address || base.title || '',
-        price: price || '',
-        details,
-        imageBlocked: listingMeta.imageBlocked,
-        zpid: listingMeta.zpid,
-      },
-    });
+  if (directResult) {
+    return NextResponse.json(directResult);
   }
 
-  if (baseResult) {
-    return NextResponse.json(baseResult);
+  // Strategy 2: Fallback to microlink.io for bot-protected sites
+  const microlinkResult = await fetchViaMicrolink(url, parsed);
+  if (microlinkResult) {
+    return NextResponse.json(microlinkResult);
   }
 
   return NextResponse.json({ error: 'Could not auto-fetch preview — this site may block previews. You can enter the details manually.' }, { status: 422 });
@@ -163,11 +132,6 @@ async function fetchDirect(url: string, parsed: URL) {
       }
     }
 
-    // Validate OG image URL with a HEAD request
-    if (resolvedImage) {
-      resolvedImage = await validateImageUrl(resolvedImage);
-    }
-
     return {
       url,
       title: ogTitle.slice(0, 200),
@@ -248,27 +212,4 @@ function decodeHTMLEntities(str: string): string {
     .replace(/&#39;/g, "'")
     .replace(/&#x27;/g, "'")
     .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n)));
-}
-
-// ── Validate OG image URL via HEAD request ──────────────
-async function validateImageUrl(imageUrl: string): Promise<string> {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch(imageUrl, {
-      method: 'HEAD',
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-      redirect: 'follow',
-    });
-    clearTimeout(timeout);
-    if (!res.ok) return '';
-    const contentType = res.headers.get('content-type') || '';
-    if (!contentType.startsWith('image/')) return '';
-    return imageUrl;
-  } catch {
-    return '';
-  }
 }

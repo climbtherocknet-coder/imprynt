@@ -21,18 +21,16 @@ export default function CollapsibleSection({
   title,
   defaultOpen = false,
   badge,
-  flat = false,
   children,
 }: {
   title: string;
   defaultOpen?: boolean;
   badge?: React.ReactNode;
-  flat?: boolean;
   children: React.ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
-    <div style={flat ? undefined : sectionStyle}>
+    <div style={sectionStyle}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{

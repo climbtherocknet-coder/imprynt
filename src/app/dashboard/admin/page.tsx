@@ -1,158 +1,118 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import CCOverview from '@/components/admin/CCOverview';
-import CCFeatures from '@/components/admin/CCFeatures';
-import CCRoadmap from '@/components/admin/CCRoadmap';
-import CCChangelog from '@/components/admin/CCChangelog';
-import CCDocs from '@/components/admin/CCDocs';
+import { useState, useEffect } from 'react';
 import '@/styles/dashboard.css';
-import '@/styles/cc.css';
 
-type TabKey = 'overview' | 'features' | 'roadmap' | 'changelog' | 'docs';
+interface AdminStats {
+  users: { total: number; paid: number };
+  templateStats: { template: string; count: number; pct: number }[];
+  protectedPages: number;
+  vcardDownloads: number;
+}
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'features', label: 'Features' },
-  { key: 'roadmap', label: 'Roadmap' },
-  { key: 'changelog', label: 'Changelog' },
-  { key: 'docs', label: 'Docs' },
-];
+const TEMPLATE_NAMES: Record<string, string> = {
+  clean: 'Clean', warm: 'Warm', classic: 'Classic', soft: 'Soft',
+  midnight: 'Midnight', editorial: 'Editorial', noir: 'Noir',
+  signal: 'Signal', studio: 'Studio', dusk: 'Dusk',
+};
 
-function CommandCenterInner() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const tabParam = searchParams.get('tab') as TabKey | null;
-  const [activeTab, setActiveTab] = useState<TabKey>(
-    tabParam && TABS.some(t => t.key === tabParam) ? tabParam : 'overview'
-  );
-
-  const [accessLevel, setAccessLevel] = useState<'admin' | 'advisory' | null>(null);
-  const [currentUserId, setCurrentUserId] = useState('');
+export default function AdminPage() {
+  const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Probe CC overview to check access, then determine admin vs advisory
-    fetch('/api/admin/cc/overview')
-      .then(r => {
-        if (r.status === 401) { window.location.href = '/login'; return null; }
-        if (r.status === 403) { setError('Access denied.'); return null; }
-        return r.json();
-      })
-      .then(data => {
-        if (!data || data.error) return;
-        // Get session for user ID
-        fetch('/api/auth/session')
-          .then(r => r.json())
-          .then(s => { if (s?.user?.id) setCurrentUserId(s.user.id); })
-          .catch(() => {});
-        // Check admin by trying admin stats endpoint
-        fetch('/api/admin/stats')
-          .then(r => setAccessLevel(r.ok ? 'admin' : 'advisory'))
-          .catch(() => setAccessLevel('advisory'));
+    fetch('/api/admin/stats', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) { setError(d.error); return; }
+        setStats(d);
       })
       .catch(() => setError('Failed to load'));
   }, []);
 
-  const switchTab = (tab: TabKey) => {
-    setActiveTab(tab);
-    router.replace(tab === 'overview' ? '/dashboard/admin' : `/dashboard/admin?tab=${tab}`, { scroll: false });
+  const cardStyle: React.CSSProperties = {
+    background: 'var(--surface, #161c28)',
+    border: '1px solid var(--border, #1e2535)',
+    borderRadius: '0.75rem',
+    padding: '1.25rem',
+    marginBottom: '1rem',
   };
 
-  if (error) {
-    return (
-      <div className="dash-page">
-        <header className="dash-header">
-          <a href="/dashboard" className="dash-logo" style={{ textDecoration: 'none' }}>
-            <div className="dash-logo-mark" />
-            <span className="dash-logo-text">Command Center</span>
-          </a>
-        </header>
-        <main className="dash-main">
-          <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>
-            {error === 'Access denied.' ? 'You do not have access to the Command Center.' : error}
-          </p>
-        </main>
-      </div>
-    );
-  }
-
-  if (!accessLevel) {
-    return (
-      <div className="dash-page">
-        <header className="dash-header">
-          <a href="/dashboard" className="dash-logo" style={{ textDecoration: 'none' }}>
-            <div className="dash-logo-mark" />
-            <span className="dash-logo-text">Command Center</span>
-          </a>
-        </header>
-        <main className="dash-main">
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Loading...</p>
-        </main>
-      </div>
-    );
-  }
+  const labelStyle: React.CSSProperties = {
+    fontSize: '0.6875rem',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    color: 'var(--text-muted, #5d6370)',
+    marginBottom: '0.75rem',
+  };
 
   return (
     <div className="dash-page">
-      {/* Header */}
       <header className="dash-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <a href="/dashboard" className="dash-logo" style={{ textDecoration: 'none' }}>
-            <div className="dash-logo-mark" />
-            <span className="dash-logo-text">Command Center</span>
-          </a>
-          <span className={`cc-badge cc-badge--${accessLevel === 'admin' ? 'shipped' : 'in_progress'}`} style={{ fontSize: '0.5625rem' }}>
-            {accessLevel}
-          </span>
-        </div>
-        <a href="/dashboard" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', textDecoration: 'none' }}>
-          &#8592; Dashboard
+        <a href="/dashboard" className="dash-logo" style={{ textDecoration: 'none' }}>
+          <div className="dash-logo-mark" />
+          <span className="dash-logo-text">Admin</span>
         </a>
       </header>
 
-      {/* Tab bar */}
-      <div className="cc-tabs">
-        {TABS.map(tab => (
-          <button
-            key={tab.key}
-            className={`cc-tab ${activeTab === tab.key ? 'cc-tab--active' : ''}`}
-            onClick={() => switchTab(tab.key)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <main className="dash-main">
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text, #eceef2)' }}>
+          Admin Stats
+        </h2>
 
-      {/* Tab content */}
-      <div className="cc-content">
-        {activeTab === 'overview' && <CCOverview accessLevel={accessLevel} onNavigate={(tab) => switchTab(tab as TabKey)} />}
-        {activeTab === 'features' && <CCFeatures accessLevel={accessLevel} currentUserId={currentUserId} />}
-        {activeTab === 'roadmap' && <CCRoadmap accessLevel={accessLevel} currentUserId={currentUserId} />}
-        {activeTab === 'changelog' && <CCChangelog accessLevel={accessLevel} currentUserId={currentUserId} />}
-        {activeTab === 'docs' && <CCDocs accessLevel={accessLevel} currentUserId={currentUserId} />}
-      </div>
+        {error && (
+          <p style={{ color: '#ef4444', fontSize: '0.875rem', marginBottom: '1rem' }}>
+            {error === 'Forbidden' ? 'Access denied. Add your email to ADMIN_EMAILS env var.' : error}
+          </p>
+        )}
+
+        {!stats && !error && (
+          <p style={{ color: 'var(--text-muted, #5d6370)', fontSize: '0.875rem' }}>Loading…</p>
+        )}
+
+        {stats && (
+          <>
+            {/* Summary */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              {[
+                { label: 'Total Users', value: stats.users.total },
+                { label: 'Paid Users', value: stats.users.paid },
+                { label: 'Protected Pages', value: stats.protectedPages },
+                { label: 'vCard Downloads', value: stats.vcardDownloads },
+              ].map(s => (
+                <div key={s.label} style={{ ...cardStyle, marginBottom: 0 }}>
+                  <p style={{ ...labelStyle, marginBottom: '0.375rem' }}>{s.label}</p>
+                  <p style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text, #eceef2)', margin: 0 }}>{s.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Template Usage */}
+            <div style={cardStyle}>
+              <p style={labelStyle}>Template Usage</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {stats.templateStats.map((t, i) => (
+                  <div key={t.template} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', minWidth: 16, textAlign: 'right' }}>
+                      {i + 1}.
+                    </span>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text, #eceef2)', minWidth: 80 }}>
+                      {TEMPLATE_NAMES[t.template] || t.template}
+                    </span>
+                    <div style={{ flex: 1, height: 6, background: 'var(--border, #1e2535)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${t.pct}%`, background: 'var(--accent, #e8a849)', borderRadius: 3 }} />
+                    </div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', minWidth: 60, textAlign: 'right' }}>
+                      {t.count} ({t.pct}%)
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </main>
     </div>
-  );
-}
-
-export default function CommandCenterPage() {
-  return (
-    <Suspense fallback={
-      <div className="dash-page">
-        <header className="dash-header">
-          <a href="/dashboard" className="dash-logo" style={{ textDecoration: 'none' }}>
-            <div className="dash-logo-mark" />
-            <span className="dash-logo-text">Command Center</span>
-          </a>
-        </header>
-        <main className="dash-main">
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Loading...</p>
-        </main>
-      </div>
-    }>
-      <CommandCenterInner />
-    </Suspense>
   );
 }
