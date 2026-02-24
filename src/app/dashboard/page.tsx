@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
 import { getPlanStatus } from '@/lib/plan';
+import { getAccessLevel } from '@/lib/access';
 import SignOutButton from './SignOutButton';
 import DashboardOnAir from './DashboardOnAir';
 import MyUrlsCard from './MyUrlsCard';
@@ -60,6 +61,16 @@ function IconAccount() {
   );
 }
 
+function IconCommandCenter() {
+  return (
+    <div style={iconWrap}>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9l3 3-3 3"/><line x1="13" y1="15" x2="17" y2="15"/>
+      </svg>
+    </div>
+  );
+}
+
 function IconLock() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -101,6 +112,7 @@ export default async function DashboardPage({
   const emailVerified = !!userCheck.rows[0]?.email_verified;
   const planStatus = getPlanStatus(userCheck.rows[0]);
   const firstName = userCheck.rows[0]?.first_name || session.user.name?.split(' ')[0] || '';
+  const ccAccess = getAccessLevel(session.user.email, userCheck.rows[0]?.plan);
 
   // Fetch profile
   const profileResult = await query(
@@ -256,34 +268,51 @@ export default async function DashboardPage({
                   <p className="dash-nav-desc">Email, password, billing</p>
                 </div>
               </a>
+
+              {ccAccess !== 'none' && (
+                <a href="/dashboard/admin" className="dash-nav-card">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                    <IconCommandCenter />
+                    <span className="dash-nav-arrow">&rarr;</span>
+                  </div>
+                  <div>
+                    <h3 className="dash-nav-title">Command Center</h3>
+                    <p className="dash-nav-desc">Features, roadmap, docs</p>
+                  </div>
+                </a>
+              )}
             </div>
           </div>
 
-          {/* Right column — live phone preview */}
+          {/* Right column — protected pages card + live phone preview */}
           {profile && (
             <div className="dash-preview">
-              <div className="dash-pin-status">
-                <a href="/dashboard/page-editor?tab=personal" className="dash-pin-link">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                    style={{ color: personalIconColor || 'var(--accent, #e8a849)', flexShrink: 0 }}>
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" fill="none"/>
-                    <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
-                  </svg>
-                  <span>Personal</span>
-                  <span className={`dash-pin-badge ${personalPinSet ? 'dash-pin-badge--set' : ''}`}>
-                    {personalPinSet ? 'PIN set' : 'No PIN'}
-                  </span>
-                </a>
-                <a href="/dashboard/page-editor?tab=portfolio" className="dash-pin-link">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-                    style={{ flexShrink: 0 }}>
-                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
-                  <span>Portfolio</span>
-                  <span className={`dash-pin-badge ${portfolioPinSet ? 'dash-pin-badge--set' : ''}`}>
-                    {portfolioPinSet ? 'PIN set' : 'No PIN'}
-                  </span>
-                </a>
+              {/* Protected Pages card */}
+              <div style={{ backgroundColor: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)', padding: '0.875rem 1rem', marginBottom: '1rem' }}>
+                <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted, #5d6370)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.625rem' }}>Protected Pages</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <a href="/dashboard/page-editor?tab=personal" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.5rem 0.625rem', borderRadius: '0.5rem', backgroundColor: 'var(--bg, #0c1017)', border: '1px solid var(--border, #1e2535)', textDecoration: 'none', color: 'inherit', transition: 'border-color 0.15s' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                      style={{ color: personalIconColor || 'var(--accent, #e8a849)', flexShrink: 0 }}>
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" fill="none"/>
+                      <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
+                    </svg>
+                    <span style={{ flex: 1, fontSize: '0.8125rem', fontWeight: 500 }}>Personal</span>
+                    <span style={{ fontSize: '0.6875rem', fontWeight: 600, padding: '0.125rem 0.5rem', borderRadius: '9999px', backgroundColor: personalPinSet ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: personalPinSet ? '#10b981' : '#ef4444' }}>
+                      {personalPinSet ? 'PIN set' : 'No PIN'}
+                    </span>
+                  </a>
+                  <a href="/dashboard/page-editor?tab=portfolio" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.5rem 0.625rem', borderRadius: '0.5rem', backgroundColor: 'var(--bg, #0c1017)', border: '1px solid var(--border, #1e2535)', textDecoration: 'none', color: 'inherit', transition: 'border-color 0.15s' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                      style={{ flexShrink: 0 }}>
+                      <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    <span style={{ flex: 1, fontSize: '0.8125rem', fontWeight: 500 }}>Portfolio</span>
+                    <span style={{ fontSize: '0.6875rem', fontWeight: 600, padding: '0.125rem 0.5rem', borderRadius: '9999px', backgroundColor: portfolioPinSet ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: portfolioPinSet ? '#10b981' : '#ef4444' }}>
+                      {portfolioPinSet ? 'PIN set' : 'No PIN'}
+                    </span>
+                  </a>
+                </div>
               </div>
               <div className="dash-phone">
                 <div className="dash-phone-screen">

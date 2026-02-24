@@ -84,6 +84,29 @@ export async function GET() {
     bgImagePositionY = r?.bg_image_position_y ?? 50;
   } catch { /* column doesn't exist yet */ }
 
+  // Fetch zoom fields (migration 041)
+  let photoZoom = 100, coverPositionX = 50, coverZoom = 100, bgImagePositionX = 50, bgImageZoom = 100;
+  try {
+    const zr = await query(
+      'SELECT photo_zoom, cover_position_x, cover_zoom, bg_image_position_x, bg_image_zoom FROM profiles WHERE id = $1',
+      [profile.id]
+    );
+    const r = zr.rows[0];
+    photoZoom = r?.photo_zoom ?? 100;
+    coverPositionX = r?.cover_position_x ?? 50;
+    coverZoom = r?.cover_zoom ?? 100;
+    bgImagePositionX = r?.bg_image_position_x ?? 50;
+    bgImageZoom = r?.bg_image_zoom ?? 100;
+  } catch { /* column doesn't exist yet */ }
+
+  // Fetch link button settings (migration 046)
+  let linkSize = 'medium', linkShape = 'pill';
+  try {
+    const lsResult = await query('SELECT link_size, link_shape FROM profiles WHERE id = $1', [profile.id]);
+    linkSize = lsResult.rows[0]?.link_size || 'medium';
+    linkShape = lsResult.rows[0]?.link_shape || 'pill';
+  } catch { /* column doesn't exist yet */ }
+
   const linksResult = await query(
     `SELECT id, link_type, label, url, display_order, show_business, show_personal, show_showcase
      FROM links
@@ -137,6 +160,13 @@ export async function GET() {
       bgImageUrl,
       bgImageOpacity,
       bgImagePositionY,
+      photoZoom,
+      coverPositionX,
+      coverZoom,
+      bgImagePositionX,
+      bgImageZoom,
+      linkSize,
+      linkShape,
     },
     links: linksResult.rows.map((l: Record<string, unknown>) => ({
       id: l.id,
@@ -259,6 +289,21 @@ export async function PUT(req: NextRequest) {
           await query('UPDATE profiles SET photo_align = $1 WHERE user_id = $2', [alignVal, userId]);
         } catch { /* column doesn't exist yet */ }
       }
+      // link button settings (migration 046)
+      const { linkSize, linkShape } = body;
+      try {
+        const validLinkSizes = ['small', 'medium', 'large'];
+        const validLinkShapes = ['pill', 'rounded', 'square'];
+        const lsUpdates: string[] = [];
+        const lsParams: unknown[] = [];
+        let lsi = 1;
+        if (linkSize && validLinkSizes.includes(linkSize)) { lsUpdates.push(`link_size = $${lsi++}`); lsParams.push(linkSize); }
+        if (linkShape && validLinkShapes.includes(linkShape)) { lsUpdates.push(`link_shape = $${lsi++}`); lsParams.push(linkShape); }
+        if (lsUpdates.length > 0) {
+          lsParams.push(userId);
+          await query(`UPDATE profiles SET ${lsUpdates.join(', ')} WHERE user_id = $${lsi}`, lsParams);
+        }
+      } catch { /* column doesn't exist yet */ }
     } else if (section === 'statusTags') {
       const { statusTags } = body;
       const presetSlugs = ['open_to_network', 'open_to_work', 'hiring', 'open_to_collaborate', 'consulting', 'mentoring'];
@@ -432,6 +477,37 @@ export async function PUT(req: NextRequest) {
           [bUrl ?? null, bgOpacityVal, bgPosYVal, userId]
         );
       } catch { /* column doesn't exist yet */ }
+      // zoom fields — update separately (migration 041)
+      const { photoZoom: pZoom, coverPositionX: cPosX, coverZoom: cZoom, bgImagePositionX: bPosX, bgImageZoom: bZoom } = body;
+      try {
+        const zoomUpdates: string[] = [];
+        const zoomParams: unknown[] = [];
+        let zi = 1;
+        if (typeof pZoom === 'number') { zoomUpdates.push(`photo_zoom = $${zi++}`); zoomParams.push(Math.max(100, Math.min(300, Math.round(pZoom)))); }
+        if (typeof cPosX === 'number') { zoomUpdates.push(`cover_position_x = $${zi++}`); zoomParams.push(Math.max(0, Math.min(100, Math.round(cPosX)))); }
+        if (typeof cZoom === 'number') { zoomUpdates.push(`cover_zoom = $${zi++}`); zoomParams.push(Math.max(100, Math.min(300, Math.round(cZoom)))); }
+        if (typeof bPosX === 'number') { zoomUpdates.push(`bg_image_position_x = $${zi++}`); zoomParams.push(Math.max(0, Math.min(100, Math.round(bPosX)))); }
+        if (typeof bZoom === 'number') { zoomUpdates.push(`bg_image_zoom = $${zi++}`); zoomParams.push(Math.max(100, Math.min(300, Math.round(bZoom)))); }
+        if (zoomUpdates.length > 0) {
+          zoomParams.push(userId);
+          await query(`UPDATE profiles SET ${zoomUpdates.join(', ')} WHERE user_id = $${zi}`, zoomParams);
+        }
+      } catch { /* column doesn't exist yet */ }
+      // link button settings (migration 046)
+      const { linkSize: lSize, linkShape: lShape } = body;
+      try {
+        const validLinkSizes = ['small', 'medium', 'large'];
+        const validLinkShapes = ['pill', 'rounded', 'square'];
+        const lsUpdates: string[] = [];
+        const lsParams: unknown[] = [];
+        let lsi = 1;
+        if (lSize && validLinkSizes.includes(lSize)) { lsUpdates.push(`link_size = $${lsi++}`); lsParams.push(lSize); }
+        if (lShape && validLinkShapes.includes(lShape)) { lsUpdates.push(`link_shape = $${lsi++}`); lsParams.push(lShape); }
+        if (lsUpdates.length > 0) {
+          lsParams.push(userId);
+          await query(`UPDATE profiles SET ${lsUpdates.join(', ')} WHERE user_id = $${lsi}`, lsParams);
+        }
+      } catch { /* column doesn't exist yet */ }
     } else if (section === 'customTheme') {
       // Standalone custom_theme save (auto-save as user tweaks)
       const { customTheme } = body;
@@ -443,7 +519,7 @@ export async function PUT(req: NextRequest) {
       } catch { /* column doesn't exist yet */ }
     } else if (section === 'cover') {
       // Standalone cover photo save
-      const { coverUrl: cUrl, coverPositionY: cPosY, coverOpacity: cOpacity } = body;
+      const { coverUrl: cUrl, coverPositionY: cPosY, coverOpacity: cOpacity, coverPositionX: cPosX, coverZoom: cZoom } = body;
       const coverPosYVal = typeof cPosY === 'number' ? Math.max(0, Math.min(100, Math.round(cPosY))) : 50;
       const coverOpacityVal = typeof cOpacity === 'number' ? Math.max(10, Math.min(100, Math.round(cOpacity))) : 70;
       try {
@@ -452,15 +528,33 @@ export async function PUT(req: NextRequest) {
           [cUrl ?? null, coverPosYVal, coverOpacityVal, userId]
         );
       } catch { /* column doesn't exist yet */ }
+      // cover zoom fields (migration 041)
+      try {
+        const coverPosXVal = typeof cPosX === 'number' ? Math.max(0, Math.min(100, Math.round(cPosX))) : 50;
+        const coverZoomVal = typeof cZoom === 'number' ? Math.max(100, Math.min(300, Math.round(cZoom))) : 100;
+        await query(
+          `UPDATE profiles SET cover_position_x = $1, cover_zoom = $2 WHERE user_id = $3`,
+          [coverPosXVal, coverZoomVal, userId]
+        );
+      } catch { /* column doesn't exist yet */ }
     } else if (section === 'bgImage') {
       // Standalone background photo save
-      const { bgImageUrl: bUrl, bgImageOpacity: bOpacity, bgImagePositionY: bPosY } = body;
+      const { bgImageUrl: bUrl, bgImageOpacity: bOpacity, bgImagePositionY: bPosY, bgImagePositionX: bPosX, bgImageZoom: bZoom } = body;
       const bgOpacityVal = typeof bOpacity === 'number' ? Math.max(5, Math.min(100, Math.round(bOpacity))) : 20;
       const bgPosYVal = typeof bPosY === 'number' ? Math.max(0, Math.min(100, Math.round(bPosY))) : 50;
       try {
         await query(
           `UPDATE profiles SET bg_image_url = $1, bg_image_opacity = $2, bg_image_position_y = $3 WHERE user_id = $4`,
           [bUrl ?? null, bgOpacityVal, bgPosYVal, userId]
+        );
+      } catch { /* column doesn't exist yet */ }
+      // bg zoom fields (migration 041)
+      try {
+        const bgPosXVal = typeof bPosX === 'number' ? Math.max(0, Math.min(100, Math.round(bPosX))) : 50;
+        const bgZoomVal = typeof bZoom === 'number' ? Math.max(100, Math.min(300, Math.round(bZoom))) : 100;
+        await query(
+          `UPDATE profiles SET bg_image_position_x = $1, bg_image_zoom = $2 WHERE user_id = $3`,
+          [bgPosXVal, bgZoomVal, userId]
         );
       } catch { /* column doesn't exist yet */ }
     } else if (section === 'vcardPin') {

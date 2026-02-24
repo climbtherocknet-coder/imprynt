@@ -68,6 +68,13 @@ CREATE TABLE profiles (
     bg_image_url    VARCHAR(500),                     -- background photo (full page behind profile)
     bg_image_opacity SMALLINT NOT NULL DEFAULT 20 CHECK (bg_image_opacity BETWEEN 5 AND 100),
     bg_image_position_y INTEGER NOT NULL DEFAULT 50 CHECK (bg_image_position_y BETWEEN 0 AND 100),
+    photo_zoom      SMALLINT NOT NULL DEFAULT 100,
+    cover_position_x INTEGER NOT NULL DEFAULT 50,
+    cover_zoom      SMALLINT NOT NULL DEFAULT 100,
+    bg_image_position_x INTEGER NOT NULL DEFAULT 50,
+    bg_image_zoom   SMALLINT NOT NULL DEFAULT 100,
+    link_size       VARCHAR(10) NOT NULL DEFAULT 'medium',
+    link_shape      VARCHAR(10) NOT NULL DEFAULT 'pill',
     status_tags     TEXT[] DEFAULT '{}',              -- e.g. {'open_to_network','hiring'}
     slug_rotated_at TIMESTAMPTZ DEFAULT NOW(),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -98,10 +105,34 @@ CREATE TABLE protected_pages (
     icon_opacity    NUMERIC(3,2) DEFAULT 0.35,  -- impression icon opacity (0.0 - 1.0)
     icon_corner     VARCHAR(20) DEFAULT 'bottom-right', -- impression icon corner placement
     photo_url       VARCHAR(500),     -- personal photo for impression pages
+    show_resume     BOOLEAN NOT NULL DEFAULT true,
     allow_remember  BOOLEAN NOT NULL DEFAULT true,
     pin_version     INTEGER NOT NULL DEFAULT 1,
     display_order   INTEGER NOT NULL DEFAULT 0,
     is_active       BOOLEAN NOT NULL DEFAULT true,
+    -- Per-page photo settings (independent from profile)
+    photo_shape       VARCHAR(20) NOT NULL DEFAULT 'circle',
+    photo_radius      INTEGER,
+    photo_size        VARCHAR(10) NOT NULL DEFAULT 'medium',
+    photo_position_x  INTEGER NOT NULL DEFAULT 50,
+    photo_position_y  INTEGER NOT NULL DEFAULT 50,
+    photo_animation   VARCHAR(20) NOT NULL DEFAULT 'none',
+    photo_align       VARCHAR(10) NOT NULL DEFAULT 'center',
+    -- Per-page cover photo
+    cover_url         VARCHAR(500),
+    cover_opacity     SMALLINT NOT NULL DEFAULT 30,
+    cover_position_y  INTEGER NOT NULL DEFAULT 50,
+    -- Per-page background photo
+    bg_image_url      VARCHAR(500),
+    bg_image_opacity  SMALLINT NOT NULL DEFAULT 20,
+    bg_image_position_y INTEGER NOT NULL DEFAULT 50,
+    photo_zoom      SMALLINT NOT NULL DEFAULT 100,
+    cover_position_x INTEGER NOT NULL DEFAULT 50,
+    cover_zoom      SMALLINT NOT NULL DEFAULT 100,
+    bg_image_position_x INTEGER NOT NULL DEFAULT 50,
+    bg_image_zoom   SMALLINT NOT NULL DEFAULT 100,
+    link_size       VARCHAR(10) NOT NULL DEFAULT 'medium',
+    link_shape      VARCHAR(10) NOT NULL DEFAULT 'pill',
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -300,7 +331,7 @@ CREATE TABLE pods (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     profile_id      UUID REFERENCES profiles(id) ON DELETE CASCADE,
     protected_page_id UUID REFERENCES protected_pages(id) ON DELETE CASCADE,
-    pod_type        VARCHAR(20) NOT NULL CHECK (pod_type IN ('text', 'text_image', 'stats', 'cta', 'link_preview', 'project')),
+    pod_type        VARCHAR(20) NOT NULL CHECK (pod_type IN ('text', 'text_image', 'stats', 'cta', 'link_preview', 'project', 'listing', 'event')),
     display_order   INTEGER NOT NULL DEFAULT 0,
     label           VARCHAR(50),        -- section label e.g. "About", "By the Numbers"
     title           VARCHAR(200),       -- pod heading
@@ -312,6 +343,18 @@ CREATE TABLE pods (
     tags            VARCHAR(500),       -- for project pods: comma-separated tags
     image_position  VARCHAR(10) NOT NULL DEFAULT 'left', -- for text_image pods: 'left' or 'right'
     show_on_profile BOOLEAN NOT NULL DEFAULT false, -- showcase pods promoted to main profile
+    listing_status  VARCHAR(20) DEFAULT 'active' CHECK (listing_status IN ('active', 'pending', 'sold', 'off_market', 'rented', 'leased', 'open_house')),
+    listing_price   VARCHAR(50),
+    listing_details JSONB,              -- {beds, baths, sqft, ...}
+    source_domain   VARCHAR(100),       -- e.g. 'zillow.com'
+    auto_remove_at  TIMESTAMPTZ,        -- scheduled auto-removal after sold/rented
+    sold_at         TIMESTAMPTZ,        -- when status changed to sold/rented/leased
+    event_start     TIMESTAMPTZ,        -- for event pods: start datetime
+    event_end       TIMESTAMPTZ,        -- for event pods: end datetime
+    event_venue     VARCHAR(200),       -- for event pods: venue name
+    event_address   VARCHAR(300),       -- for event pods: full address
+    event_status    VARCHAR(20) DEFAULT 'upcoming' CHECK (event_status IN ('upcoming', 'cancelled', 'postponed', 'sold_out')),
+    event_auto_hide BOOLEAN NOT NULL DEFAULT true, -- auto-hide after event ends
     is_active       BOOLEAN NOT NULL DEFAULT true,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -325,6 +368,26 @@ CREATE TABLE pods (
 CREATE INDEX idx_pods_profile ON pods(profile_id);
 CREATE INDEX idx_pods_protected_page ON pods(protected_page_id);
 CREATE INDEX idx_pods_order ON pods(profile_id, display_order);
+CREATE INDEX idx_pods_auto_remove ON pods(auto_remove_at) WHERE auto_remove_at IS NOT NULL;
+CREATE INDEX idx_pods_event_start ON pods(event_start) WHERE pod_type = 'event';
+
+-- ============================================================
+-- IMAGE GALLERY
+-- Curated backgrounds and covers for gallery picker
+-- ============================================================
+CREATE TABLE image_gallery (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    category        VARCHAR(50) NOT NULL,
+    url             VARCHAR(500) NOT NULL,
+    thumbnail_url   VARCHAR(500),
+    label           VARCHAR(100),
+    tags            VARCHAR(200),
+    display_order   INTEGER NOT NULL DEFAULT 0,
+    is_active       BOOLEAN NOT NULL DEFAULT true,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_image_gallery_category ON image_gallery(category);
 
 -- ============================================================
 -- INVITE CODES
@@ -434,3 +497,102 @@ CREATE TRIGGER contacts_updated_at BEFORE UPDATE ON contacts FOR EACH ROW EXECUT
 CREATE TRIGGER showcase_items_updated_at BEFORE UPDATE ON showcase_items FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER contact_fields_updated_at BEFORE UPDATE ON contact_fields FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER pods_updated_at BEFORE UPDATE ON pods FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================================
+-- COMMAND CENTER — internal operating hub
+-- ============================================================
+CREATE TABLE cc_features (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name            VARCHAR(200) NOT NULL,
+    description     TEXT,
+    category        VARCHAR(50) NOT NULL DEFAULT 'platform',
+    status          VARCHAR(20) NOT NULL DEFAULT 'planned'
+      CHECK (status IN ('shipped', 'in_progress', 'planned', 'exploring', 'cut')),
+    priority        INTEGER NOT NULL DEFAULT 0,
+    release_phase   VARCHAR(20) CHECK (release_phase IN ('v1', 'v1.5', 'v2', 'future')),
+    shipped_at      TIMESTAMPTZ,
+    created_by      UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_cc_features_status ON cc_features(status);
+CREATE INDEX idx_cc_features_category ON cc_features(category);
+
+CREATE TABLE cc_roadmap (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title           VARCHAR(200) NOT NULL,
+    description     TEXT,
+    phase           VARCHAR(20) NOT NULL DEFAULT 'later'
+      CHECK (phase IN ('now', 'next', 'later', 'done', 'icebox')),
+    category        VARCHAR(50),
+    priority        INTEGER NOT NULL DEFAULT 0,
+    feature_id      UUID REFERENCES cc_features(id) ON DELETE SET NULL,
+    target_date     DATE,
+    completed_at    TIMESTAMPTZ,
+    created_by      UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_cc_roadmap_phase ON cc_roadmap(phase);
+
+CREATE TABLE cc_changelog (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title           VARCHAR(200) NOT NULL,
+    body            TEXT,
+    version         VARCHAR(20),
+    entry_date      DATE NOT NULL DEFAULT CURRENT_DATE,
+    tags            TEXT[] DEFAULT '{}',
+    is_public       BOOLEAN NOT NULL DEFAULT false,
+    feature_ids     UUID[] DEFAULT '{}',
+    created_by      UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_cc_changelog_date ON cc_changelog(entry_date DESC);
+
+CREATE TABLE cc_docs (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title           VARCHAR(200) NOT NULL,
+    body            TEXT,
+    doc_type        VARCHAR(30) NOT NULL DEFAULT 'note'
+      CHECK (doc_type IN ('design_spec', 'marketing', 'decision', 'note', 'meeting', 'strategy')),
+    visibility      VARCHAR(20) NOT NULL DEFAULT 'admin'
+      CHECK (visibility IN ('admin', 'advisory', 'all')),
+    is_pinned       BOOLEAN NOT NULL DEFAULT false,
+    tags            TEXT[] DEFAULT '{}',
+    created_by      UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_cc_docs_type ON cc_docs(doc_type);
+CREATE INDEX idx_cc_docs_visibility ON cc_docs(visibility);
+
+CREATE TABLE cc_comments (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    parent_type     VARCHAR(20) NOT NULL
+      CHECK (parent_type IN ('feature', 'roadmap', 'changelog', 'doc')),
+    parent_id       UUID NOT NULL,
+    body            TEXT NOT NULL,
+    author_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_cc_comments_parent ON cc_comments(parent_type, parent_id);
+CREATE INDEX idx_cc_comments_author ON cc_comments(author_id);
+
+CREATE TABLE cc_votes (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    parent_type VARCHAR(20) NOT NULL CHECK (parent_type IN ('feature', 'roadmap')),
+    parent_id   UUID NOT NULL,
+    user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(parent_type, parent_id, user_id)
+);
+CREATE INDEX idx_cc_votes_parent ON cc_votes(parent_type, parent_id);
+CREATE INDEX idx_cc_votes_user ON cc_votes(user_id);
+
+CREATE TRIGGER cc_features_updated_at BEFORE UPDATE ON cc_features FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER cc_roadmap_updated_at BEFORE UPDATE ON cc_roadmap FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER cc_changelog_updated_at BEFORE UPDATE ON cc_changelog FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER cc_docs_updated_at BEFORE UPDATE ON cc_docs FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER cc_comments_updated_at BEFORE UPDATE ON cc_comments FOR EACH ROW EXECUTE FUNCTION update_updated_at();

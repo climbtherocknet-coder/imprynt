@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import '@/styles/profile.css';
 import { getTheme, getCustomTheme, getThemeCSSVars, getTemplateDataAttrs, getAccentOverrideVars, isDarkTemplate, LINK_ICONS, type CustomThemeData } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
@@ -22,8 +24,22 @@ interface ProtectedPagePreviewProps {
   photoPositionX?: number;
   photoPositionY?: number;
   photoAnimation?: string;
+  photoAlign?: string;
   profileId?: string;
   customTheme?: CustomThemeData | null;
+  coverUrl?: string;
+  coverOpacity?: number;
+  coverPositionY?: number;
+  bgImageUrl?: string;
+  bgImageOpacity?: number;
+  bgImagePositionY?: number;
+  photoZoom?: number;
+  coverPositionX?: number;
+  coverZoom?: number;
+  bgImagePositionX?: number;
+  bgImageZoom?: number;
+  linkSize?: string;
+  linkShape?: string;
 }
 
 function getPhotoStyles(shape: string, radius: number, size: string, posX: number, posY: number): React.CSSProperties {
@@ -51,7 +67,6 @@ function getPhotoStyles(shape: string, radius: number, size: string, posX: numbe
     clipPath,
     objectFit: 'cover' as const,
     objectPosition: `${posX}% ${posY}%`,
-    margin: '0 auto 0.75rem',
     display: 'block',
   };
 }
@@ -73,15 +88,34 @@ export default function ProtectedPagePreview({
   photoSize = 'medium',
   photoPositionX = 50,
   photoPositionY = 50,
+  photoAnimation,
+  photoAlign = 'center',
   profileId,
   customTheme,
+  coverUrl,
+  coverOpacity = 30,
+  coverPositionY = 50,
+  bgImageUrl,
+  bgImageOpacity = 20,
+  bgImagePositionY = 50,
+  photoZoom = 100,
+  coverPositionX = 50,
+  coverZoom = 100,
+  bgImagePositionX = 50,
+  bgImageZoom = 100,
+  linkSize = 'medium',
+  linkShape = 'pill',
 }: ProtectedPagePreviewProps) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
   const theme = template === 'custom' ? getCustomTheme(customTheme) : getTheme(template);
   const accent = accentOverride || theme.colors.accent;
   const isDark = isDarkTemplate(template);
   const cssVars = getThemeCSSVars(theme);
   const accentOverrides = accentOverride ? getAccentOverrideVars(accentOverride) : {};
   const dataAttrs = getTemplateDataAttrs(theme);
+  if (linkSize !== 'medium') dataAttrs['data-link-size'] = linkSize;
+  if (linkShape !== 'pill') dataAttrs['data-link-shape'] = linkShape;
 
   const cssVarStyle = {
     ...Object.fromEntries(
@@ -96,24 +130,72 @@ export default function ProtectedPagePreview({
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
   const isImpression = mode === 'personal';
 
+  // Close lightbox on Escape
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') setLightboxOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (lightboxOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [lightboxOpen, handleKeyDown]);
+
+  // Alignment style for photo + name section
+  const alignStyle: React.CSSProperties = {
+    textAlign: photoAlign === 'left' ? 'left' : photoAlign === 'right' ? 'right' : 'center',
+  };
+
   return (
     <div
       className={`profile-page t-${template}`}
       {...dataAttrs}
+      {...(bgImageUrl ? { 'data-has-bg': 'true' } : {})}
       style={{
         ...cssVarStyle,
         minHeight: '100%',
         backgroundColor: 'var(--bg)',
         fontFamily: 'var(--font-body)',
         color: 'var(--text)',
+        position: 'relative',
       }}
     >
-      <div style={{
-        maxWidth: 480,
-        margin: '0 auto',
-        padding: '2rem 1rem',
-        textAlign: 'center',
-      }}>
+      {/* Background Photo */}
+      {bgImageUrl && (
+        <div
+          className="profile-bg-image"
+          style={{ '--bg-overlay-opacity': `${(100 - bgImageOpacity) / 100}` } as React.CSSProperties}
+        >
+          <img
+            src={bgImageUrl}
+            alt=""
+            style={{
+              objectPosition: `${bgImagePositionX}% ${bgImagePositionY}%`,
+              transform: bgImageZoom > 100 ? `scale(${bgImageZoom / 100})` : undefined,
+            }}
+          />
+        </div>
+      )}
+
+      {/* Cover + Content */}
+      <div
+        className="profile-top"
+        {...(coverUrl ? { 'data-has-cover': 'true' } : {})}
+        style={coverUrl ? {
+          '--cover-url': `url('${coverUrl}')`,
+          '--cover-opacity': `${coverOpacity / 100}`,
+          '--cover-pos': `${coverPositionX}% ${coverPositionY}%`,
+          '--cover-zoom': coverZoom > 100 ? `${coverZoom}%` : 'cover',
+        } as React.CSSProperties : undefined}
+      >
+        <div style={{
+          maxWidth: 480,
+          margin: '0 auto',
+          padding: '2rem 1rem',
+          position: 'relative',
+          zIndex: 1,
+        }}>
         {/* Badge */}
         {isImpression && (
           <div style={{
@@ -132,35 +214,49 @@ export default function ProtectedPagePreview({
           </div>
         )}
 
-        {/* Photo */}
-        {(() => {
-          const ps = getPhotoStyles(photoShape, photoRadius, photoSize, photoPositionX, photoPositionY);
-          return photoUrl ? (
-            <img
-              src={photoUrl}
-              alt={fullName}
-              referrerPolicy="no-referrer"
-              style={ps}
-            />
-          ) : (
-            <div style={{
-              ...ps,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              backgroundColor: accent + '15', color: accent, fontSize: '1.5rem', fontWeight: 700,
-            }}>
-              {(firstName?.[0] || '').toUpperCase()}
-            </div>
-          );
-        })()}
+        {/* Photo + Name section with alignment */}
+        <div style={alignStyle} data-photo-align={photoAlign}>
+          {/* Photo */}
+          {(() => {
+            const ps = getPhotoStyles(photoShape, photoRadius, photoSize, photoPositionX, photoPositionY);
+            const marginStyle = photoAlign === 'left' ? { margin: '0 0 0.75rem' } :
+                                photoAlign === 'right' ? { margin: '0 0 0.75rem', marginLeft: 'auto' } :
+                                { margin: '0 auto 0.75rem' };
+            const zoomStyle: React.CSSProperties = photoZoom > 100 ? {
+              transform: `scale(${photoZoom / 100})`,
+              transformOrigin: `${photoPositionX}% ${photoPositionY}%`,
+            } : {};
+            return photoUrl ? (
+              <div style={{ ...marginStyle, width: ps.width, height: ps.height, overflow: 'hidden', borderRadius: ps.borderRadius, clipPath: ps.clipPath, flexShrink: 0 }}>
+                <img
+                  src={photoUrl}
+                  alt={fullName}
+                  referrerPolicy="no-referrer"
+                  className="photo-expandable"
+                  style={{ ...ps, ...zoomStyle, borderRadius: 0, clipPath: undefined, margin: 0 }}
+                  onClick={() => setLightboxOpen(true)}
+                />
+              </div>
+            ) : (
+              <div style={{
+                ...ps, ...marginStyle,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                backgroundColor: accent + '15', color: accent, fontSize: '1.5rem', fontWeight: 700,
+              }}>
+                {(firstName?.[0] || '').toUpperCase()}
+              </div>
+            );
+          })()}
 
-        {/* Name */}
-        <h1 style={{
-          fontSize: '1.5rem', fontWeight: 800, fontFamily: 'var(--font-heading)',
-          color: 'var(--text)',
-          margin: '0 0 0.25rem', letterSpacing: '-0.02em',
-        }}>
-          {fullName}
-        </h1>
+          {/* Name */}
+          <h1 style={{
+            fontSize: '1.5rem', fontWeight: 800, fontFamily: 'var(--font-heading)',
+            color: 'var(--text)',
+            margin: '0 0 0.25rem', letterSpacing: '-0.02em',
+          }}>
+            {fullName}
+          </h1>
+        </div>
 
         {/* Bio / personal message */}
         {bioText && (
@@ -168,6 +264,7 @@ export default function ProtectedPagePreview({
             fontSize: '0.925rem', lineHeight: 1.6,
             color: 'var(--text-mid)', margin: '1rem 0',
             whiteSpace: 'pre-line',
+            textAlign: photoAlign === 'left' ? 'left' : photoAlign === 'right' ? 'right' : 'center',
           }}>
             {bioText}
           </p>
@@ -251,7 +348,15 @@ export default function ProtectedPagePreview({
             ))}
           </div>
         )}
+        </div>
       </div>
+
+      {/* Photo Lightbox */}
+      {lightboxOpen && photoUrl && (
+        <div className="photo-lightbox-overlay" onClick={() => setLightboxOpen(false)}>
+          <img src={photoUrl} alt={fullName} />
+        </div>
+      )}
     </div>
   );
 }

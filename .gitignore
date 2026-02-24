@@ -32,3 +32,6 @@ pgdata/
 
 # Backups
 backups/
+
+# Database dumps
+db_production_dump.sql

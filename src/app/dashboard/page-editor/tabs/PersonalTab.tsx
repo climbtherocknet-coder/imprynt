@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import PodEditor from '@/components/pods/PodEditor';
 import ToggleSwitch from '@/components/ToggleSwitch';
 import CollapsibleSection from '@/components/ui/CollapsibleSection';
+import ImageCropper from '@/components/ui/ImageCropper';
+import GalleryPicker from '@/components/ui/GalleryPicker';
 import ProtectedPagePreview from '@/components/templates/ProtectedPagePreview';
 import type { PodData } from '@/components/pods/PodRenderer';
 import type { PlanStatusClient } from '../PageEditor';
@@ -82,6 +84,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [isDirty, setIsDirty] = useState(false);
 
   // Page state
   const [page, setPage] = useState<PageData | null>(null);
@@ -124,11 +127,30 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
   const [photoPositionX, setPhotoPositionX] = useState(50);
   const [photoPositionY, setPhotoPositionY] = useState(50);
   const [photoAnimation, setPhotoAnimation] = useState('none');
+  const [photoAlign, setPhotoAlign] = useState('center');
   const [showPhotoSettings, setShowPhotoSettings] = useState(false);
   const [showShapeSlider, setShowShapeSlider] = useState(false);
-  const [photoSettingsSaving, setPhotoSettingsSaving] = useState(false);
-  const [photoSettingsSaved, setPhotoSettingsSaved] = useState(false);
   const isPaid = planStatus.isPaid;
+
+  // Cover & background photo (per-page)
+  const [coverUrl, setCoverUrl] = useState('');
+  const [coverOpacity, setCoverOpacity] = useState(30);
+  const [coverPositionY, setCoverPositionY] = useState(50);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
+  const [bgImageUrl, setBgImageUrl] = useState('');
+  const [bgImageOpacity, setBgImageOpacity] = useState(20);
+  const [bgImagePositionY, setBgImagePositionY] = useState(50);
+  const [bgImageUploading, setBgImageUploading] = useState(false);
+  const bgImageFileInputRef = useRef<HTMLInputElement>(null);
+  const [photoZoom, setPhotoZoom] = useState(100);
+  const [coverPositionX, setCoverPositionX] = useState(50);
+  const [coverZoom, setCoverZoom] = useState(100);
+  const [bgImagePositionX, setBgImagePositionX] = useState(50);
+  const [bgImageZoom, setBgImageZoom] = useState(100);
+  const [showGallery, setShowGallery] = useState<'cover' | 'background' | null>(null);
+  const [linkSize, setLinkSize] = useState('medium');
+  const [linkShape, setLinkShape] = useState('pill');
 
   // Creating vs editing
   const [isNew, setIsNew] = useState(true);
@@ -170,6 +192,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           photoAnimation: d.profile.photoAnimation || 'none',
           profileId: d.profile.id || '',
         });
+        // Set profile photo settings as defaults (will be overridden by page data if it exists)
         setPhotoShape(d.profile.photoShape || 'circle');
         const r = d.profile.photoRadius;
         if (r != null) setPhotoRadius(r);
@@ -198,6 +221,32 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           setAllowRemember(p.allowRemember !== false);
           setPhotoUrl(p.photoUrl || '');
           setPhotoMode(p.photoUrl ? 'custom' : 'profile');
+          // Load per-page photo settings (override profile defaults)
+          if (p.photoShape) setPhotoShape(p.photoShape);
+          if (p.photoRadius != null) setPhotoRadius(p.photoRadius);
+          else {
+            const map: Record<string, number> = { circle: 50, rounded: 32, soft: 16, square: 0 };
+            setPhotoRadius(map[p.photoShape] ?? 50);
+          }
+          if (p.photoSize) setPhotoSize(p.photoSize);
+          if (p.photoPositionX != null) setPhotoPositionX(p.photoPositionX);
+          if (p.photoPositionY != null) setPhotoPositionY(p.photoPositionY);
+          if (p.photoAnimation) setPhotoAnimation(p.photoAnimation);
+          if (p.photoAlign) setPhotoAlign(p.photoAlign);
+          // Load per-page cover/bg settings
+          setCoverUrl(p.coverUrl || '');
+          setCoverOpacity(p.coverOpacity ?? 30);
+          setCoverPositionY(p.coverPositionY ?? 50);
+          setBgImageUrl(p.bgImageUrl || '');
+          setBgImageOpacity(p.bgImageOpacity ?? 20);
+          setBgImagePositionY(p.bgImagePositionY ?? 50);
+          setPhotoZoom(p.photoZoom ?? 100);
+          setCoverPositionX(p.coverPositionX ?? 50);
+          setCoverZoom(p.coverZoom ?? 100);
+          setBgImagePositionX(p.bgImagePositionX ?? 50);
+          setBgImageZoom(p.bgImageZoom ?? 100);
+          setLinkSize(p.linkSize || 'medium');
+          setLinkShape(p.linkShape || 'pill');
           setIsNew(false);
         }
         setLoading(false);
@@ -259,6 +308,14 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           iconCorner,
           allowRemember,
           photoUrl: photoMode === 'custom' ? photoUrl : '',
+          // Per-page photo settings
+          photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize,
+          photoPositionX, photoPositionY, photoAnimation, photoAlign,
+          // Per-page cover/bg
+          coverUrl: coverUrl || null, coverOpacity, coverPositionY,
+          bgImageUrl: bgImageUrl || null, bgImageOpacity, bgImagePositionY,
+          photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom,
+          linkSize, linkShape,
         };
         if (pin) body.pin = pin;
 
@@ -276,36 +333,54 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
       }
 
       setSaved(true);
+      setIsDirty(false);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
       setSaving(false);
     }
-  }, [isNew, page, pageTitle, bioText, pin, pinConfirm, isActive, iconColor, iconOpacity, iconCorner, allowRemember, photoMode, photoUrl]);
+  }, [isNew, page, pageTitle, bioText, pin, pinConfirm, isActive, iconColor, iconOpacity, iconCorner, allowRemember, photoMode, photoUrl, photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, coverUrl, coverOpacity, coverPositionY, bgImageUrl, bgImageOpacity, bgImagePositionY, photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom, linkSize, linkShape]);
 
-  // Save photo settings to profile
-  async function savePhotoSettings() {
-    setPhotoSettingsSaving(true);
-    setPhotoSettingsSaved(false);
+  // Cover photo upload
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverUploading(true);
     setError('');
     try {
-      const res = await fetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          section: 'appearance',
-          photoShape, photoRadius, photoSize,
-          photoPositionX, photoPositionY, photoAnimation,
-        }),
-      });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to save'); }
-      setPhotoSettingsSaved(true);
-      setTimeout(() => setPhotoSettingsSaved(false), 2000);
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload/file', { method: 'POST', body: formData });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Upload failed'); }
+      const { url } = await res.json();
+      setCoverUrl(url);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save photo settings');
+      setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
-      setPhotoSettingsSaving(false);
+      setCoverUploading(false);
+      if (coverFileInputRef.current) coverFileInputRef.current.value = '';
+    }
+  }
+
+  // Background photo upload
+  async function handleBgImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBgImageUploading(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload/file', { method: 'POST', body: formData });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Upload failed'); }
+      const { url } = await res.json();
+      setBgImageUrl(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setBgImageUploading(false);
+      if (bgImageFileInputRef.current) bgImageFileInputRef.current.value = '';
     }
   }
 
@@ -331,8 +406,8 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
     }
   }
 
-  const handlePodsChange = useCallback((updatedPods: { id: string; podType: string; label: string; title: string; body: string; imageUrl: string; stats: { num: string; label: string }[]; ctaLabel: string; ctaUrl: string; tags?: string; imagePosition?: string }[]) => {
-    setPreviewPods(updatedPods.map(p => ({
+  const handlePodsChange = useCallback((updatedPods: { id: string; isActive: boolean; podType: string; label: string; title: string; body: string; imageUrl: string; stats: { num: string; label: string }[]; ctaLabel: string; ctaUrl: string; tags?: string; imagePosition?: string }[]) => {
+    setPreviewPods(updatedPods.filter(p => p.isActive).map(p => ({
       id: p.id, podType: p.podType, label: p.label, title: p.title, body: p.body,
       imageUrl: p.imageUrl, stats: p.stats, ctaLabel: p.ctaLabel, ctaUrl: p.ctaUrl,
       tags: p.tags || '', imagePosition: p.imagePosition || 'left',
@@ -359,6 +434,20 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
         photoPositionX={photoPositionX}
         photoPositionY={photoPositionY}
         photoAnimation={photoAnimation}
+        photoAlign={photoAlign}
+        coverUrl={coverUrl || undefined}
+        coverOpacity={coverOpacity}
+        coverPositionY={coverPositionY}
+        bgImageUrl={bgImageUrl || undefined}
+        bgImageOpacity={bgImageOpacity}
+        bgImagePositionY={bgImagePositionY}
+        photoZoom={photoZoom}
+        coverPositionX={coverPositionX}
+        coverZoom={coverZoom}
+        bgImagePositionX={bgImagePositionX}
+        bgImageZoom={bgImageZoom}
+        linkSize={linkSize}
+        linkShape={linkShape}
       />
     );
   }
@@ -397,7 +486,24 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
       )}
 
       <div className="editor-split">
-      <main className="editor-panel" style={{ paddingBottom: '4rem' }}>
+      <main className="editor-panel" style={{ paddingBottom: '4rem' }} onChangeCapture={() => setIsDirty(true)} onClickCapture={(e) => { const t = e.target as HTMLElement; if (t.tagName === 'BUTTON' && !t.closest('[data-save-bar]')) setIsDirty(true); }}>
+
+        {/* ─── Sticky Save Bar ────────── */}
+        {!isNew && (
+          <div data-save-bar style={{ position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--bg, #0c1017)', padding: '0.75rem 0', borderBottom: '1px solid var(--border, #1e2535)', marginBottom: '1rem' }}>
+            {isDirty && !saving && !saved && (
+              <span style={{ fontSize: '0.6875rem', color: 'var(--accent, #e8a849)', marginRight: 'auto' }}>Unsaved changes</span>
+            )}
+            <button
+              data-save-bar
+              onClick={savePage}
+              disabled={saving}
+              style={{ padding: '0.5rem 1.25rem', fontSize: '0.8125rem', fontWeight: 600, borderRadius: '0.5rem', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', backgroundColor: saved ? '#059669' : isDirty ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)', color: saved ? '#fff' : 'var(--bg, #0c1017)', opacity: saving ? 0.6 : 1, transition: 'background-color 0.2s' }}
+            >
+              {saving ? 'Saving...' : saved ? '\u2713 Saved' : 'Save Changes'}
+            </button>
+          </div>
+        )}
 
         {/* ─── Info Box (consolidated) ────────────── */}
         <div style={{ marginBottom: '1.25rem', padding: '1.25rem', backgroundColor: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
@@ -460,14 +566,16 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
           </a>
 
-          {/* Save Changes */}
-          <button
-            onClick={savePage}
-            disabled={saving}
-            style={{ padding: '0.875rem 1rem', borderRadius: '0.625rem', backgroundColor: 'var(--accent, #e8a849)', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: '#fff', fontFamily: 'inherit', opacity: saving ? 0.6 : 1, transition: 'opacity 0.15s' }}
-          >
-            {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Personal Page' : 'Save Changes'}
-          </button>
+          {/* Create button only shown for new pages; Save moved to sticky bar */}
+          {isNew && (
+            <button
+              onClick={savePage}
+              disabled={saving}
+              style={{ padding: '0.875rem 1rem', borderRadius: '0.625rem', backgroundColor: 'var(--accent, #e8a849)', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: '#fff', fontFamily: 'inherit', opacity: saving ? 0.6 : 1, transition: 'opacity 0.15s' }}
+            >
+              {saving ? 'Creating...' : 'Create Personal Page'}
+            </button>
+          )}
         </div>
 
         {/* ─── Always-visible: Page title + message ── */}
@@ -497,10 +605,10 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           </div>
         </div>
 
-        {/* ─── Photo & Icon Settings (only after created) ── */}
+        {/* ─── Visuals (only after created) ── */}
         {!isNew && (
-          <CollapsibleSection title="Photo & Icon Settings">
-            {/* Impression-specific photo */}
+          <CollapsibleSection title="Visuals">
+            {/* ── Profile Photo ── */}
             <div>
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
                 Optionally use a different photo for your Personal page.
@@ -534,10 +642,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
               </div>
 
               {photoMode === 'custom' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  {photoUrl && (
-                    <img src={photoUrl} alt="Personal" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-light, #283042)' }} />
-                  )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
                   <button
                     onClick={() => photoRef.current?.click()}
                     disabled={photoUploading}
@@ -547,7 +652,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                       cursor: photoUploading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: 'var(--text, #eceef2)',
                     }}
                   >
-                    {photoUploading ? 'Uploading...' : photoUrl ? 'Change' : 'Upload photo'}
+                    {photoUploading ? 'Uploading...' : photoUrl ? 'Replace' : 'Upload photo'}
                   </button>
                   {photoUrl && (
                     <button
@@ -563,6 +668,23 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                   )}
                   <input ref={photoRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoUpload} style={{ display: 'none' }} />
                 </div>
+              )}
+              <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.75rem' }}>
+                JPEG, PNG, or WebP. Max 10MB.
+              </p>
+
+              {(photoMode === 'custom' ? photoUrl : profileData?.photoUrl) && (
+                <ImageCropper
+                  src={(photoMode === 'custom' && photoUrl) ? photoUrl : (profileData?.photoUrl || '')}
+                  frameShape="circle"
+                  positionX={photoPositionX}
+                  positionY={photoPositionY}
+                  zoom={photoZoom}
+                  onPositionChange={(x, y) => { setPhotoPositionX(x); setPhotoPositionY(y); }}
+                  onZoomChange={setPhotoZoom}
+                  photoShape={photoShape}
+                  photoRadius={photoRadius}
+                />
               )}
             </div>
 
@@ -686,29 +808,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                     )}
                   </div>
 
-                  {/* Position display */}
-                  <div style={{ marginBottom: '0.75rem' }}>
-                    <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Position</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-mid, #a8adb8)' }}>X: {photoPositionX}%</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-mid, #a8adb8)' }}>Y: {photoPositionY}%</span>
-                      {(photoPositionX !== 50 || photoPositionY !== 50) && (
-                        <button
-                          onClick={() => { setPhotoPositionX(50); setPhotoPositionY(50); }}
-                          style={{
-                            background: 'none', border: '1px solid var(--border-light, #283042)', borderRadius: '0.25rem',
-                            fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', cursor: 'pointer', padding: '0.125rem 0.375rem', fontFamily: 'inherit',
-                          }}
-                        >
-                          Reset
-                        </button>
-                      )}
-                    </div>
-                    <p style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', margin: '0.25rem 0 0' }}>
-                      Drag the photo on your profile editor to reposition.
-                    </p>
-                  </div>
-
                   {/* Animation picker */}
                   <div style={{ marginBottom: '0.75rem' }}>
                     <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Animation</label>
@@ -747,30 +846,284 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                     </div>
                   </div>
 
-                  {/* Save photo settings */}
-                  <button
-                    onClick={savePhotoSettings}
-                    disabled={photoSettingsSaving}
-                    style={{
-                      padding: '0.375rem 1rem',
-                      backgroundColor: photoSettingsSaved ? '#22c55e' : 'var(--accent, #e8a849)',
-                      color: 'var(--bg, #0c1017)',
-                      border: 'none', borderRadius: '2rem',
-                      fontSize: '0.75rem', fontWeight: 600,
-                      cursor: photoSettingsSaving ? 'not-allowed' : 'pointer',
-                      fontFamily: 'inherit', opacity: photoSettingsSaving ? 0.6 : 1,
-                      transition: 'background-color 0.2s',
-                    }}
-                  >
-                    {photoSettingsSaving ? 'Saving...' : photoSettingsSaved ? 'Saved!' : 'Save Photo Settings'}
-                  </button>
+                  {/* Photo alignment -- 3 buttons */}
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: '0.375rem' }}>Photo Alignment</label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      {([['left', 'Left', 'M4 6h6M4 10h8M4 14h6M4 18h4'], ['center', 'Center', 'M4 6h16M6 10h12M4 14h16M6 18h12'], ['right', 'Right', 'M14 6h6M12 10h8M14 14h6M16 18h4']] as [string, string, string][]).map(([val, label, iconPath]) => {
+                        const isActive = photoAlign === val;
+                        return (
+                          <button
+                            key={val}
+                            onClick={() => setPhotoAlign(val)}
+                            style={{
+                              flex: 1,
+                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem',
+                              padding: '0.5rem 0.25rem',
+                              borderRadius: '0.5rem',
+                              border: isActive ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                              backgroundColor: isActive ? 'rgba(232, 168, 73, 0.08)' : 'var(--surface, #161c28)',
+                              color: isActive ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                              cursor: 'pointer', fontFamily: 'inherit',
+                              transition: 'all 0.15s',
+                            }}
+                          >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                              <path d={iconPath} />
+                            </svg>
+                            <span style={{ fontSize: '0.625rem', fontWeight: 600 }}>{label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', margin: '0.5rem 0 0', fontStyle: 'italic' }}>
+                    Photo settings save with the main &ldquo;Save Changes&rdquo; button above.
+                  </p>
                 </>)}
               </div>
             </div>
 
-            {/* ── Hidden Tap Icon ── */}
-            <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '1rem', marginTop: '1rem' }}>
-              <label style={{ ...labelStyle, fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Hidden Tap Icon</label>
+            <div style={{ borderTop: '1px solid var(--border, #1e2535)', margin: '1.25rem 0' }} />
+
+            {/* ── Cover Photo ── */}
+            <CollapsibleSection title="Cover Photo" flat defaultOpen={!!coverUrl}>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <button
+                  onClick={() => coverFileInputRef.current?.click()}
+                  disabled={!isPaid || coverUploading}
+                  style={{
+                    padding: '0.375rem 0.75rem',
+                    backgroundColor: 'var(--border, #1e2535)',
+                    border: '1px solid var(--border-light, #283042)',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 500,
+                    cursor: !isPaid || coverUploading ? 'not-allowed' : 'pointer',
+                    fontFamily: 'inherit',
+                    color: isPaid ? 'var(--text, #eceef2)' : 'var(--text-muted, #5d6370)',
+                    opacity: isPaid ? 1 : 0.6,
+                  }}
+                >
+                  {coverUploading ? 'Uploading...' : coverUrl ? 'Replace' : 'Upload'}
+                </button>
+                {coverUrl && (
+                  <button
+                    onClick={() => setCoverUrl('')}
+                    style={{
+                      padding: '0.375rem 0.75rem',
+                      backgroundColor: 'transparent',
+                      border: '1px solid var(--border-light, #283042)',
+                      borderRadius: '0.375rem',
+                      fontSize: '0.8125rem',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      color: 'var(--text-muted, #5d6370)',
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowGallery('cover')}
+                  disabled={!isPaid}
+                  style={{
+                    padding: '0.375rem 0.75rem',
+                    backgroundColor: 'transparent',
+                    border: '1px solid var(--border-light, #283042)',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 500,
+                    cursor: isPaid ? 'pointer' : 'not-allowed',
+                    fontFamily: 'inherit',
+                    color: isPaid ? 'var(--text-mid, #a8adb8)' : 'var(--text-muted, #5d6370)',
+                    opacity: isPaid ? 1 : 0.6,
+                  }}
+                >
+                  Browse Gallery
+                </button>
+              </div>
+              {coverUrl && (
+                <ImageCropper
+                  src={coverUrl}
+                  frameShape="banner"
+                  positionX={coverPositionX}
+                  positionY={coverPositionY}
+                  zoom={coverZoom}
+                  onPositionChange={(x, y) => { setCoverPositionX(x); setCoverPositionY(y); }}
+                  onZoomChange={setCoverZoom}
+                />
+              )}
+              {coverUrl && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Opacity</label>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{coverOpacity}%</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Subtle</span>
+                    <input type="range" min={10} max={100} value={coverOpacity} onChange={e => setCoverOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }} />
+                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Bold</span>
+                  </div>
+                </div>
+              )}
+              <input ref={coverFileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleCoverUpload} style={{ display: 'none' }} />
+            </CollapsibleSection>
+
+            <div style={{ borderTop: '1px solid var(--border, #1e2535)', margin: '1.25rem 0' }} />
+
+            {/* ── Background Photo ── */}
+            <CollapsibleSection title="Background Photo" flat defaultOpen={!!bgImageUrl}>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <button
+                  onClick={() => bgImageFileInputRef.current?.click()}
+                  disabled={!isPaid || bgImageUploading}
+                  style={{
+                    padding: '0.375rem 0.75rem',
+                    backgroundColor: 'var(--border, #1e2535)',
+                    border: '1px solid var(--border-light, #283042)',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 500,
+                    cursor: !isPaid || bgImageUploading ? 'not-allowed' : 'pointer',
+                    fontFamily: 'inherit',
+                    color: isPaid ? 'var(--text, #eceef2)' : 'var(--text-muted, #5d6370)',
+                    opacity: isPaid ? 1 : 0.6,
+                  }}
+                >
+                  {bgImageUploading ? 'Uploading...' : bgImageUrl ? 'Replace' : 'Upload'}
+                </button>
+                {bgImageUrl && (
+                  <button
+                    onClick={() => setBgImageUrl('')}
+                    style={{
+                      padding: '0.375rem 0.75rem',
+                      backgroundColor: 'transparent',
+                      border: '1px solid var(--border-light, #283042)',
+                      borderRadius: '0.375rem',
+                      fontSize: '0.8125rem',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      color: 'var(--text-muted, #5d6370)',
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowGallery('background')}
+                  disabled={!isPaid}
+                  style={{
+                    padding: '0.375rem 0.75rem',
+                    backgroundColor: 'transparent',
+                    border: '1px solid var(--border-light, #283042)',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 500,
+                    cursor: isPaid ? 'pointer' : 'not-allowed',
+                    fontFamily: 'inherit',
+                    color: isPaid ? 'var(--text-mid, #a8adb8)' : 'var(--text-muted, #5d6370)',
+                    opacity: isPaid ? 1 : 0.6,
+                  }}
+                >
+                  Browse Gallery
+                </button>
+              </div>
+              {bgImageUrl && (
+                <ImageCropper
+                  src={bgImageUrl}
+                  frameShape="portrait"
+                  positionX={bgImagePositionX}
+                  positionY={bgImagePositionY}
+                  zoom={bgImageZoom}
+                  onPositionChange={(x, y) => { setBgImagePositionX(x); setBgImagePositionY(y); }}
+                  onZoomChange={setBgImageZoom}
+                />
+              )}
+              {bgImageUrl && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Visibility</label>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{bgImageOpacity}%</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Subtle</span>
+                    <input type="range" min={5} max={100} value={bgImageOpacity} onChange={e => setBgImageOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }} />
+                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Bold</span>
+                  </div>
+                </div>
+              )}
+              <input ref={bgImageFileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleBgImageUpload} style={{ display: 'none' }} />
+            </CollapsibleSection>
+
+            {/* Gallery picker modal */}
+            {showGallery && (
+              <GalleryPicker
+                category={showGallery}
+                onSelect={(url) => {
+                  if (showGallery === 'cover') setCoverUrl(url);
+                  else setBgImageUrl(url);
+                  setShowGallery(null);
+                }}
+                onClose={() => setShowGallery(null)}
+              />
+            )}
+          </CollapsibleSection>
+        )}
+
+        {/* ─── Link Buttons (only after created) ── */}
+        {!isNew && (
+          <CollapsibleSection title="Link Buttons">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.5rem' }}>
+              <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', marginRight: '0.125rem' }}>Size:</span>
+              {(['small', 'medium', 'large'] as const).map(sz => (
+                <button
+                  key={sz}
+                  onClick={() => setLinkSize(sz)}
+                  style={{
+                    padding: '0.25rem 0.625rem', borderRadius: '9999px', fontSize: '0.6875rem',
+                    fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                    border: linkSize === sz ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                    backgroundColor: linkSize === sz ? 'rgba(232,168,73,0.1)' : 'var(--surface, #161c28)',
+                    color: linkSize === sz ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {sz.charAt(0).toUpperCase() + sz.slice(1)}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', marginRight: '0.125rem' }}>Shape:</span>
+              {(['pill', 'rounded', 'square'] as const).map(sh => (
+                <button
+                  key={sh}
+                  onClick={() => setLinkShape(sh)}
+                  style={{
+                    padding: '0.25rem 0.625rem', borderRadius: '9999px', fontSize: '0.6875rem',
+                    fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                    border: linkShape === sh ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                    backgroundColor: linkShape === sh ? 'rgba(232,168,73,0.1)' : 'var(--surface, #161c28)',
+                    color: linkShape === sh ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {sh.charAt(0).toUpperCase() + sh.slice(1)}
+                </button>
+              ))}
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0.5rem 0 0' }}>
+              These settings are independent per page.
+            </p>
+          </CollapsibleSection>
+        )}
+
+        {/* ─── Hidden Tap Icon (only after created) ── */}
+        {!isNew && (
+          <CollapsibleSection title="Hidden Tap Icon">
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
                 Customize the circle-dot icon on your public profile. Only those you tell will know to tap it.
               </p>
@@ -815,7 +1168,6 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                   ))}
                 </div>
               </div>
-            </div>
           </CollapsibleSection>
         )}
 

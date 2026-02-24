@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import PodEditor from '@/components/pods/PodEditor';
 import ToggleSwitch from '@/components/ToggleSwitch';
 import CollapsibleSection from '@/components/ui/CollapsibleSection';
+import ImageCropper from '@/components/ui/ImageCropper';
+import GalleryPicker from '@/components/ui/GalleryPicker';
 import ProtectedPagePreview from '@/components/templates/ProtectedPagePreview';
 import type { PodData } from '@/components/pods/PodRenderer';
 import type { PlanStatusClient } from '../PageEditor';
@@ -87,6 +89,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [isDirty, setIsDirty] = useState(false);
   const [startingTrial, setStartingTrial] = useState(false);
 
   // Profile slug for preview
@@ -116,15 +119,47 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
 
   // Personal page icon color (shared across tabs)
   const [personalIconColor, setPersonalIconColor] = useState('');
+  const isPaid = planStatus.isPaid;
 
   // Profile data for preview
   const [profileData, setProfileData] = useState<{
     firstName: string; lastName: string; photoUrl: string;
     template: string; accentColor: string;
-    photoShape: string; photoRadius: number; photoSize: string;
-    photoPositionX: number; photoPositionY: number;
   } | null>(null);
   const [previewPods, setPreviewPods] = useState<PodData[]>([]);
+
+  // Per-page photo settings (independent from profile)
+  const [photoShape, setPhotoShape] = useState('circle');
+  const [photoRadius, setPhotoRadius] = useState(50);
+  const [photoSize, setPhotoSize] = useState('medium');
+  const [photoPositionX, setPhotoPositionX] = useState(50);
+  const [photoPositionY, setPhotoPositionY] = useState(50);
+  const [photoAnimation, setPhotoAnimation] = useState('none');
+  const [photoAlign, setPhotoAlign] = useState('center');
+  const [showPhotoSettings, setShowPhotoSettings] = useState(false);
+  const [showShapeSlider, setShowShapeSlider] = useState(false);
+
+  // Cover & background photo (per-page)
+  const [coverUrl, setCoverUrl] = useState('');
+  const [coverOpacity, setCoverOpacity] = useState(30);
+  const [coverPositionY, setCoverPositionY] = useState(50);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
+  const [bgImageUrl, setBgImageUrl] = useState('');
+  const [bgImageOpacity, setBgImageOpacity] = useState(20);
+  const [bgImagePositionY, setBgImagePositionY] = useState(50);
+  const [bgImageUploading, setBgImageUploading] = useState(false);
+  const bgImageFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Zoom state (migration 041)
+  const [photoZoom, setPhotoZoom] = useState(100);
+  const [coverPositionX, setCoverPositionX] = useState(50);
+  const [coverZoom, setCoverZoom] = useState(100);
+  const [bgImagePositionX, setBgImagePositionX] = useState(50);
+  const [bgImageZoom, setBgImageZoom] = useState(100);
+  const [showGallery, setShowGallery] = useState<'cover' | 'background' | null>(null);
+  const [linkSize, setLinkSize] = useState('medium');
+  const [linkShape, setLinkShape] = useState('pill');
 
   // Resume upload
   const [resumeUploading, setResumeUploading] = useState(false);
@@ -150,12 +185,19 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
           photoUrl: d.profile.photoUrl || '',
           template: currentTemplate || d.profile.template || 'clean',
           accentColor: currentAccentColor !== undefined ? currentAccentColor : (d.profile.accentColor || ''),
-          photoShape: d.profile.photoShape || 'circle',
-          photoRadius: d.profile.photoRadius ?? 50,
-          photoSize: d.profile.photoSize || 'medium',
-          photoPositionX: d.profile.photoPositionX ?? 50,
-          photoPositionY: d.profile.photoPositionY ?? 50,
         });
+        // Set profile photo settings as defaults (overridden by page data if it exists)
+        setPhotoShape(d.profile.photoShape || 'circle');
+        const r = d.profile.photoRadius;
+        if (r != null) setPhotoRadius(r);
+        else {
+          const map: Record<string, number> = { circle: 50, rounded: 32, soft: 16, square: 0 };
+          setPhotoRadius(map[d.profile.photoShape] ?? 50);
+        }
+        setPhotoSize(d.profile.photoSize || 'medium');
+        setPhotoPositionX(d.profile.photoPositionX ?? 50);
+        setPhotoPositionY(d.profile.photoPositionY ?? 50);
+        setPhotoAnimation(d.profile.photoAnimation || 'none');
       }
     }).catch(() => {});
     fetch('/api/protected-pages?mode=visible')
@@ -171,6 +213,32 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
           setShowResume(p.showResume !== false);
           setIsActive(p.isActive);
           setAllowRemember(p.allowRemember !== false);
+          // Load per-page photo settings (override profile defaults)
+          if (p.photoShape) setPhotoShape(p.photoShape);
+          if (p.photoRadius != null) setPhotoRadius(p.photoRadius);
+          else {
+            const map: Record<string, number> = { circle: 50, rounded: 32, soft: 16, square: 0 };
+            setPhotoRadius(map[p.photoShape] ?? 50);
+          }
+          if (p.photoSize) setPhotoSize(p.photoSize);
+          if (p.photoPositionX != null) setPhotoPositionX(p.photoPositionX);
+          if (p.photoPositionY != null) setPhotoPositionY(p.photoPositionY);
+          if (p.photoAnimation) setPhotoAnimation(p.photoAnimation);
+          if (p.photoAlign) setPhotoAlign(p.photoAlign);
+          // Load per-page cover/bg
+          setCoverUrl(p.coverUrl || '');
+          setCoverOpacity(p.coverOpacity ?? 30);
+          setCoverPositionY(p.coverPositionY ?? 50);
+          setBgImageUrl(p.bgImageUrl || '');
+          setBgImageOpacity(p.bgImageOpacity ?? 20);
+          setBgImagePositionY(p.bgImagePositionY ?? 50);
+          setPhotoZoom(p.photoZoom ?? 100);
+          setCoverPositionX(p.coverPositionX ?? 50);
+          setCoverZoom(p.coverZoom ?? 100);
+          setBgImagePositionX(p.bgImagePositionX ?? 50);
+          setBgImageZoom(p.bgImageZoom ?? 100);
+          setLinkSize(p.linkSize || 'medium');
+          setLinkShape(p.linkShape || 'pill');
           setIsNew(false);
         }
       })
@@ -238,6 +306,14 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
           showResume,
           isActive,
           allowRemember,
+          // Per-page photo settings
+          photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize,
+          photoPositionX, photoPositionY, photoAnimation, photoAlign,
+          // Per-page cover/bg
+          coverUrl: coverUrl || null, coverOpacity, coverPositionY,
+          bgImageUrl: bgImageUrl || null, bgImageOpacity, bgImagePositionY,
+          photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom,
+          linkSize, linkShape,
         };
         if (pin) body.pin = pin;
 
@@ -255,13 +331,14 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
       }
 
       setSaved(true);
+      setIsDirty(false);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
       setSaving(false);
     }
-  }, [isNew, page, pageTitle, buttonLabel, bioText, resumeUrl, showResume, pin, pinConfirm, isActive, allowRemember]);
+  }, [isNew, page, pageTitle, buttonLabel, bioText, resumeUrl, showResume, pin, pinConfirm, isActive, allowRemember, photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, coverUrl, coverOpacity, coverPositionY, bgImageUrl, bgImageOpacity, bgImagePositionY, photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom, linkSize, linkShape]);
 
   // Resume upload
   async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -281,6 +358,48 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
     } finally {
       setResumeUploading(false);
       if (resumeRef.current) resumeRef.current.value = '';
+    }
+  }
+
+  // Cover photo upload
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverUploading(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload/file', { method: 'POST', body: formData });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Upload failed'); }
+      const { url } = await res.json();
+      setCoverUrl(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setCoverUploading(false);
+      if (coverFileInputRef.current) coverFileInputRef.current.value = '';
+    }
+  }
+
+  // Background photo upload
+  async function handleBgImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBgImageUploading(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload/file', { method: 'POST', body: formData });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Upload failed'); }
+      const { url } = await res.json();
+      setBgImageUrl(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setBgImageUploading(false);
+      if (bgImageFileInputRef.current) bgImageFileInputRef.current.value = '';
     }
   }
 
@@ -320,11 +439,26 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
         pods={previewPods}
         resumeUrl={resumeUrl}
         showResume={showResume}
-        photoShape={profileData.photoShape}
-        photoRadius={profileData.photoRadius}
-        photoSize={profileData.photoSize}
-        photoPositionX={profileData.photoPositionX}
-        photoPositionY={profileData.photoPositionY}
+        photoShape={photoShape}
+        photoRadius={photoRadius}
+        photoSize={photoSize}
+        photoPositionX={photoPositionX}
+        photoPositionY={photoPositionY}
+        photoAnimation={photoAnimation}
+        photoAlign={photoAlign}
+        coverUrl={coverUrl || undefined}
+        coverOpacity={coverOpacity}
+        coverPositionY={coverPositionY}
+        bgImageUrl={bgImageUrl || undefined}
+        bgImageOpacity={bgImageOpacity}
+        bgImagePositionY={bgImagePositionY}
+        photoZoom={photoZoom}
+        coverPositionX={coverPositionX}
+        coverZoom={coverZoom}
+        bgImagePositionX={bgImagePositionX}
+        bgImageZoom={bgImageZoom}
+        linkSize={linkSize}
+        linkShape={linkShape}
       />
     );
   }
@@ -360,7 +494,24 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
       )}
 
       <div className="editor-split">
-      <main className="editor-panel" style={{ paddingBottom: '4rem' }}>
+      <main className="editor-panel" style={{ paddingBottom: '4rem' }} onChangeCapture={() => setIsDirty(true)} onClickCapture={(e) => { const t = e.target as HTMLElement; if (t.tagName === 'BUTTON' && !t.closest('[data-save-bar]')) setIsDirty(true); }}>
+
+        {/* ─── Sticky Save Bar ────────── */}
+        {!isNew && (
+          <div data-save-bar style={{ position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--bg, #0c1017)', padding: '0.75rem 0', borderBottom: '1px solid var(--border, #1e2535)', marginBottom: '1rem' }}>
+            {isDirty && !saving && !saved && (
+              <span style={{ fontSize: '0.6875rem', color: 'var(--accent, #e8a849)', marginRight: 'auto' }}>Unsaved changes</span>
+            )}
+            <button
+              data-save-bar
+              onClick={savePage}
+              disabled={saving}
+              style={{ padding: '0.5rem 1.25rem', fontSize: '0.8125rem', fontWeight: 600, borderRadius: '0.5rem', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', backgroundColor: saved ? '#059669' : isDirty ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)', color: saved ? '#fff' : 'var(--bg, #0c1017)', opacity: saving ? 0.6 : 1, transition: 'background-color 0.2s' }}
+            >
+              {saving ? 'Saving...' : saved ? '\u2713 Saved' : 'Save Changes'}
+            </button>
+          </div>
+        )}
 
         {/* ─── Info Box (consolidated) ────────────── */}
         <div style={{ marginBottom: '1.25rem', padding: '1.25rem', backgroundColor: 'var(--surface, #161c28)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
@@ -421,14 +572,16 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
           </a>
 
-          {/* Save Changes */}
-          <button
-            onClick={savePage}
-            disabled={saving}
-            style={{ padding: '0.875rem 1rem', borderRadius: '0.625rem', backgroundColor: 'var(--accent, #e8a849)', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: '#fff', fontFamily: 'inherit', opacity: saving ? 0.6 : 1, transition: 'opacity 0.15s' }}
-          >
-            {saving ? 'Saving...' : saved ? '✓ Saved' : isNew ? 'Create Portfolio' : 'Save Changes'}
-          </button>
+          {/* Create button only shown for new pages; Save moved to sticky bar */}
+          {isNew && (
+            <button
+              onClick={savePage}
+              disabled={saving}
+              style={{ padding: '0.875rem 1rem', borderRadius: '0.625rem', backgroundColor: 'var(--accent, #e8a849)', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: '#fff', fontFamily: 'inherit', opacity: saving ? 0.6 : 1, transition: 'opacity 0.15s' }}
+            >
+              {saving ? 'Creating...' : 'Create Portfolio'}
+            </button>
+          )}
         </div>
 
         {/* ─── Always-visible: Page title + button label ── */}
@@ -509,6 +662,450 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
             )}
           </div>
         </CollapsibleSection>
+
+        {/* ─── Visuals (only after created) ─── */}
+        {!isNew && (
+          <CollapsibleSection title="Visuals">
+            {/* ── Profile Photo ── */}
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.75rem' }}>
+              Your profile photo is shared across all pages. Crop and position it here for this page.
+            </p>
+
+            {profileData?.photoUrl && (
+              <ImageCropper
+                src={profileData.photoUrl}
+                frameShape="circle"
+                positionX={photoPositionX}
+                positionY={photoPositionY}
+                zoom={photoZoom}
+                onPositionChange={(x, y) => { setPhotoPositionX(x); setPhotoPositionY(y); }}
+                onZoomChange={setPhotoZoom}
+                photoShape={photoShape}
+                photoRadius={photoRadius}
+              />
+            )}
+
+            {/* ── Photo Settings (collapsible) ── */}
+            <div style={{ marginBottom: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem', border: '1px solid var(--border, #1e2535)' }}>
+              <div
+                onClick={() => setShowPhotoSettings(!showPhotoSettings)}
+                className="collapsible-header"
+              >
+                <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', transition: 'transform 0.2s', transform: showPhotoSettings ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
+                <label style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>Photo Settings</label>
+              </div>
+
+              {showPhotoSettings && (<>
+                {/* Size picker */}
+                <div style={{ marginBottom: '0.75rem', marginTop: '0.75rem' }}>
+                  <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Size</label>
+                  <div style={{ display: 'flex', gap: '0.375rem' }}>
+                    {([
+                      { id: 'small', label: 'S', iconSize: 12 },
+                      { id: 'medium', label: 'M', iconSize: 16 },
+                      { id: 'large', label: 'L', iconSize: 20 },
+                    ] as const).map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => setPhotoSize(s.id)}
+                        style={{
+                          width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          borderRadius: '0.375rem',
+                          border: photoSize === s.id ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                          backgroundColor: 'var(--surface, #161c28)', cursor: 'pointer', padding: 0,
+                          transition: 'border-color 0.15s',
+                        }}
+                      >
+                        <div style={{ width: s.iconSize, height: s.iconSize, borderRadius: '50%', backgroundColor: photoSize === s.id ? 'var(--accent, #e8a849)' : 'var(--text-muted, #5d6370)' }} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Shape picker */}
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Shape</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
+                    {([
+                      { id: 'circle', label: 'Circle', free: true, render: <div style={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                      { id: 'rounded', label: 'Rounded', free: false, render: <div style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                      { id: 'soft', label: 'Soft', free: false, render: <div style={{ width: 22, height: 22, borderRadius: 3, backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                      { id: 'square', label: 'Square', free: true, render: <div style={{ width: 22, height: 22, borderRadius: 0, backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                      { id: 'hexagon', label: 'Hexagon', free: false, render: <div style={{ width: 22, height: 22, clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)', backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                      { id: 'diamond', label: 'Diamond', free: false, render: <div style={{ width: 22, height: 22, clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', backgroundColor: 'var(--accent, #e8a849)' }} /> },
+                    ] as const).map(shape => {
+                      const isSelected = photoShape === shape.id;
+                      const isLocked = !isPaid && !shape.free;
+                      return (
+                        <button
+                          key={shape.id}
+                          onClick={() => {
+                            if (isLocked) return;
+                            setPhotoShape(shape.id);
+                            const map: Record<string, number> = { circle: 50, rounded: 32, soft: 16, square: 0 };
+                            if (map[shape.id] !== undefined) setPhotoRadius(map[shape.id]);
+                            if (shape.id === 'hexagon' || shape.id === 'diamond') setShowShapeSlider(false);
+                          }}
+                          title={isLocked ? `${shape.label} (Premium)` : shape.label}
+                          style={{
+                            width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            borderRadius: '0.375rem', position: 'relative' as const,
+                            border: isSelected ? '2px solid var(--accent, #e8a849)' : '2px solid var(--border-light, #283042)',
+                            backgroundColor: 'var(--surface, #161c28)',
+                            cursor: isLocked ? 'not-allowed' : 'pointer', padding: 0,
+                            opacity: isLocked ? 0.45 : 1,
+                            transition: 'border-color 0.15s, opacity 0.15s',
+                          }}
+                        >
+                          {shape.render}
+                          {isLocked && (
+                            <span style={{ position: 'absolute' as const, top: -4, right: -4, fontSize: '0.4375rem', fontWeight: 700, backgroundColor: 'var(--border-light, #283042)', color: 'var(--text-muted, #5d6370)', padding: '0px 3px', borderRadius: '2px', lineHeight: 1.4 }}>PRO</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                    {!['hexagon', 'diamond'].includes(photoShape) && (
+                      <button
+                        onClick={() => { if (!isPaid) return; setShowShapeSlider(!showShapeSlider); }}
+                        style={{
+                          background: 'none', border: 'none', fontFamily: 'inherit',
+                          fontSize: '0.6875rem', padding: '0 0.25rem',
+                          cursor: isPaid ? 'pointer' : 'not-allowed',
+                          color: isPaid ? 'var(--text-muted, #5d6370)' : 'var(--border-light, #283042)',
+                          transition: 'color 0.15s',
+                        }}
+                      >
+                        {showShapeSlider ? 'Hide' : 'Custom'}
+                      </button>
+                    )}
+                  </div>
+                  {showShapeSlider && !['hexagon', 'diamond'].includes(photoShape) && isPaid && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                      <input
+                        type="range" min={0} max={50} value={photoRadius}
+                        onChange={e => {
+                          const val = parseInt(e.target.value);
+                          setPhotoRadius(val);
+                          if (val === 50) setPhotoShape('circle');
+                          else if (val === 32) setPhotoShape('rounded');
+                          else if (val === 16) setPhotoShape('soft');
+                          else if (val === 0) setPhotoShape('square');
+                          else setPhotoShape('custom');
+                        }}
+                        style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }}
+                      />
+                      <span style={{ fontSize: '0.6875rem', color: 'var(--text-mid, #a8adb8)', minWidth: 28, textAlign: 'right' as const }}>{photoRadius}%</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Animation picker */}
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Animation</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+                    {([
+                      { id: 'none', label: 'None', free: true },
+                      { id: 'fade', label: 'Fade', free: false },
+                      { id: 'slide-left', label: '\u2190', free: false },
+                      { id: 'slide-right', label: '\u2192', free: false },
+                      { id: 'scale', label: 'Scale', free: false },
+                      { id: 'pop', label: 'Pop', free: false },
+                    ] as const).map(anim => {
+                      const isSelected = photoAnimation === anim.id;
+                      const isLocked = !isPaid && !anim.free;
+                      return (
+                        <button
+                          key={anim.id}
+                          onClick={() => { if (isLocked) return; setPhotoAnimation(anim.id); }}
+                          style={{
+                            padding: '0.25rem 0.5rem', borderRadius: '9999px', fontSize: '0.6875rem', fontWeight: 500,
+                            border: isSelected ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                            backgroundColor: isSelected ? 'rgba(232, 168, 73, 0.1)' : 'var(--surface, #161c28)',
+                            color: isSelected ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                            cursor: isLocked ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                            opacity: isLocked ? 0.45 : 1, position: 'relative' as const,
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          {anim.label}
+                          {isLocked && (
+                            <span style={{ fontSize: '0.4375rem', fontWeight: 700, marginLeft: '0.25rem', color: 'var(--text-muted, #5d6370)' }}>PRO</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Photo alignment — 3 buttons */}
+                <div>
+                  <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: '0.375rem' }}>Photo Alignment</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    {([['left', 'Left', 'M4 6h6M4 10h8M4 14h6M4 18h4'], ['center', 'Center', 'M4 6h16M6 10h12M4 14h16M6 18h12'], ['right', 'Right', 'M14 6h6M12 10h8M14 14h6M16 18h4']] as [string, string, string][]).map(([val, label, iconPath]) => {
+                      const isActive = photoAlign === val;
+                      return (
+                        <button
+                          key={val}
+                          onClick={() => setPhotoAlign(val)}
+                          style={{
+                            flex: 1,
+                            display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '0.25rem',
+                            padding: '0.5rem 0.25rem',
+                            borderRadius: '0.5rem',
+                            border: isActive ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                            backgroundColor: isActive ? 'rgba(232, 168, 73, 0.08)' : 'var(--surface, #161c28)',
+                            color: isActive ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                            cursor: 'pointer', fontFamily: 'inherit',
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                            <path d={iconPath} />
+                          </svg>
+                          <span style={{ fontSize: '0.625rem', fontWeight: 600 }}>{label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>)}
+            </div>
+
+            <div style={{ borderTop: '1px solid var(--border, #1e2535)', margin: '1.25rem 0' }} />
+
+            {/* ── Cover Photo ── */}
+            <CollapsibleSection title="Cover Photo" flat defaultOpen={!!coverUrl}>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <button
+                  onClick={() => coverFileInputRef.current?.click()}
+                  disabled={!isPaid || coverUploading}
+                  style={{
+                    padding: '0.375rem 0.75rem',
+                    backgroundColor: 'var(--border, #1e2535)',
+                    border: '1px solid var(--border-light, #283042)',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 500,
+                    cursor: !isPaid || coverUploading ? 'not-allowed' : 'pointer',
+                    fontFamily: 'inherit',
+                    color: isPaid ? 'var(--text, #eceef2)' : 'var(--text-muted, #5d6370)',
+                    opacity: isPaid ? 1 : 0.6,
+                  }}
+                >
+                  {coverUploading ? 'Uploading...' : coverUrl ? 'Replace' : 'Upload'}
+                </button>
+                {coverUrl && (
+                  <button
+                    onClick={() => setCoverUrl('')}
+                    style={{
+                      padding: '0.375rem 0.75rem',
+                      backgroundColor: 'transparent',
+                      border: '1px solid var(--border-light, #283042)',
+                      borderRadius: '0.375rem',
+                      fontSize: '0.8125rem',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      color: 'var(--text-muted, #5d6370)',
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowGallery('cover')}
+                  disabled={!isPaid}
+                  style={{
+                    padding: '0.375rem 0.75rem',
+                    backgroundColor: 'transparent',
+                    border: '1px solid var(--border-light, #283042)',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 500,
+                    cursor: isPaid ? 'pointer' : 'not-allowed',
+                    fontFamily: 'inherit',
+                    color: isPaid ? 'var(--text-mid, #a8adb8)' : 'var(--text-muted, #5d6370)',
+                    opacity: isPaid ? 1 : 0.6,
+                  }}
+                >
+                  Browse Gallery
+                </button>
+              </div>
+              {coverUrl && (
+                <ImageCropper
+                  src={coverUrl}
+                  frameShape="banner"
+                  positionX={coverPositionX}
+                  positionY={coverPositionY}
+                  zoom={coverZoom}
+                  onPositionChange={(x, y) => { setCoverPositionX(x); setCoverPositionY(y); }}
+                  onZoomChange={setCoverZoom}
+                />
+              )}
+              {coverUrl && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Opacity</label>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{coverOpacity}%</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' as const }}>Subtle</span>
+                    <input type="range" min={10} max={100} value={coverOpacity} onChange={e => setCoverOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }} />
+                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' as const }}>Bold</span>
+                  </div>
+                </div>
+              )}
+              <input ref={coverFileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleCoverUpload} style={{ display: 'none' }} />
+            </CollapsibleSection>
+
+            <div style={{ borderTop: '1px solid var(--border, #1e2535)', margin: '1.25rem 0' }} />
+
+            {/* ── Background Photo ── */}
+            <CollapsibleSection title="Background Photo" flat defaultOpen={!!bgImageUrl}>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <button
+                  onClick={() => bgImageFileInputRef.current?.click()}
+                  disabled={!isPaid || bgImageUploading}
+                  style={{
+                    padding: '0.375rem 0.75rem',
+                    backgroundColor: 'var(--border, #1e2535)',
+                    border: '1px solid var(--border-light, #283042)',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 500,
+                    cursor: !isPaid || bgImageUploading ? 'not-allowed' : 'pointer',
+                    fontFamily: 'inherit',
+                    color: isPaid ? 'var(--text, #eceef2)' : 'var(--text-muted, #5d6370)',
+                    opacity: isPaid ? 1 : 0.6,
+                  }}
+                >
+                  {bgImageUploading ? 'Uploading...' : bgImageUrl ? 'Replace' : 'Upload'}
+                </button>
+                {bgImageUrl && (
+                  <button
+                    onClick={() => setBgImageUrl('')}
+                    style={{
+                      padding: '0.375rem 0.75rem',
+                      backgroundColor: 'transparent',
+                      border: '1px solid var(--border-light, #283042)',
+                      borderRadius: '0.375rem',
+                      fontSize: '0.8125rem',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      color: 'var(--text-muted, #5d6370)',
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowGallery('background')}
+                  disabled={!isPaid}
+                  style={{
+                    padding: '0.375rem 0.75rem',
+                    backgroundColor: 'transparent',
+                    border: '1px solid var(--border-light, #283042)',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 500,
+                    cursor: isPaid ? 'pointer' : 'not-allowed',
+                    fontFamily: 'inherit',
+                    color: isPaid ? 'var(--text-mid, #a8adb8)' : 'var(--text-muted, #5d6370)',
+                    opacity: isPaid ? 1 : 0.6,
+                  }}
+                >
+                  Browse Gallery
+                </button>
+              </div>
+              {bgImageUrl && (
+                <ImageCropper
+                  src={bgImageUrl}
+                  frameShape="portrait"
+                  positionX={bgImagePositionX}
+                  positionY={bgImagePositionY}
+                  zoom={bgImageZoom}
+                  onPositionChange={(x, y) => { setBgImagePositionX(x); setBgImagePositionY(y); }}
+                  onZoomChange={setBgImageZoom}
+                />
+              )}
+              {bgImageUrl && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                    <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Visibility</label>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{bgImageOpacity}%</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' as const }}>Subtle</span>
+                    <input type="range" min={5} max={100} value={bgImageOpacity} onChange={e => setBgImageOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }} />
+                    <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' as const }}>Bold</span>
+                  </div>
+                </div>
+              )}
+              <input ref={bgImageFileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleBgImageUpload} style={{ display: 'none' }} />
+            </CollapsibleSection>
+
+            {/* Gallery picker modal */}
+            {showGallery && (
+              <GalleryPicker
+                category={showGallery}
+                onSelect={(url) => {
+                  if (showGallery === 'cover') setCoverUrl(url);
+                  else setBgImageUrl(url);
+                  setShowGallery(null);
+                }}
+                onClose={() => setShowGallery(null)}
+              />
+            )}
+          </CollapsibleSection>
+        )}
+
+        {/* ─── Link Buttons (only after created) ── */}
+        {!isNew && (
+          <CollapsibleSection title="Link Buttons">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.5rem' }}>
+              <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', marginRight: '0.125rem' }}>Size:</span>
+              {(['small', 'medium', 'large'] as const).map(sz => (
+                <button
+                  key={sz}
+                  onClick={() => setLinkSize(sz)}
+                  style={{
+                    padding: '0.25rem 0.625rem', borderRadius: '9999px', fontSize: '0.6875rem',
+                    fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                    border: linkSize === sz ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                    backgroundColor: linkSize === sz ? 'rgba(232,168,73,0.1)' : 'var(--surface, #161c28)',
+                    color: linkSize === sz ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {sz.charAt(0).toUpperCase() + sz.slice(1)}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', marginRight: '0.125rem' }}>Shape:</span>
+              {(['pill', 'rounded', 'square'] as const).map(sh => (
+                <button
+                  key={sh}
+                  onClick={() => setLinkShape(sh)}
+                  style={{
+                    padding: '0.25rem 0.625rem', borderRadius: '9999px', fontSize: '0.6875rem',
+                    fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                    border: linkShape === sh ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
+                    backgroundColor: linkShape === sh ? 'rgba(232,168,73,0.1)' : 'var(--surface, #161c28)',
+                    color: linkShape === sh ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {sh.charAt(0).toUpperCase() + sh.slice(1)}
+                </button>
+              ))}
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0.5rem 0 0' }}>
+              These settings are independent per page.
+            </p>
+          </CollapsibleSection>
+        )}
 
         {/* ─── Content Blocks (only after created) ─── */}
         {!isNew && page && (

@@ -53,6 +53,13 @@ interface ProfileData {
   bg_image_url: string | null;
   bg_image_opacity: number;
   bg_image_position_y: number;
+  photo_zoom: number;
+  cover_position_x: number;
+  cover_zoom: number;
+  bg_image_position_x: number;
+  bg_image_zoom: number;
+  link_size: string;
+  link_shape: string;
 }
 
 interface LinkData {
@@ -161,6 +168,31 @@ async function getProfileAny(slug: string) {
       profile.bg_image_url = null;
       profile.bg_image_opacity = 20;
       profile.bg_image_position_y = 50;
+    }
+    // Fetch zoom fields (migration 041)
+    try {
+      const zr = await query('SELECT photo_zoom, cover_position_x, cover_zoom, bg_image_position_x, bg_image_zoom FROM profiles WHERE id = $1', [profile.profile_id]);
+      const r = zr.rows[0];
+      profile.photo_zoom = r?.photo_zoom ?? 100;
+      profile.cover_position_x = r?.cover_position_x ?? 50;
+      profile.cover_zoom = r?.cover_zoom ?? 100;
+      profile.bg_image_position_x = r?.bg_image_position_x ?? 50;
+      profile.bg_image_zoom = r?.bg_image_zoom ?? 100;
+    } catch {
+      profile.photo_zoom = 100;
+      profile.cover_position_x = 50;
+      profile.cover_zoom = 100;
+      profile.bg_image_position_x = 50;
+      profile.bg_image_zoom = 100;
+    }
+    // Fetch link button settings (migration 046)
+    try {
+      const lsResult = await query('SELECT link_size, link_shape FROM profiles WHERE id = $1', [profile.profile_id]);
+      profile.link_size = lsResult.rows[0]?.link_size || 'medium';
+      profile.link_shape = lsResult.rows[0]?.link_shape || 'pill';
+    } catch {
+      profile.link_size = 'medium';
+      profile.link_shape = 'pill';
     }
   }
   return profile;
@@ -375,6 +407,13 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         bgImageUrl={profile.bg_image_url || undefined}
         bgImageOpacity={profile.bg_image_opacity ?? 20}
         bgImagePositionY={profile.bg_image_position_y ?? 50}
+        photoZoom={profile.photo_zoom ?? 100}
+        coverPositionX={profile.cover_position_x ?? 50}
+        coverZoom={profile.cover_zoom ?? 100}
+        bgImagePositionX={profile.bg_image_position_x ?? 50}
+        bgImageZoom={profile.bg_image_zoom ?? 100}
+        linkSize={profile.link_size || 'medium'}
+        linkShape={profile.link_shape || 'pill'}
       />
 
       {/* Client-side interactive elements (PIN modal, protected pages) */}
