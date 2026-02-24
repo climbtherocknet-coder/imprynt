@@ -40,6 +40,8 @@ interface ProtectedPagePreviewProps {
   bgImageZoom?: number;
   linkSize?: string;
   linkShape?: string;
+  linkButtonColor?: string | null;
+  linkDisplay?: string;
 }
 
 function getPhotoStyles(shape: string, radius: number, size: string, posX: number, posY: number): React.CSSProperties {
@@ -105,6 +107,8 @@ export default function ProtectedPagePreview({
   bgImageZoom = 100,
   linkSize = 'medium',
   linkShape = 'pill',
+  linkButtonColor,
+  linkDisplay = 'default',
 }: ProtectedPagePreviewProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -125,6 +129,7 @@ export default function ProtectedPagePreview({
       })
     ),
     ...accentOverrides,
+    ...(linkButtonColor ? { '--link-btn-color': linkButtonColor } : {}),
   } as React.CSSProperties;
 
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
@@ -273,32 +278,56 @@ export default function ProtectedPagePreview({
         {/* Divider */}
         <div style={{ width: 40, height: 2, backgroundColor: 'var(--border)', margin: '1.5rem auto', borderRadius: 1 }} />
 
-        {/* Links */}
+        {/* Links — use profile's link display mode */}
         {links.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {links.map((link, i) => (
-              <a
-                key={link.id || i}
-                href={link.linkType === 'email' ? `mailto:${link.url}` :
-                      link.linkType === 'phone' ? `tel:${link.url}` :
-                      link.url || '#'}
-                target={['email', 'phone'].includes(link.linkType) ? undefined : '_blank'}
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  gap: '0.5rem', padding: '0.875rem 1.25rem',
-                  borderRadius: 'var(--radius)', textDecoration: 'none',
-                  fontWeight: 600, fontSize: '0.9375rem',
-                  backgroundColor: accent,
-                  color: isDark ? 'var(--bg)' : '#fff',
-                  border: '2px solid transparent',
-                }}
-              >
-                <span style={{ width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }} dangerouslySetInnerHTML={{ __html: LINK_ICONS[link.linkType] || LINK_ICONS.custom }} />
-                {link.label || link.linkType}
+          linkDisplay === 'icons' ? (
+            <div className="link-icons-row">
+              {links.map((link, i) => {
+                const btnColor = link.buttonColor || linkButtonColor || null;
+                return (
+                  <a
+                    key={link.id || i}
+                    href={link.linkType === 'email' ? `mailto:${link.url}` :
+                          link.linkType === 'phone' ? `tel:${link.url}` :
+                          link.url || '#'}
+                    target={['email', 'phone'].includes(link.linkType) ? undefined : '_blank'}
+                    rel="noopener noreferrer"
+                    className="link-icon-btn"
+                    title={link.label || link.linkType}
+                    aria-label={link.label || link.linkType}
+                    style={btnColor ? {
+                      color: btnColor,
+                      borderColor: btnColor,
+                      '--link-btn-color': btnColor,
+                    } as React.CSSProperties : undefined}
+                  >
+                    <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[link.linkType] || LINK_ICONS.custom }} />
+                  </a>
+                );
+              })}
+            </div>
+          ) : (() => {
+            const ls = linkDisplay === 'default' ? theme.modifiers.linkStyle : linkDisplay;
+            const href = (l: typeof links[0]) =>
+              l.linkType === 'email' ? `mailto:${l.url}` : l.linkType === 'phone' ? `tel:${l.url}` : l.url || '#';
+            const target = (l: typeof links[0]) =>
+              ['email', 'phone'].includes(l.linkType) ? undefined : '_blank';
+            const renderLink = (l: typeof links[0], i: number, cls: string) => (
+              <a key={l.id || i} href={href(l)} target={target(l)} rel="noopener noreferrer" className={cls}>
+                <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[l.linkType] || LINK_ICONS.custom }} />
+                {l.label || l.linkType}
               </a>
-            ))}
-          </div>
+            );
+            if (ls === 'stacked') return (
+              <div className="link-stacked">{links.map((l, i) => renderLink(l, i, 'link-stacked-item'))}</div>
+            );
+            if (ls === 'full-width-pills') return (
+              <div className="link-full-width">{links.map((l, i) => renderLink(l, i, 'link-full-width-item'))}</div>
+            );
+            return (
+              <div className="link-row">{links.map((l, i) => renderLink(l, i, 'link-pill'))}</div>
+            );
+          })()
         )}
 
         {/* Save Contact */}

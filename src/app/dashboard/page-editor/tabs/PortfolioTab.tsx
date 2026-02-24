@@ -90,6 +90,8 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [isDirty, setIsDirty] = useState(false);
+  const [saveBarHidden, setSaveBarHidden] = useState(false);
+  const saveBarRef = useRef<HTMLDivElement>(null);
   const [startingTrial, setStartingTrial] = useState(false);
 
   // Profile slug for preview
@@ -125,6 +127,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
   const [profileData, setProfileData] = useState<{
     firstName: string; lastName: string; photoUrl: string;
     template: string; accentColor: string;
+    linkDisplay: string;
   } | null>(null);
   const [previewPods, setPreviewPods] = useState<PodData[]>([]);
 
@@ -158,8 +161,6 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
   const [bgImagePositionX, setBgImagePositionX] = useState(50);
   const [bgImageZoom, setBgImageZoom] = useState(100);
   const [showGallery, setShowGallery] = useState<'cover' | 'background' | null>(null);
-  const [linkSize, setLinkSize] = useState('medium');
-  const [linkShape, setLinkShape] = useState('pill');
 
   // Resume upload
   const [resumeUploading, setResumeUploading] = useState(false);
@@ -185,6 +186,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
           photoUrl: d.profile.photoUrl || '',
           template: currentTemplate || d.profile.template || 'clean',
           accentColor: currentAccentColor !== undefined ? currentAccentColor : (d.profile.accentColor || ''),
+          linkDisplay: d.profile.linkDisplay || 'default',
         });
         // Set profile photo settings as defaults (overridden by page data if it exists)
         setPhotoShape(d.profile.photoShape || 'circle');
@@ -237,8 +239,6 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
           setCoverZoom(p.coverZoom ?? 100);
           setBgImagePositionX(p.bgImagePositionX ?? 50);
           setBgImageZoom(p.bgImageZoom ?? 100);
-          setLinkSize(p.linkSize || 'medium');
-          setLinkShape(p.linkShape || 'pill');
           setIsNew(false);
         }
       })
@@ -251,6 +251,38 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
         if (data.pages?.[0]?.iconColor) setPersonalIconColor(data.pages[0].iconColor);
       })
       .catch(() => {});
+  }, []);
+
+  // Floating save — appears when save bar is no longer visible
+  useEffect(() => {
+    const el = saveBarRef.current;
+    if (!el) return;
+
+    const check = () => {
+      const rect = el.getBoundingClientRect();
+      setSaveBarHidden(rect.top < 60);
+    };
+
+    window.addEventListener('scroll', check, { passive: true });
+
+    let scrollParent: HTMLElement | null = el.parentElement;
+    while (scrollParent) {
+      const style = getComputedStyle(scrollParent);
+      if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+        scrollParent.addEventListener('scroll', check, { passive: true });
+        break;
+      }
+      scrollParent = scrollParent.parentElement;
+    }
+
+    check();
+
+    return () => {
+      window.removeEventListener('scroll', check);
+      if (scrollParent) {
+        scrollParent.removeEventListener('scroll', check);
+      }
+    };
   }, []);
 
   // Save page settings
@@ -313,7 +345,6 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
           coverUrl: coverUrl || null, coverOpacity, coverPositionY,
           bgImageUrl: bgImageUrl || null, bgImageOpacity, bgImagePositionY,
           photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom,
-          linkSize, linkShape,
         };
         if (pin) body.pin = pin;
 
@@ -338,7 +369,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
     } finally {
       setSaving(false);
     }
-  }, [isNew, page, pageTitle, buttonLabel, bioText, resumeUrl, showResume, pin, pinConfirm, isActive, allowRemember, photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, coverUrl, coverOpacity, coverPositionY, bgImageUrl, bgImageOpacity, bgImagePositionY, photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom, linkSize, linkShape]);
+  }, [isNew, page, pageTitle, buttonLabel, bioText, resumeUrl, showResume, pin, pinConfirm, isActive, allowRemember, photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, coverUrl, coverOpacity, coverPositionY, bgImageUrl, bgImageOpacity, bgImagePositionY, photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom]);
 
   // Resume upload
   async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -457,8 +488,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
         coverZoom={coverZoom}
         bgImagePositionX={bgImagePositionX}
         bgImageZoom={bgImageZoom}
-        linkSize={linkSize}
-        linkShape={linkShape}
+        linkDisplay={profileData.linkDisplay}
       />
     );
   }
@@ -496,12 +526,22 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
       <div className="editor-split">
       <main className="editor-panel" style={{ paddingBottom: '4rem' }} onChangeCapture={() => setIsDirty(true)} onClickCapture={(e) => { const t = e.target as HTMLElement; if (t.tagName === 'BUTTON' && !t.closest('[data-save-bar]')) setIsDirty(true); }}>
 
-        {/* ─── Sticky Save Bar ────────── */}
+        {/* ─── Save Bar + Floating Save ────────── */}
         {!isNew && (
-          <div data-save-bar style={{ position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--bg, #0c1017)', padding: '0.75rem 0', borderBottom: '1px solid var(--border, #1e2535)', marginBottom: '1rem' }}>
+          <div ref={saveBarRef} data-save-bar style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 0', borderBottom: '1px solid var(--border, #1e2535)', marginBottom: '1rem' }}>
             {isDirty && !saving && !saved && (
               <span style={{ fontSize: '0.6875rem', color: 'var(--accent, #e8a849)', marginRight: 'auto' }}>Unsaved changes</span>
             )}
+            <a
+              href={slug ? `/${slug}` : '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => { if (!slug) e.preventDefault(); }}
+              style={{ padding: '0.5rem 1rem', fontSize: '0.8125rem', fontWeight: 500, borderRadius: '0.5rem', border: '1px solid var(--border-light, #283042)', cursor: slug ? 'pointer' : 'default', fontFamily: 'inherit', backgroundColor: 'transparent', color: 'var(--text-mid, #a8adb8)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.375rem', opacity: slug ? 1 : 0.4 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              View Page
+            </a>
             <button
               data-save-bar
               onClick={savePage}
@@ -510,6 +550,35 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
             >
               {saving ? 'Saving...' : saved ? '\u2713 Saved' : 'Save Changes'}
             </button>
+          </div>
+        )}
+        {/* Floating circular icons when save bar scrolled out of view */}
+        {!isNew && saveBarHidden && (
+          <div style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 200, display: 'flex', flexDirection: 'column', gap: '0.5rem', animation: 'float-in 0.2s ease-out' }}>
+            {isDirty && (
+              <button
+                onClick={savePage}
+                disabled={saving}
+                title={saving ? 'Saving...' : saved ? 'Saved!' : 'Save changes'}
+                style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', backgroundColor: saved ? '#059669' : 'var(--accent, #e8a849)', color: 'var(--bg, #0c1017)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', opacity: saving ? 0.6 : 1, transition: 'background-color 0.2s' }}
+              >
+                {saved ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                )}
+              </button>
+            )}
+            <a
+              href={slug ? `/${slug}` : '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => { if (!slug) e.preventDefault(); }}
+              title="View Page"
+              style={{ width: 44, height: 44, borderRadius: '50%', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', textDecoration: 'none' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </a>
           </div>
         )}
 
@@ -622,6 +691,20 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
             />
           </div>
         </div>
+
+        {/* ─── Content Blocks (only after created) ─── */}
+        {!isNew && page && (
+          <CollapsibleSection title="Content Blocks" defaultOpen>
+            <PodEditor
+              parentType="protected_page"
+              parentId={page.id}
+              isPaid={planStatus.isPaid}
+              visibilityMode="visible"
+              onError={setError}
+              onPodsChange={handlePodsChange}
+            />
+          </CollapsibleSection>
+        )}
 
         {/* ─── Resume ──────────────────────────────── */}
         <CollapsibleSection title="Resume">
@@ -1057,67 +1140,6 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
                 onClose={() => setShowGallery(null)}
               />
             )}
-          </CollapsibleSection>
-        )}
-
-        {/* ─── Link Buttons (only after created) ── */}
-        {!isNew && (
-          <CollapsibleSection title="Link Buttons">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.5rem' }}>
-              <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', marginRight: '0.125rem' }}>Size:</span>
-              {(['small', 'medium', 'large'] as const).map(sz => (
-                <button
-                  key={sz}
-                  onClick={() => setLinkSize(sz)}
-                  style={{
-                    padding: '0.25rem 0.625rem', borderRadius: '9999px', fontSize: '0.6875rem',
-                    fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-                    border: linkSize === sz ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
-                    backgroundColor: linkSize === sz ? 'rgba(232,168,73,0.1)' : 'var(--surface, #161c28)',
-                    color: linkSize === sz ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {sz.charAt(0).toUpperCase() + sz.slice(1)}
-                </button>
-              ))}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-              <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', marginRight: '0.125rem' }}>Shape:</span>
-              {(['pill', 'rounded', 'square'] as const).map(sh => (
-                <button
-                  key={sh}
-                  onClick={() => setLinkShape(sh)}
-                  style={{
-                    padding: '0.25rem 0.625rem', borderRadius: '9999px', fontSize: '0.6875rem',
-                    fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-                    border: linkShape === sh ? '2px solid var(--accent, #e8a849)' : '1px solid var(--border-light, #283042)',
-                    backgroundColor: linkShape === sh ? 'rgba(232,168,73,0.1)' : 'var(--surface, #161c28)',
-                    color: linkShape === sh ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {sh.charAt(0).toUpperCase() + sh.slice(1)}
-                </button>
-              ))}
-            </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0.5rem 0 0' }}>
-              These settings are independent per page.
-            </p>
-          </CollapsibleSection>
-        )}
-
-        {/* ─── Content Blocks (only after created) ─── */}
-        {!isNew && page && (
-          <CollapsibleSection title="Content Blocks">
-            <PodEditor
-              parentType="protected_page"
-              parentId={page.id}
-              isPaid={planStatus.isPaid}
-              visibilityMode="visible"
-              onError={setError}
-              onPodsChange={handlePodsChange}
-            />
           </CollapsibleSection>
         )}
 

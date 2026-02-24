@@ -29,7 +29,8 @@ interface ProtectedPageContent {
     bgImageUrl?: string; bgImageOpacity?: number; bgImagePositionY?: number;
     photoZoom?: number; coverPositionX?: number; coverZoom?: number;
     bgImagePositionX?: number; bgImageZoom?: number;
-    linkSize?: string; linkShape?: string;
+    linkSize?: string; linkShape?: string; linkButtonColor?: string | null;
+    linkDisplay?: string;
   };
   profile: {
     firstName: string; lastName: string; photoUrl: string;
@@ -37,7 +38,7 @@ interface ProtectedPageContent {
     primaryColor: string; accentColor: string; fontPair: string;
     customTheme?: Record<string, string> | null;
   };
-  links: { id: string; linkType: string; label: string; url: string }[];
+  links: { id: string; linkType: string; label: string; url: string; buttonColor?: string | null }[];
   pods?: PodData[];
   showcaseItems?: ShowcaseItemData[];
 }
@@ -403,6 +404,9 @@ function ProtectedPageView({
   // Link button settings
   const linkSize = content.page.linkSize || 'medium';
   const linkShape = content.page.linkShape || 'pill';
+  const linkButtonColor = content.page.linkButtonColor || null;
+  const linkDisplay = content.page.linkDisplay || 'default';
+  const linkStyle = theme.modifiers.linkStyle;
   if (linkSize !== 'medium') dataAttrs['data-link-size'] = linkSize;
   if (linkShape !== 'pill') dataAttrs['data-link-shape'] = linkShape;
 
@@ -443,6 +447,7 @@ function ProtectedPageView({
         {...(bgImageUrl ? { 'data-has-bg': 'true' } : {})}
         style={{
           ...cssVarStyle,
+          ...(linkButtonColor ? { '--link-btn-color': linkButtonColor } : {}),
           position: 'fixed',
           inset: 0,
           backgroundColor: 'var(--bg)',
@@ -450,7 +455,7 @@ function ProtectedPageView({
           color: 'var(--text)',
           overflowY: 'auto',
           zIndex: 900,
-        }}
+        } as React.CSSProperties}
       >
         {/* Background Photo */}
         {bgImageUrl && (
@@ -579,31 +584,60 @@ function ProtectedPageView({
         <div style={{ width: 40, height: 2, backgroundColor: 'var(--border)', margin: '1.5rem auto', borderRadius: 1 }} />
 
         {/* Links */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {content.links.map(link => (
-            <a
-              key={link.id}
-              href={link.linkType === 'email' ? `mailto:${link.url}` :
-                    link.linkType === 'phone' ? `tel:${link.url}` :
-                    link.url}
-              target={['email', 'phone'].includes(link.linkType) ? undefined : '_blank'}
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: '0.5rem', padding: '0.875rem 1.25rem',
-                borderRadius: 'var(--radius)', textDecoration: 'none',
-                fontWeight: 600, fontSize: '0.9375rem',
-                transition: 'transform 0.15s, opacity 0.15s',
-                backgroundColor: accent,
-                color: isDark ? 'var(--bg)' : '#fff',
-                border: '2px solid transparent',
-              }}
-            >
-              <span style={{ fontSize: '1rem' }}>{LINK_ICONS[link.linkType] || '>'}</span>
-              {link.label || link.linkType}
-            </a>
-          ))}
-        </div>
+        {content.links.length > 0 && (
+          <>
+            {linkDisplay === 'icons' ? (
+              <div className="link-icons-row">
+                {content.links.map(link => {
+                  const btnColor = link.buttonColor || linkButtonColor || null;
+                  return (
+                    <a
+                      key={link.id}
+                      href={link.linkType === 'email' ? `mailto:${link.url}` :
+                            link.linkType === 'phone' ? `tel:${link.url}` :
+                            link.url}
+                      target={['email', 'phone'].includes(link.linkType) ? undefined : '_blank'}
+                      rel="noopener noreferrer"
+                      className="link-icon-btn"
+                      title={link.label || link.linkType}
+                      aria-label={link.label || link.linkType}
+                      style={btnColor ? {
+                        color: btnColor,
+                        borderColor: btnColor,
+                        '--link-btn-color': btnColor,
+                      } as React.CSSProperties : undefined}
+                    >
+                      <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[link.linkType] || LINK_ICONS.custom }} />
+                    </a>
+                  );
+                })}
+              </div>
+            ) : (() => {
+              const style = linkStyle || 'pills';
+              const linkHref = (l: typeof content.links[0]) =>
+                l.linkType === 'email' ? `mailto:${l.url}` : l.linkType === 'phone' ? `tel:${l.url}` : l.url;
+              const linkTarget = (l: typeof content.links[0]) =>
+                ['email', 'phone'].includes(l.linkType) ? undefined : '_blank';
+              const linkColorStyle = (l: typeof content.links[0]) =>
+                l.buttonColor ? { '--link-btn-color': l.buttonColor } as React.CSSProperties : undefined;
+              const renderLink = (l: typeof content.links[0], cls: string) => (
+                <a key={l.id} href={linkHref(l)} target={linkTarget(l)} rel="noopener noreferrer" className={cls} style={linkColorStyle(l)}>
+                  <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[l.linkType] || LINK_ICONS.custom }} />
+                  {l.label || l.linkType}
+                </a>
+              );
+              if (style === 'stacked') return (
+                <div className="link-stacked">{content.links.map(l => renderLink(l, 'link-stacked-item'))}</div>
+              );
+              if (style === 'full-width-pills') return (
+                <div className="link-full-width">{content.links.map(l => renderLink(l, 'link-full-width-item'))}</div>
+              );
+              return (
+                <div className="link-row">{content.links.map(l => renderLink(l, 'link-pill'))}</div>
+              );
+            })()}
+          </>
+        )}
 
         {/* Personal vCard download (impression pages only) */}
         {isPersonal && downloadToken && (
