@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import RichTextEditor from '@/components/pods/RichTextEditor';
 
 // ── Types ──────────────────────────────────────────────
@@ -20,6 +20,20 @@ export interface PodItem {
   imagePosition: string;
   showOnProfile: boolean;
   isActive: boolean;
+  listingStatus: string;
+  listingPrice: string;
+  listingDetails: { beds?: string; baths?: string; sqft?: string };
+  sourceDomain: string;
+  autoRemoveAt: string;
+  soldAt: string;
+  eventStart: string;
+  eventEnd: string;
+  eventVenue: string;
+  eventAddress: string;
+  eventStatus: string;
+  eventAutoHide: boolean;
+  audioUrl: string;
+  audioDuration: number;
 }
 
 interface PodEditorProps {
@@ -29,6 +43,7 @@ interface PodEditorProps {
   visibilityMode?: 'hidden' | 'visible';
   onError: (msg: string) => void;
   onPodsChange?: (pods: PodItem[]) => void;
+  onPodSaved?: () => void;
 }
 
 // ── Constants ──────────────────────────────────────────
@@ -40,6 +55,26 @@ const POD_TYPE_DEFS = [
   { type: 'cta', label: 'Call to Action', icon: '\u2192' },
   { type: 'link_preview', label: 'Link Preview', icon: '\u29C9' },
   { type: 'project', label: 'Project', icon: '\u{1F4CB}' },
+  { type: 'listing', label: 'Listing', icon: '\u{1F3E0}' },
+  { type: 'event', label: 'Event', icon: '\u{1F4C5}' },
+  { type: 'music', label: 'Music', icon: '\u{1F3B5}' },
+];
+
+const LISTING_STATUSES = [
+  { value: 'active', label: 'Active', color: '#22c55e' },
+  { value: 'pending', label: 'Pending', color: '#f59e0b' },
+  { value: 'sold', label: 'Sold', color: '#ef4444' },
+  { value: 'off_market', label: 'Off Market', color: '#6b7280' },
+  { value: 'rented', label: 'Rented', color: '#8b5cf6' },
+  { value: 'leased', label: 'Leased', color: '#3b82f6' },
+  { value: 'open_house', label: 'Open House', color: '#06b6d4' },
+];
+
+const EVENT_STATUSES = [
+  { value: 'upcoming', label: 'Upcoming', color: '#22c55e' },
+  { value: 'cancelled', label: 'Cancelled', color: '#ef4444' },
+  { value: 'postponed', label: 'Postponed', color: '#f59e0b' },
+  { value: 'sold_out', label: 'Sold Out', color: '#8b5cf6' },
 ];
 
 // ── Styles ─────────────────────────────────────────────
@@ -142,15 +177,37 @@ async function uploadPodImage(file: File): Promise<{ url: string } | { error: st
   }
 }
 
+async function uploadPodAudio(file: File): Promise<{ url: string } | { error: string }> {
+  if (file.size > 15 * 1024 * 1024) {
+    return { error: 'Audio file is too large (max 15MB). Try a smaller file.' };
+  }
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const res = await fetch('/api/upload/file', { method: 'POST', body: formData });
+    if (!res.ok) {
+      const data = await res.json();
+      return { error: data.error || 'Upload failed. Please try again.' };
+    }
+    const data = await res.json();
+    return { url: data.url };
+  } catch {
+    return { error: 'Upload failed. Check your connection and try again.' };
+  }
+}
+
 // ── Component ──────────────────────────────────────────
 
-export default function PodEditor({ parentType, parentId, isPaid, visibilityMode, onError, onPodsChange }: PodEditorProps) {
+export default function PodEditor({ parentType, parentId, isPaid, visibilityMode, onError, onPodsChange, onPodSaved }: PodEditorProps) {
   const [pods, setPods] = useState<PodItem[]>([]);
   const [editingPodId, setEditingPodId] = useState<string | null>(null);
   const [podSaving, setPodSaving] = useState<string | null>(null);
   const [podSaved, setPodSaved] = useState<string | null>(null);
   const [fetchingPreview, setFetchingPreview] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<Record<string, string>>({});
+  const [showAutoRemoveModal, setShowAutoRemoveModal] = useState<string | null>(null);
+  const fetchedUrlsRef = useRef<Set<string>>(new Set());
+  const autoFetchTimerRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const maxPods = parentType === 'profile' ? (isPaid ? 6 : 2) : 6;
   const apiBase = parentType === 'profile' ? '/api/pods' : '/api/protected-pages/pods';
@@ -207,9 +264,24 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
         imagePosition: 'left',
         showOnProfile: false,
         isActive: true,
+        listingStatus: 'active',
+        listingPrice: '',
+        listingDetails: {},
+        sourceDomain: '',
+        autoRemoveAt: '',
+        soldAt: '',
+        eventStart: '',
+        eventEnd: '',
+        eventVenue: '',
+        eventAddress: '',
+        eventStatus: 'upcoming',
+        eventAutoHide: true,
+        audioUrl: '',
+        audioDuration: 0,
       };
       setPods(prev => [...prev, newPod]);
       setEditingPodId(id);
+      onPodSaved?.();
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Failed to add block');
     }
@@ -264,6 +336,30 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
       if (isShowcase) {
         body.showOnProfile = pod.showOnProfile;
       }
+      if (pod.podType === 'listing') {
+        body.listingStatus = pod.listingStatus;
+        body.listingPrice = pod.listingPrice;
+        body.listingDetails = pod.listingDetails;
+        body.sourceDomain = pod.sourceDomain;
+        body.autoRemoveAt = pod.autoRemoveAt;
+        // Open house: send event_start/event_end
+        if (pod.listingStatus === 'open_house') {
+          body.eventStart = pod.eventStart;
+          body.eventEnd = pod.eventEnd;
+        }
+      }
+      if (pod.podType === 'event') {
+        body.eventStart = pod.eventStart;
+        body.eventEnd = pod.eventEnd;
+        body.eventVenue = pod.eventVenue;
+        body.eventAddress = pod.eventAddress;
+        body.eventStatus = pod.eventStatus;
+        body.eventAutoHide = pod.eventAutoHide;
+      }
+      if (pod.podType === 'music') {
+        body.audioUrl = pod.audioUrl;
+        body.audioDuration = pod.audioDuration;
+      }
       const res = await fetch(apiBase, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -274,6 +370,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
         throw new Error(d.error || 'Failed to save');
       }
       setPodSaved(podId);
+      onPodSaved?.();
       setTimeout(() => setPodSaved(null), 2000);
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Failed to save block');
@@ -289,6 +386,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
       if (!res.ok) throw new Error('Failed to delete');
       setPods(prev => prev.filter(p => p.id !== podId));
       if (editingPodId === podId) setEditingPodId(null);
+      onPodSaved?.();
     } catch {
       onError('Failed to delete block');
     }
@@ -313,6 +411,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      onPodSaved?.();
     } catch {
       onError('Failed to reorder');
     }
@@ -355,6 +454,98 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
     } finally {
       setFetchingPreview(null);
     }
+  }
+
+  const handleLinkPreviewUrlChange = useCallback((podId: string, newUrl: string) => {
+    updatePodField(podId, 'ctaUrl', newUrl.slice(0, 500));
+    // Clear any pending timer for this pod
+    if (autoFetchTimerRef.current[podId]) {
+      clearTimeout(autoFetchTimerRef.current[podId]);
+    }
+    // Auto-fetch if it looks like a valid URL and hasn't been fetched
+    try {
+      const parsed = new URL(newUrl.trim());
+      if (['http:', 'https:'].includes(parsed.protocol) && !fetchedUrlsRef.current.has(newUrl.trim())) {
+        autoFetchTimerRef.current[podId] = setTimeout(() => {
+          fetchedUrlsRef.current.add(newUrl.trim());
+          fetchOgPreview(podId);
+        }, 800);
+      }
+    } catch {
+      // Not a valid URL yet, ignore
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function fetchListingPreview(podId: string) {
+    const pod = pods.find(p => p.id === podId);
+    if (!pod?.ctaUrl) return;
+    setFetchingPreview(podId);
+    onError('');
+    try {
+      const res = await fetch(`/api/og-preview?url=${encodeURIComponent(pod.ctaUrl)}&mode=listing`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch listing');
+      setPods(prev => prev.map(p => {
+        if (p.id !== podId) return p;
+        const listing = data.listing || {};
+        return {
+          ...p,
+          title: listing.address || data.title || p.title,
+          body: data.description || p.body,
+          imageUrl: listing.imageBlocked ? p.imageUrl : (data.image || p.imageUrl),
+          listingPrice: listing.price || p.listingPrice,
+          listingDetails: {
+            ...p.listingDetails,
+            ...(listing.details || {}),
+          },
+          sourceDomain: data.domain || p.sourceDomain,
+          ctaLabel: data.domain || p.ctaLabel,
+        };
+      }));
+      if (data.listing?.imageBlocked) {
+        onError("This site blocks image previews. Upload a photo of the property instead.");
+      }
+    } catch {
+      // Fallback: extract domain from URL
+      try {
+        const parsed = new URL(pod.ctaUrl);
+        const domain = parsed.hostname.replace(/^www\./, '');
+        setPods(prev => prev.map(p => {
+          if (p.id !== podId) return p;
+          return {
+            ...p,
+            sourceDomain: p.sourceDomain || domain,
+            ctaLabel: p.ctaLabel || domain,
+          };
+        }));
+      } catch { /* malformed URL */ }
+      onError("Couldn't auto-fetch this listing. Upload a photo and enter the details below.");
+    } finally {
+      setFetchingPreview(null);
+    }
+  }
+
+  function handleStatusChange(podId: string, newStatus: string) {
+    updatePodField(podId, 'listingStatus', newStatus);
+    if (['sold', 'rented', 'leased'].includes(newStatus)) {
+      updatePodField(podId, 'soldAt', new Date().toISOString());
+      setShowAutoRemoveModal(podId);
+    } else {
+      updatePodField(podId, 'soldAt', '');
+      updatePodField(podId, 'autoRemoveAt', '');
+    }
+  }
+
+  function setAutoRemoveDays(podId: string, days: number | null) {
+    if (days === null) {
+      updatePodField(podId, 'autoRemoveAt', '');
+    } else {
+      const removeDate = new Date();
+      removeDate.setDate(removeDate.getDate() + days);
+      updatePodField(podId, 'autoRemoveAt', removeDate.toISOString());
+    }
+    setShowAutoRemoveModal(null);
   }
 
   // ── Render ───────────────────────────────────────────
@@ -426,6 +617,30 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                 {pod.label && (
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)' }}>
                     — {pod.label}
+                  </span>
+                )}
+                {pod.podType === 'listing' && pod.listingStatus && pod.listingStatus !== 'active' && (
+                  <span style={{
+                    fontSize: '0.625rem',
+                    fontWeight: 600,
+                    padding: '1px 6px',
+                    borderRadius: '9999px',
+                    backgroundColor: `${LISTING_STATUSES.find(s => s.value === pod.listingStatus)?.color || '#6b7280'}20`,
+                    color: LISTING_STATUSES.find(s => s.value === pod.listingStatus)?.color || '#6b7280',
+                  }}>
+                    {LISTING_STATUSES.find(s => s.value === pod.listingStatus)?.label || pod.listingStatus}
+                  </span>
+                )}
+                {pod.podType === 'event' && pod.eventStatus && pod.eventStatus !== 'upcoming' && (
+                  <span style={{
+                    fontSize: '0.625rem',
+                    fontWeight: 600,
+                    padding: '1px 6px',
+                    borderRadius: '9999px',
+                    backgroundColor: `${EVENT_STATUSES.find(s => s.value === pod.eventStatus)?.color || '#6b7280'}20`,
+                    color: EVENT_STATUSES.find(s => s.value === pod.eventStatus)?.color || '#6b7280',
+                  }}>
+                    {EVENT_STATUSES.find(s => s.value === pod.eventStatus)?.label || pod.eventStatus}
                   </span>
                 )}
                 {isShowcase && pod.showOnProfile && (
@@ -640,7 +855,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                     </div>
                   )}
 
-                  {/* Link Preview: URL + fetch button + auto-filled fields */}
+                  {/* Link Preview: URL + photo upload + auto-filled fields */}
                   {pod.podType === 'link_preview' && (
                     <>
                       <div style={{ marginBottom: '0.625rem' }}>
@@ -649,12 +864,12 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                           <input
                             type="text"
                             value={pod.ctaUrl}
-                            onChange={e => updatePodField(pod.id, 'ctaUrl', e.target.value.slice(0, 500))}
-                            placeholder="https://..."
+                            onChange={e => handleLinkPreviewUrlChange(pod.id, e.target.value)}
+                            placeholder="Paste a URL — preview auto-fetches"
                             style={{ ...inputStyle, flex: 1 }}
                           />
                           <button
-                            onClick={() => fetchOgPreview(pod.id)}
+                            onClick={() => { fetchedUrlsRef.current.add(pod.ctaUrl); fetchOgPreview(pod.id); }}
                             disabled={!pod.ctaUrl || fetchingPreview === pod.id}
                             style={{
                               ...saveBtnStyle,
@@ -664,30 +879,74 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                               whiteSpace: 'nowrap',
                             }}
                           >
-                            {fetchingPreview === pod.id ? 'Fetching...' : 'Fetch Preview'}
+                            {fetchingPreview === pod.id ? 'Fetching...' : 'Fetch'}
                           </button>
                         </div>
+                        {fetchingPreview === pod.id && (
+                          <p style={{ fontSize: '0.75rem', color: 'var(--accent, #e8a849)', margin: '0.25rem 0 0' }}>
+                            Fetching preview data...
+                          </p>
+                        )}
                       </div>
 
-                      {/* Preview fields (auto-filled or manual entry) */}
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.625rem' }}>
-                        Auto-fetch may not work on all sites. You can always enter details manually or upload an image.
-                      </p>
-                      {pod.imageUrl && (
-                        <div style={{ marginBottom: '0.625rem' }}>
-                          <img
-                            src={pod.imageUrl}
-                            alt="Preview"
-                            style={{
-                              width: '100%',
-                              aspectRatio: '1.91 / 1',
-                              objectFit: 'cover',
-                              borderRadius: '0.5rem',
-                              border: '1px solid var(--border, #1e2535)',
-                            }}
-                          />
-                        </div>
-                      )}
+                      {/* Prominent photo upload zone */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Preview image</label>
+                        {pod.imageUrl ? (
+                          <div style={{ position: 'relative' }}>
+                            <img
+                              src={pod.imageUrl}
+                              alt="Preview"
+                              style={{
+                                width: '100%',
+                                aspectRatio: '1.91 / 1',
+                                objectFit: 'cover',
+                                borderRadius: '0.5rem',
+                                border: '1px solid var(--border, #1e2535)',
+                                display: 'block',
+                              }}
+                            />
+                            <div style={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: '0.25rem' }}>
+                              <label style={{
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                padding: '0.25rem 0.5rem', borderRadius: '0.375rem',
+                                background: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: '0.6875rem',
+                                fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', backdropFilter: 'blur(4px)',
+                              }}>
+                                Replace
+                                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const result = await uploadPodImage(file); if ('url' in result) { updatePodField(pod.id, 'imageUrl', result.url); setUploadError(prev => { const n = { ...prev }; delete n[pod.id]; return n; }); } else { setUploadError(prev => ({ ...prev, [pod.id]: result.error })); } e.target.value = ''; }} />
+                              </label>
+                              <button type="button" onClick={() => updatePodField(pod.id, 'imageUrl', '')} style={{
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                padding: '0.25rem 0.5rem', borderRadius: '0.375rem',
+                                background: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: '0.6875rem',
+                                fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', border: 'none', backdropFilter: 'blur(4px)',
+                              }}>Remove</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <label style={{
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            padding: '1.25rem', borderRadius: '0.5rem',
+                            border: '2px dashed var(--border-light, #283042)',
+                            cursor: 'pointer', transition: 'border-color 0.15s',
+                            minHeight: 80,
+                          }}>
+                            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.25rem' }}>
+                              Drop an image or click to upload
+                            </span>
+                            <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', opacity: 0.7 }}>
+                              Auto-fetched from URL when available
+                            </span>
+                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const result = await uploadPodImage(file); if ('url' in result) { updatePodField(pod.id, 'imageUrl', result.url); setUploadError(prev => { const n = { ...prev }; delete n[pod.id]; return n; }); } else { setUploadError(prev => ({ ...prev, [pod.id]: result.error })); } e.target.value = ''; }} />
+                          </label>
+                        )}
+                        {uploadError[pod.id] && (
+                          <p style={{ fontSize: '0.75rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{uploadError[pod.id]}</p>
+                        )}
+                      </div>
+
+                      {/* Title + Description */}
                       <div style={{ marginBottom: '0.625rem' }}>
                         <label style={labelStyle}>Title</label>
                         <input
@@ -707,33 +966,6 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                           rows={2}
                           style={{ ...inputStyle, resize: 'vertical', minHeight: 50 }}
                         />
-                      </div>
-                      <div style={{ marginBottom: '0.625rem' }}>
-                        <label style={labelStyle}>Image</label>
-                        <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
-                          <input
-                            type="text"
-                            value={pod.imageUrl}
-                            onChange={e => updatePodField(pod.id, 'imageUrl', e.target.value.slice(0, 1000))}
-                            placeholder="https://... or upload"
-                            style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
-                          />
-                          <label
-                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
-                          >
-                            Upload
-                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const result = await uploadPodImage(file); if ('url' in result) { updatePodField(pod.id, 'imageUrl', result.url); setUploadError(prev => { const n = { ...prev }; delete n[pod.id]; return n; }); } else { setUploadError(prev => ({ ...prev, [pod.id]: result.error })); } e.target.value = ''; }} />
-                          </label>
-                        </div>
-                        {uploadError[pod.id] && (
-                          <p style={{ fontSize: '0.75rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{uploadError[pod.id]}</p>
-                        )}
-                        {pod.imageUrl && (
-                          <div style={{ marginTop: '0.375rem', position: 'relative', display: 'inline-block' }}>
-                            <img src={pod.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: 120, borderRadius: '0.375rem', border: '1px solid var(--border, #1e2535)', objectFit: 'cover' }} />
-                            <button type="button" onClick={() => updatePodField(pod.id, 'imageUrl', '')} style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.625rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Remove image">✕</button>
-                          </div>
-                        )}
                       </div>
                     </>
                   )}
@@ -821,6 +1053,566 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                         />
                       </div>
                     </>
+                  )}
+
+                  {/* Listing: URL + fetch + photo + price + details + status */}
+                  {pod.podType === 'listing' && (
+                    <>
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Listing URL</label>
+                        <div style={{ display: 'flex', gap: '0.375rem' }}>
+                          <input
+                            type="text"
+                            value={pod.ctaUrl}
+                            onChange={e => updatePodField(pod.id, 'ctaUrl', e.target.value.slice(0, 500))}
+                            placeholder="https://zillow.com/homedetails/..."
+                            style={{ ...inputStyle, flex: 1 }}
+                          />
+                          <button
+                            onClick={() => fetchListingPreview(pod.id)}
+                            disabled={!pod.ctaUrl || fetchingPreview === pod.id}
+                            style={{
+                              ...saveBtnStyle,
+                              padding: '0.5rem 0.75rem',
+                              fontSize: '0.75rem',
+                              opacity: !pod.ctaUrl || fetchingPreview === pod.id ? 0.5 : 1,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {fetchingPreview === pod.id ? 'Fetching...' : 'Fetch'}
+                          </button>
+                        </div>
+                        {pod.sourceDomain && (
+                          <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', marginTop: '0.25rem' }}>
+                            Source: {pod.sourceDomain}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Photo */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Property photo</label>
+                        <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            value={pod.imageUrl}
+                            onChange={e => updatePodField(pod.id, 'imageUrl', e.target.value.slice(0, 500))}
+                            placeholder="https://... or upload"
+                            style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+                          />
+                          <label
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                          >
+                            Upload
+                            <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const result = await uploadPodImage(file); if ('url' in result) { updatePodField(pod.id, 'imageUrl', result.url); setUploadError(prev => { const n = { ...prev }; delete n[pod.id]; return n; }); } else { setUploadError(prev => ({ ...prev, [pod.id]: result.error })); } e.target.value = ''; }} />
+                          </label>
+                        </div>
+                        {uploadError[pod.id] && (
+                          <p style={{ fontSize: '0.75rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{uploadError[pod.id]}</p>
+                        )}
+                        {pod.imageUrl && (
+                          <div style={{ marginTop: '0.375rem', position: 'relative', display: 'inline-block' }}>
+                            <img src={pod.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: 140, borderRadius: '0.5rem', border: '1px solid var(--border, #1e2535)', objectFit: 'cover' }} />
+                            <button type="button" onClick={() => updatePodField(pod.id, 'imageUrl', '')} style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.625rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Remove image">{'\u2715'}</button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Address / title */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Address / title</label>
+                        <input
+                          type="text"
+                          value={pod.title}
+                          onChange={e => updatePodField(pod.id, 'title', e.target.value.slice(0, 200))}
+                          placeholder="123 Main Street, City, ST"
+                          style={inputStyle}
+                        />
+                      </div>
+
+                      {/* Price */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Price</label>
+                        <input
+                          type="text"
+                          value={pod.listingPrice}
+                          onChange={e => updatePodField(pod.id, 'listingPrice', e.target.value.slice(0, 50))}
+                          placeholder="$450,000"
+                          style={inputStyle}
+                        />
+                      </div>
+
+                      {/* Details: beds / baths / sqft */}
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.625rem' }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={labelStyle}>Beds</label>
+                          <input
+                            type="text"
+                            value={pod.listingDetails?.beds || ''}
+                            onChange={e => updatePodField(pod.id, 'listingDetails', { ...pod.listingDetails, beds: e.target.value.slice(0, 10) })}
+                            placeholder="3"
+                            style={inputStyle}
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={labelStyle}>Baths</label>
+                          <input
+                            type="text"
+                            value={pod.listingDetails?.baths || ''}
+                            onChange={e => updatePodField(pod.id, 'listingDetails', { ...pod.listingDetails, baths: e.target.value.slice(0, 10) })}
+                            placeholder="2"
+                            style={inputStyle}
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={labelStyle}>Sq ft</label>
+                          <input
+                            type="text"
+                            value={pod.listingDetails?.sqft || ''}
+                            onChange={e => updatePodField(pod.id, 'listingDetails', { ...pod.listingDetails, sqft: e.target.value.slice(0, 15) })}
+                            placeholder="1,500"
+                            style={inputStyle}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Description (optional)</label>
+                        <textarea
+                          value={pod.body}
+                          onChange={e => updatePodField(pod.id, 'body', e.target.value.slice(0, 500))}
+                          placeholder="Beautiful home in a great neighborhood..."
+                          rows={2}
+                          style={{ ...inputStyle, resize: 'vertical', minHeight: 50 }}
+                        />
+                      </div>
+
+                      {/* Status */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Status</label>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+                          {LISTING_STATUSES.map(s => (
+                            <button
+                              key={s.value}
+                              type="button"
+                              onClick={() => handleStatusChange(pod.id, s.value)}
+                              style={{
+                                padding: '0.3125rem 0.625rem',
+                                borderRadius: '9999px',
+                                border: '1px solid',
+                                borderColor: pod.listingStatus === s.value ? s.color : 'var(--border-light, #283042)',
+                                backgroundColor: pod.listingStatus === s.value ? `${s.color}20` : 'transparent',
+                                color: pod.listingStatus === s.value ? s.color : 'var(--text-mid, #a8adb8)',
+                                fontSize: '0.75rem',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                fontFamily: 'inherit',
+                              }}
+                            >
+                              {s.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Open house date/time picker */}
+                      {pod.listingStatus === 'open_house' && (
+                        <div style={{ marginBottom: '0.625rem', padding: '0.625rem 0.75rem', backgroundColor: 'rgba(6, 182, 212, 0.06)', borderRadius: '0.5rem', border: '1px solid rgba(6, 182, 212, 0.15)' }}>
+                          <label style={{ ...labelStyle, color: '#06b6d4' }}>Open House Date &amp; Time</label>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <div style={{ flex: 1 }}>
+                              <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Start</label>
+                              <input
+                                type="datetime-local"
+                                value={pod.eventStart ? new Date(new Date(pod.eventStart).getTime() - new Date(pod.eventStart).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
+                                onChange={e => updatePodField(pod.id, 'eventStart', e.target.value ? new Date(e.target.value).toISOString() : '')}
+                                style={inputStyle}
+                              />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>End</label>
+                              <input
+                                type="datetime-local"
+                                value={pod.eventEnd ? new Date(new Date(pod.eventEnd).getTime() - new Date(pod.eventEnd).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
+                                onChange={e => updatePodField(pod.id, 'eventEnd', e.target.value ? new Date(e.target.value).toISOString() : '')}
+                                style={inputStyle}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Auto-remove info */}
+                      {pod.autoRemoveAt && (
+                        <div style={{ marginBottom: '0.625rem', padding: '0.5rem 0.75rem', backgroundColor: 'rgba(239, 68, 68, 0.08)', borderRadius: '0.5rem', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+                          <p style={{ fontSize: '0.75rem', color: '#ef4444', margin: 0 }}>
+                            Auto-removes on {new Date(pod.autoRemoveAt).toLocaleDateString()}
+                            <button
+                              type="button"
+                              onClick={() => updatePodField(pod.id, 'autoRemoveAt', '')}
+                              style={{ marginLeft: '0.5rem', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.75rem', textDecoration: 'underline' }}
+                            >
+                              Cancel
+                            </button>
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Event: title + start/end + venue + address + ticket link + image + status + auto-hide */}
+                  {pod.podType === 'event' && (
+                    <>
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Event name</label>
+                        <input
+                          type="text"
+                          value={pod.title}
+                          onChange={e => updatePodField(pod.id, 'title', e.target.value.slice(0, 200))}
+                          placeholder="Annual Investor Summit"
+                          style={inputStyle}
+                        />
+                      </div>
+
+                      {/* Date/time */}
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.625rem' }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={labelStyle}>Start</label>
+                          <input
+                            type="datetime-local"
+                            value={pod.eventStart ? new Date(new Date(pod.eventStart).getTime() - new Date(pod.eventStart).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
+                            onChange={e => updatePodField(pod.id, 'eventStart', e.target.value ? new Date(e.target.value).toISOString() : '')}
+                            style={inputStyle}
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={labelStyle}>End</label>
+                          <input
+                            type="datetime-local"
+                            value={pod.eventEnd ? new Date(new Date(pod.eventEnd).getTime() - new Date(pod.eventEnd).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
+                            onChange={e => updatePodField(pod.id, 'eventEnd', e.target.value ? new Date(e.target.value).toISOString() : '')}
+                            style={inputStyle}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Venue + address */}
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.625rem' }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={labelStyle}>Venue</label>
+                          <input
+                            type="text"
+                            value={pod.eventVenue}
+                            onChange={e => updatePodField(pod.id, 'eventVenue', e.target.value.slice(0, 200))}
+                            placeholder="The Grand Ballroom"
+                            style={inputStyle}
+                          />
+                        </div>
+                      </div>
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Address</label>
+                        <input
+                          type="text"
+                          value={pod.eventAddress}
+                          onChange={e => updatePodField(pod.id, 'eventAddress', e.target.value.slice(0, 300))}
+                          placeholder="100 Broadway, New York, NY 10001"
+                          style={inputStyle}
+                        />
+                      </div>
+
+                      {/* Ticket / RSVP link */}
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.625rem' }}>
+                        <div style={{ flex: '0 0 35%' }}>
+                          <label style={labelStyle}>Button text</label>
+                          <input
+                            type="text"
+                            value={pod.ctaLabel}
+                            onChange={e => updatePodField(pod.id, 'ctaLabel', e.target.value.slice(0, 100))}
+                            placeholder="Get Tickets"
+                            style={inputStyle}
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={labelStyle}>Ticket / RSVP URL</label>
+                          <input
+                            type="text"
+                            value={pod.ctaUrl}
+                            onChange={e => updatePodField(pod.id, 'ctaUrl', e.target.value.slice(0, 500))}
+                            placeholder="https://eventbrite.com/..."
+                            style={inputStyle}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Photo */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Event image</label>
+                        <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            value={pod.imageUrl}
+                            onChange={e => updatePodField(pod.id, 'imageUrl', e.target.value.slice(0, 500))}
+                            placeholder="https://... or upload"
+                            style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+                          />
+                          <label
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                          >
+                            Upload
+                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const result = await uploadPodImage(file); if ('url' in result) { updatePodField(pod.id, 'imageUrl', result.url); setUploadError(prev => { const n = { ...prev }; delete n[pod.id]; return n; }); } else { setUploadError(prev => ({ ...prev, [pod.id]: result.error })); } e.target.value = ''; }} />
+                          </label>
+                        </div>
+                        {uploadError[pod.id] && (
+                          <p style={{ fontSize: '0.75rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{uploadError[pod.id]}</p>
+                        )}
+                        {pod.imageUrl && (
+                          <div style={{ marginTop: '0.375rem', position: 'relative', display: 'inline-block' }}>
+                            <img src={pod.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: 140, borderRadius: '0.5rem', border: '1px solid var(--border, #1e2535)', objectFit: 'cover' }} />
+                            <button type="button" onClick={() => updatePodField(pod.id, 'imageUrl', '')} style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.625rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Remove image">{'\u2715'}</button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Description */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Description (optional)</label>
+                        <textarea
+                          value={pod.body}
+                          onChange={e => updatePodField(pod.id, 'body', e.target.value.slice(0, 500))}
+                          placeholder="Join us for an evening of networking and insights..."
+                          rows={3}
+                          style={{ ...inputStyle, resize: 'vertical', minHeight: 60 }}
+                        />
+                      </div>
+
+                      {/* Status */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Status</label>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+                          {EVENT_STATUSES.map(s => (
+                            <button
+                              key={s.value}
+                              type="button"
+                              onClick={() => updatePodField(pod.id, 'eventStatus', s.value)}
+                              style={{
+                                padding: '0.3125rem 0.625rem',
+                                borderRadius: '9999px',
+                                border: '1px solid',
+                                borderColor: pod.eventStatus === s.value ? s.color : 'var(--border-light, #283042)',
+                                backgroundColor: pod.eventStatus === s.value ? `${s.color}20` : 'transparent',
+                                color: pod.eventStatus === s.value ? s.color : 'var(--text-mid, #a8adb8)',
+                                fontSize: '0.75rem',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                fontFamily: 'inherit',
+                              }}
+                            >
+                              {s.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Auto-hide toggle */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={{ ...labelStyle, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <input
+                            type="checkbox"
+                            checked={pod.eventAutoHide}
+                            onChange={e => updatePodField(pod.id, 'eventAutoHide', e.target.checked)}
+                            style={{ width: 16, height: 16, accentColor: 'var(--accent, #e8a849)' }}
+                          />
+                          Auto-hide after event ends
+                        </label>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0.25rem 0 0 1.5rem' }}>
+                          When checked, this card automatically hides from your page after the end time passes.
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Music: title, audio upload, cover art, artist, description, external link */}
+                  {pod.podType === 'music' && (
+                    <>
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Track title</label>
+                        <input
+                          type="text"
+                          value={pod.title}
+                          onChange={e => updatePodField(pod.id, 'title', e.target.value.slice(0, 200))}
+                          placeholder="My Song"
+                          style={inputStyle}
+                        />
+                      </div>
+
+                      {/* Audio file upload */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Audio file</label>
+                        {pod.audioUrl ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                            <audio controls src={pod.audioUrl} style={{ width: '100%', height: 36, borderRadius: '0.375rem' }} />
+                            <div style={{ display: 'flex', gap: '0.375rem' }}>
+                              <label style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                                Replace
+                                <input type="file" accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/m4a,audio/ogg,audio/aac" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const result = await uploadPodAudio(file); if ('url' in result) { updatePodField(pod.id, 'audioUrl', result.url); setUploadError(prev => { const n = { ...prev }; delete n[pod.id]; return n; }); } else { setUploadError(prev => ({ ...prev, [pod.id]: result.error })); } e.target.value = ''; }} />
+                              </label>
+                              <button type="button" onClick={() => updatePodField(pod.id, 'audioUrl', '')} style={{ padding: '0.25rem 0.625rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'transparent', color: 'var(--text-muted, #5d6370)', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'inherit' }}>
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <label style={{
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            padding: '1.25rem', borderRadius: '0.5rem',
+                            border: '2px dashed var(--border-light, #283042)',
+                            cursor: 'pointer', transition: 'border-color 0.15s',
+                            minHeight: 60,
+                          }}>
+                            <span style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>{'\u{1F3B5}'}</span>
+                            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>
+                              Drop audio or click to upload
+                            </span>
+                            <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', opacity: 0.7 }}>
+                              MP3, WAV, M4A, OGG, AAC — max 15MB
+                            </span>
+                            <input type="file" accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/m4a,audio/ogg,audio/aac" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const result = await uploadPodAudio(file); if ('url' in result) { updatePodField(pod.id, 'audioUrl', result.url); setUploadError(prev => { const n = { ...prev }; delete n[pod.id]; return n; }); } else { setUploadError(prev => ({ ...prev, [pod.id]: result.error })); } e.target.value = ''; }} />
+                          </label>
+                        )}
+                        {uploadError[pod.id] && (
+                          <p style={{ fontSize: '0.75rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{uploadError[pod.id]}</p>
+                        )}
+                      </div>
+
+                      {/* Cover art */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Cover art (optional)</label>
+                        <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            value={pod.imageUrl}
+                            onChange={e => updatePodField(pod.id, 'imageUrl', e.target.value.slice(0, 500))}
+                            placeholder="https://... or upload"
+                            style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+                          />
+                          <label
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                          >
+                            Upload
+                            <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const result = await uploadPodImage(file); if ('url' in result) { updatePodField(pod.id, 'imageUrl', result.url); setUploadError(prev => { const n = { ...prev }; delete n[pod.id]; return n; }); } else { setUploadError(prev => ({ ...prev, [pod.id]: result.error })); } e.target.value = ''; }} />
+                          </label>
+                        </div>
+                        {pod.imageUrl && (
+                          <div style={{ marginTop: '0.375rem', position: 'relative', display: 'inline-block' }}>
+                            <img src={pod.imageUrl} alt="" style={{ width: 80, height: 80, borderRadius: '0.5rem', border: '1px solid var(--border, #1e2535)', objectFit: 'cover' }} />
+                            <button type="button" onClick={() => updatePodField(pod.id, 'imageUrl', '')} style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.625rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Remove image">{'\u2715'}</button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Artist */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Artist</label>
+                        <input
+                          type="text"
+                          value={pod.tags}
+                          onChange={e => updatePodField(pod.id, 'tags', e.target.value.slice(0, 200))}
+                          placeholder="Artist name"
+                          style={inputStyle}
+                        />
+                      </div>
+
+                      {/* Description */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Description (optional)</label>
+                        <textarea
+                          value={pod.body}
+                          onChange={e => updatePodField(pod.id, 'body', e.target.value.slice(0, 500))}
+                          placeholder="A short note about this track..."
+                          rows={2}
+                          style={{ ...inputStyle, resize: 'vertical', minHeight: 50 }}
+                        />
+                      </div>
+
+                      {/* External link */}
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.625rem' }}>
+                        <div style={{ flex: '0 0 35%' }}>
+                          <label style={labelStyle}>Link label</label>
+                          <input
+                            type="text"
+                            value={pod.ctaLabel}
+                            onChange={e => updatePodField(pod.id, 'ctaLabel', e.target.value.slice(0, 100))}
+                            placeholder="Listen on Spotify"
+                            style={inputStyle}
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={labelStyle}>Link URL</label>
+                          <input
+                            type="text"
+                            value={pod.ctaUrl}
+                            onChange={e => updatePodField(pod.id, 'ctaUrl', e.target.value.slice(0, 500))}
+                            placeholder="https://open.spotify.com/..."
+                            style={inputStyle}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Auto-remove modal */}
+                  {showAutoRemoveModal === pod.id && (
+                    <div style={{
+                      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                      backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      zIndex: 9999,
+                    }} onClick={() => setShowAutoRemoveModal(null)}>
+                      <div
+                        style={{
+                          backgroundColor: 'var(--surface, #161c28)', borderRadius: '1rem',
+                          padding: '1.5rem', maxWidth: 360, width: '90%',
+                          border: '1px solid var(--border, #1e2535)',
+                        }}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text, #eceef2)' }}>
+                          Auto-remove this listing?
+                        </h3>
+                        <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
+                          Automatically remove this card from your page after a set period.
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                          {[7, 14, 30, 60].map(days => (
+                            <button
+                              key={days}
+                              type="button"
+                              onClick={() => setAutoRemoveDays(pod.id, days)}
+                              style={{
+                                padding: '0.5rem 0.75rem', borderRadius: '0.5rem',
+                                border: '1px solid var(--border-light, #283042)',
+                                backgroundColor: 'transparent', color: 'var(--text, #eceef2)',
+                                fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                              }}
+                            >
+                              {days} days
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => setAutoRemoveDays(pod.id, null)}
+                            style={{
+                              padding: '0.5rem 0.75rem', borderRadius: '0.5rem',
+                              border: '1px solid var(--border-light, #283042)',
+                              backgroundColor: 'transparent', color: 'var(--text-muted, #5d6370)',
+                              fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                            }}
+                          >
+                            No, keep it visible
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
                   {/* Show on profile checkbox (showcase only) */}

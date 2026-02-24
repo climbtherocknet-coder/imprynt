@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { getTheme, getCustomTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, getAccentOverrideVars, isDarkTemplate, LINK_ICONS } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
 import ProfileFeedbackButton from '@/components/ReportButton';
+import '@/styles/profile.css';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -18,14 +19,26 @@ interface ShowcaseItemData {
 }
 
 interface ProtectedPageContent {
-  page: { id: string; pageTitle: string; bioText: string; visibilityMode: string; resumeUrl?: string; showResume?: boolean };
+  page: {
+    id: string; pageTitle: string; bioText: string; visibilityMode: string;
+    resumeUrl?: string; showResume?: boolean;
+    photoShape?: string; photoRadius?: number; photoSize?: string;
+    photoPositionX?: number; photoPositionY?: number;
+    photoAnimation?: string; photoAlign?: string;
+    coverUrl?: string; coverOpacity?: number; coverPositionY?: number;
+    bgImageUrl?: string; bgImageOpacity?: number; bgImagePositionY?: number;
+    photoZoom?: number; coverPositionX?: number; coverZoom?: number;
+    bgImagePositionX?: number; bgImageZoom?: number;
+    linkSize?: string; linkShape?: string; linkButtonColor?: string | null;
+    linkDisplay?: string;
+  };
   profile: {
     firstName: string; lastName: string; photoUrl: string;
     title: string; company: string; template: string;
     primaryColor: string; accentColor: string; fontPair: string;
     customTheme?: Record<string, string> | null;
   };
-  links: { id: string; linkType: string; label: string; url: string }[];
+  links: { id: string; linkType: string; label: string; url: string; buttonColor?: string | null }[];
   pods?: PodData[];
   showcaseItems?: ShowcaseItemData[];
 }
@@ -51,6 +64,37 @@ interface ProfileClientProps {
   allowSharing?: boolean;
   allowFeedback?: boolean;
   showQrButton?: boolean;
+}
+
+// ── Photo Styles Helper ────────────────────────────────
+
+function getPhotoStyles(shape: string, radius: number, size: string, posX: number, posY: number): React.CSSProperties {
+  const sizeMap: Record<string, number> = { small: 56, medium: 72, large: 96 };
+  const dim = sizeMap[size] || 72;
+
+  let borderRadius: string;
+  let clipPath: string | undefined;
+
+  if (shape === 'hexagon') {
+    borderRadius = '0';
+    clipPath = 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)';
+  } else if (shape === 'diamond') {
+    borderRadius = '0';
+    clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)';
+  } else {
+    borderRadius = `${radius}%`;
+    clipPath = undefined;
+  }
+
+  return {
+    width: dim,
+    height: dim,
+    borderRadius,
+    clipPath,
+    objectFit: 'cover' as const,
+    objectPosition: `${posX}% ${posY}%`,
+    display: 'block',
+  };
 }
 
 // ── PIN Modal ──────────────────────────────────────────
@@ -309,6 +353,8 @@ function ProtectedPageView({
   isRemembered?: boolean;
   onForget?: () => void;
 }) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
   const theme = content.profile.template === 'custom'
     ? getCustomTheme(content.profile.customTheme || null)
     : getTheme(content.profile.template);
@@ -332,6 +378,60 @@ function ProtectedPageView({
   const fullName = [content.profile.firstName, content.profile.lastName].filter(Boolean).join(' ');
   const isPersonal = content.page.visibilityMode === 'hidden';
 
+  // Page-level photo settings with defaults
+  const photoShape = content.page.photoShape || 'circle';
+  const photoRadius = content.page.photoRadius ?? 50;
+  const photoSize = content.page.photoSize || 'medium';
+  const photoPosX = content.page.photoPositionX ?? 50;
+  const photoPosY = content.page.photoPositionY ?? 50;
+  const photoAlign = content.page.photoAlign || 'center';
+
+  // Cover & background
+  const coverUrl = content.page.coverUrl || '';
+  const coverOpacity = content.page.coverOpacity ?? 30;
+  const coverPositionY = content.page.coverPositionY ?? 50;
+  const bgImageUrl = content.page.bgImageUrl || '';
+  const bgImageOpacity = content.page.bgImageOpacity ?? 20;
+  const bgImagePositionY = content.page.bgImagePositionY ?? 50;
+
+  // Zoom
+  const photoZoom = content.page.photoZoom ?? 100;
+  const coverPositionX = content.page.coverPositionX ?? 50;
+  const coverZoom = content.page.coverZoom ?? 100;
+  const bgImagePositionX = content.page.bgImagePositionX ?? 50;
+  const bgImageZoom = content.page.bgImageZoom ?? 100;
+
+  // Link button settings
+  const linkSize = content.page.linkSize || 'medium';
+  const linkShape = content.page.linkShape || 'pill';
+  const linkButtonColor = content.page.linkButtonColor || null;
+  const linkDisplay = content.page.linkDisplay || 'default';
+  const linkStyle = theme.modifiers.linkStyle;
+  if (linkSize !== 'medium') dataAttrs['data-link-size'] = linkSize;
+  if (linkShape !== 'pill') dataAttrs['data-link-shape'] = linkShape;
+
+  // Photo styles
+  const ps = getPhotoStyles(photoShape, photoRadius, photoSize, photoPosX, photoPosY);
+  const marginStyle = photoAlign === 'left' ? { margin: '0 0 0.75rem' } :
+                      photoAlign === 'right' ? { margin: '0 0 0.75rem', marginLeft: 'auto' } :
+                      { margin: '0 auto 0.75rem' };
+
+  const alignStyle: React.CSSProperties = {
+    textAlign: photoAlign === 'left' ? 'left' : photoAlign === 'right' ? 'right' : 'center',
+  };
+
+  // Close lightbox on Escape
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') setLightboxOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (lightboxOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [lightboxOpen, handleKeyDown]);
+
   return (
     <>
       {googleFontsUrl && (
@@ -344,8 +444,10 @@ function ProtectedPageView({
       <div
         className={`profile-page t-${content.profile.template}`}
         {...dataAttrs}
+        {...(bgImageUrl ? { 'data-has-bg': 'true' } : {})}
         style={{
           ...cssVarStyle,
+          ...(linkButtonColor ? { '--link-btn-color': linkButtonColor } : {}),
           position: 'fixed',
           inset: 0,
           backgroundColor: 'var(--bg)',
@@ -353,13 +455,42 @@ function ProtectedPageView({
           color: 'var(--text)',
           overflowY: 'auto',
           zIndex: 900,
-        }}
+        } as React.CSSProperties}
       >
+        {/* Background Photo */}
+        {bgImageUrl && (
+          <div
+            className="profile-bg-image"
+            style={{ '--bg-overlay-opacity': `${(100 - bgImageOpacity) / 100}` } as React.CSSProperties}
+          >
+            <img
+              src={bgImageUrl}
+              alt=""
+              style={{
+                objectPosition: `${bgImagePositionX}% ${bgImagePositionY}%`,
+                transform: bgImageZoom > 100 ? `scale(${bgImageZoom / 100})` : undefined,
+              }}
+            />
+          </div>
+        )}
+
+        {/* Cover + Content */}
+        <div
+          className="profile-top"
+          {...(coverUrl ? { 'data-has-cover': 'true' } : {})}
+          style={coverUrl ? {
+            '--cover-url': `url('${coverUrl}')`,
+            '--cover-opacity': `${coverOpacity / 100}`,
+            '--cover-pos': `${coverPositionX}% ${coverPositionY}%`,
+            '--cover-zoom': coverZoom > 100 ? `${coverZoom}%` : 'cover',
+          } as React.CSSProperties : undefined}
+        >
         <div style={{
           maxWidth: 480,
           margin: '0 auto',
           padding: '2rem 1rem',
-          textAlign: 'center',
+          position: 'relative',
+          zIndex: 1,
         }}>
         {/* Back button */}
         <button
@@ -399,30 +530,43 @@ function ProtectedPageView({
           </div>
         )}
 
-        {/* Mini profile header */}
-        {content.profile.photoUrl ? (
-          <img
-            src={content.profile.photoUrl}
-            alt={fullName}
-            style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', margin: '0 auto 0.75rem', display: 'block' }}
-          />
-        ) : (
-          <div style={{
-            width: 72, height: 72, borderRadius: '50%', margin: '0 auto 0.75rem',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            backgroundColor: accent + '15', color: accent, fontSize: '1.5rem', fontWeight: 700,
-          }}>
-            {(content.profile.firstName?.[0] || '').toUpperCase()}
-          </div>
-        )}
+        {/* Photo + Name section with alignment */}
+        <div style={alignStyle} data-photo-align={photoAlign}>
+          {content.profile.photoUrl ? (
+            <div style={{ ...marginStyle, width: ps.width, height: ps.height, overflow: 'hidden', borderRadius: ps.borderRadius, clipPath: ps.clipPath, flexShrink: 0 }}>
+              <img
+                src={content.profile.photoUrl}
+                alt={fullName}
+                className="photo-expandable"
+                style={{
+                  ...ps,
+                  borderRadius: 0, clipPath: undefined, margin: 0,
+                  ...(photoZoom > 100 ? {
+                    transform: `scale(${photoZoom / 100})`,
+                    transformOrigin: `${photoPosX}% ${photoPosY}%`,
+                  } : {}),
+                }}
+                onClick={() => setLightboxOpen(true)}
+              />
+            </div>
+          ) : (
+            <div style={{
+              ...ps, ...marginStyle,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              backgroundColor: accent + '15', color: accent, fontSize: '1.5rem', fontWeight: 700,
+            }}>
+              {(content.profile.firstName?.[0] || '').toUpperCase()}
+            </div>
+          )}
 
-        <h1 style={{
-          fontSize: '1.5rem', fontWeight: 800, fontFamily: 'var(--font-heading)',
-          color: 'var(--text)',
-          margin: '0 0 0.25rem', letterSpacing: '-0.02em',
-        }}>
-          {fullName}
-        </h1>
+          <h1 style={{
+            fontSize: '1.5rem', fontWeight: 800, fontFamily: 'var(--font-heading)',
+            color: 'var(--text)',
+            margin: '0 0 0.25rem', letterSpacing: '-0.02em',
+          }}>
+            {fullName}
+          </h1>
+        </div>
 
         {/* Personal message */}
         {content.page.bioText && (
@@ -430,6 +574,7 @@ function ProtectedPageView({
             fontSize: '0.925rem', lineHeight: 1.6,
             color: 'var(--text-mid)', margin: '1rem 0',
             whiteSpace: 'pre-line',
+            textAlign: photoAlign === 'left' ? 'left' : photoAlign === 'right' ? 'right' : 'center',
           }}>
             {content.page.bioText}
           </p>
@@ -439,31 +584,60 @@ function ProtectedPageView({
         <div style={{ width: 40, height: 2, backgroundColor: 'var(--border)', margin: '1.5rem auto', borderRadius: 1 }} />
 
         {/* Links */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {content.links.map(link => (
-            <a
-              key={link.id}
-              href={link.linkType === 'email' ? `mailto:${link.url}` :
-                    link.linkType === 'phone' ? `tel:${link.url}` :
-                    link.url}
-              target={['email', 'phone'].includes(link.linkType) ? undefined : '_blank'}
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: '0.5rem', padding: '0.875rem 1.25rem',
-                borderRadius: 'var(--radius)', textDecoration: 'none',
-                fontWeight: 600, fontSize: '0.9375rem',
-                transition: 'transform 0.15s, opacity 0.15s',
-                backgroundColor: accent,
-                color: isDark ? 'var(--bg)' : '#fff',
-                border: '2px solid transparent',
-              }}
-            >
-              <span style={{ fontSize: '1rem' }}>{LINK_ICONS[link.linkType] || '>'}</span>
-              {link.label || link.linkType}
-            </a>
-          ))}
-        </div>
+        {content.links.length > 0 && (
+          <>
+            {linkDisplay === 'icons' ? (
+              <div className="link-icons-row">
+                {content.links.map(link => {
+                  const btnColor = link.buttonColor || linkButtonColor || null;
+                  return (
+                    <a
+                      key={link.id}
+                      href={link.linkType === 'email' ? `mailto:${link.url}` :
+                            link.linkType === 'phone' ? `tel:${link.url}` :
+                            link.url}
+                      target={['email', 'phone'].includes(link.linkType) ? undefined : '_blank'}
+                      rel="noopener noreferrer"
+                      className="link-icon-btn"
+                      title={link.label || link.linkType}
+                      aria-label={link.label || link.linkType}
+                      style={btnColor ? {
+                        color: btnColor,
+                        borderColor: btnColor,
+                        '--link-btn-color': btnColor,
+                      } as React.CSSProperties : undefined}
+                    >
+                      <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[link.linkType] || LINK_ICONS.custom }} />
+                    </a>
+                  );
+                })}
+              </div>
+            ) : (() => {
+              const style = linkStyle || 'pills';
+              const linkHref = (l: typeof content.links[0]) =>
+                l.linkType === 'email' ? `mailto:${l.url}` : l.linkType === 'phone' ? `tel:${l.url}` : l.url;
+              const linkTarget = (l: typeof content.links[0]) =>
+                ['email', 'phone'].includes(l.linkType) ? undefined : '_blank';
+              const linkColorStyle = (l: typeof content.links[0]) =>
+                l.buttonColor ? { '--link-btn-color': l.buttonColor } as React.CSSProperties : undefined;
+              const renderLink = (l: typeof content.links[0], cls: string) => (
+                <a key={l.id} href={linkHref(l)} target={linkTarget(l)} rel="noopener noreferrer" className={cls} style={linkColorStyle(l)}>
+                  <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[l.linkType] || LINK_ICONS.custom }} />
+                  {l.label || l.linkType}
+                </a>
+              );
+              if (style === 'stacked') return (
+                <div className="link-stacked">{content.links.map(l => renderLink(l, 'link-stacked-item'))}</div>
+              );
+              if (style === 'full-width-pills') return (
+                <div className="link-full-width">{content.links.map(l => renderLink(l, 'link-full-width-item'))}</div>
+              );
+              return (
+                <div className="link-row">{content.links.map(l => renderLink(l, 'link-pill'))}</div>
+              );
+            })()}
+          </>
+        )}
 
         {/* Personal vCard download (impression pages only) */}
         {isPersonal && downloadToken && (
@@ -502,7 +676,7 @@ function ProtectedPageView({
                 border: '1px solid var(--accent-border)',
               }}
             >
-              📄 View Resume
+              View Resume
             </a>
           </div>
         )}
@@ -641,6 +815,14 @@ function ProtectedPageView({
           </div>
         )}
       </div>
+      </div>{/* end .profile-top */}
+
+      {/* Photo Lightbox */}
+      {lightboxOpen && content.profile.photoUrl && (
+        <div className="photo-lightbox-overlay" onClick={() => setLightboxOpen(false)}>
+          <img src={content.profile.photoUrl} alt={fullName} />
+        </div>
+      )}
     </div>
     </>
   );
