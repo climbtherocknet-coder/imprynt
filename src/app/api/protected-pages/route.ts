@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
            pp.photo_animation, pp.photo_align, pp.cover_url, pp.cover_opacity, pp.cover_position_y,
            pp.bg_image_url, pp.bg_image_opacity, pp.bg_image_position_y,
            pp.photo_zoom, pp.cover_position_x, pp.cover_zoom, pp.bg_image_position_x, pp.bg_image_zoom,
-           pp.link_size, pp.link_shape
+           p.link_size, p.link_shape, p.link_button_color
     FROM protected_pages pp
     JOIN profiles p ON p.id = pp.profile_id
     WHERE pp.user_id = $1
@@ -84,6 +84,7 @@ export async function GET(req: NextRequest) {
       bgImageZoom: row.bg_image_zoom ?? 100,
       linkSize: row.link_size || 'medium',
       linkShape: row.link_shape || 'pill',
+      linkButtonColor: row.link_button_color || null,
       displayOrder: row.display_order,
       isActive: row.is_active,
       links: linksResult.rows.map((l: Record<string, unknown>) => ({
@@ -183,8 +184,7 @@ export async function PUT(req: NextRequest) {
   const { id, pageTitle, bioText, buttonLabel, resumeUrl, showResume, pin, isActive, iconColor, iconOpacity, iconCorner, allowRemember, photoUrl,
     photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign,
     coverUrl, coverOpacity, coverPositionY, bgImageUrl, bgImageOpacity, bgImagePositionY,
-    photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom,
-    linkSize, linkShape } = body;
+    photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom } = body;
 
   if (!id) {
     return NextResponse.json({ error: 'Page ID required' }, { status: 400 });
@@ -327,17 +327,6 @@ export async function PUT(req: NextRequest) {
   if (bgImageZoom !== undefined) {
     updates.push(`bg_image_zoom = $${paramIdx++}`);
     params.push(Math.max(100, Math.min(300, Number(bgImageZoom))));
-  }
-  // Link button settings (migration 046)
-  if (linkSize !== undefined) {
-    const validLinkSizes = ['small', 'medium', 'large'];
-    updates.push(`link_size = $${paramIdx++}`);
-    params.push(validLinkSizes.includes(linkSize) ? linkSize : 'medium');
-  }
-  if (linkShape !== undefined) {
-    const validLinkShapes = ['pill', 'rounded', 'square'];
-    updates.push(`link_shape = $${paramIdx++}`);
-    params.push(validLinkShapes.includes(linkShape) ? linkShape : 'pill');
   }
   if (pin) {
     if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {

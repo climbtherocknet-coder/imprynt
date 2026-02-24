@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
 
-const VALID_POD_TYPES = ['text', 'text_image', 'stats', 'cta', 'link_preview', 'project', 'listing', 'event'] as const;
+const VALID_POD_TYPES = ['text', 'text_image', 'stats', 'cta', 'link_preview', 'project', 'listing', 'event', 'music'] as const;
 const MAX_PODS = 6;
 
 // GET - Load pods for a protected page (dashboard editor)
@@ -31,7 +31,8 @@ export async function GET(req: NextRequest) {
     `SELECT id, pod_type, display_order, label, title, body,
             image_url, stats, cta_label, cta_url, tags, image_position, show_on_profile, is_active,
             listing_status, listing_price, listing_details, source_domain, auto_remove_at, sold_at,
-            event_start, event_end, event_venue, event_address, event_status, event_auto_hide
+            event_start, event_end, event_venue, event_address, event_status, event_auto_hide,
+            audio_url, audio_duration
      FROM pods
      WHERE protected_page_id = $1 AND is_active = true
        AND (auto_remove_at IS NULL OR auto_remove_at > NOW())
@@ -67,6 +68,8 @@ export async function GET(req: NextRequest) {
     eventAddress: r.event_address || '',
     eventStatus: r.event_status || 'upcoming',
     eventAutoHide: r.event_auto_hide ?? true,
+    audioUrl: r.audio_url || '',
+    audioDuration: r.audio_duration || 0,
   }));
 
   return NextResponse.json({ pods });
@@ -90,7 +93,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { protectedPageId, podType, label, title, podBody, imageUrl, stats, ctaLabel, ctaUrl, tags,
           listingStatus, listingPrice, listingDetails, sourceDomain,
-          eventStart, eventEnd, eventVenue, eventAddress, eventStatus, eventAutoHide } = body;
+          eventStart, eventEnd, eventVenue, eventAddress, eventStatus, eventAutoHide,
+          audioUrl, audioDuration } = body;
 
   if (!protectedPageId) {
     return NextResponse.json({ error: 'Protected page ID required' }, { status: 400 });
@@ -127,8 +131,9 @@ export async function POST(req: NextRequest) {
   const result = await query(
     `INSERT INTO pods (protected_page_id, pod_type, display_order, label, title, body, image_url, stats, cta_label, cta_url, tags,
                        listing_status, listing_price, listing_details, source_domain,
-                       event_start, event_end, event_venue, event_address, event_status, event_auto_hide)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+                       event_start, event_end, event_venue, event_address, event_status, event_auto_hide,
+                       audio_url, audio_duration)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
      RETURNING id`,
     [
       protectedPageId,
@@ -152,6 +157,8 @@ export async function POST(req: NextRequest) {
       podType === 'event' ? (eventAddress?.trim()?.slice(0, 300) || null) : null,
       podType === 'event' ? (eventStatus || 'upcoming') : null,
       podType === 'event' ? (eventAutoHide !== false) : true,
+      podType === 'music' ? (audioUrl?.trim()?.slice(0, 500) || null) : null,
+      podType === 'music' ? (audioDuration || null) : null,
     ]
   );
 
@@ -198,7 +205,8 @@ export async function PUT(req: NextRequest) {
   // Single pod update
   const { id, label, title, podBody, imageUrl, stats, ctaLabel, ctaUrl, tags, showOnProfile,
           listingStatus, listingPrice, listingDetails, sourceDomain, autoRemoveAt,
-          eventStart, eventEnd, eventVenue, eventAddress, eventStatus, eventAutoHide } = body;
+          eventStart, eventEnd, eventVenue, eventAddress, eventStatus, eventAutoHide,
+          audioUrl, audioDuration } = body;
   if (!id) {
     return NextResponse.json({ error: 'Pod ID required' }, { status: 400 });
   }
@@ -259,6 +267,9 @@ export async function PUT(req: NextRequest) {
     params.push(validEventStatuses.includes(eventStatus) ? eventStatus : 'upcoming');
   }
   if (eventAutoHide !== undefined) { updates.push(`event_auto_hide = $${idx++}`); params.push(!!eventAutoHide); }
+  // Music fields
+  if (audioUrl !== undefined) { updates.push(`audio_url = $${idx++}`); params.push(audioUrl?.trim()?.slice(0, 500) || null); }
+  if (audioDuration !== undefined) { updates.push(`audio_duration = $${idx++}`); params.push(audioDuration || null); }
 
   if (updates.length === 0) {
     return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });

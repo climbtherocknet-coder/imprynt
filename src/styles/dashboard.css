@@ -3,6 +3,11 @@
    Dark navy + warm gold, consistent with auth
    ═══════════════════════════════════════════ */
 
+@keyframes float-in {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 /* ── Shell ── */
 .dash-page {
   min-height: 100vh;
@@ -729,10 +734,6 @@
     grid-template-columns: 1fr;
   }
 
-  .dash-nav-grid {
-    grid-template-columns: 1fr;
-  }
-
   .dash-main {
     padding: 1rem;
   }
@@ -778,21 +779,6 @@
   padding: 1.5rem 1.25rem;
 }
 
-/* ── 3-column nav grid ── */
-.dash-nav-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-  margin-top: 0.25rem;
-}
-
-.dash-nav-grid .dash-nav-card {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem;
-}
-
 /* ── Clickable PIN indicators ── */
 .dash-pin-link {
   display: flex;
@@ -814,12 +800,12 @@
 }
 
 /* ═══════════════════════════════════════════
-   DASHBOARD SPLIT — controls left, phone right
+   DASHBOARD SPLIT LAYOUT (grid left + phone right)
    ═══════════════════════════════════════════ */
 
 .dash-split {
   display: flex;
-  gap: 4.5rem;
+  gap: 2rem;
   align-items: flex-start;
 }
 
@@ -828,15 +814,26 @@
   min-width: 0;
 }
 
-/* Phone preview column */
-.dash-preview {
+.dash-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.dash-grid-2col .dash-nav-card {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.dash-right {
   flex-shrink: 0;
   position: sticky;
-  top: 80px;
+  top: calc(53px + 1.5rem);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
 }
 
 .dash-phone {
@@ -885,6 +882,11 @@
   position: absolute;
   top: 0;
   left: 0;
+  /* Hide iframe's own scrollbar */
+  scrollbar-width: none;  /* Firefox */
+}
+.dash-phone-screen iframe::-webkit-scrollbar {
+  display: none;  /* Chrome/Safari */
 }
 
 /* PIN status above phone */
@@ -922,14 +924,18 @@
   color: #4ade80;
 }
 
-/* Hide phone preview on mobile/tablet, show mobile button instead */
+/* Mobile: single column grid, hide right column entirely */
 @media (max-width: 768px) {
-  .dash-preview {
-    display: none;
-  }
-
   .dash-split {
-    display: block;
+    flex-direction: column;
+  }
+  .dash-right,
+  .dash-split-right {
+    display: none !important;
+  }
+  .dash-grid-2col,
+  .dash-nav-grid {
+    grid-template-columns: 1fr !important;
   }
 }
 
@@ -1358,5 +1364,10 @@
 
   .page-controls {
     grid-template-columns: 1fr !important;
+  }
+
+  /* Editor floating buttons — collapse labels on mobile */
+  .editor-float-label {
+    display: none;
   }
 }

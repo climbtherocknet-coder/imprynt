@@ -32,6 +32,8 @@ export interface PodItem {
   eventAddress: string;
   eventStatus: string;
   eventAutoHide: boolean;
+  audioUrl: string;
+  audioDuration: number;
 }
 
 interface PodEditorProps {
@@ -55,6 +57,7 @@ const POD_TYPE_DEFS = [
   { type: 'project', label: 'Project', icon: '\u{1F4CB}' },
   { type: 'listing', label: 'Listing', icon: '\u{1F3E0}' },
   { type: 'event', label: 'Event', icon: '\u{1F4C5}' },
+  { type: 'music', label: 'Music', icon: '\u{1F3B5}' },
 ];
 
 const LISTING_STATUSES = [
@@ -174,6 +177,25 @@ async function uploadPodImage(file: File): Promise<{ url: string } | { error: st
   }
 }
 
+async function uploadPodAudio(file: File): Promise<{ url: string } | { error: string }> {
+  if (file.size > 15 * 1024 * 1024) {
+    return { error: 'Audio file is too large (max 15MB). Try a smaller file.' };
+  }
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const res = await fetch('/api/upload/file', { method: 'POST', body: formData });
+    if (!res.ok) {
+      const data = await res.json();
+      return { error: data.error || 'Upload failed. Please try again.' };
+    }
+    const data = await res.json();
+    return { url: data.url };
+  } catch {
+    return { error: 'Upload failed. Check your connection and try again.' };
+  }
+}
+
 // ── Component ──────────────────────────────────────────
 
 export default function PodEditor({ parentType, parentId, isPaid, visibilityMode, onError, onPodsChange, onPodSaved }: PodEditorProps) {
@@ -254,6 +276,8 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
         eventAddress: '',
         eventStatus: 'upcoming',
         eventAutoHide: true,
+        audioUrl: '',
+        audioDuration: 0,
       };
       setPods(prev => [...prev, newPod]);
       setEditingPodId(id);
@@ -331,6 +355,10 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
         body.eventAddress = pod.eventAddress;
         body.eventStatus = pod.eventStatus;
         body.eventAutoHide = pod.eventAutoHide;
+      }
+      if (pod.podType === 'music') {
+        body.audioUrl = pod.audioUrl;
+        body.audioDuration = pod.audioDuration;
       }
       const res = await fetch(apiBase, {
         method: 'PUT',
@@ -1400,6 +1428,135 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                         <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0.25rem 0 0 1.5rem' }}>
                           When checked, this card automatically hides from your page after the end time passes.
                         </p>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Music: title, audio upload, cover art, artist, description, external link */}
+                  {pod.podType === 'music' && (
+                    <>
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Track title</label>
+                        <input
+                          type="text"
+                          value={pod.title}
+                          onChange={e => updatePodField(pod.id, 'title', e.target.value.slice(0, 200))}
+                          placeholder="My Song"
+                          style={inputStyle}
+                        />
+                      </div>
+
+                      {/* Audio file upload */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Audio file</label>
+                        {pod.audioUrl ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                            <audio controls src={pod.audioUrl} style={{ width: '100%', height: 36, borderRadius: '0.375rem' }} />
+                            <div style={{ display: 'flex', gap: '0.375rem' }}>
+                              <label style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                                Replace
+                                <input type="file" accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/m4a,audio/ogg,audio/aac" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const result = await uploadPodAudio(file); if ('url' in result) { updatePodField(pod.id, 'audioUrl', result.url); setUploadError(prev => { const n = { ...prev }; delete n[pod.id]; return n; }); } else { setUploadError(prev => ({ ...prev, [pod.id]: result.error })); } e.target.value = ''; }} />
+                              </label>
+                              <button type="button" onClick={() => updatePodField(pod.id, 'audioUrl', '')} style={{ padding: '0.25rem 0.625rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'transparent', color: 'var(--text-muted, #5d6370)', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'inherit' }}>
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <label style={{
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            padding: '1.25rem', borderRadius: '0.5rem',
+                            border: '2px dashed var(--border-light, #283042)',
+                            cursor: 'pointer', transition: 'border-color 0.15s',
+                            minHeight: 60,
+                          }}>
+                            <span style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>{'\u{1F3B5}'}</span>
+                            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>
+                              Drop audio or click to upload
+                            </span>
+                            <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', opacity: 0.7 }}>
+                              MP3, WAV, M4A, OGG, AAC — max 15MB
+                            </span>
+                            <input type="file" accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/m4a,audio/ogg,audio/aac" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const result = await uploadPodAudio(file); if ('url' in result) { updatePodField(pod.id, 'audioUrl', result.url); setUploadError(prev => { const n = { ...prev }; delete n[pod.id]; return n; }); } else { setUploadError(prev => ({ ...prev, [pod.id]: result.error })); } e.target.value = ''; }} />
+                          </label>
+                        )}
+                        {uploadError[pod.id] && (
+                          <p style={{ fontSize: '0.75rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{uploadError[pod.id]}</p>
+                        )}
+                      </div>
+
+                      {/* Cover art */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Cover art (optional)</label>
+                        <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            value={pod.imageUrl}
+                            onChange={e => updatePodField(pod.id, 'imageUrl', e.target.value.slice(0, 500))}
+                            placeholder="https://... or upload"
+                            style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+                          />
+                          <label
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: '1px solid var(--border-light, #283042)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                          >
+                            Upload
+                            <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const result = await uploadPodImage(file); if ('url' in result) { updatePodField(pod.id, 'imageUrl', result.url); setUploadError(prev => { const n = { ...prev }; delete n[pod.id]; return n; }); } else { setUploadError(prev => ({ ...prev, [pod.id]: result.error })); } e.target.value = ''; }} />
+                          </label>
+                        </div>
+                        {pod.imageUrl && (
+                          <div style={{ marginTop: '0.375rem', position: 'relative', display: 'inline-block' }}>
+                            <img src={pod.imageUrl} alt="" style={{ width: 80, height: 80, borderRadius: '0.5rem', border: '1px solid var(--border, #1e2535)', objectFit: 'cover' }} />
+                            <button type="button" onClick={() => updatePodField(pod.id, 'imageUrl', '')} style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.625rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Remove image">{'\u2715'}</button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Artist */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Artist</label>
+                        <input
+                          type="text"
+                          value={pod.tags}
+                          onChange={e => updatePodField(pod.id, 'tags', e.target.value.slice(0, 200))}
+                          placeholder="Artist name"
+                          style={inputStyle}
+                        />
+                      </div>
+
+                      {/* Description */}
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Description (optional)</label>
+                        <textarea
+                          value={pod.body}
+                          onChange={e => updatePodField(pod.id, 'body', e.target.value.slice(0, 500))}
+                          placeholder="A short note about this track..."
+                          rows={2}
+                          style={{ ...inputStyle, resize: 'vertical', minHeight: 50 }}
+                        />
+                      </div>
+
+                      {/* External link */}
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.625rem' }}>
+                        <div style={{ flex: '0 0 35%' }}>
+                          <label style={labelStyle}>Link label</label>
+                          <input
+                            type="text"
+                            value={pod.ctaLabel}
+                            onChange={e => updatePodField(pod.id, 'ctaLabel', e.target.value.slice(0, 100))}
+                            placeholder="Listen on Spotify"
+                            style={inputStyle}
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={labelStyle}>Link URL</label>
+                          <input
+                            type="text"
+                            value={pod.ctaUrl}
+                            onChange={e => updatePodField(pod.id, 'ctaUrl', e.target.value.slice(0, 500))}
+                            placeholder="https://open.spotify.com/..."
+                            style={inputStyle}
+                          />
+                        </div>
                       </div>
                     </>
                   )}

@@ -75,6 +75,7 @@ CREATE TABLE profiles (
     bg_image_zoom   SMALLINT NOT NULL DEFAULT 100,
     link_size       VARCHAR(10) NOT NULL DEFAULT 'medium',
     link_shape      VARCHAR(10) NOT NULL DEFAULT 'pill',
+    link_button_color VARCHAR(7),                    -- hex, NULL = use accent
     status_tags     TEXT[] DEFAULT '{}',              -- e.g. {'open_to_network','hiring'}
     slug_rotated_at TIMESTAMPTZ DEFAULT NOW(),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -160,6 +161,7 @@ CREATE TABLE links (
     show_business   BOOLEAN NOT NULL DEFAULT true,
     show_personal   BOOLEAN NOT NULL DEFAULT false,
     show_showcase   BOOLEAN NOT NULL DEFAULT false,
+    button_color    VARCHAR(7),                      -- hex, NULL = use global/accent
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -331,7 +333,7 @@ CREATE TABLE pods (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     profile_id      UUID REFERENCES profiles(id) ON DELETE CASCADE,
     protected_page_id UUID REFERENCES protected_pages(id) ON DELETE CASCADE,
-    pod_type        VARCHAR(20) NOT NULL CHECK (pod_type IN ('text', 'text_image', 'stats', 'cta', 'link_preview', 'project', 'listing', 'event')),
+    pod_type        VARCHAR(20) NOT NULL CHECK (pod_type IN ('text', 'text_image', 'stats', 'cta', 'link_preview', 'project', 'listing', 'event', 'music')),
     display_order   INTEGER NOT NULL DEFAULT 0,
     label           VARCHAR(50),        -- section label e.g. "About", "By the Numbers"
     title           VARCHAR(200),       -- pod heading
@@ -355,6 +357,8 @@ CREATE TABLE pods (
     event_address   VARCHAR(300),       -- for event pods: full address
     event_status    VARCHAR(20) DEFAULT 'upcoming' CHECK (event_status IN ('upcoming', 'cancelled', 'postponed', 'sold_out')),
     event_auto_hide BOOLEAN NOT NULL DEFAULT true, -- auto-hide after event ends
+    audio_url       VARCHAR(500),       -- for music pods: audio file URL
+    audio_duration  INTEGER,            -- for music pods: duration in seconds
     is_active       BOOLEAN NOT NULL DEFAULT true,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),

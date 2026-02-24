@@ -99,16 +99,17 @@ export async function GET() {
     bgImageZoom = r?.bg_image_zoom ?? 100;
   } catch { /* column doesn't exist yet */ }
 
-  // Fetch link button settings (migration 046)
-  let linkSize = 'medium', linkShape = 'pill';
+  // Fetch link button settings (migration 046+047)
+  let linkSize = 'medium', linkShape = 'pill', linkButtonColor: string | null = null;
   try {
-    const lsResult = await query('SELECT link_size, link_shape FROM profiles WHERE id = $1', [profile.id]);
+    const lsResult = await query('SELECT link_size, link_shape, link_button_color FROM profiles WHERE id = $1', [profile.id]);
     linkSize = lsResult.rows[0]?.link_size || 'medium';
     linkShape = lsResult.rows[0]?.link_shape || 'pill';
-  } catch { /* column doesn't exist yet */ }
+    linkButtonColor = lsResult.rows[0]?.link_button_color || null;
+  } catch { /* columns don't exist yet */ }
 
   const linksResult = await query(
-    `SELECT id, link_type, label, url, display_order, show_business, show_personal, show_showcase
+    `SELECT id, link_type, label, url, display_order, show_business, show_personal, show_showcase, button_color
      FROM links
      WHERE profile_id = $1 AND is_active = true
      ORDER BY display_order ASC`,
@@ -167,11 +168,13 @@ export async function GET() {
       bgImageZoom,
       linkSize,
       linkShape,
+      linkButtonColor,
     },
     links: linksResult.rows.map((l: Record<string, unknown>) => ({
       id: l.id,
       linkType: l.link_type,
       label: l.label || '',
+      buttonColor: (l.button_color as string) || null,
       url: l.url,
       displayOrder: l.display_order,
       showBusiness: l.show_business,
@@ -302,6 +305,15 @@ export async function PUT(req: NextRequest) {
         if (lsUpdates.length > 0) {
           lsParams.push(userId);
           await query(`UPDATE profiles SET ${lsUpdates.join(', ')} WHERE user_id = $${lsi}`, lsParams);
+        }
+      } catch { /* column doesn't exist yet */ }
+      // link button color (migration 047)
+      const { linkButtonColor } = body;
+      try {
+        if (linkButtonColor !== undefined) {
+          const hexRegex2 = /^#[0-9a-fA-F]{6}$/;
+          const colorVal = (typeof linkButtonColor === 'string' && hexRegex2.test(linkButtonColor)) ? linkButtonColor : null;
+          await query('UPDATE profiles SET link_button_color = $1 WHERE user_id = $2', [colorVal, userId]);
         }
       } catch { /* column doesn't exist yet */ }
     } else if (section === 'statusTags') {
@@ -494,7 +506,7 @@ export async function PUT(req: NextRequest) {
         }
       } catch { /* column doesn't exist yet */ }
       // link button settings (migration 046)
-      const { linkSize: lSize, linkShape: lShape } = body;
+      const { linkSize: lSize, linkShape: lShape, linkButtonColor: lBtnColor } = body;
       try {
         const validLinkSizes = ['small', 'medium', 'large'];
         const validLinkShapes = ['pill', 'rounded', 'square'];
@@ -503,6 +515,11 @@ export async function PUT(req: NextRequest) {
         let lsi = 1;
         if (lSize && validLinkSizes.includes(lSize)) { lsUpdates.push(`link_size = $${lsi++}`); lsParams.push(lSize); }
         if (lShape && validLinkShapes.includes(lShape)) { lsUpdates.push(`link_shape = $${lsi++}`); lsParams.push(lShape); }
+        if (lBtnColor !== undefined) {
+          const hexRx = /^#[0-9a-fA-F]{6}$/;
+          lsUpdates.push(`link_button_color = $${lsi++}`);
+          lsParams.push((typeof lBtnColor === 'string' && hexRx.test(lBtnColor)) ? lBtnColor : null);
+        }
         if (lsUpdates.length > 0) {
           lsParams.push(userId);
           await query(`UPDATE profiles SET ${lsUpdates.join(', ')} WHERE user_id = $${lsi}`, lsParams);

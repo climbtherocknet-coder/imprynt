@@ -8,6 +8,7 @@ import ProfileTemplate from '@/components/templates/ProfileTemplate';
 import ToggleSwitch from '@/components/ToggleSwitch';
 import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import ImageCropper from '@/components/ui/ImageCropper';
+import EditorFloatingButtons from '../EditorFloatingButtons';
 import GalleryPicker from '@/components/ui/GalleryPicker';
 import type { PlanStatusClient } from '../PageEditor';
 import '@/styles/dashboard.css';
@@ -443,41 +444,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
     setIsDirty(false);
   }, [handleSaveProfile]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Floating save — appears when save bar is no longer visible
-  useEffect(() => {
-    const el = saveBarRef.current;
-    if (!el) return;
-
-    const check = () => {
-      const rect = el.getBoundingClientRect();
-      // Show floating buttons when save bar top is above 60px (behind sticky header)
-      // This threshold accounts for the sticky header height (~53px)
-      setSaveBarHidden(rect.top < 60);
-    };
-
-    // Listen on BOTH window and the closest scrollable parent
-    window.addEventListener('scroll', check, { passive: true });
-
-    // Also try to find any scrollable ancestor
-    let scrollParent: HTMLElement | null = el.parentElement;
-    while (scrollParent) {
-      const style = getComputedStyle(scrollParent);
-      if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
-        scrollParent.addEventListener('scroll', check, { passive: true });
-        break;
-      }
-      scrollParent = scrollParent.parentElement;
-    }
-
-    check(); // Initial check
-
-    return () => {
-      window.removeEventListener('scroll', check);
-      if (scrollParent) {
-        scrollParent.removeEventListener('scroll', check);
-      }
-    };
-  }, []);
+  // Floating save/view buttons handled by EditorFloatingButtons component
 
   // ── Link CRUD ──────────────────────────────────────────
 
@@ -781,33 +748,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           </button>
         </div>
         {/* Floating circular icons when save bar scrolled out of view */}
-        {saveBarHidden && (
-          <div style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 200, display: 'flex', flexDirection: 'column', gap: '0.5rem', animation: 'float-in 0.2s ease-out' }}>
-            {isDirty && (
-              <button
-                onClick={handleSaveAll}
-                disabled={!!saving}
-                title={saving ? 'Saving...' : saved === 'profile' ? 'Saved!' : 'Save changes'}
-                style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', backgroundColor: saved === 'profile' ? '#059669' : 'var(--accent, #e8a849)', color: 'var(--bg, #0c1017)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', opacity: saving ? 0.6 : 1, transition: 'background-color 0.2s', padding: 0, fontFamily: 'inherit' }}
-              >
-                {saved === 'profile' ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                )}
-              </button>
-            )}
-            <a
-              href={`/${data?.profile?.slug || ''}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="View Page"
-              style={{ width: 44, height: 44, borderRadius: '50%', border: '1px solid var(--border, #1e2535)', backgroundColor: 'var(--surface, #161c28)', color: 'var(--text-mid, #a8adb8)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.3)', textDecoration: 'none', padding: 0 }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </a>
-          </div>
-        )}
+        {/* Floating save/view handled by EditorFloatingButtons */}
 
         {/* ─── Always-visible: Name + Tagline ──────── */}
         <div style={{ ...sectionStyle, marginBottom: '1rem' }}>
@@ -2129,6 +2070,14 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           </div>
         </div>
       )}
+
+      <EditorFloatingButtons
+        isDirty={isDirty}
+        saving={!!saving}
+        saved={!!saved}
+        onSave={handleSaveAll}
+        slug={data?.profile?.slug}
+      />
 
     </>
   );

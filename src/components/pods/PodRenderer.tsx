@@ -24,6 +24,8 @@ export interface PodData {
   eventAddress?: string;
   eventStatus?: string;
   eventAutoHide?: boolean;
+  audioUrl?: string;
+  audioDuration?: number;
 }
 
 function getEventState(pod: PodData): 'upcoming' | 'live' | 'ended' | 'cancelled' | 'postponed' | 'sold_out' {
@@ -248,6 +250,43 @@ export default function PodRenderer({ pod, delay }: { pod: PodData; delay: numbe
       );
     }
     return card;
+  }
+
+  if (pod.podType === 'music') {
+    const artist = pod.tags || '';
+    return (
+      <div className={`pod fade-in ${delayClass}`}>
+        {pod.label && <p className="pod-label">{pod.label}</p>}
+        <div className="pod-music">
+          <div className="pod-music-header">
+            {pod.imageUrl ? (
+              <img src={pod.imageUrl} alt={pod.title || ''} className="pod-music-art" referrerPolicy="no-referrer" />
+            ) : (
+              <div className="pod-music-art pod-music-art--placeholder">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                </svg>
+              </div>
+            )}
+            <div className="pod-music-info">
+              {pod.title && <h3 className="pod-music-title">{pod.title}</h3>}
+              {artist && <p className="pod-music-artist">{artist}</p>}
+            </div>
+          </div>
+          {pod.audioUrl && (
+            <div className="pod-music-player">
+              <audio controls src={pod.audioUrl} preload="metadata" style={{ width: '100%', height: 36 }} />
+            </div>
+          )}
+          {pod.body && <p className="pod-music-desc">{pod.body}</p>}
+          {pod.ctaUrl && (
+            <a href={pod.ctaUrl} target="_blank" rel="noopener noreferrer" className="pod-music-link">
+              {pod.ctaLabel || 'Listen'} →
+            </a>
+          )}
+        </div>
+      </div>
+    );
   }
 
   if (pod.podType === 'event') {

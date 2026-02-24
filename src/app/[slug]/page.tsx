@@ -60,6 +60,7 @@ interface ProfileData {
   bg_image_zoom: number;
   link_size: string;
   link_shape: string;
+  link_button_color: string | null;
 }
 
 interface LinkData {
@@ -67,6 +68,7 @@ interface LinkData {
   link_type: string;
   label: string;
   url: string;
+  button_color: string | null;
 }
 
 interface ProtectedPageData {
@@ -185,14 +187,16 @@ async function getProfileAny(slug: string) {
       profile.bg_image_position_x = 50;
       profile.bg_image_zoom = 100;
     }
-    // Fetch link button settings (migration 046)
+    // Fetch link button settings (migration 046+047)
     try {
-      const lsResult = await query('SELECT link_size, link_shape FROM profiles WHERE id = $1', [profile.profile_id]);
+      const lsResult = await query('SELECT link_size, link_shape, link_button_color FROM profiles WHERE id = $1', [profile.profile_id]);
       profile.link_size = lsResult.rows[0]?.link_size || 'medium';
       profile.link_shape = lsResult.rows[0]?.link_shape || 'pill';
+      profile.link_button_color = lsResult.rows[0]?.link_button_color || null;
     } catch {
       profile.link_size = 'medium';
       profile.link_shape = 'pill';
+      profile.link_button_color = null;
     }
   }
   return profile;
@@ -200,7 +204,7 @@ async function getProfileAny(slug: string) {
 
 async function getLinks(profileId: string) {
   const result = await query(
-    `SELECT id, link_type, label, url FROM links
+    `SELECT id, link_type, label, url, button_color FROM links
      WHERE profile_id = $1 AND show_business = true AND is_active = true
      ORDER BY display_order ASC`,
     [profileId]
@@ -210,7 +214,10 @@ async function getLinks(profileId: string) {
 
 async function getPods(profileId: string): Promise<PodData[]> {
   const result = await query(
-    `SELECT id, pod_type, label, title, body, image_url, stats, cta_label, cta_url, tags, image_position
+    `SELECT id, pod_type, label, title, body, image_url, stats, cta_label, cta_url, tags, image_position,
+            listing_status, listing_price, listing_details, source_domain,
+            event_start, event_end, event_venue, event_address, event_status, event_auto_hide,
+            audio_url, audio_duration
      FROM pods
      WHERE (
        (profile_id = $1 AND is_active = true)
@@ -234,6 +241,18 @@ async function getPods(profileId: string): Promise<PodData[]> {
     ctaUrl: (r.cta_url as string) || '',
     tags: (r.tags as string) || '',
     imagePosition: (r.image_position as string) || 'left',
+    listingStatus: (r.listing_status as string) || 'active',
+    listingPrice: (r.listing_price as string) || '',
+    listingDetails: (r.listing_details as { beds?: string; baths?: string; sqft?: string }) || {},
+    sourceDomain: (r.source_domain as string) || '',
+    eventStart: (r.event_start as string) || '',
+    eventEnd: (r.event_end as string) || '',
+    eventVenue: (r.event_venue as string) || '',
+    eventAddress: (r.event_address as string) || '',
+    eventStatus: (r.event_status as string) || 'upcoming',
+    eventAutoHide: (r.event_auto_hide as boolean) ?? true,
+    audioUrl: (r.audio_url as string) || '',
+    audioDuration: (r.audio_duration as number) || 0,
   }));
 }
 
@@ -387,7 +406,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         company={profile.company}
         tagline={profile.tagline}
         photoUrl={profile.photo_url}
-        links={links}
+        links={links.map(l => ({ id: l.id, link_type: l.link_type, label: l.label, url: l.url, buttonColor: l.button_color }))}
         pods={pods}
         isPaid={isPaid}
         statusTags={profile.status_tags || []}
@@ -414,6 +433,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         bgImageZoom={profile.bg_image_zoom ?? 100}
         linkSize={profile.link_size || 'medium'}
         linkShape={profile.link_shape || 'pill'}
+        linkButtonColor={profile.link_button_color || null}
       />
 
       {/* Client-side interactive elements (PIN modal, protected pages) */}

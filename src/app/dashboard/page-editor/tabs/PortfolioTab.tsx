@@ -7,6 +7,7 @@ import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import ImageCropper from '@/components/ui/ImageCropper';
 import GalleryPicker from '@/components/ui/GalleryPicker';
 import ProtectedPagePreview from '@/components/templates/ProtectedPagePreview';
+import EditorFloatingButtons from '../EditorFloatingButtons';
 import type { PodData } from '@/components/pods/PodRenderer';
 import type { PlanStatusClient } from '../PageEditor';
 import '@/styles/dashboard.css';
@@ -20,6 +21,7 @@ interface LinkItem {
   label: string;
   url: string;
   displayOrder: number;
+  buttonColor?: string | null;
 }
 
 interface PageData {
@@ -128,6 +130,9 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
     firstName: string; lastName: string; photoUrl: string;
     template: string; accentColor: string;
     linkDisplay: string;
+    linkSize: string;
+    linkShape: string;
+    linkButtonColor: string | null;
   } | null>(null);
   const [previewPods, setPreviewPods] = useState<PodData[]>([]);
 
@@ -187,6 +192,9 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
           template: currentTemplate || d.profile.template || 'clean',
           accentColor: currentAccentColor !== undefined ? currentAccentColor : (d.profile.accentColor || ''),
           linkDisplay: d.profile.linkDisplay || 'default',
+          linkSize: d.profile.linkSize || 'medium',
+          linkShape: d.profile.linkShape || 'pill',
+          linkButtonColor: d.profile.linkButtonColor || null,
         });
         // Set profile photo settings as defaults (overridden by page data if it exists)
         setPhotoShape(d.profile.photoShape || 'circle');
@@ -466,7 +474,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
         template={profileData.template}
         accentColor={profileData.accentColor}
         bioText={bioText}
-        links={links.map(l => ({ id: l.id || '', linkType: l.linkType, label: l.label, url: l.url }))}
+        links={links.map(l => ({ id: l.id || '', linkType: l.linkType, label: l.label, url: l.url, buttonColor: l.buttonColor || null }))}
         pods={previewPods}
         resumeUrl={resumeUrl}
         showResume={showResume}
@@ -489,6 +497,9 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
         bgImagePositionX={bgImagePositionX}
         bgImageZoom={bgImageZoom}
         linkDisplay={profileData.linkDisplay}
+        linkSize={profileData.linkSize}
+        linkShape={profileData.linkShape}
+        linkButtonColor={profileData.linkButtonColor}
       />
     );
   }
@@ -1284,6 +1295,15 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
           </div>
         </div>
       )}
+
+      <EditorFloatingButtons
+        isDirty={isDirty}
+        saving={saving}
+        saved={saved}
+        onSave={savePage}
+        slug={slug}
+      />
+
     </>
   );
 }

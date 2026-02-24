@@ -14,7 +14,7 @@ interface ProtectedPagePreviewProps {
   template: string;
   accentColor: string;
   bioText: string;
-  links: { id?: string; linkType: string; label: string; url: string }[];
+  links: { id?: string; linkType: string; label: string; url: string; buttonColor?: string | null }[];
   pods: PodData[];
   resumeUrl?: string;
   showResume?: boolean;
@@ -312,12 +312,16 @@ export default function ProtectedPagePreview({
               l.linkType === 'email' ? `mailto:${l.url}` : l.linkType === 'phone' ? `tel:${l.url}` : l.url || '#';
             const target = (l: typeof links[0]) =>
               ['email', 'phone'].includes(l.linkType) ? undefined : '_blank';
-            const renderLink = (l: typeof links[0], i: number, cls: string) => (
-              <a key={l.id || i} href={href(l)} target={target(l)} rel="noopener noreferrer" className={cls}>
-                <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[l.linkType] || LINK_ICONS.custom }} />
-                {l.label || l.linkType}
-              </a>
-            );
+            const renderLink = (l: typeof links[0], i: number, cls: string) => {
+              const bc = l.buttonColor || linkButtonColor || null;
+              return (
+                <a key={l.id || i} href={href(l)} target={target(l)} rel="noopener noreferrer" className={cls}
+                  style={bc ? { color: bc, borderColor: bc, '--link-btn-color': bc } as React.CSSProperties : undefined}>
+                  <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[l.linkType] || LINK_ICONS.custom }} />
+                  {l.label || l.linkType}
+                </a>
+              );
+            };
             if (ls === 'stacked') return (
               <div className="link-stacked">{links.map((l, i) => renderLink(l, i, 'link-stacked-item'))}</div>
             );
