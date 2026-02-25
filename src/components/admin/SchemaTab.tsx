@@ -350,35 +350,36 @@ erDiagram
     users ||--o{ cc_votes : "voted"
 `;
 
-export default function SchemaTab() {
-  const hiddenRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [blobUrl, setBlobUrl] = useState('');
-  const [error, setError] = useState('');
+const DARK_THEME = {
+  theme: 'dark' as const,
+  vars: {
+    primaryColor: '#1e2535',
+    primaryTextColor: '#eceef2',
+    primaryBorderColor: '#283042',
+    lineColor: '#5d6370',
+    secondaryColor: '#161c28',
+    tertiaryColor: '#0c1017',
+  },
+  bg: '#0c1017',
+};
 
-  useEffect(() => {
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: 'dark',
-      themeVariables: {
-        primaryColor: '#1e2535',
-        primaryTextColor: '#eceef2',
-        primaryBorderColor: '#283042',
-        lineColor: '#5d6370',
-        secondaryColor: '#161c28',
-        tertiaryColor: '#0c1017',
-      },
-    });
+const LIGHT_THEME = {
+  theme: 'default' as const,
+  vars: {
+    primaryColor: '#e8ecf1',
+    primaryTextColor: '#1a1a2e',
+    primaryBorderColor: '#c4cdd6',
+    lineColor: '#6b7280',
+    secondaryColor: '#f3f4f6',
+    tertiaryColor: '#ffffff',
+  },
+  bg: '#ffffff',
+};
 
-    if (hiddenRef.current) {
-      mermaid.run({ nodes: [hiddenRef.current] })
-        .then(() => {
-          const svg = hiddenRef.current?.querySelector('svg');
-          if (!svg) { setError('SVG not found after render'); return; }
-          const svgHtml = svg.outerHTML;
-          const html = `<!DOCTYPE html>
+function buildIframeHtml(svgHtml: string, bg: string) {
+  return `<!DOCTYPE html>
 <html><head><style>
-  html, body { margin: 0; padding: 0; background: #0c1017; overflow: hidden; height: 100%; }
+  html, body { margin: 0; padding: 0; background: ${bg}; overflow: hidden; height: 100%; }
   #viewport { width: 100%; height: 100%; overflow: hidden; cursor: grab; }
   #viewport.dragging { cursor: grabbing; }
   #content { transform-origin: 0 0; padding: 2rem; display: inline-block; }
@@ -398,8 +399,8 @@ export default function SchemaTab() {
     var rect = vp.getBoundingClientRect();
     var mx = e.clientX - rect.left, my = e.clientY - rect.top;
     var oldZoom = zoom;
-    var delta = e.deltaY > 0 ? 0.9 : 1.1;
-    zoom = Math.min(4, Math.max(0.1, zoom * delta));
+    var delta = e.deltaY > 0 ? 0.85 : 1.18;
+    zoom = Math.min(10, Math.max(0.05, zoom * delta));
     panX = mx - (mx - panX) * (zoom / oldZoom);
     panY = my - (my - panY) * (zoom / oldZoom);
     apply();
@@ -423,15 +424,66 @@ export default function SchemaTab() {
 })();
 </script>
 </body></html>`;
-          const blob = new Blob([html], { type: 'text/html' });
-          setBlobUrl(URL.createObjectURL(blob));
+}
+
+export default function SchemaTab() {
+  const hiddenRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [blobUrl, setBlobUrl] = useState('');
+  const [error, setError] = useState('');
+  const [isDark, setIsDark] = useState(true);
+  const [rendering, setRendering] = useState(false);
+  const blobUrlRef = useRef('');
+
+  useEffect(() => {
+    setRendering(true);
+    setError('');
+
+    const t = isDark ? DARK_THEME : LIGHT_THEME;
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: t.theme,
+      themeVariables: t.vars,
+    });
+
+    // Mermaid mutates the DOM node — we need a fresh one each render
+    if (hiddenRef.current) {
+      hiddenRef.current.removeAttribute('data-processed');
+      hiddenRef.current.innerHTML = SCHEMA_MERMAID;
+
+      mermaid.run({ nodes: [hiddenRef.current] })
+        .then(() => {
+          const svg = hiddenRef.current?.querySelector('svg');
+          if (!svg) { setError('SVG not found after render'); setRendering(false); return; }
+          const html = buildIframeHtml(svg.outerHTML, t.bg);
+          if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+          const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+          blobUrlRef.current = url;
+          setBlobUrl(url);
+          setRendering(false);
         })
-        .catch((err) => setError(err?.message || 'Failed to render diagram'));
+        .catch((err) => { setError(err?.message || 'Failed to render'); setRendering(false); });
     }
 
-    return () => { if (blobUrl) URL.revokeObjectURL(blobUrl); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => {
+      if (blobUrlRef.current) { URL.revokeObjectURL(blobUrlRef.current); blobUrlRef.current = ''; }
+    };
+  }, [isDark]);
+
+  const btnStyle: React.CSSProperties = {
+    background: 'var(--surface, #161c28)',
+    border: '1px solid var(--border, #283042)',
+    borderRadius: '0.375rem',
+    color: 'var(--text, #eceef2)',
+    padding: '0.25rem 0.625rem',
+    fontSize: '0.75rem',
+    cursor: 'pointer',
+    lineHeight: 1,
+    height: '1.75rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.375rem',
+  };
 
   return (
     <div>
@@ -449,6 +501,10 @@ export default function SchemaTab() {
             25 tables &middot; Last updated Feb 25, 2026 &middot; Scroll to zoom, drag to pan
           </p>
         </div>
+        <button style={btnStyle} onClick={() => setIsDark(d => !d)} title="Toggle light/dark theme">
+          <span style={{ fontSize: '0.875rem' }}>{isDark ? '\u2600' : '\u263E'}</span>
+          {isDark ? 'Light' : 'Dark'}
+        </button>
       </div>
 
       {error && (
@@ -460,7 +516,7 @@ export default function SchemaTab() {
         {SCHEMA_MERMAID}
       </div>
 
-      {/* Iframe displays the rendered SVG with native zoom/scroll */}
+      {/* Iframe displays the rendered SVG with zoom/pan */}
       <iframe
         ref={iframeRef}
         src={blobUrl || undefined}
@@ -470,17 +526,17 @@ export default function SchemaTab() {
           height: '75vh',
           border: '1px solid var(--border, #1e2535)',
           borderRadius: '0.75rem',
-          background: '#0c1017',
-          display: blobUrl ? 'block' : 'none',
+          background: isDark ? '#0c1017' : '#ffffff',
+          display: blobUrl && !rendering ? 'block' : 'none',
         }}
       />
 
-      {!blobUrl && !error && (
+      {(rendering || (!blobUrl && !error)) && (
         <div style={{
           height: '75vh',
           border: '1px solid var(--border, #1e2535)',
           borderRadius: '0.75rem',
-          background: '#0c1017',
+          background: isDark ? '#0c1017' : '#ffffff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
