@@ -400,7 +400,7 @@ function buildIframeHtml(svgHtml: string, bg: string) {
     var mx = e.clientX - rect.left, my = e.clientY - rect.top;
     var oldZoom = zoom;
     var delta = e.deltaY > 0 ? 0.85 : 1.18;
-    zoom = Math.min(10, Math.max(0.05, zoom * delta));
+    zoom = Math.min(20, Math.max(0.05, zoom * delta));
     panX = mx - (mx - panX) * (zoom / oldZoom);
     panY = my - (my - panY) * (zoom / oldZoom);
     apply();
