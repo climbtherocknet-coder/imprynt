@@ -7,10 +7,11 @@ import CCFeatures from '@/components/admin/CCFeatures';
 import CCRoadmap from '@/components/admin/CCRoadmap';
 import CCChangelog from '@/components/admin/CCChangelog';
 import CCDocs from '@/components/admin/CCDocs';
+import SchemaTab from '@/components/admin/SchemaTab';
 import '@/styles/dashboard.css';
 import '@/styles/cc.css';
 
-type TabKey = 'overview' | 'features' | 'roadmap' | 'changelog' | 'docs';
+type TabKey = 'overview' | 'features' | 'roadmap' | 'changelog' | 'docs' | 'schema';
 
 const ALL_TABS: { key: TabKey; label: string }[] = [
   { key: 'overview', label: 'Overview' },
@@ -18,6 +19,7 @@ const ALL_TABS: { key: TabKey; label: string }[] = [
   { key: 'roadmap', label: 'Roadmap' },
   { key: 'changelog', label: 'Changelog' },
   { key: 'docs', label: 'Docs' },
+  { key: 'schema', label: 'Schema' },
 ];
 
 const ADVISORY_TABS: TabKey[] = ['features', 'roadmap'];
@@ -143,6 +145,7 @@ function CommandCenterInner() {
         {activeTab === 'roadmap' && <CCRoadmap accessLevel={accessLevel} currentUserId={currentUserId} />}
         {activeTab === 'changelog' && <CCChangelog accessLevel={accessLevel} currentUserId={currentUserId} />}
         {activeTab === 'docs' && <CCDocs accessLevel={accessLevel} currentUserId={currentUserId} />}
+        {activeTab === 'schema' && <SchemaTab />}
       </div>
     </div>
   );
