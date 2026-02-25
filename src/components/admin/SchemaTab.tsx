@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
 
 const SCHEMA_MERMAID = `
@@ -350,24 +350,13 @@ erDiagram
     users ||--o{ cc_votes : "voted"
 `;
 
-const MIN_ZOOM = 0.2;
-const MAX_ZOOM = 3;
-const ZOOM_STEP = 0.15;
-
 export default function SchemaTab() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const [rendered, setRendered] = useState(false);
+  const hiddenRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [blobUrl, setBlobUrl] = useState('');
   const [error, setError] = useState('');
-  const [zoom, setZoom] = useState(0.6);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const dragging = useRef(false);
-  const dragStart = useRef({ x: 0, y: 0 });
-  const panStart = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    if (rendered) return;
-
     mermaid.initialize({
       startOnLoad: false,
       theme: 'dark',
@@ -381,61 +370,27 @@ export default function SchemaTab() {
       },
     });
 
-    if (containerRef.current) {
-      mermaid.run({ nodes: [containerRef.current] })
-        .then(() => setRendered(true))
+    if (hiddenRef.current) {
+      mermaid.run({ nodes: [hiddenRef.current] })
+        .then(() => {
+          const svg = hiddenRef.current?.querySelector('svg');
+          if (!svg) { setError('SVG not found after render'); return; }
+          const svgHtml = svg.outerHTML;
+          const html = `<!DOCTYPE html>
+<html><head><style>
+  html, body { margin: 0; padding: 0; background: #0c1017; overflow: auto; }
+  body { display: flex; justify-content: center; padding: 2rem; }
+  svg { max-width: none; }
+</style></head><body>${svgHtml}</body></html>`;
+          const blob = new Blob([html], { type: 'text/html' });
+          setBlobUrl(URL.createObjectURL(blob));
+        })
         .catch((err) => setError(err?.message || 'Failed to render diagram'));
     }
-  }, [rendered]);
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-    setZoom(z => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + delta)));
+    return () => { if (blobUrl) URL.revokeObjectURL(blobUrl); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    dragging.current = true;
-    dragStart.current = { x: e.clientX, y: e.clientY };
-    panStart.current = { ...pan };
-    e.preventDefault();
-  }, [pan]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragging.current) return;
-    setPan({
-      x: panStart.current.x + (e.clientX - dragStart.current.x),
-      y: panStart.current.y + (e.clientY - dragStart.current.y),
-    });
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    dragging.current = false;
-  }, []);
-
-  const resetView = useCallback(() => {
-    setZoom(0.6);
-    setPan({ x: 0, y: 0 });
-  }, []);
-
-  const zoomLabel = `${Math.round(zoom * 100)}%`;
-
-  const btnStyle: React.CSSProperties = {
-    background: 'var(--surface, #161c28)',
-    border: '1px solid var(--border, #283042)',
-    borderRadius: '0.375rem',
-    color: 'var(--text, #eceef2)',
-    padding: '0.25rem 0.5rem',
-    fontSize: '0.75rem',
-    cursor: 'pointer',
-    lineHeight: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: '1.75rem',
-    height: '1.75rem',
-  };
 
   return (
     <div>
@@ -450,14 +405,8 @@ export default function SchemaTab() {
             Database Schema
           </h2>
           <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-            25 tables &middot; Last updated Feb 25, 2026 &middot; Scroll to zoom, drag to pan
+            25 tables &middot; Last updated Feb 25, 2026 &middot; Ctrl+scroll to zoom
           </p>
-        </div>
-        <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
-          <button style={btnStyle} onClick={() => setZoom(z => Math.max(MIN_ZOOM, z - ZOOM_STEP))} title="Zoom out">−</button>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', minWidth: '2.5rem', textAlign: 'center' }}>{zoomLabel}</span>
-          <button style={btnStyle} onClick={() => setZoom(z => Math.min(MAX_ZOOM, z + ZOOM_STEP))} title="Zoom in">+</button>
-          <button style={{ ...btnStyle, padding: '0.25rem 0.625rem', minWidth: 'auto' }} onClick={resetView} title="Reset view">Reset</button>
         </div>
       </div>
 
@@ -465,36 +414,41 @@ export default function SchemaTab() {
         <p style={{ color: '#ef4444', fontSize: '0.8125rem', marginBottom: '1rem' }}>{error}</p>
       )}
 
-      <div
-        ref={viewportRef}
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+      {/* Hidden container for mermaid to render into */}
+      <div ref={hiddenRef} className="mermaid" style={{ position: 'absolute', left: '-9999px', visibility: 'hidden' }}>
+        {SCHEMA_MERMAID}
+      </div>
+
+      {/* Iframe displays the rendered SVG with native zoom/scroll */}
+      <iframe
+        ref={iframeRef}
+        src={blobUrl || undefined}
+        title="Database Schema ERD"
         style={{
-          background: 'var(--bg, #0c1017)',
+          width: '100%',
+          height: '75vh',
           border: '1px solid var(--border, #1e2535)',
           borderRadius: '0.75rem',
-          overflow: 'hidden',
-          height: '75vh',
-          cursor: dragging.current ? 'grabbing' : 'grab',
-          position: 'relative',
+          background: '#0c1017',
+          display: blobUrl ? 'block' : 'none',
         }}
-      >
-        <div
-          style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transformOrigin: '0 0',
-            padding: '1.5rem',
-            willChange: 'transform',
-          }}
-        >
-          <div ref={containerRef} className="mermaid">
-            {SCHEMA_MERMAID}
-          </div>
+      />
+
+      {!blobUrl && !error && (
+        <div style={{
+          height: '75vh',
+          border: '1px solid var(--border, #1e2535)',
+          borderRadius: '0.75rem',
+          background: '#0c1017',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'var(--text-muted)',
+          fontSize: '0.8125rem',
+        }}>
+          Rendering diagram...
         </div>
-      </div>
+      )}
     </div>
   );
 }
