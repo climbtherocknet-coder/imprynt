@@ -37,7 +37,7 @@ Write-Host "Git is clean. HEAD: $($local.Substring(0,8))" -ForegroundColor Green
 # Step 1: Backup production database
 Write-Host "`n[2/6] Backing up production database..." -ForegroundColor Yellow
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-ssh $SERVER "cd $REMOTE_DIR && docker compose --env-file .env.production -f docker-compose.prod.yml exec -T db pg_dump -U imprynt imprynt > backup_${timestamp}.sql && echo 'Backup: backup_${timestamp}.sql ($(wc -c < backup_${timestamp}.sql) bytes)'"
+ssh $SERVER "cd $REMOTE_DIR && docker compose --env-file .env.production -f docker-compose.prod.yml exec -T db pg_dump -U imprynt imprynt > backup_${timestamp}.sql && echo 'Backup: backup_${timestamp}.sql' && wc -c backup_${timestamp}.sql"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: Backup failed. Aborting deploy." -ForegroundColor Red
     exit 1
