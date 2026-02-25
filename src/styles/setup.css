@@ -970,3 +970,708 @@
     min-height: 260px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   LAUNCH SCREEN — Multi-section scrollable celebration
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Scrollable layout ──────────────────────── */
+.setup-launch-scroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 1rem 0;
+}
+
+.setup-launch-section {
+  width: 100%;
+  max-width: 560px;
+  padding: 2rem 0;
+}
+
+.setup-launch-section + .setup-launch-section {
+  border-top: 1px solid var(--border, #1e2535);
+}
+
+.setup-launch-section-title {
+  font-family: var(--font-serif, 'Instrument Serif', Georgia, serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--text, #eceef2);
+  text-align: center;
+  margin: 0 0 1rem;
+}
+
+/* ── Plan comparison cards ──────────────────── */
+.setup-plan-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem;
+}
+
+.setup-plan-card {
+  border-radius: 1rem;
+  border: 1px solid var(--border, #1e2535);
+  background: var(--surface, #161c28);
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s;
+}
+
+.setup-plan-card--upgrade {
+  border-color: var(--accent, #e8a849);
+  background: linear-gradient(165deg, rgba(232, 168, 73, 0.06), var(--surface, #161c28) 60%);
+}
+
+.setup-plan-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text, #eceef2);
+  margin-bottom: 0.25rem;
+}
+
+.setup-plan-price {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text, #eceef2);
+  margin-bottom: 1rem;
+}
+
+.setup-plan-period {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--text-muted, #5d6370);
+}
+
+.setup-plan-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.setup-plan-feature {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  padding-left: 1.25rem;
+  position: relative;
+}
+
+.setup-plan-feature::before {
+  position: absolute;
+  left: 0;
+  font-size: 0.75rem;
+}
+
+.setup-plan-feature--yes {
+  color: var(--text-mid, #a8adb8);
+}
+
+.setup-plan-feature--yes::before {
+  content: '✓';
+  color: var(--accent, #e8a849);
+}
+
+.setup-plan-feature--no {
+  color: var(--text-muted, #5d6370);
+}
+
+.setup-plan-feature--no::before {
+  content: '✗';
+  color: var(--text-muted, #5d6370);
+}
+
+.setup-plan-cta {
+  text-align: center;
+}
+
+.setup-plan-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted, #5d6370);
+  padding: 0.375rem 1rem;
+  border: 1px solid var(--border-light, #283042);
+  border-radius: 2rem;
+  display: inline-block;
+}
+
+.setup-plan-annual {
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--text-muted, #5d6370);
+  margin-top: 1rem;
+}
+
+/* ── Device showcase ────────────────────────── */
+.setup-device-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem;
+}
+
+.setup-device-card {
+  border-radius: 1rem;
+  border: 1px solid var(--border, #1e2535);
+  background: var(--surface, #161c28);
+  padding: 1.5rem 1rem;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.setup-device-image {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.setup-device-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.setup-device-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text, #eceef2);
+  margin-bottom: 0.25rem;
+}
+
+.setup-device-price {
+  font-size: 0.8125rem;
+  color: var(--text-muted, #5d6370);
+  margin-bottom: 0.75rem;
+}
+
+.setup-device-badge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.625rem;
+  border-radius: 2rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted, #5d6370);
+}
+
+.setup-device-badge--rd {
+  background: rgba(232, 168, 73, 0.08);
+  color: var(--accent, #e8a849);
+  opacity: 0.7;
+}
+
+/* Tactus teaser row */
+.setup-device-teaser {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.875rem;
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border, #1e2535);
+  background: var(--surface, #161c28);
+  opacity: 0.7;
+}
+
+.setup-device-teaser-image {
+  width: 80px;
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.setup-device-teaser-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.setup-device-teaser-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+/* ── Responsive ────────────────────────────── */
+@media (max-width: 480px) {
+  .setup-launch-scroll {
+    padding: 1.5rem 1rem 0;
+  }
+
+  .setup-launch-section {
+    padding: 1.5rem 0;
+  }
+
+  .setup-plan-grid,
+  .setup-device-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.625rem;
+  }
+
+  .setup-plan-card {
+    padding: 1rem 0.875rem;
+  }
+
+  .setup-plan-price {
+    font-size: 1.25rem;
+  }
+
+  .setup-device-image {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SPLIT LAYOUT — Live preview alongside editor
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Split container ── */
+.setup-split {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.setup-editor {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2.5rem 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* Desktop: editor + preview side by side */
+@media (min-width: 1024px) {
+  .setup-split {
+    gap: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  .setup-editor {
+    flex: 0 0 55%;
+  }
+  .setup-preview-panel {
+    display: flex;
+    flex: 0 0 45%;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 1.5rem;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 80px);
+  }
+}
+
+/* Smaller desktops: give editor more room */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .setup-editor {
+    flex: 0 0 62%;
+  }
+  .setup-preview-panel {
+    flex: 0 0 38%;
+  }
+}
+
+/* Wide screens: scale up phone frame */
+@media (min-width: 1280px) {
+  .setup-preview-phone {
+    width: 375px;
+    height: 720px;
+  }
+}
+
+/* ── Preview phone frame ── */
+.setup-preview-panel {
+  display: none;
+}
+
+.setup-preview-phone {
+  width: 320px;
+  height: 640px;
+  border: 3px solid var(--border-light, #283042);
+  border-radius: 2.5rem;
+  overflow: hidden;
+  position: relative;
+  background: var(--surface, #161c28);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.setup-preview-notch {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 24px;
+  background: var(--surface, #161c28);
+  border-radius: 0 0 12px 12px;
+  z-index: 10;
+}
+
+.setup-preview-screen {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.setup-preview-screen::-webkit-scrollbar {
+  width: 0;
+}
+
+.setup-preview-screen .profile-page {
+  min-height: 100%;
+}
+
+/* ── Mobile preview floating button ── */
+.setup-mobile-preview-btn {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .setup-mobile-preview-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    padding: 0.5rem 1rem;
+    background: var(--accent, #e8a849);
+    color: var(--bg, #0c1017);
+    border: none;
+    border-radius: 2rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 50;
+    font-family: inherit;
+  }
+}
+
+/* ── Mobile preview overlay ── */
+.setup-mobile-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.setup-mobile-preview-container {
+  width: 100%;
+  max-width: 420px;
+  max-height: 95vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: var(--bg, #0c1017);
+}
+
+.setup-mobile-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border, #1e2535);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text, #eceef2);
+}
+
+.setup-mobile-preview-header button {
+  background: none;
+  border: none;
+  color: var(--accent, #e8a849);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-family: inherit;
+}
+
+.setup-mobile-preview-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.setup-mobile-preview-body .profile-page {
+  min-height: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOGGLE GROUPS — Shape / Size / Display mode buttons
+   ═══════════════════════════════════════════════════════════ */
+
+.setup-toggle-group {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.setup-toggle-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border, #1e2535);
+  background: var(--surface, #161c28);
+  color: var(--text-muted, #5d6370);
+  font-size: 0.75rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.setup-toggle-btn--active {
+  background: var(--accent, #e8a849);
+  color: var(--bg, #0c1017);
+  border-color: var(--accent, #e8a849);
+}
+
+.setup-toggle-btn:hover:not(.setup-toggle-btn--active) {
+  border-color: var(--border-light, #283042);
+  color: var(--text, #eceef2);
+}
+
+.setup-shape-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.setup-shape-row .setup-label {
+  margin-bottom: 0;
+  min-width: 3rem;
+  font-size: 0.75rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   POD LIST — Created pods in step 4
+   ═══════════════════════════════════════════════════════════ */
+
+.setup-pod-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-bottom: 1rem;
+}
+
+.setup-pod-item {
+  padding: 0.5rem 0.75rem;
+  background: var(--surface, #161c28);
+  border: 1px solid var(--border, #1e2535);
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text, #eceef2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── Per-link color picker ── */
+.setup-link-color-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border-light, #283042);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.setup-link-color-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PREVIEW TAB TOGGLE — Business / Personal / Portfolio
+   ═══════════════════════════════════════════════════════════ */
+
+.setup-preview-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  background: var(--surface, #161c28);
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  border: 1px solid var(--border, #1e2535);
+}
+
+.setup-preview-tab {
+  flex: 1;
+  padding: 0.375rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #5d6370);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.setup-preview-tab:hover:not(.setup-preview-tab--active) {
+  color: var(--text-mid, #a8adb8);
+}
+
+.setup-preview-tab--active {
+  background: var(--accent, #e8a849);
+  color: var(--bg, #0c1017);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INFO CARDS — Steps 5-6 informational content
+   ═══════════════════════════════════════════════════════════ */
+
+.setup-info-card {
+  padding: 2rem 1.5rem;
+  background: var(--surface, #161c28);
+  border: 1px solid var(--border, #1e2535);
+  border-radius: 1rem;
+  margin-top: 0.5rem;
+}
+
+.setup-info-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text, #eceef2);
+  margin: 0 0 0.75rem;
+}
+
+.setup-info-text {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text-mid, #a8adb8);
+  margin: 0 0 1rem;
+}
+
+.setup-info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.25rem;
+}
+
+.setup-info-list li {
+  position: relative;
+  padding-left: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--text-mid, #a8adb8);
+  line-height: 2;
+}
+
+.setup-info-list li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--accent, #e8a849);
+  font-weight: 700;
+}
+
+.setup-info-note {
+  font-size: 0.8125rem;
+  color: var(--text-muted, #5d6370);
+  margin: 0;
+  font-style: italic;
+}
+
+/* ── Mobile responsive ─────────────────────────── */
+
+/* Step indicators on narrow screens */
+@media (max-width: 480px) {
+  .setup-step-indicators {
+    gap: 0.125rem;
+    padding: 0.5rem 0.5rem 0;
+  }
+  .setup-step-dot {
+    font-size: 0.5625rem;
+    padding: 0.2rem 0.35rem;
+  }
+}
+
+/* Editor area — better mobile spacing */
+@media (max-width: 640px) {
+  .setup-editor {
+    padding: 1.25rem 0.75rem;
+  }
+  .setup-content {
+    max-width: 100%;
+  }
+  .setup-heading {
+    font-size: 1.375rem;
+  }
+  .setup-subheading {
+    font-size: 0.8125rem;
+    margin-bottom: 1.5rem;
+  }
+  .setup-nav {
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .setup-btn-primary {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+  }
+  .setup-btn-ghost {
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Mobile preview button — clear of nav area */
+@media (max-width: 1023px) {
+  .setup-mobile-preview-btn {
+    bottom: 5rem;
+    right: 1rem;
+    z-index: 50;
+  }
+}
+@media (max-width: 640px) {
+  .setup-mobile-preview-btn {
+    bottom: 4.5rem;
+    right: 0.75rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Mobile overlay — full height on small screens */
+@media (max-width: 480px) {
+  .setup-mobile-preview-container {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+    height: 100%;
+  }
+}
+
+/* Contain editor section overflow within wizard width */
+.setup-content [style*="grid"],
+.setup-content .collapsible-section {
+  max-width: 100%;
+  overflow-x: hidden;
+}

@@ -20,6 +20,7 @@ CREATE TABLE users (
     stripe_customer_id VARCHAR(255),
     stripe_subscription_id VARCHAR(255),
     setup_completed BOOLEAN NOT NULL DEFAULT false,
+    setup_step      SMALLINT NOT NULL DEFAULT 1,
     invite_code_id  UUID,                        -- FK added after invite_codes table created
     trial_started_at TIMESTAMPTZ,
     trial_ends_at    TIMESTAMPTZ,
@@ -68,6 +69,11 @@ CREATE TABLE profiles (
     bg_image_url    VARCHAR(500),                     -- background photo (full page behind profile)
     bg_image_opacity SMALLINT NOT NULL DEFAULT 20 CHECK (bg_image_opacity BETWEEN 5 AND 100),
     bg_image_position_y INTEGER NOT NULL DEFAULT 50 CHECK (bg_image_position_y BETWEEN 0 AND 100),
+    photo_zoom      SMALLINT NOT NULL DEFAULT 100,
+    cover_position_x INTEGER NOT NULL DEFAULT 50,
+    cover_zoom      SMALLINT NOT NULL DEFAULT 100,
+    bg_image_position_x INTEGER NOT NULL DEFAULT 50,
+    bg_image_zoom   SMALLINT NOT NULL DEFAULT 100,
     status_tags     TEXT[] DEFAULT '{}',              -- e.g. {'open_to_network','hiring'}
     slug_rotated_at TIMESTAMPTZ DEFAULT NOW(),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -98,8 +104,27 @@ CREATE TABLE protected_pages (
     icon_opacity    NUMERIC(3,2) DEFAULT 0.35,  -- impression icon opacity (0.0 - 1.0)
     icon_corner     VARCHAR(20) DEFAULT 'bottom-right', -- impression icon corner placement
     photo_url       VARCHAR(500),     -- personal photo for impression pages
+    photo_shape     VARCHAR(20) DEFAULT 'circle',
+    photo_radius    INTEGER,
+    photo_size      VARCHAR(20) DEFAULT 'medium',
+    photo_position_x INTEGER DEFAULT 50,
+    photo_position_y INTEGER DEFAULT 50,
+    photo_animation VARCHAR(20) DEFAULT 'none',
+    photo_align     VARCHAR(10) DEFAULT 'center',
+    cover_url       VARCHAR(500),
+    cover_opacity   SMALLINT DEFAULT 30,
+    cover_position_y INTEGER DEFAULT 50,
+    bg_image_url    VARCHAR(500),
+    bg_image_opacity SMALLINT DEFAULT 20,
+    bg_image_position_y INTEGER DEFAULT 50,
+    photo_zoom      SMALLINT NOT NULL DEFAULT 100,
+    cover_position_x INTEGER NOT NULL DEFAULT 50,
+    cover_zoom      SMALLINT NOT NULL DEFAULT 100,
+    bg_image_position_x INTEGER NOT NULL DEFAULT 50,
+    bg_image_zoom   SMALLINT NOT NULL DEFAULT 100,
     allow_remember  BOOLEAN NOT NULL DEFAULT true,
     pin_version     INTEGER NOT NULL DEFAULT 1,
+    show_resume     BOOLEAN NOT NULL DEFAULT true,
     display_order   INTEGER NOT NULL DEFAULT 0,
     is_active       BOOLEAN NOT NULL DEFAULT true,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -417,6 +442,30 @@ CREATE INDEX idx_evtoken_user ON email_verification_tokens(user_id);
 -- UPDATED_AT TRIGGER
 -- Auto-update the updated_at timestamp on row changes
 -- ============================================================
+-- ── Image Gallery ──────────────────────────
+CREATE TABLE IF NOT EXISTS image_gallery (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  category      VARCHAR(50) NOT NULL,
+  url           VARCHAR(500) NOT NULL,
+  thumbnail_url VARCHAR(500),
+  label         VARCHAR(100),
+  tags          VARCHAR(200),
+  display_order INTEGER NOT NULL DEFAULT 0,
+  is_active     BOOLEAN NOT NULL DEFAULT true,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_image_gallery_category ON image_gallery(category);
+
+-- ── Hardware Waitlist ──────────────────────
+CREATE TABLE IF NOT EXISTS hardware_waitlist (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  product     VARCHAR(50) NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, product)
+);
+CREATE INDEX IF NOT EXISTS idx_hardware_waitlist_product ON hardware_waitlist(product);
+
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN

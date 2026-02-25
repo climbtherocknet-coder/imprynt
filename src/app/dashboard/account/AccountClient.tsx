@@ -69,6 +69,8 @@ export default function AccountClient({ user, accessories }: AccountProps) {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -174,6 +176,21 @@ export default function AccountClient({ user, accessories }: AccountProps) {
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : 'Failed to delete account');
       setDeleteLoading(false);
+    }
+  }
+
+  async function handleResetTestAccount() {
+    if (!confirm('Reset this test account? All profile data will be cleared and you\'ll be sent back to setup.')) return;
+    setResetLoading(true);
+    try {
+      const res = await fetch('/api/account/reset-test', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Reset failed');
+      setResetDone(true);
+      setTimeout(() => { window.location.href = '/dashboard/setup'; }, 1500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Reset failed');
+      setResetLoading(false);
     }
   }
 
@@ -547,6 +564,37 @@ export default function AccountClient({ user, accessories }: AccountProps) {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Reset Test Account (only for test@imprynt.io) */}
+        {user.email === 'test@imprynt.io' && (
+          <div style={{ ...sectionStyle, borderColor: 'rgba(59, 130, 246, 0.3)' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem', color: '#60a5fa' }}>Test Account</h3>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 1rem' }}>
+              Reset this account to a fresh state. Clears all profile data, links, content blocks, and photos.
+              The account and password stay the same.
+            </p>
+            {resetDone ? (
+              <p style={{ fontSize: '0.875rem', color: '#22c55e', fontWeight: 500 }}>
+                Account reset! Redirecting to setup...
+              </p>
+            ) : (
+              <button
+                onClick={handleResetTestAccount}
+                disabled={resetLoading}
+                className="dash-btn-ghost"
+                style={{
+                  width: 'auto',
+                  padding: '0.625rem 1rem',
+                  borderColor: 'rgba(59, 130, 246, 0.3)',
+                  color: '#60a5fa',
+                  opacity: resetLoading ? 0.5 : 1,
+                }}
+              >
+                {resetLoading ? 'Resetting...' : 'Reset Test Account'}
+              </button>
+            )}
           </div>
         )}
 

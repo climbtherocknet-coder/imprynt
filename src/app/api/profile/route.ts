@@ -410,7 +410,7 @@ export async function PUT(req: NextRequest) {
 
       await query(
         `UPDATE profiles SET
-          title = $1, company = $2, tagline = $3,
+          title = COALESCE($1, title), company = COALESCE($2, company), tagline = COALESCE($3, tagline),
           template = COALESCE($4, template),
           primary_color = COALESCE($5, primary_color),
           accent_color = CASE WHEN $6::text = '__clear__' THEN NULL ELSE COALESCE($6, accent_color) END,
