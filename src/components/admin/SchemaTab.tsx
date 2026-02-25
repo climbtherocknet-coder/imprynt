@@ -378,10 +378,51 @@ export default function SchemaTab() {
           const svgHtml = svg.outerHTML;
           const html = `<!DOCTYPE html>
 <html><head><style>
-  html, body { margin: 0; padding: 0; background: #0c1017; overflow: auto; }
-  body { display: flex; justify-content: center; padding: 2rem; }
+  html, body { margin: 0; padding: 0; background: #0c1017; overflow: hidden; height: 100%; }
+  #viewport { width: 100%; height: 100%; overflow: hidden; cursor: grab; }
+  #viewport.dragging { cursor: grabbing; }
+  #content { transform-origin: 0 0; padding: 2rem; display: inline-block; }
   svg { max-width: none; }
-</style></head><body>${svgHtml}</body></html>`;
+</style></head><body>
+<div id="viewport"><div id="content">${svgHtml}</div></div>
+<script>
+(function() {
+  var vp = document.getElementById('viewport');
+  var ct = document.getElementById('content');
+  var zoom = 0.45, panX = 0, panY = 0;
+  var dragging = false, startX = 0, startY = 0, startPanX = 0, startPanY = 0;
+  function apply() { ct.style.transform = 'translate('+panX+'px,'+panY+'px) scale('+zoom+')'; }
+  apply();
+  vp.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    var rect = vp.getBoundingClientRect();
+    var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    var oldZoom = zoom;
+    var delta = e.deltaY > 0 ? 0.9 : 1.1;
+    zoom = Math.min(4, Math.max(0.1, zoom * delta));
+    panX = mx - (mx - panX) * (zoom / oldZoom);
+    panY = my - (my - panY) * (zoom / oldZoom);
+    apply();
+  }, { passive: false });
+  vp.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
+    dragging = true; startX = e.clientX; startY = e.clientY;
+    startPanX = panX; startPanY = panY;
+    vp.classList.add('dragging');
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    panX = startPanX + (e.clientX - startX);
+    panY = startPanY + (e.clientY - startY);
+    apply();
+  });
+  window.addEventListener('mouseup', function() {
+    dragging = false; vp.classList.remove('dragging');
+  });
+})();
+</script>
+</body></html>`;
           const blob = new Blob([html], { type: 'text/html' });
           setBlobUrl(URL.createObjectURL(blob));
         })
@@ -405,7 +446,7 @@ export default function SchemaTab() {
             Database Schema
           </h2>
           <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-            25 tables &middot; Last updated Feb 25, 2026 &middot; Ctrl+scroll to zoom
+            25 tables &middot; Last updated Feb 25, 2026 &middot; Scroll to zoom, drag to pan
           </p>
         </div>
       </div>
