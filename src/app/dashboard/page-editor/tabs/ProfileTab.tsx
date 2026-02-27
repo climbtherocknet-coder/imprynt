@@ -32,6 +32,7 @@ interface PreviewState {
   bgImageOpacity: number; bgImageZoom: number;
   links: LinkItem[]; linkDisplay: string; linkSize: string; linkShape: string;
   linkButtonColor: string | null;
+  saveButtonStyle: string; saveButtonColor: string | null;
 }
 
 // ── Component ──────────────────────────────────────────
@@ -108,6 +109,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           links: d.links,
           linkDisplay: d.profile.linkDisplay || 'default', linkSize: d.profile.linkSize || 'medium',
           linkShape: d.profile.linkShape || 'pill', linkButtonColor: d.profile.linkButtonColor || null,
+          saveButtonStyle: d.profile.saveButtonStyle || 'auto', saveButtonColor: d.profile.saveButtonColor || null,
         });
 
         setAllowSharing(d.profile.allowSharing !== false);
@@ -247,6 +249,8 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
         linkSize={previewState.linkSize}
         linkShape={previewState.linkShape}
         linkButtonColor={previewState.linkButtonColor}
+        saveButtonStyle={previewState.saveButtonStyle}
+        saveButtonColor={previewState.saveButtonColor}
         contained={true}
       />
     );
@@ -376,8 +380,15 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
             initial={{
               contactFields: {},
               customFields: [],
+              saveButtonStyle: previewState?.saveButtonStyle || 'auto',
+              saveButtonColor: previewState?.saveButtonColor || null,
             }}
-            onChange={() => {}}
+            onChange={(state) => {
+              if (previewState && (state.saveButtonStyle !== previewState.saveButtonStyle || state.saveButtonColor !== previewState.saveButtonColor)) {
+                setPreviewState(prev => prev ? { ...prev, saveButtonStyle: state.saveButtonStyle || 'auto', saveButtonColor: state.saveButtonColor || null } : prev);
+                setIsDirty(true);
+              }
+            }}
             onError={setError}
           />
         </CollapsibleSection>

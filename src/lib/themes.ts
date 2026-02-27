@@ -26,6 +26,8 @@ export interface TemplateTheme {
     accentHover: string;
     border: string;
     borderHover: string;
+    saveBtnBg: string;
+    saveBtnColor: string;
   };
   modifiers: {
     photoShape: 'circle' | 'rounded';
@@ -73,6 +75,8 @@ const clean: TemplateTheme = {
     accentHover: '#2563eb',
     border: '#e9ecef',
     borderHover: '#dee2e6',
+    saveBtnBg: '#3B82F6',
+    saveBtnColor: '#ffffff',
   },
   modifiers: {
     photoShape: 'circle',
@@ -110,6 +114,8 @@ const warm: TemplateTheme = {
     accentHover: '#b06435',
     border: '#e2dbd2',
     borderHover: '#d4cbc0',
+    saveBtnBg: '#c2703e',
+    saveBtnColor: '#ffffff',
   },
   modifiers: {
     photoShape: 'circle',
@@ -147,6 +153,8 @@ const classic: TemplateTheme = {
     accentHover: '#162d4a',
     border: '#ddd9d2',
     borderHover: '#ccc8c0',
+    saveBtnBg: '#1e3a5f',
+    saveBtnColor: '#ffffff',
   },
   modifiers: {
     photoShape: 'circle',
@@ -187,6 +195,8 @@ const soft: TemplateTheme = {
     accentHover: '#3d6b54',
     border: '#dcdee2',
     borderHover: '#cdd0d4',
+    saveBtnBg: '#4a7a62',
+    saveBtnColor: '#ffffff',
   },
   modifiers: {
     photoShape: 'circle',
@@ -229,6 +239,8 @@ const midnight: TemplateTheme = {
     accentHover: '#b5e600',
     border: '#1e1e1e',
     borderHover: '#2a2a2a',
+    saveBtnBg: '#c8ff00',
+    saveBtnColor: '#0a0a0a',
   },
   modifiers: {
     photoShape: 'circle',
@@ -270,6 +282,8 @@ const editorial: TemplateTheme = {
     accentHover: '#a0750a',
     border: '#e2dbd2',
     borderHover: '#d4cbc0',
+    saveBtnBg: '#b8860b',
+    saveBtnColor: '#ffffff',
   },
   modifiers: {
     photoShape: 'circle',
@@ -310,6 +324,8 @@ const noir: TemplateTheme = {
     accentHover: '#ffffff',
     border: '#2a2a2a',
     borderHover: '#383838',
+    saveBtnBg: '#c49a6c',
+    saveBtnColor: '#111111',
   },
   modifiers: {
     photoShape: 'rounded',
@@ -355,6 +371,8 @@ const signal: TemplateTheme = {
     accentHover: '#d94a33',
     border: '#e5e5e5',
     borderHover: '#d4d4d4',
+    saveBtnBg: '#e8553d',
+    saveBtnColor: '#ffffff',
   },
   modifiers: {
     photoShape: 'rounded',
@@ -395,6 +413,8 @@ const studio: TemplateTheme = {
     accentHover: '#7b8ce7',
     border: '#1e1e28',
     borderHover: '#2a2a38',
+    saveBtnBg: '#8b9cf7',
+    saveBtnColor: '#0c0c0e',
   },
   modifiers: {
     photoShape: 'rounded',
@@ -438,6 +458,8 @@ const dusk: TemplateTheme = {
     accentHover: '#f0b85e',
     border: '#1e2535',
     borderHover: '#283042',
+    saveBtnBg: '#e8a849',
+    saveBtnColor: '#0c1017',
   },
   modifiers: {
     photoShape: 'circle',
@@ -515,6 +537,8 @@ export function getCustomTheme(data: CustomThemeData | null | undefined): Templa
       accentHover:  d.accentHover  || base.colors.accentHover,
       border:       d.border       || base.colors.border,
       borderHover:  d.borderHover  || base.colors.borderHover,
+      saveBtnBg:    base.colors.saveBtnBg,
+      saveBtnColor: base.colors.saveBtnColor,
     },
     modifiers: {
       photoShape:     d.photoShape    || base.modifiers.photoShape,
@@ -583,6 +607,8 @@ export function getThemeCSSVars(theme: TemplateTheme): string {
     `--font-heading: ${fonts.heading}`,
     `--font-body: ${fonts.body}`,
     `--accent-contrast: ${getAccentContrastColor(colors.accent, colors.bg)}`,
+    `--save-btn-bg: ${colors.saveBtnBg}`,
+    `--save-btn-color: ${colors.saveBtnColor}`,
   ];
 
   if (extraVars) {

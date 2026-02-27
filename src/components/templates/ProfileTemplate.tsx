@@ -1,5 +1,5 @@
 import '@/styles/profile.css';
-import { getTheme, getCustomTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, getAccentOverrideVars, LINK_ICONS, type CustomThemeData } from '@/lib/themes';
+import { getTheme, getCustomTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, getAccentOverrideVars, getAccentContrastColor, LINK_ICONS, type CustomThemeData } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
 import SaveContactButton from '@/components/templates/SaveContactButton';
 import ExpandablePhoto from '@/components/templates/ExpandablePhoto';
@@ -56,6 +56,9 @@ export interface ProfileTemplateProps {
   linkSize?: string;
   linkShape?: string;
   linkButtonColor?: string | null;
+  // Save button styling (migration 054)
+  saveButtonStyle?: string;
+  saveButtonColor?: string | null;
   // Editor preview containment (prevent position:fixed from escaping preview)
   contained?: boolean;
 }
@@ -109,11 +112,21 @@ export default function ProfileTemplate({
   linkSize = 'medium',
   linkShape = 'pill',
   linkButtonColor,
+  saveButtonStyle = 'auto',
+  saveButtonColor,
   contained = false,
 }: ProfileTemplateProps) {
   const theme = template === 'custom' ? getCustomTheme(customTheme as CustomThemeData) : getTheme(template);
   const cssVars = getThemeCSSVars(theme);
   const accentOverrides = accentColor ? getAccentOverrideVars(accentColor, theme.colors.bg) : {};
+  // Save button style overrides (custom/inverted override theme defaults)
+  const saveBtnOverrides: Record<string, string> = saveButtonStyle === 'custom' && saveButtonColor
+    ? { '--save-btn-bg': saveButtonColor, '--save-btn-color': getAccentContrastColor(saveButtonColor, theme.colors.bg) }
+    : saveButtonStyle === 'inverted'
+    ? { '--save-btn-bg': theme.colors.text, '--save-btn-color': theme.colors.bg }
+    : saveButtonStyle === 'accent' && accentColor
+    ? { '--save-btn-bg': accentColor, '--save-btn-color': getAccentContrastColor(accentColor, theme.colors.bg) }
+    : {};
   const dataAttrs = getTemplateDataAttrs(theme);
   // User's photo shape overrides the theme default
   const effectiveShape = photoShape || theme.modifiers.photoShape;
@@ -148,7 +161,7 @@ export default function ProfileTemplate({
         style={{ ...Object.fromEntries(cssVars.split('; ').map(v => {
           const [key, ...rest] = v.split(': ');
           return [key, rest.join(': ')];
-        })), ...accentOverrides, ...(linkButtonColor ? { '--link-btn-color': linkButtonColor } : {}) } as React.CSSProperties}
+        })), ...accentOverrides, ...(linkButtonColor ? { '--link-btn-color': linkButtonColor } : {}), ...saveBtnOverrides } as React.CSSProperties}
         {...dataAttrs}
         {...(contained ? { 'data-contained': 'true' } : {})}
         {...(bgImageUrl ? { 'data-has-bg': 'true' } : {})}

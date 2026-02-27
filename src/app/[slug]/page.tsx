@@ -61,6 +61,8 @@ interface ProfileData {
   link_size: string;
   link_shape: string;
   link_button_color: string | null;
+  save_button_style: string;
+  save_button_color: string | null;
 }
 
 interface LinkData {
@@ -193,10 +195,20 @@ async function getProfileAny(slug: string) {
       profile.link_size = lsResult.rows[0]?.link_size || 'medium';
       profile.link_shape = lsResult.rows[0]?.link_shape || 'pill';
       profile.link_button_color = lsResult.rows[0]?.link_button_color || null;
+      try {
+        const sbResult = await query('SELECT save_button_style, save_button_color FROM profiles WHERE id = $1', [profile.profile_id]);
+        profile.save_button_style = sbResult.rows[0]?.save_button_style || 'auto';
+        profile.save_button_color = sbResult.rows[0]?.save_button_color || null;
+      } catch {
+        profile.save_button_style = 'auto';
+        profile.save_button_color = null;
+      }
     } catch {
       profile.link_size = 'medium';
       profile.link_shape = 'pill';
       profile.link_button_color = null;
+      profile.save_button_style = 'auto';
+      profile.save_button_color = null;
     }
   }
   return profile;
@@ -435,6 +447,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         linkSize={profile.link_size || 'medium'}
         linkShape={profile.link_shape || 'pill'}
         linkButtonColor={profile.link_button_color || null}
+        saveButtonStyle={profile.save_button_style || 'auto'}
+        saveButtonColor={profile.save_button_color || null}
       />
 
       {/* Client-side interactive elements (PIN modal, protected pages) */}

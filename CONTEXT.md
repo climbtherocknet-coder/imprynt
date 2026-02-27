@@ -3,7 +3,7 @@
 **Purpose:** This file is the shared memory between Claude sessions. After each work session or push, update the relevant sections so context is never lost if a conversation resets.
 
 **Last updated:** February 27, 2026
-**Updated by:** Claude (session 9 — marketing site redesign)
+**Updated by:** Claude (session 12 — ring photo + deploy)
 
 ---
 
@@ -22,7 +22,7 @@ The Imprynt platform is a fully functional Next.js 15 app. Marketing pages (land
   - PortfolioTab: visible PIN-gated portfolio/showcase layer with same customization
 - **Editor Components:** Reusable sections extracted into `src/components/editor/`
 - **Pods System:** Content blocks (text, text_image, stats, listing, music, event, link_preview, project, cta) with PodEditor modal
-- **Event Pods:** Full renderer with date/time display, venue, address (Google Maps link), status badges (cancelled/postponed/sold out/happening now/ended), countdown timer, CTA button, markdown body. Timezone-aware (stores creator's timezone). Auto-hide after event ends.
+- **Event Pods:** Full renderer with date/time display, venue, address (Google Maps link), status badges (cancelled/postponed/sold out/happening now/ended), countdown timer, CTA button, markdown body. Stores raw datetime-local strings (TEXT columns, no timezone conversion). Auto-hide after event ends.
 - **Link Preview Pods:** Auto-fetch OG metadata with manual Fetch button, editable title/body/image, image upload/replace/remove, manual fallback when auto-fetch fails
 - **Listing Pods:** Real estate listings with price, beds/baths/sqft, status (active/pending/sold/open house), source domain, auto-revert open house status
 - **Music Pods:** Album art, artist, audio player, link
@@ -48,6 +48,8 @@ The Imprynt platform is a fully functional Next.js 15 app. Marketing pages (land
 - **Site-Wide Theme Infrastructure:** ThemeProvider + ThemeToggle components, `data-theme` attribute on documentElement, system/light/dark preference stored in localStorage. CSS palettes for light mode NOT yet built in stylesheets.
 - **Link Click Tracking:** `LinkTracker.tsx` component on public profiles, fires beacon to `/api/analytics/link-click`
 - **Analytics Dashboard:** `/dashboard/analytics` with total views, unique visitors, views today/week/month, views by day chart, top links by clicks, event breakdown (page_view/link_click/vcard_download/pin_success/pin_attempt/nfc_tap), scoring
+- **NFC Redirect + Short URLs:** `/go/[id]` route resolves `redirect_id` to profile slug. Logs `nfc_tap` analytics event. `/r/[id]` kept as backward-compatible alias. Short domain (impr.in) configurable via `NEXT_PUBLIC_SHORT_DOMAIN` env var — `getShareUrl()` helper returns `impr.in/{id}` when set, `/go/{id}` fallback. QR codes encode share URL.
+- **Save Contact Button:** Template-aware styling via `--save-btn-bg`/`--save-btn-color` CSS variables. Each template has distinct save button colors. User customization: auto (template default), accent, inverted, or custom color picker. Migration 054.
 - **Additional Features:** Waitlist modal, feedback button, announcement banner, breadcrumbs, verification banner, demo profiles system, gallery/stock photo picker, vCard download with optional PIN protection
 
 ### What's In Progress
@@ -128,7 +130,7 @@ src/
 ```
 
 ### Database
-- Schema: `db/init.sql` (regenerated Feb 26, 2026), migrations in `db/migrations/` (001-052, no gaps)
+- Schema: `db/init.sql` (regenerated Feb 26, 2026), migrations in `db/migrations/` (001-054, no gaps)
 - 28 tables: users, profiles, links, contact_fields, protected_pages, pods, showcase_items, analytics_events, pin_attempts, accessories, invite_codes, waitlist, feedback, hardware_waitlist, image_gallery, connections, score_events, user_scores, vcard_download_tokens, email_verification_tokens, password_resets, contacts, cc_features, cc_roadmap, cc_changelog, cc_docs, cc_votes, cc_comments
 
 ### Running Locally
@@ -200,10 +202,36 @@ docker compose up --build
 - **Files modified:** `themes.ts`, `ProfileTemplate.tsx`, `profile.css`, `cc.css`, `PodEditor.tsx`, `PodRenderer.tsx`, pods API routes (main + protected-pages), `[slug]/page.tsx`, `dashboard/admin/page.tsx`, `AdminClient.tsx`
 - **Files created:** `db/migrations/051_event_timezone.sql`
 
-### February 27, 2026 — Queued for Next Session
-- **Event timezone display bug (CRITICAL):** `event_start` and `event_end` are `TIMESTAMPTZ` columns. When PodEditor stores a raw datetime-local string like `2026-03-14T20:00`, PostgreSQL interprets it as UTC. The public profile renderer then displays UTC times (shows 2:00 PM instead of 8:00 PM for a Mountain Time event). Fix: write migration to change columns to `TEXT`, update API to store raw datetime-local strings, update PodRenderer to parse without timezone conversion. The `event_timezone` column stays for future display use.
-- **Landing page redesign (in progress):** Running CLAUDE_CODE_PROMPT_REDESIGN.md. Review results when complete.
-- **Short URL (impr.in):** Domain purchased, pending approval. Implementation queued.
+### February 27, 2026 (Session 10) — NFC Redirect + Event Timezone + Save Contact + Landing Polish
+- **Fixed (CRITICAL):** NFC redirect route missing. Dashboard generated /go/{redirectId} URLs but no /go/ route existed. Created `src/app/go/[id]/route.ts`. `/r/` route kept as alias.
+- **Fixed (CRITICAL):** Event timezone display bug. Changed event_start/event_end from TIMESTAMPTZ to TEXT. PodRenderer now parses datetime-local strings without timezone conversion. Migration 053.
+- **New feature:** Save Contact button differentiation. Auto-contrast per template via `--save-btn-bg`/`--save-btn-color` CSS variables (10 templates, each unique). User customization: auto/accent/inverted/custom with color picker in Contact Card editor. Migration 054.
+- **Polish:** Landing page visual depth — subtle noise texture on background, varied section padding (tighter/standard/breathing/grand finale rhythm), warmer value cards (top accent border replaces left), hover lift on use case cards, bigger content type icons (22px) with accent background, improved NFC placeholder (radial gradient instead of dashed circle), brighter impression demo icons (+opacity), warmer/larger final CTA glow.
+- **Fixed:** Demo iframe slug updated to real profile (`/demo-ava`).
+- **Verified:** HeroPhone already showing real demo profiles via iframe carousel.
+- **Cleanup:** Deleted orphaned `demo.css`. No remaining `/demo` route references (only `/demo-ava` slug).
+- **Version:** v0.10.1
+- **Files created:** `db/migrations/053_event_datetime_text.sql`, `db/migrations/054_save_button_style.sql`, `src/app/go/[id]/route.ts`
+- **Files modified:** `db/init.sql`, `src/components/pods/PodRenderer.tsx`, `src/app/api/pods/route.ts`, `src/app/api/protected-pages/[pageId]/route.ts`, `src/app/api/protected-pages/pods/route.ts`, `src/lib/themes.ts`, `src/styles/profile.css`, `src/components/templates/SaveContactButton.tsx`, `src/components/templates/ProfileTemplate.tsx`, `src/app/api/profile/route.ts`, `src/app/[slug]/page.tsx`, `src/components/editor/ContactCardSection.tsx`, `src/components/editor/constants.ts`, `src/app/dashboard/page-editor/tabs/ProfileTab.tsx`, `src/styles/landing.css`, `src/app/page.tsx`
+- **Files deleted:** `src/styles/demo.css`
+- **Short URL (impr.in):** Code complete. Dashboard + QR + share links ready. Waiting for domain DNS + Caddy config (see `docs/short-url-setup.md`).
+
+### February 27, 2026 (Session 12) — Ring Photo + Deploy
+- **Added:** Ring product photography to landing page NFC section. `ring1.jpg` (hero, wood surface) and `ring3.jpg` (stone surface, secondary) optimized via sharp (800px max, quality 82) and placed in `public/images/`. Placeholder CSS removed, real `.lp-nfc-photo` styles applied (260px, border-radius 1rem, shadow).
+- **Version:** v0.10.3
+- **Files modified:** `src/app/page.tsx`, `src/styles/landing.css`
+- **Files added:** `public/images/ring1.jpg` (143KB), `public/images/ring3.jpg` (62KB)
+
+### February 27, 2026 (Session 11) — Short URL System + Dashboard Cleanup
+- **New:** Short URL infrastructure. `NEXT_PUBLIC_SHORT_DOMAIN` env var. `getShareUrl()` helper in `src/lib/shortUrl.ts` returns `impr.in/{id}` when configured, `/go/{id}` fallback. `displayUrl()` strips protocol for clean display.
+- **Redesigned:** Dashboard "My Links" modal (`MyUrlsCard.tsx`). "Share Link" replaces "Ring/NFC URL". Protocol stripped from display. Compact view now shows share link instead of slug. "Regenerate Slug" replaces "Regenerate Profile URL" with clearer copy.
+- **Updated:** QR codes now encode share link (redirect-based, shortest URL, survives slug changes). Updated `/api/profile/qr`, `/api/profile/[profileId]/qr`, `/api/setup/complete`, and `SetupWizard.tsx`.
+- **Added:** Ring photo CSS (`.lp-nfc-photo`) ready for when photo is available. TODO comment in `page.tsx`.
+- **Docs:** `docs/short-url-setup.md` — DNS, Caddy config, and env var instructions for when impr.in is approved.
+- **Ready for:** Domain approval -> DNS + Caddy config -> flip env var -> short URLs live.
+- **Version:** v0.10.2
+- **Files created:** `src/lib/shortUrl.ts`, `docs/short-url-setup.md`
+- **Files modified:** `.env.example`, `src/app/dashboard/MyUrlsCard.tsx`, `src/app/api/profile/qr/route.ts`, `src/app/api/profile/[profileId]/qr/route.ts`, `src/app/api/setup/complete/route.ts`, `src/app/dashboard/setup/SetupWizard.tsx`, `src/app/page.tsx`, `src/styles/landing.css`
 
 ### February 26, 2026 (Session 4) — Event Enhancements + Profile Polish
 - **Event timezone fix:** PodEditor datetime-local inputs no longer double-convert to/from UTC. Stores raw datetime-local values. Auto-detects and saves creator's timezone on first eventStart entry.

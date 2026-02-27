@@ -144,14 +144,14 @@ export default function SaveContactButton({ profileId, pinProtected, iconOnly = 
   if (!pinProtected) {
     if (inline) {
       return (
-        <a href={`/api/vcard/${profileId}`} className="link-icon-btn" title="Save Contact" aria-label="Save Contact">
+        <a href={`/api/vcard/${profileId}`} className="link-icon-btn save-icon-btn" title="Save Contact" aria-label="Save Contact">
           {iconBtn}
         </a>
       );
     }
     return (
       <div className="save-row fade-in d4">
-        <a href={`/api/vcard/${profileId}`} className={iconOnly ? 'link-icon-btn' : 'save-btn'}>
+        <a href={`/api/vcard/${profileId}`} className={iconOnly ? 'link-icon-btn save-icon-btn' : 'save-btn'}>
           {iconOnly ? iconBtn : '↓ Save Contact'}
         </a>
       </div>
@@ -162,7 +162,7 @@ export default function SaveContactButton({ profileId, pinProtected, iconOnly = 
     return (
       <span style={{ position: 'relative', display: 'inline-flex' }}>
         <button
-          className="link-icon-btn"
+          className="link-icon-btn save-icon-btn"
           onClick={() => setShowPinPrompt(!showPinPrompt)}
           title="Save Contact"
           aria-label="Save Contact"
@@ -177,7 +177,7 @@ export default function SaveContactButton({ profileId, pinProtected, iconOnly = 
   return (
     <div className="save-row fade-in d4" style={{ position: 'relative' }}>
       <button
-        className={iconOnly ? 'link-icon-btn' : 'save-btn'}
+        className={iconOnly ? 'link-icon-btn save-icon-btn' : 'save-btn'}
         onClick={() => setShowPinPrompt(!showPinPrompt)}
         style={{ cursor: 'pointer', border: 'none', fontFamily: 'inherit', width: iconOnly ? 'auto' : '100%' }}
       >

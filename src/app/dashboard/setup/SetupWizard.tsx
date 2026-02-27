@@ -406,7 +406,8 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
       setProfileUrl(data.profileUrl);
       setPublished(true);
 
-      // Generate QR code (PNG + SVG)
+      // Generate QR code using share URL (shorter, redirect-based, survives slug changes)
+      const qrUrl = data.shareUrl || data.profileUrl;
       try {
         const qrOpts = {
           width: 256,
@@ -416,9 +417,9 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
             light: currentTheme?.colors.bg || '#fff',
           },
         };
-        const url = await QRCode.toDataURL(data.profileUrl, qrOpts);
+        const url = await QRCode.toDataURL(qrUrl, qrOpts);
         setQrDataUrl(url);
-        const svg = await QRCode.toString(data.profileUrl, { ...qrOpts, type: 'svg' });
+        const svg = await QRCode.toString(qrUrl, { ...qrOpts, type: 'svg' });
         setQrSvgData(svg);
       } catch { /* QR generation failed -- not critical */ }
     } catch (err) {

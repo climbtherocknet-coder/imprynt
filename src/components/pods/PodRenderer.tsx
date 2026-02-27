@@ -29,22 +29,39 @@ export interface PodData {
   audioDuration?: number;
 }
 
+function parseDatetimeLocal(dateStr: string): { year: number; month: number; day: number; hour: number; minute: number } | null {
+  const m = dateStr.match(/(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/);
+  if (!m) return null;
+  return { year: Number(m[1]), month: Number(m[2]) - 1, day: Number(m[3]), hour: Number(m[4] ?? 0), minute: Number(m[5] ?? 0) };
+}
+
 function getEventState(pod: PodData): 'upcoming' | 'live' | 'ended' | 'cancelled' | 'postponed' | 'sold_out' {
   if (pod.eventStatus === 'cancelled') return 'cancelled';
   if (pod.eventStatus === 'postponed') return 'postponed';
   if (pod.eventStatus === 'sold_out') return 'sold_out';
-  const now = Date.now();
-  if (pod.eventStart && new Date(pod.eventStart).getTime() <= now) {
-    if (pod.eventEnd && new Date(pod.eventEnd).getTime() <= now) return 'ended';
+  if (!pod.eventStart) return 'upcoming';
+  const now = new Date();
+  const sp = parseDatetimeLocal(pod.eventStart);
+  if (!sp) return 'upcoming';
+  const start = new Date(sp.year, sp.month, sp.day, sp.hour, sp.minute);
+  if (start.getTime() <= now.getTime()) {
+    if (pod.eventEnd) {
+      const ep = parseDatetimeLocal(pod.eventEnd);
+      if (ep) {
+        const end = new Date(ep.year, ep.month, ep.day, ep.hour, ep.minute);
+        if (end.getTime() <= now.getTime()) return 'ended';
+      }
+    }
     return 'live';
   }
   return 'upcoming';
 }
 
 function formatEventCountdown(startStr: string): string {
-  const now = Date.now();
-  const start = new Date(startStr).getTime();
-  const diff = start - now;
+  const sp = parseDatetimeLocal(startStr);
+  if (!sp) return '';
+  const start = new Date(sp.year, sp.month, sp.day, sp.hour, sp.minute);
+  const diff = start.getTime() - Date.now();
   if (diff <= 0) return '';
   const mins = Math.floor(diff / 60000);
   const hours = Math.floor(mins / 60);
@@ -56,18 +73,19 @@ function formatEventCountdown(startStr: string): string {
   return 'Starting soon';
 }
 
-function formatEventDate(dateStr: string, tz?: string): string {
-  const d = new Date(dateStr);
-  const opts: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' };
-  if (tz) opts.timeZone = tz;
-  return d.toLocaleDateString('en-US', opts);
+function formatEventDate(dateStr: string): string {
+  const p = parseDatetimeLocal(dateStr);
+  if (!p) return '';
+  const d = new Date(p.year, p.month, p.day, 12, 0, 0);
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-function formatEventTime(dateStr: string, tz?: string): string {
-  const d = new Date(dateStr);
-  const opts: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' };
-  if (tz) opts.timeZone = tz;
-  return d.toLocaleTimeString('en-US', opts);
+function formatEventTime(dateStr: string): string {
+  const p = parseDatetimeLocal(dateStr);
+  if (!p) return '';
+  const ampm = p.hour >= 12 ? 'PM' : 'AM';
+  const displayHour = p.hour === 0 ? 12 : p.hour > 12 ? p.hour - 12 : p.hour;
+  return `${displayHour}:${String(p.minute).padStart(2, '0')} ${ampm}`;
 }
 
 export default function PodRenderer({ pod, delay }: { pod: PodData; delay: number }) {
@@ -192,7 +210,10 @@ export default function PodRenderer({ pod, delay }: { pod: PodData; delay: numbe
   if (pod.podType === 'listing') {
     const details = pod.listingDetails || {};
     // Open house: auto-revert display to "active" if the open house has passed
-    const isOpenHousePast = pod.listingStatus === 'open_house' && pod.eventEnd && new Date(pod.eventEnd).getTime() < Date.now();
+    const isOpenHousePast = pod.listingStatus === 'open_house' && pod.eventEnd && (() => {
+      const ep = parseDatetimeLocal(pod.eventEnd!);
+      return ep ? new Date(ep.year, ep.month, ep.day, ep.hour, ep.minute).getTime() < Date.now() : false;
+    })();
     const displayStatus = isOpenHousePast ? 'active' : (pod.listingStatus || 'active');
     const statusLabel = displayStatus !== 'active'
       ? displayStatus.replace('_', ' ')
@@ -295,7 +316,6 @@ export default function PodRenderer({ pod, delay }: { pod: PodData; delay: numbe
   }
 
   if (pod.podType === 'event') {
-    const tz = pod.eventTimezone || undefined;
     const state = getEventState(pod);
     const mapUrl = pod.eventAddress
       ? `https://maps.google.com/?q=${encodeURIComponent(pod.eventAddress)}`
@@ -330,10 +350,10 @@ export default function PodRenderer({ pod, delay }: { pod: PodData; delay: numbe
             {/* Date + time (large, accent color) */}
             {pod.eventStart && (
               <div className="pod-event-datetime">
-                <span className="pod-event-date">{formatEventDate(pod.eventStart, tz).toUpperCase()}</span>
+                <span className="pod-event-date">{formatEventDate(pod.eventStart).toUpperCase()}</span>
                 <span className="pod-event-time">
-                  {formatEventTime(pod.eventStart, tz)}
-                  {pod.eventEnd && ` \u2013 ${formatEventTime(pod.eventEnd, tz)}`}
+                  {formatEventTime(pod.eventStart)}
+                  {pod.eventEnd && ` \u2013 ${formatEventTime(pod.eventEnd)}`}
                 </span>
               </div>
             )}

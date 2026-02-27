@@ -7,6 +7,8 @@ import { inputStyle, CONTACT_FIELD_DEFS } from './constants';
 export interface ContactCardState {
   contactFields: Record<string, { value: string; showBusiness: boolean; showPersonal: boolean }>;
   customFields: { tempId: string; label: string; value: string; showBusiness: boolean; showPersonal: boolean }[];
+  saveButtonStyle?: string;
+  saveButtonColor?: string | null;
 }
 
 export interface ContactCardSectionProps {
@@ -42,6 +44,9 @@ const ContactCardSection = forwardRef<ContactCardSectionRef, ContactCardSectionP
       { tempId: string; label: string; value: string; showBusiness: boolean; showPersonal: boolean }[]
     >(initial.customFields || []);
 
+    const [saveButtonStyle, setSaveButtonStyle] = useState(initial.saveButtonStyle || 'auto');
+    const [saveButtonColor, setSaveButtonColor] = useState(initial.saveButtonColor || '');
+
     const [contactSaving, setContactSaving] = useState(false);
     const [contactSaved, setContactSaved] = useState(false);
 
@@ -49,6 +54,8 @@ const ContactCardSection = forwardRef<ContactCardSectionRef, ContactCardSectionP
     const getState = (): ContactCardState => ({
       contactFields,
       customFields,
+      saveButtonStyle,
+      saveButtonColor: saveButtonColor || null,
     });
 
     useImperativeHandle(ref, () => ({
@@ -76,12 +83,20 @@ const ContactCardSection = forwardRef<ContactCardSectionRef, ContactCardSectionP
           }));
 
         const payload = [...standardPayload, ...customPayload];
-        const res = await fetch('/api/account/contact-fields', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fields: payload }),
-        });
-        if (!res.ok) throw new Error('Failed to save contact fields');
+        const [contactRes, profileRes] = await Promise.all([
+          fetch('/api/account/contact-fields', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fields: payload }),
+          }),
+          fetch('/api/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ section: 'appearance', saveButtonStyle, saveButtonColor: saveButtonColor || null }),
+          }),
+        ]);
+        if (!contactRes.ok) throw new Error('Failed to save contact fields');
+        if (!profileRes.ok) throw new Error('Failed to save button style');
       },
     }));
 
@@ -115,7 +130,7 @@ const ContactCardSection = forwardRef<ContactCardSectionRef, ContactCardSectionP
     // ── onChange propagation ────────────────────────────
     useEffect(() => {
       onChange(getState());
-    }, [contactFields, customFields]);
+    }, [contactFields, customFields, saveButtonStyle, saveButtonColor]);
 
     // ── Toggle button base style ───────────────────────
     const toggleBtnBase: React.CSSProperties = {
@@ -207,6 +222,32 @@ const ContactCardSection = forwardRef<ContactCardSectionRef, ContactCardSectionP
         >
           + Add custom field
         </button>
+
+        {/* ── Save Button Style ─────────────────────────── */}
+        <div style={{ borderTop: '1px solid var(--border, #1e2535)', marginTop: '1.25rem', paddingTop: '1rem' }}>
+          <label style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-mid, #a8adb8)', display: 'block', marginBottom: '0.375rem' }}>Save button style</label>
+          <select
+            value={saveButtonStyle}
+            onChange={e => setSaveButtonStyle(e.target.value)}
+            style={{ ...inputStyle, cursor: 'pointer' }}
+          >
+            <option value="auto">Auto (matches template)</option>
+            <option value="accent">Accent color</option>
+            <option value="inverted">Inverted</option>
+            <option value="custom">Custom color</option>
+          </select>
+          {saveButtonStyle === 'custom' && (
+            <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>Color</label>
+              <input
+                type="color"
+                value={saveButtonColor || '#e8a849'}
+                onChange={e => setSaveButtonColor(e.target.value)}
+                style={{ width: 32, height: 32, border: '1px solid var(--border, #1e2535)', borderRadius: '0.375rem', padding: 0, cursor: 'pointer', background: 'none' }}
+              />
+            </div>
+          )}
+        </div>
       </>
     );
   },

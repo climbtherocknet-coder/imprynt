@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
+import { getShareUrl } from '@/lib/shortUrl';
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -9,16 +10,16 @@ export async function GET(req: NextRequest) {
   }
 
   const result = await query(
-    'SELECT slug FROM profiles WHERE user_id = $1',
+    'SELECT slug, redirect_id FROM profiles WHERE user_id = $1',
     [session.user.id]
   );
   if (!result.rows[0]) {
     return NextResponse.json({ error: 'No profile found' }, { status: 404 });
   }
 
-  const slug = result.rows[0].slug;
+  const { redirect_id } = result.rows[0];
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${req.nextUrl.protocol}//${req.nextUrl.host}`;
-  const profileUrl = `${appUrl}/${slug}`;
+  const profileUrl = getShareUrl(redirect_id, appUrl);
 
   const format = req.nextUrl.searchParams.get('format') || 'svg';
 

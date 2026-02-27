@@ -68,7 +68,7 @@ export async function GET(
      FROM pods
      WHERE protected_page_id = $1 AND is_active = true
        AND (auto_remove_at IS NULL OR auto_remove_at > NOW())
-       AND NOT (pod_type = 'event' AND event_auto_hide = true AND event_end IS NOT NULL AND event_end < NOW())
+       AND NOT (pod_type = 'event' AND event_auto_hide = true AND event_end IS NOT NULL AND event_end < to_char(NOW(), 'YYYY-MM-DD"T"HH24:MI'))
      ORDER BY display_order ASC`,
     [pageId]
   );

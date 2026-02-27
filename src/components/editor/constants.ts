@@ -156,6 +156,8 @@ export interface ProfileData {
     linkSize: string;
     linkShape: string;
     linkButtonColor: string | null;
+    saveButtonStyle: string;
+    saveButtonColor: string | null;
   };
   links: LinkItem[];
 }

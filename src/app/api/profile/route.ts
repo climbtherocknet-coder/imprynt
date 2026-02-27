@@ -108,6 +108,14 @@ export async function GET() {
     linkButtonColor = lsResult.rows[0]?.link_button_color || null;
   } catch { /* columns don't exist yet */ }
 
+  // Fetch save button settings (migration 054)
+  let saveButtonStyle = 'auto', saveButtonColor: string | null = null;
+  try {
+    const sbResult = await query('SELECT save_button_style, save_button_color FROM profiles WHERE id = $1', [profile.id]);
+    saveButtonStyle = sbResult.rows[0]?.save_button_style || 'auto';
+    saveButtonColor = sbResult.rows[0]?.save_button_color || null;
+  } catch { /* columns don't exist yet */ }
+
   const linksResult = await query(
     `SELECT id, link_type, label, url, display_order, show_business, show_personal, show_showcase, button_color
      FROM links
@@ -169,6 +177,8 @@ export async function GET() {
       linkSize,
       linkShape,
       linkButtonColor,
+      saveButtonStyle,
+      saveButtonColor,
     },
     links: linksResult.rows.map((l: Record<string, unknown>) => ({
       id: l.id,
@@ -316,6 +326,19 @@ export async function PUT(req: NextRequest) {
           await query('UPDATE profiles SET link_button_color = $1 WHERE user_id = $2', [colorVal, userId]);
         }
       } catch { /* column doesn't exist yet */ }
+      // Save button style (migration 054)
+      const { saveButtonStyle, saveButtonColor: saveColor } = body;
+      try {
+        const validStyles = ['auto', 'accent', 'inverted', 'custom'];
+        if (saveButtonStyle !== undefined && validStyles.includes(saveButtonStyle)) {
+          await query('UPDATE profiles SET save_button_style = $1 WHERE user_id = $2', [saveButtonStyle, userId]);
+        }
+        if (saveColor !== undefined) {
+          const hexRegex3 = /^#[0-9a-fA-F]{6}$/;
+          const val = (typeof saveColor === 'string' && hexRegex3.test(saveColor)) ? saveColor : null;
+          await query('UPDATE profiles SET save_button_color = $1 WHERE user_id = $2', [val, userId]);
+        }
+      } catch { /* columns don't exist yet */ }
     } else if (section === 'statusTags') {
       const { statusTags } = body;
       const presetSlugs = ['open_to_network', 'open_to_work', 'hiring', 'open_to_collaborate', 'consulting', 'mentoring'];
@@ -525,6 +548,19 @@ export async function PUT(req: NextRequest) {
           await query(`UPDATE profiles SET ${lsUpdates.join(', ')} WHERE user_id = $${lsi}`, lsParams);
         }
       } catch { /* column doesn't exist yet */ }
+      // Save button style (migration 054) — also in 'profile' combined save
+      const { saveButtonStyle: sbStyle, saveButtonColor: sbColor } = body;
+      try {
+        const validSbStyles = ['auto', 'accent', 'inverted', 'custom'];
+        if (sbStyle !== undefined && validSbStyles.includes(sbStyle)) {
+          await query('UPDATE profiles SET save_button_style = $1 WHERE user_id = $2', [sbStyle, userId]);
+        }
+        if (sbColor !== undefined) {
+          const hexRxSb = /^#[0-9a-fA-F]{6}$/;
+          const val = (typeof sbColor === 'string' && hexRxSb.test(sbColor)) ? sbColor : null;
+          await query('UPDATE profiles SET save_button_color = $1 WHERE user_id = $2', [val, userId]);
+        }
+      } catch { /* columns don't exist yet */ }
     } else if (section === 'customTheme') {
       // Standalone custom_theme save (auto-save as user tweaks)
       const { customTheme } = body;

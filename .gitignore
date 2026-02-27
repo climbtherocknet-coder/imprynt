@@ -42,3 +42,6 @@ public/uploads/
 
 # Claude working prompts
 CLAUDE_CODE_PROMPT_*.md
+
+# Original ring photos (unoptimized) — optimized versions in public/images/
+/ring*.jpg

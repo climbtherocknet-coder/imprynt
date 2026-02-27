@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getShareUrl, displayUrl } from '@/lib/shortUrl';
 
 interface Props {
   slug: string;
@@ -34,6 +35,13 @@ const urlTextStyle: React.CSSProperties = {
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
   fontFamily: 'monospace',
+};
+
+const descStyle: React.CSSProperties = {
+  margin: '0.5rem 0 0',
+  fontSize: '0.75rem',
+  color: 'var(--text-muted, #5d6370)',
+  lineHeight: 1.5,
 };
 
 function CopyButton({ url, label }: { url: string; label: string }) {
@@ -79,7 +87,7 @@ export default function MyUrlsCard({ slug: initialSlug, redirectId }: Props) {
   }, []);
 
   const profileUrl = `${origin}/${slug}`;
-  const ringUrl = `${origin}/go/${redirectId}`;
+  const shareUrl = getShareUrl(redirectId, origin);
 
   async function rotateSlug() {
     setRotating(true);
@@ -112,28 +120,12 @@ export default function MyUrlsCard({ slug: initialSlug, redirectId }: Props) {
           flex: 1,
           fontFamily: 'monospace',
         }}>
-          /{slug}
+          {displayUrl(shareUrl)}
         </span>
-        <button
-          onClick={() => { navigator.clipboard.writeText(profileUrl).catch(() => {}); }}
-          title="Copy profile URL"
-          style={{
-            fontSize: '0.6875rem',
-            padding: '0.2rem 0.45rem',
-            borderRadius: '0.375rem',
-            border: '1px solid var(--border-light, #283042)',
-            background: 'transparent',
-            color: 'var(--text-muted, #5d6370)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            flexShrink: 0,
-          }}
-        >
-          Copy
-        </button>
+        <CopyButton url={shareUrl} label="share link" />
         <button
           onClick={() => setOpen(true)}
-          title="View all URLs"
+          title="View all links"
           style={{
             fontSize: '0.6875rem',
             padding: '0.2rem 0.45rem',
@@ -182,7 +174,7 @@ export default function MyUrlsCard({ slug: initialSlug, redirectId }: Props) {
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text, #eceef2)' }}>
-                My Links
+                Your Links
               </h3>
               <button
                 onClick={() => setOpen(false)}
@@ -200,32 +192,36 @@ export default function MyUrlsCard({ slug: initialSlug, redirectId }: Props) {
               </button>
             </div>
 
-            {/* Profile URL */}
+            {/* Your Page */}
             <div>
-              <p style={labelStyle}>Profile URL</p>
+              <p style={labelStyle}>Your Page</p>
               <div style={urlRowStyle}>
-                <span style={urlTextStyle}>{profileUrl}</span>
-                <CopyButton url={profileUrl} label="profile URL" />
+                <span style={urlTextStyle}>{displayUrl(profileUrl)}</span>
+                <CopyButton url={profileUrl} label="page URL" />
               </div>
+              <p style={descStyle}>This is your public profile URL.</p>
             </div>
 
-            {/* Ring / NFC URL */}
+            {/* Share Link */}
             <div>
-              <p style={labelStyle}>Ring / NFC URL</p>
+              <p style={labelStyle}>Share Link</p>
               <div style={urlRowStyle}>
-                <span style={urlTextStyle}>{ringUrl}</span>
-                <CopyButton url={ringUrl} label="ring URL" />
+                <span style={urlTextStyle}>{displayUrl(shareUrl)}</span>
+                <CopyButton url={shareUrl} label="share link" />
               </div>
-              <p style={{ margin: '0.5rem 0 0', fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)' }}>
-                This permanent link always redirects to your current profile. Use it on rings, cards, or NFC chips — it never breaks even if you change your slug.
+              <p style={descStyle}>
+                Shortest link to your profile. Use for NFC rings, QR codes, and link-in-bio. Works even if you change your slug.
               </p>
             </div>
 
+            {/* Divider */}
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border, #1e2535)', margin: 0 }} />
+
             {/* Regenerate */}
             <div>
-              <p style={labelStyle}>Regenerate Profile URL</p>
-              <p style={{ margin: '0 0 0.75rem', fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)' }}>
-                Generates a new random slug for your profile URL. Your Ring / NFC URL is unaffected.
+              <p style={labelStyle}>Regenerate Slug</p>
+              <p style={{ margin: '0 0 0.75rem', fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', lineHeight: 1.5 }}>
+                Get a new random slug for your page URL. Your share link stays the same.
               </p>
               {rotateError && (
                 <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#ef4444' }}>{rotateError}</p>
@@ -246,7 +242,7 @@ export default function MyUrlsCard({ slug: initialSlug, redirectId }: Props) {
                   transition: 'all 0.15s',
                 }}
               >
-                {rotating ? 'Generating…' : 'Generate new URL'}
+                {rotating ? 'Generating...' : 'Generate new slug'}
               </button>
             </div>
           </div>

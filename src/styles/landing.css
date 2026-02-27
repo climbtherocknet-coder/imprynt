@@ -13,6 +13,8 @@
 
 .landing {
   background: var(--lp-bg);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
   color: var(--lp-text);
   font-family: var(--lp-sans);
   -webkit-font-smoothing: antialiased;
@@ -733,7 +735,7 @@
    HOW IT WORKS
    ═══════════════════════════════════════════ */
 .lp-how {
-  padding: 5rem 2rem;
+  padding: 4rem 2rem;
   max-width: 800px;
   margin: 0 auto;
 }
@@ -789,7 +791,7 @@
    INTERACTIVE DEMO
    ═══════════════════════════════════════════ */
 .lp-demo-section {
-  padding: 5rem 2rem;
+  padding: 5.5rem 2rem;
   max-width: 800px;
   margin: 0 auto;
   text-align: center;
@@ -875,15 +877,15 @@
 }
 
 .lp-value-card {
-  padding: 1.5rem 1.375rem;
+  padding: 1.75rem 1.5rem;
   border-radius: 0.75rem;
   border: 1px solid var(--lp-border);
-  border-left: 3px solid var(--lp-accent);
+  border-top: 2px solid var(--lp-accent);
   background: var(--lp-surface);
   transition: border-color 0.2s;
 }
 
-.lp-value-card:hover { border-color: var(--lp-border-hover); border-left-color: var(--lp-accent); }
+.lp-value-card:hover { border-color: var(--lp-border-hover); border-top-color: var(--lp-accent); }
 
 .lp-value-card h3 {
   font-family: var(--lp-serif);
@@ -905,7 +907,7 @@
 .lp-impression {
   background: #1a1510;
   color: #f2ede6;
-  padding: 5rem 2rem;
+  padding: 5.5rem 2rem;
   max-width: none;
   text-align: center;
 }
@@ -972,9 +974,9 @@
   background: var(--lp-accent);
 }
 
-.lp-imp-subtle { opacity: 0.08; }
-.lp-imp-visible { opacity: 0.25; }
-.lp-imp-bold { opacity: 0.5; }
+.lp-imp-subtle { opacity: 0.15; }
+.lp-imp-visible { opacity: 0.4; }
+.lp-imp-bold { opacity: 0.7; }
 
 .lp-imp-label {
   font-size: 0.625rem;
@@ -1023,10 +1025,14 @@
   border: 1px solid var(--lp-border);
   border-radius: 0.75rem;
   padding: 1.875rem 1.5rem;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
-.lp-case-card:hover { border-color: var(--lp-border-hover); }
+.lp-case-card:hover {
+  border-color: var(--lp-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
 
 .lp-case-who {
   font-size: 0.6875rem;
@@ -1072,7 +1078,7 @@
    CONTENT TYPES (What You Can Build)
    ═══════════════════════════════════════════ */
 .lp-content-types {
-  padding: 5rem 2rem;
+  padding: 4rem 2rem;
   max-width: 800px;
   margin: 0 auto;
   text-align: center;
@@ -1111,10 +1117,15 @@
 .lp-content-item:hover { border-color: var(--lp-border-hover); }
 
 .lp-content-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.5rem;
+  background: var(--lp-accent-soft);
   color: var(--lp-accent);
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 0.25rem;
 }
 
 .lp-content-soon {
@@ -1141,7 +1152,7 @@
 .lp-nfc {
   background: #1a1510;
   color: #f2ede6;
-  padding: 5rem 2rem;
+  padding: 5.5rem 2rem;
   display: flex;
   gap: 3rem;
   align-items: center;
@@ -1239,23 +1250,12 @@
   flex-shrink: 0;
 }
 
-.lp-nfc-photo-placeholder {
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  border: 2px dashed rgba(196, 135, 60, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.lp-nfc-photo-placeholder::after {
-  content: '';
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 3px solid rgba(196, 135, 60, 0.2);
+.lp-nfc-photo {
+  width: 260px;
+  height: 260px;
+  border-radius: 1rem;
+  object-fit: cover;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
 }
 
 @media (max-width: 768px) {
@@ -1272,14 +1272,9 @@
     align-items: center;
   }
 
-  .lp-nfc-photo-placeholder {
-    width: 150px;
-    height: 150px;
-  }
-
-  .lp-nfc-photo-placeholder::after {
-    width: 60px;
-    height: 60px;
+  .lp-nfc-photo {
+    width: 200px;
+    height: 200px;
   }
 }
 
@@ -1439,7 +1434,7 @@
    FINAL CTA
    ═══════════════════════════════════════════ */
 .lp-final {
-  padding: 6rem 2rem;
+  padding: 7rem 2rem;
   text-align: center;
   position: relative;
 }
@@ -1450,9 +1445,9 @@
   bottom: 25%;
   left: 50%;
   transform: translateX(-50%);
-  width: 480px;
-  height: 480px;
-  background: radial-gradient(circle, var(--lp-accent-soft), transparent 60%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--lp-accent) 8%, transparent), transparent 60%);
   pointer-events: none;
 }
 

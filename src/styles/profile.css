@@ -456,8 +456,8 @@ body::-webkit-scrollbar {
   align-items: center;
   gap: 0.4375rem;
   padding: 0.5625rem 1.125rem;
-  background: var(--accent);
-  color: var(--accent-contrast, #fff);
+  background: var(--save-btn-bg, var(--accent));
+  color: var(--save-btn-color, var(--accent-contrast, #fff));
   border: none;
   border-radius: 0.5rem;
   font-size: 0.8125rem;
@@ -467,9 +467,16 @@ body::-webkit-scrollbar {
   transition: all 0.15s;
 }
 .save-btn:hover {
-  background: var(--accent-hover);
+  filter: brightness(1.1);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 20%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--save-btn-bg, var(--accent)) 20%, transparent);
+}
+
+/* Icon-only mode save button */
+.link-icon-btn.save-icon-btn {
+  background: var(--save-btn-bg, var(--accent));
+  color: var(--save-btn-color, var(--accent-contrast, #fff));
+  border-color: var(--save-btn-bg, var(--accent));
 }
 
 /* Button style modifiers */
@@ -1699,22 +1706,6 @@ a.pod-event-address:hover {
 .t-dusk .hero-tagline { display: block; }
 .t-dusk .pod-title { font-family: var(--font-heading); font-weight: 400; font-size: 1.375rem; }
 
-/* Dark template overrides for save-btn text color */
-.t-midnight .save-btn,
-.t-studio .save-btn,
-.t-dusk .save-btn {
-  color: var(--bg);
-}
-
-/* Noir save-btn uses warm color for bg */
-.t-noir .save-btn {
-  background: var(--warm, #c49a6c);
-  color: var(--bg);
-}
-.t-noir .save-btn:hover {
-  background: color-mix(in srgb, var(--warm, #c49a6c) 85%, white);
-}
-
 /* Dark template overrides for pod-cta-btn text color (matches save-btn) */
 .t-midnight .pod-cta-btn,
 .t-studio .pod-cta-btn,
@@ -1729,12 +1720,6 @@ a.pod-event-address:hover {
 }
 .t-noir .pod-cta-btn:hover {
   background: color-mix(in srgb, var(--warm, #c49a6c) 85%, white);
-}
-
-/* Noir lightbox save button */
-.t-noir .photo-lightbox-card .save-btn {
-  background: var(--warm, #c49a6c);
-  color: var(--bg);
 }
 
 /* Dark template overrides for pod-event-cta (same pattern) */
@@ -1880,8 +1865,8 @@ a.pod-event-address:hover {
 
 .photo-lightbox-card .save-btn {
   width: 100%;
-  background: var(--accent, #e8a849);
-  color: var(--accent-contrast, #fff);
+  background: var(--save-btn-bg, var(--accent, #e8a849));
+  color: var(--save-btn-color, var(--accent-contrast, #fff));
   border: none;
   border-radius: 9999px;
   padding: 0.625rem 1.5rem;
