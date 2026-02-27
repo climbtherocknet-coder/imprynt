@@ -113,7 +113,7 @@ export default function ProfileTemplate({
 }: ProfileTemplateProps) {
   const theme = template === 'custom' ? getCustomTheme(customTheme as CustomThemeData) : getTheme(template);
   const cssVars = getThemeCSSVars(theme);
-  const accentOverrides = accentColor ? getAccentOverrideVars(accentColor) : {};
+  const accentOverrides = accentColor ? getAccentOverrideVars(accentColor, theme.colors.bg) : {};
   const dataAttrs = getTemplateDataAttrs(theme);
   // User's photo shape overrides the theme default
   const effectiveShape = photoShape || theme.modifiers.photoShape;
@@ -219,6 +219,10 @@ export default function ProfileTemplate({
                 photoPositionX={photoPositionX}
                 photoPositionY={photoPositionY}
                 photoZoom={photoZoom}
+                title={title}
+                company={company}
+                profileId={profileId}
+                vcardPinEnabled={vcardPinEnabled}
               />
             </div>
           ) : (
@@ -233,6 +237,10 @@ export default function ProfileTemplate({
               photoRadius={photoRadius}
               photoPositionX={photoPositionX}
               photoPositionY={photoPositionY}
+              title={title}
+              company={company}
+              profileId={profileId}
+              vcardPinEnabled={vcardPinEnabled}
             />
           )}
 
@@ -332,9 +340,11 @@ export default function ProfileTemplate({
         {/* ─── Footer ─── */}
         <div className="footer fade-in d8">
           {!isPaid && (
-            <a href="https://trysygnet.com" target="_blank" rel="noopener noreferrer" className="watermark">
-              <span className="watermark-mark" />
-              <span className="watermark-text">Powered by <strong>Imprynt</strong></span>
+            <a href="/register?ref=profile" className="free-cta" target="_blank" rel="noopener noreferrer">
+              <span className="free-cta-mark" />
+              <span className="free-cta-text">
+                Create your free <strong>Imprynt</strong> profile →
+              </span>
             </a>
           )}
         </div>
@@ -346,12 +356,14 @@ export default function ProfileTemplate({
 // ── Hero sub-component (used in both wrapped and unwrapped modes)
 function HeroContent({
   photoUrl, fullName, firstName, subtitle, tagline, hasTagline, photoShape, photoRadius, photoPositionX, photoPositionY, photoZoom,
+  title, company, profileId, vcardPinEnabled,
 }: {
   photoUrl: string; fullName: string; firstName: string;
   subtitle: string; tagline: string; hasTagline: boolean;
   photoShape?: string; photoRadius?: number | null;
   photoPositionX?: number; photoPositionY?: number;
   photoZoom?: number;
+  title?: string; company?: string; profileId: string; vcardPinEnabled?: boolean;
 }) {
   const customPhotoStyle: React.CSSProperties | undefined =
     photoShape === 'custom' && photoRadius != null
@@ -371,6 +383,10 @@ function HeroContent({
             transformOrigin: `${photoPositionX ?? 50}% ${photoPositionY ?? 50}%`,
           }}
           initials={(firstName?.[0] || '').toUpperCase()}
+          title={title}
+          company={company}
+          profileId={profileId}
+          vcardPinEnabled={vcardPinEnabled}
         />
         <div className="hero-identity">
           <h1 className="hero-name">{fullName}</h1>

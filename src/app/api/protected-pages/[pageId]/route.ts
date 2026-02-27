@@ -63,7 +63,7 @@ export async function GET(
     `SELECT id, pod_type, display_order, label, title, body,
             image_url, stats, cta_label, cta_url, tags, image_position,
             listing_status, listing_price, listing_details, source_domain, auto_remove_at, sold_at,
-            event_start, event_end, event_venue, event_address, event_status, event_auto_hide,
+            event_start, event_end, event_venue, event_address, event_status, event_auto_hide, event_timezone,
             audio_url, audio_duration
      FROM pods
      WHERE protected_page_id = $1 AND is_active = true
@@ -159,6 +159,7 @@ export async function GET(
       eventAddress: (r.event_address as string) || '',
       eventStatus: (r.event_status as string) || 'upcoming',
       eventAutoHide: (r.event_auto_hide as boolean) ?? true,
+      eventTimezone: (r.event_timezone as string) || '',
       audioUrl: (r.audio_url as string) || '',
       audioDuration: (r.audio_duration as number) || 0,
     })),

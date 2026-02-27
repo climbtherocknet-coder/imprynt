@@ -216,7 +216,7 @@ async function getPods(profileId: string): Promise<PodData[]> {
   const result = await query(
     `SELECT id, pod_type, label, title, body, image_url, stats, cta_label, cta_url, tags, image_position,
             listing_status, listing_price, listing_details, source_domain,
-            event_start, event_end, event_venue, event_address, event_status, event_auto_hide,
+            event_start, event_end, event_venue, event_address, event_status, event_auto_hide, event_timezone,
             audio_url, audio_duration
      FROM pods
      WHERE (
@@ -251,6 +251,7 @@ async function getPods(profileId: string): Promise<PodData[]> {
     eventAddress: (r.event_address as string) || '',
     eventStatus: (r.event_status as string) || 'upcoming',
     eventAutoHide: (r.event_auto_hide as boolean) ?? true,
+    eventTimezone: (r.event_timezone as string) || '',
     audioUrl: (r.audio_url as string) || '',
     audioDuration: (r.audio_duration as number) || 0,
   }));
@@ -446,7 +447,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         portfolioPages={visibleProtectedPages.map(p => ({ id: p.id, buttonLabel: p.button_label }))}
         allowSharing={profile.allow_sharing !== false}
         allowFeedback={profile.allow_feedback !== false}
-        showQrButton={!!profile.show_qr_button}
+        showQrButton={!isPaid || !!profile.show_qr_button}
       />
 
       {/* Link click tracking */}

@@ -830,7 +830,7 @@ function ProtectedPageView({
 
 // ── Share Button ─────────────────────────────────────────
 
-function ShareButton({ profileId, isDark, corner }: { profileId: string; isDark: boolean; corner: 'bottom-left' | 'bottom-right' }) {
+function ShareButton({ profileId, isDark }: { profileId: string; isDark: boolean }) {
   const [copied, setCopied] = useState(false);
 
   async function handleShare() {
@@ -863,7 +863,7 @@ function ShareButton({ profileId, isDark, corner }: { profileId: string; isDark:
   }
 
   return (
-    <div style={{ position: 'fixed', bottom: 16, [corner === 'bottom-left' ? 'left' : 'right']: 16, zIndex: 50 }}>
+    <div style={{ position: 'relative' }}>
       <button
         onClick={handleShare}
         aria-label="Share profile"
@@ -897,12 +897,12 @@ function ShareButton({ profileId, isDark, corner }: { profileId: string; isDark:
         <div style={{
           position: 'absolute',
           bottom: '100%',
-          [corner === 'bottom-left' ? 'left' : 'right']: 0,
+          right: 0,
           marginBottom: '0.375rem',
           padding: '0.375rem 0.75rem',
           borderRadius: '9999px',
           backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.8)',
-          color: isDark ? '#fff' : '#fff',
+          color: '#fff',
           fontSize: '0.75rem',
           fontWeight: 500,
           whiteSpace: 'nowrap',
@@ -943,10 +943,6 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
       iconCorner === 'top-right' ? { top: 16, right: 16 } :
       { top: 16, left: 16 }),
   };
-
-  // Share button: bottom edge, opposite horizontal side from impression
-  const shareCorner: 'bottom-left' | 'bottom-right' =
-    iconCorner === 'bottom-left' ? 'bottom-right' : 'bottom-left';
 
   // Feedback button: top-right by default, top-left if impression occupies top-right
   const feedbackCorner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' =
@@ -1058,10 +1054,54 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
 
   return (
     <>
-      {/* Share button */}
-      {allowSharing && (
-        <ShareButton profileId={profileId} isDark={isDark} corner={shareCorner} />
-      )}
+      {/* Bottom-right floating buttons (stacked) */}
+      <div style={{
+        position: 'fixed',
+        bottom: 16,
+        right: 16,
+        zIndex: 50,
+        display: 'flex',
+        flexDirection: 'column-reverse',
+        gap: '0.5rem',
+        alignItems: 'center',
+      }}>
+        {/* Share button (bottom of stack) */}
+        {allowSharing && (
+          <ShareButton profileId={profileId} isDark={isDark} />
+        )}
+        {/* QR code button */}
+        {showQrButton && (
+          <button
+            onClick={() => { setShowQrModal(true); setQrImgLoaded(false); setQrImgError(false); }}
+            aria-label="Show QR code"
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)'}`,
+              backgroundColor: 'transparent',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+              opacity: 0.5,
+              WebkitTapHighlightColor: 'transparent',
+              transition: 'opacity 0.2s',
+              color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.opacity = '1'; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = '0.5'; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <path d="M14 14h2v2h-2zM18 14h3v3h-3zM14 18h2v3h-2z"/>
+            </svg>
+          </button>
+        )}
+      </div>
 
       {/* Impression: circle-dot logo mark (also handles showcase/protected pages) */}
       {hasPersonal && (
@@ -1105,40 +1145,6 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
         />
       )}
 
-      {/* QR code button */}
-      {showQrButton && (
-        <button
-          onClick={() => { setShowQrModal(true); setQrImgLoaded(false); setQrImgError(false); }}
-          aria-label="Show QR code"
-          style={{
-            position: 'fixed',
-            bottom: 80,
-            right: 16,
-            zIndex: 50,
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            border: `1.5px solid ${accent}`,
-            backgroundColor: 'transparent',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-            opacity: 0.7,
-            WebkitTapHighlightColor: 'transparent',
-            transition: 'opacity 0.2s',
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="7" height="7" rx="1"/>
-            <rect x="14" y="3" width="7" height="7" rx="1"/>
-            <rect x="3" y="14" width="7" height="7" rx="1"/>
-            <path d="M14 14h2v2h-2zM18 14h3v3h-3zM14 18h2v3h-2z"/>
-          </svg>
-        </button>
-      )}
-
       {/* QR code modal */}
       {showQrModal && (
         <div
@@ -1157,16 +1163,17 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: '#ffffff',
+              background: 'var(--surface, #161c28)',
               borderRadius: '1.25rem',
               padding: '1.5rem',
               width: '100%',
               maxWidth: 280,
               textAlign: 'center',
               boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+              border: '1px solid var(--border, #1e2535)',
             }}
           >
-            <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', fontWeight: 600, color: '#0c1017' }}>
+            <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text, #eceef2)' }}>
               Scan to open profile
             </p>
             {qrImgError ? (
@@ -1175,18 +1182,20 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
               <>
                 {!qrImgLoaded && (
                   <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ width: 24, height: 24, border: '2px solid #e5e7eb', borderTopColor: '#0c1017', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                    <div style={{ width: 24, height: 24, border: '2px solid var(--border, #e5e7eb)', borderTopColor: 'var(--text, #0c1017)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
                   </div>
                 )}
-                <img
-                  src={`/api/profile/${profileId}/qr`}
-                  alt="QR code for this profile"
-                  width={180}
-                  height={180}
-                  style={{ display: qrImgLoaded ? 'block' : 'none', margin: '0 auto', borderRadius: '0.5rem' }}
-                  onLoad={() => setQrImgLoaded(true)}
-                  onError={() => { setQrImgError(true); setQrImgLoaded(false); }}
-                />
+                <div style={{ background: '#ffffff', borderRadius: '0.75rem', padding: '0.75rem', display: 'inline-block' }}>
+                  <img
+                    src={`/api/profile/${profileId}/qr`}
+                    alt="QR code for this profile"
+                    width={180}
+                    height={180}
+                    style={{ display: qrImgLoaded ? 'block' : 'none', borderRadius: '0.25rem' }}
+                    onLoad={() => setQrImgLoaded(true)}
+                    onError={() => { setQrImgError(true); setQrImgLoaded(false); }}
+                  />
+                </div>
               </>
             )}
             <button
@@ -1195,10 +1204,10 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
                 marginTop: '1rem',
                 padding: '0.5rem 1.5rem',
                 background: 'transparent',
-                border: '1px solid #e5e7eb',
+                border: '1px solid var(--border, #1e2535)',
                 borderRadius: '9999px',
                 fontSize: '0.8125rem',
-                color: '#6b7280',
+                color: 'var(--text-mid, #a8adb8)',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
               }}

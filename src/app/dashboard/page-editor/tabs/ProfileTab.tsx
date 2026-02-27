@@ -427,21 +427,27 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
               label="Show feedback button on your profile"
               description="Allows visitors to send feedback or report your profile."
             />
-            <ToggleSwitch
-              checked={showQrButton}
-              onChange={async (val) => {
-                setShowQrButton(val);
-                try {
-                  await fetch('/api/profile', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ section: 'qrButton', showQrButton: val }),
-                  });
-                } catch { /* silent */ }
-              }}
-              label="Show QR code button on your profile"
-              description="Adds a QR code icon visitors can tap to share your profile URL."
-            />
+            {!isPaid ? (
+              <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', padding: '0.5rem 0' }}>
+                QR code button is always shown on free profiles. Upgrade for more sharing options.
+              </div>
+            ) : (
+              <ToggleSwitch
+                checked={showQrButton}
+                onChange={async (val) => {
+                  setShowQrButton(val);
+                  try {
+                    await fetch('/api/profile', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ section: 'qrButton', showQrButton: val }),
+                    });
+                  } catch { /* silent */ }
+                }}
+                label="Show QR code button on your profile"
+                description="Adds a QR code icon visitors can tap to share your profile URL."
+              />
+            )}
 
             {/* vCard PIN protection */}
             <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>

@@ -50,14 +50,14 @@ export default function MobileNav() {
 
       {open && (
         <div className="lp-mobile-menu">
-          <a href="#compare" className="lp-mobile-link" onClick={close}>
-            Why Imprynt
-          </a>
           <a href="#pricing" className="lp-mobile-link" onClick={close}>
             Pricing
           </a>
           <Link href="/demo" className="lp-mobile-link" onClick={close}>
             Demo
+          </Link>
+          <Link href="/faq" className="lp-mobile-link" onClick={close}>
+            FAQ
           </Link>
           <Link href="/login" className="lp-mobile-link" onClick={close}>
             Sign in

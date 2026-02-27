@@ -28,6 +28,14 @@
 }
 .cc-tab:hover { color: var(--text-mid, #a8adb8); }
 .cc-tab--active { color: var(--text, #eceef2); border-bottom-color: var(--accent, #e8a849); }
+.cc-tab-divider {
+  display: inline-block;
+  width: 1px;
+  height: 1.25rem;
+  background: var(--border, #1e2535);
+  margin: auto 0.25rem;
+  flex-shrink: 0;
+}
 
 /* ── Content area ── */
 .cc-content {

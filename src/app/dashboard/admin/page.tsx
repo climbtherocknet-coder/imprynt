@@ -8,18 +8,29 @@ import CCRoadmap from '@/components/admin/CCRoadmap';
 import CCChangelog from '@/components/admin/CCChangelog';
 import CCDocs from '@/components/admin/CCDocs';
 import SchemaTab from '@/components/admin/SchemaTab';
+import AdminUsersTab from '@/components/admin/AdminUsersTab';
+import AdminCodesTab from '@/components/admin/AdminCodesTab';
+import AdminWaitlistTab from '@/components/admin/AdminWaitlistTab';
+import AdminFeedbackTab from '@/components/admin/AdminFeedbackTab';
+import AdminTrafficTab from '@/components/admin/AdminTrafficTab';
 import '@/styles/dashboard.css';
 import '@/styles/cc.css';
+import '@/styles/admin.css';
 
-type TabKey = 'overview' | 'features' | 'roadmap' | 'changelog' | 'docs' | 'schema';
+type TabKey = 'overview' | 'users' | 'codes' | 'waitlist' | 'feedback' | 'traffic' | 'features' | 'roadmap' | 'changelog' | 'docs' | 'schema';
 
-const ALL_TABS: { key: TabKey; label: string }[] = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'features', label: 'Features' },
-  { key: 'roadmap', label: 'Roadmap' },
-  { key: 'changelog', label: 'Changelog' },
-  { key: 'docs', label: 'Docs' },
-  { key: 'schema', label: 'Schema' },
+const ALL_TABS: { key: TabKey; label: string; group?: 'admin' | 'cc' }[] = [
+  { key: 'overview', label: 'Overview', group: 'admin' },
+  { key: 'users', label: 'Users', group: 'admin' },
+  { key: 'codes', label: 'Codes', group: 'admin' },
+  { key: 'waitlist', label: 'Waitlist', group: 'admin' },
+  { key: 'feedback', label: 'Feedback', group: 'admin' },
+  { key: 'traffic', label: 'Traffic', group: 'admin' },
+  { key: 'features', label: 'Features', group: 'cc' },
+  { key: 'roadmap', label: 'Roadmap', group: 'cc' },
+  { key: 'changelog', label: 'Changelog', group: 'cc' },
+  { key: 'docs', label: 'Docs', group: 'cc' },
+  { key: 'schema', label: 'Schema', group: 'cc' },
 ];
 
 const ADVISORY_TABS: TabKey[] = ['features', 'roadmap'];
@@ -127,20 +138,31 @@ function CommandCenterInner() {
 
       {/* Tab bar */}
       <div className="cc-tabs">
-        {visibleTabs.map(tab => (
-          <button
-            key={tab.key}
-            className={`cc-tab ${activeTab === tab.key ? 'cc-tab--active' : ''}`}
-            onClick={() => switchTab(tab.key)}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {visibleTabs.map((tab, i) => {
+          const prevTab = visibleTabs[i - 1];
+          const showDivider = prevTab && prevTab.group !== tab.group;
+          return (
+            <span key={tab.key} style={{ display: 'contents' }}>
+              {showDivider && <span className="cc-tab-divider" />}
+              <button
+                className={`cc-tab ${activeTab === tab.key ? 'cc-tab--active' : ''}`}
+                onClick={() => switchTab(tab.key)}
+              >
+                {tab.label}
+              </button>
+            </span>
+          );
+        })}
       </div>
 
       {/* Tab content */}
       <div className="cc-content">
         {activeTab === 'overview' && <CCOverview accessLevel={accessLevel} onNavigate={(tab) => switchTab(tab as TabKey)} />}
+        {activeTab === 'users' && <AdminUsersTab />}
+        {activeTab === 'codes' && <AdminCodesTab />}
+        {activeTab === 'waitlist' && <AdminWaitlistTab />}
+        {activeTab === 'feedback' && <AdminFeedbackTab />}
+        {activeTab === 'traffic' && <AdminTrafficTab />}
         {activeTab === 'features' && <CCFeatures accessLevel={accessLevel} currentUserId={currentUserId} />}
         {activeTab === 'roadmap' && <CCRoadmap accessLevel={accessLevel} currentUserId={currentUserId} />}
         {activeTab === 'changelog' && <CCChangelog accessLevel={accessLevel} currentUserId={currentUserId} />}

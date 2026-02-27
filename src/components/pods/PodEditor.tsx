@@ -32,6 +32,7 @@ export interface PodItem {
   eventAddress: string;
   eventStatus: string;
   eventAutoHide: boolean;
+  eventTimezone: string;
   audioUrl: string;
   audioDuration: number;
 }
@@ -206,6 +207,9 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
   const [fetchingPreview, setFetchingPreview] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<Record<string, string>>({});
   const [showAutoRemoveModal, setShowAutoRemoveModal] = useState<string | null>(null);
+  const [fbImportUrl, setFbImportUrl] = useState<Record<string, string>>({});
+  const [fbImportStatus, setFbImportStatus] = useState<Record<string, 'idle' | 'loading' | 'success' | 'error'>>({});
+  const [fbImportError, setFbImportError] = useState<Record<string, string>>({});
   const fetchedUrlsRef = useRef<Set<string>>(new Set());
   const autoFetchTimerRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
@@ -276,6 +280,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
         eventAddress: '',
         eventStatus: 'upcoming',
         eventAutoHide: true,
+        eventTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         audioUrl: '',
         audioDuration: 0,
       };
@@ -289,6 +294,46 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
 
   function updatePodField(podId: string, field: string, value: unknown) {
     setPods(prev => prev.map(p => p.id === podId ? { ...p, [field]: value } : p));
+  }
+
+  function isoToDatetimeLocal(iso: string): string {
+    const d = new Date(iso);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  async function handleFbImport(podId: string) {
+    const url = fbImportUrl[podId];
+    if (!url) return;
+    setFbImportStatus(prev => ({ ...prev, [podId]: 'loading' }));
+    setFbImportError(prev => ({ ...prev, [podId]: '' }));
+    try {
+      const res = await fetch('/api/events/facebook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Import failed');
+      const d = json.data;
+      if (d.title) updatePodField(podId, 'title', d.title);
+      if (d.body) updatePodField(podId, 'body', d.body);
+      if (d.imageUrl) updatePodField(podId, 'imageUrl', d.imageUrl);
+      if (d.eventVenue) updatePodField(podId, 'eventVenue', d.eventVenue);
+      if (d.eventAddress) updatePodField(podId, 'eventAddress', d.eventAddress);
+      if (d.ctaUrl) updatePodField(podId, 'ctaUrl', d.ctaUrl);
+      if (d.ctaLabel) updatePodField(podId, 'ctaLabel', d.ctaLabel);
+      if (d._hasTimestamps === 'true') {
+        if (d.eventStart) updatePodField(podId, 'eventStart', isoToDatetimeLocal(d.eventStart));
+        if (d.eventEnd) updatePodField(podId, 'eventEnd', isoToDatetimeLocal(d.eventEnd));
+        updatePodField(podId, 'eventTimezone', Intl.DateTimeFormat().resolvedOptions().timeZone);
+      }
+      setFbImportStatus(prev => ({ ...prev, [podId]: 'success' }));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Import failed';
+      setFbImportError(prev => ({ ...prev, [podId]: msg }));
+      setFbImportStatus(prev => ({ ...prev, [podId]: 'error' }));
+    }
   }
 
   function updatePodStat(podId: string, statIndex: number, field: 'num' | 'label', value: string) {
@@ -355,6 +400,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
         body.eventAddress = pod.eventAddress;
         body.eventStatus = pod.eventStatus;
         body.eventAutoHide = pod.eventAutoHide;
+        body.eventTimezone = pod.eventTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
       }
       if (pod.podType === 'music') {
         body.audioUrl = pod.audioUrl;
@@ -1225,8 +1271,8 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                               <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Start</label>
                               <input
                                 type="datetime-local"
-                                value={pod.eventStart ? new Date(new Date(pod.eventStart).getTime() - new Date(pod.eventStart).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
-                                onChange={e => updatePodField(pod.id, 'eventStart', e.target.value ? new Date(e.target.value).toISOString() : '')}
+                                value={pod.eventStart ? pod.eventStart.slice(0, 16) : ''}
+                                onChange={e => updatePodField(pod.id, 'eventStart', e.target.value || '')}
                                 style={inputStyle}
                               />
                             </div>
@@ -1234,8 +1280,8 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                               <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>End</label>
                               <input
                                 type="datetime-local"
-                                value={pod.eventEnd ? new Date(new Date(pod.eventEnd).getTime() - new Date(pod.eventEnd).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
-                                onChange={e => updatePodField(pod.id, 'eventEnd', e.target.value ? new Date(e.target.value).toISOString() : '')}
+                                value={pod.eventEnd ? pod.eventEnd.slice(0, 16) : ''}
+                                onChange={e => updatePodField(pod.id, 'eventEnd', e.target.value || '')}
                                 style={inputStyle}
                               />
                             </div>
@@ -1261,9 +1307,55 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                     </>
                   )}
 
-                  {/* Event: title + start/end + venue + address + ticket link + image + status + auto-hide */}
+                  {/* Event: fb import + title + start/end + venue + address + event link + image + status + auto-hide */}
                   {pod.podType === 'event' && (
                     <>
+                      {/* Facebook import */}
+                      <div style={{
+                        marginBottom: '0.75rem',
+                        padding: '0.625rem 0.75rem',
+                        border: '1px solid var(--border-light, #283042)',
+                        borderRadius: '0.5rem',
+                        backgroundColor: 'rgba(59, 130, 246, 0.04)',
+                      }}>
+                        <label style={{ ...labelStyle, fontSize: '0.75rem', color: 'var(--text-mid, #a8adb8)' }}>
+                          Import from Facebook <span style={{ fontWeight: 400, opacity: 0.7 }}>(optional)</span>
+                        </label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input
+                            type="url"
+                            placeholder="https://facebook.com/events/..."
+                            value={fbImportUrl[pod.id] || ''}
+                            onChange={e => setFbImportUrl(prev => ({ ...prev, [pod.id]: e.target.value }))}
+                            style={{ ...inputStyle, fontSize: '0.8125rem' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleFbImport(pod.id)}
+                            disabled={!fbImportUrl[pod.id] || fbImportStatus[pod.id] === 'loading'}
+                            style={{
+                              ...saveBtnStyle,
+                              padding: '0.5rem 1rem',
+                              fontSize: '0.75rem',
+                              whiteSpace: 'nowrap',
+                              opacity: (!fbImportUrl[pod.id] || fbImportStatus[pod.id] === 'loading') ? 0.5 : 1,
+                            }}
+                          >
+                            {fbImportStatus[pod.id] === 'loading' ? 'Importing...' : 'Import'}
+                          </button>
+                        </div>
+                        {fbImportStatus[pod.id] === 'success' && (
+                          <p style={{ fontSize: '0.75rem', color: '#22c55e', margin: '0.375rem 0 0' }}>
+                            Imported! Review the details below.
+                          </p>
+                        )}
+                        {fbImportStatus[pod.id] === 'error' && (
+                          <p style={{ fontSize: '0.75rem', color: '#f59e0b', margin: '0.375rem 0 0' }}>
+                            {fbImportError[pod.id] || "Couldn't import from Facebook."} Fill in the details manually.
+                          </p>
+                        )}
+                      </div>
+
                       <div style={{ marginBottom: '0.625rem' }}>
                         <label style={labelStyle}>Event name</label>
                         <input
@@ -1281,8 +1373,13 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                           <label style={labelStyle}>Start</label>
                           <input
                             type="datetime-local"
-                            value={pod.eventStart ? new Date(new Date(pod.eventStart).getTime() - new Date(pod.eventStart).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
-                            onChange={e => updatePodField(pod.id, 'eventStart', e.target.value ? new Date(e.target.value).toISOString() : '')}
+                            value={pod.eventStart ? pod.eventStart.slice(0, 16) : ''}
+                            onChange={e => {
+                              updatePodField(pod.id, 'eventStart', e.target.value || '');
+                              if (e.target.value && !pod.eventTimezone) {
+                                updatePodField(pod.id, 'eventTimezone', Intl.DateTimeFormat().resolvedOptions().timeZone);
+                              }
+                            }}
                             style={inputStyle}
                           />
                         </div>
@@ -1290,8 +1387,8 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                           <label style={labelStyle}>End</label>
                           <input
                             type="datetime-local"
-                            value={pod.eventEnd ? new Date(new Date(pod.eventEnd).getTime() - new Date(pod.eventEnd).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
-                            onChange={e => updatePodField(pod.id, 'eventEnd', e.target.value ? new Date(e.target.value).toISOString() : '')}
+                            value={pod.eventEnd ? pod.eventEnd.slice(0, 16) : ''}
+                            onChange={e => updatePodField(pod.id, 'eventEnd', e.target.value || '')}
                             style={inputStyle}
                           />
                         </div>
@@ -1321,25 +1418,25 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                         />
                       </div>
 
-                      {/* Ticket / RSVP link */}
+                      {/* Event link */}
                       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.625rem' }}>
                         <div style={{ flex: '0 0 35%' }}>
-                          <label style={labelStyle}>Button text</label>
+                          <label style={labelStyle}>Button label</label>
                           <input
                             type="text"
                             value={pod.ctaLabel}
                             onChange={e => updatePodField(pod.id, 'ctaLabel', e.target.value.slice(0, 100))}
-                            placeholder="Get Tickets"
+                            placeholder="Event Details"
                             style={inputStyle}
                           />
                         </div>
                         <div style={{ flex: 1 }}>
-                          <label style={labelStyle}>Ticket / RSVP URL</label>
+                          <label style={labelStyle}>Event link</label>
                           <input
                             type="text"
                             value={pod.ctaUrl}
                             onChange={e => updatePodField(pod.id, 'ctaUrl', e.target.value.slice(0, 500))}
-                            placeholder="https://eventbrite.com/..."
+                            placeholder="https://facebook.com/events/... or ticket link"
                             style={inputStyle}
                           />
                         </div>

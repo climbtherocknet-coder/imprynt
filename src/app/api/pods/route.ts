@@ -27,7 +27,7 @@ export async function GET() {
     `SELECT id, pod_type, display_order, label, title, body,
             image_url, stats, cta_label, cta_url, tags, image_position, is_active,
             listing_status, listing_price, listing_details, source_domain, auto_remove_at, sold_at,
-            event_start, event_end, event_venue, event_address, event_status, event_auto_hide,
+            event_start, event_end, event_venue, event_address, event_status, event_auto_hide, event_timezone,
             audio_url, audio_duration
      FROM pods
      WHERE profile_id = $1
@@ -63,6 +63,7 @@ export async function GET() {
     eventAddress: r.event_address || '',
     eventStatus: r.event_status || 'upcoming',
     eventAutoHide: r.event_auto_hide ?? true,
+    eventTimezone: r.event_timezone || '',
     audioUrl: r.audio_url || '',
     audioDuration: r.audio_duration || 0,
   }));
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { podType, label, title, podBody, imageUrl, stats, ctaLabel, ctaUrl, tags,
           listingStatus, listingPrice, listingDetails, sourceDomain,
-          eventStart, eventEnd, eventVenue, eventAddress, eventStatus, eventAutoHide,
+          eventStart, eventEnd, eventVenue, eventAddress, eventStatus, eventAutoHide, eventTimezone,
           audioUrl, audioDuration } = body;
 
   if (!podType || !(VALID_POD_TYPES as readonly string[]).includes(podType)) {
@@ -129,9 +130,9 @@ export async function POST(req: NextRequest) {
   const result = await query(
     `INSERT INTO pods (profile_id, pod_type, display_order, label, title, body, image_url, stats, cta_label, cta_url, tags,
                        listing_status, listing_price, listing_details, source_domain,
-                       event_start, event_end, event_venue, event_address, event_status, event_auto_hide,
+                       event_start, event_end, event_venue, event_address, event_status, event_auto_hide, event_timezone,
                        audio_url, audio_duration)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
      RETURNING id`,
     [
       profileId,
@@ -155,6 +156,7 @@ export async function POST(req: NextRequest) {
       podType === 'event' ? (eventAddress?.trim()?.slice(0, 300) || null) : null,
       podType === 'event' ? (eventStatus || 'upcoming') : null,
       podType === 'event' ? (eventAutoHide !== false) : true,
+      podType === 'event' ? (eventTimezone?.trim()?.slice(0, 50) || null) : null,
       podType === 'music' ? (audioUrl?.trim()?.slice(0, 500) || null) : null,
       podType === 'music' ? (audioDuration || null) : null,
     ]
@@ -196,7 +198,7 @@ export async function PUT(req: NextRequest) {
   // Single pod update
   const { id, label, title, podBody, imageUrl, stats, ctaLabel, ctaUrl, tags, isActive,
           listingStatus, listingPrice, listingDetails, sourceDomain, autoRemoveAt,
-          eventStart, eventEnd, eventVenue, eventAddress, eventStatus, eventAutoHide,
+          eventStart, eventEnd, eventVenue, eventAddress, eventStatus, eventAutoHide, eventTimezone,
           audioUrl, audioDuration } = body;
   if (!id) {
     return NextResponse.json({ error: 'Pod ID required' }, { status: 400 });
@@ -254,6 +256,7 @@ export async function PUT(req: NextRequest) {
     params.push(validEventStatuses.includes(eventStatus) ? eventStatus : 'upcoming');
   }
   if (eventAutoHide !== undefined) { updates.push(`event_auto_hide = $${idx++}`); params.push(!!eventAutoHide); }
+  if (eventTimezone !== undefined) { updates.push(`event_timezone = $${idx++}`); params.push(eventTimezone?.trim()?.slice(0, 50) || null); }
   // Music fields
   if (audioUrl !== undefined) { updates.push(`audio_url = $${idx++}`); params.push(audioUrl?.trim()?.slice(0, 500) || null); }
   if (audioDuration !== undefined) { updates.push(`audio_duration = $${idx++}`); params.push(audioDuration || null); }

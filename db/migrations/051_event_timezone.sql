@@ -1,0 +1,1 @@
+ALTER TABLE pods ADD COLUMN IF NOT EXISTS event_timezone VARCHAR(50);

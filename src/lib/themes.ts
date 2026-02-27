@@ -529,6 +529,23 @@ export function getCustomTheme(data: CustomThemeData | null | undefined): Templa
   };
 }
 
+// ─── Luminance / Contrast Helpers ─────────────────────────
+
+/** sRGB relative luminance from a hex color (WCAG formula) */
+export function getRelativeLuminance(hex: string): number {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const toLinear = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+}
+
+/** Return a high-contrast text color for a given accent.
+ *  Light accent → dark text (bgHex or #111111). Dark accent → #ffffff. */
+export function getAccentContrastColor(accentHex: string, bgHex?: string): string {
+  return getRelativeLuminance(accentHex) > 0.5 ? (bgHex || '#111111') : '#ffffff';
+}
+
 // ─── Helpers ─────────────────────────────────────────────────
 
 export function getTheme(templateId: string): TemplateTheme {
@@ -565,6 +582,7 @@ export function getThemeCSSVars(theme: TemplateTheme): string {
     `--radius-lg: ${modifiers.radiusLg}`,
     `--font-heading: ${fonts.heading}`,
     `--font-body: ${fonts.body}`,
+    `--accent-contrast: ${getAccentContrastColor(colors.accent, colors.bg)}`,
   ];
 
   if (extraVars) {
@@ -598,7 +616,7 @@ export function getTemplateDataAttrs(theme: TemplateTheme): Record<string, strin
  * Generate CSS variable overrides for a user-supplied accent hex color.
  * Derives soft/border/hover variants automatically from the hex value.
  */
-export function getAccentOverrideVars(hex: string): Record<string, string> {
+export function getAccentOverrideVars(hex: string, bgHex?: string): Record<string, string> {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
@@ -610,6 +628,7 @@ export function getAccentOverrideVars(hex: string): Record<string, string> {
     '--accent-soft': `rgba(${r}, ${g}, ${b}, 0.07)`,
     '--accent-border': `rgba(${r}, ${g}, ${b}, 0.18)`,
     '--accent-hover': hover,
+    '--accent-contrast': getAccentContrastColor(hex, bgHex),
   };
 }
 

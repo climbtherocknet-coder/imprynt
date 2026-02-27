@@ -24,6 +24,7 @@ export interface PodData {
   eventAddress?: string;
   eventStatus?: string;
   eventAutoHide?: boolean;
+  eventTimezone?: string;
   audioUrl?: string;
   audioDuration?: number;
 }
@@ -55,14 +56,18 @@ function formatEventCountdown(startStr: string): string {
   return 'Starting soon';
 }
 
-function formatEventDate(dateStr: string): string {
+function formatEventDate(dateStr: string, tz?: string): string {
   const d = new Date(dateStr);
-  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  const opts: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' };
+  if (tz) opts.timeZone = tz;
+  return d.toLocaleDateString('en-US', opts);
 }
 
-function formatEventTime(dateStr: string): string {
+function formatEventTime(dateStr: string, tz?: string): string {
   const d = new Date(dateStr);
-  return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const opts: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' };
+  if (tz) opts.timeZone = tz;
+  return d.toLocaleTimeString('en-US', opts);
 }
 
 export default function PodRenderer({ pod, delay }: { pod: PodData; delay: number }) {
@@ -290,46 +295,45 @@ export default function PodRenderer({ pod, delay }: { pod: PodData; delay: numbe
   }
 
   if (pod.podType === 'event') {
+    const tz = pod.eventTimezone || undefined;
     const state = getEventState(pod);
     const mapUrl = pod.eventAddress
       ? `https://maps.google.com/?q=${encodeURIComponent(pod.eventAddress)}`
       : '';
     const countdown = state === 'upcoming' && pod.eventStart ? formatEventCountdown(pod.eventStart) : '';
     const badgeLabel: Record<string, string> = {
-      live: 'HAPPENING NOW',
-      ended: 'ENDED',
-      cancelled: 'CANCELLED',
-      postponed: 'POSTPONED',
-      sold_out: 'SOLD OUT',
+      cancelled: 'Cancelled',
+      postponed: 'Postponed',
+      sold_out: 'Sold Out',
+      live: 'Happening Now',
+      ended: 'Ended',
     };
-    const badgeClass = `pod-event-badge pod-event-badge--${state}`;
+    const badgeColorClass: Record<string, string> = {
+      cancelled: 'pod-event-badge--cancelled',
+      postponed: 'pod-event-badge--postponed',
+      sold_out: 'pod-event-badge--sold_out',
+      live: 'pod-event-badge--live',
+      ended: 'pod-event-badge--ended',
+    };
     const isInactive = state === 'ended' || state === 'cancelled';
 
     return (
       <div className={`pod fade-in ${delayClass}${isInactive ? ' pod-event--inactive' : ''}`}>
         {pod.label && <p className="pod-label">{pod.label}</p>}
         <div className="pod-event">
-          {pod.imageUrl && (
-            <div className="pod-event-img-wrap">
-              <img src={pod.imageUrl} alt={pod.title || ''} className="pod-event-img" referrerPolicy="no-referrer" />
-              {badgeLabel[state] && (
-                <span className={badgeClass}>{badgeLabel[state]}</span>
-              )}
-            </div>
-          )}
-          {!pod.imageUrl && badgeLabel[state] && (
-            <span className={`${badgeClass} pod-event-badge--inline`}>{badgeLabel[state]}</span>
-          )}
           <div className="pod-event-body">
-            {pod.title && <h3 className="pod-event-title">{pod.title}</h3>}
+            {/* Badge */}
+            {badgeLabel[state] && (
+              <span className={`pod-event-badge ${badgeColorClass[state] || ''}`}>{badgeLabel[state]}</span>
+            )}
 
-            {/* Date/time row */}
+            {/* Date + time (large, accent color) */}
             {pod.eventStart && (
               <div className="pod-event-datetime">
-                <span className="pod-event-date">{formatEventDate(pod.eventStart)}</span>
+                <span className="pod-event-date">{formatEventDate(pod.eventStart, tz).toUpperCase()}</span>
                 <span className="pod-event-time">
-                  {formatEventTime(pod.eventStart)}
-                  {pod.eventEnd && ` – ${formatEventTime(pod.eventEnd)}`}
+                  {formatEventTime(pod.eventStart, tz)}
+                  {pod.eventEnd && ` \u2013 ${formatEventTime(pod.eventEnd, tz)}`}
                 </span>
               </div>
             )}
@@ -338,6 +342,9 @@ export default function PodRenderer({ pod, delay }: { pod: PodData; delay: numbe
             {countdown && (
               <p className="pod-event-countdown">{countdown}</p>
             )}
+
+            {/* Title */}
+            {pod.title && <h3 className="pod-event-title">{pod.title}</h3>}
 
             {/* Venue + address */}
             {(pod.eventVenue || pod.eventAddress) && (
@@ -355,15 +362,22 @@ export default function PodRenderer({ pod, delay }: { pod: PodData; delay: numbe
               </div>
             )}
 
-            {/* Description */}
-            {pod.body && <p className="pod-event-desc">{pod.body}</p>}
-
             {/* CTA button */}
             {pod.ctaUrl && state !== 'ended' && state !== 'cancelled' && (
               <a href={pod.ctaUrl} target="_blank" rel="noopener noreferrer" className="pod-event-cta">
-                {pod.ctaLabel || 'Get Tickets'} →
+                {pod.ctaLabel || 'Event Details'} →
               </a>
             )}
+
+            {/* Image */}
+            {pod.imageUrl && (
+              <div className="pod-event-img-wrap">
+                <img src={pod.imageUrl} alt={pod.title || ''} className="pod-event-img" referrerPolicy="no-referrer" />
+              </div>
+            )}
+
+            {/* Body (markdown) */}
+            {pod.body && <div className="pod-body pod-body-md pod-event-desc">{renderMarkdown(pod.body)}</div>}
           </div>
         </div>
       </div>
