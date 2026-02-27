@@ -39,3 +39,6 @@ db_production_dump.sql
 
 # User uploads (local dev)
 public/uploads/
+
+# Claude working prompts
+CLAUDE_CODE_PROMPT_*.md
