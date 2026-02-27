@@ -3,7 +3,7 @@
 **Purpose:** This file is the shared memory between Claude sessions. After each work session or push, update the relevant sections so context is never lost if a conversation resets.
 
 **Last updated:** February 26, 2026
-**Updated by:** Claude (session 6 — FAQ/trust page)
+**Updated by:** Claude (session 7 — landing revision + production deploy v0.9.8)
 
 ---
 
@@ -290,6 +290,20 @@ docker compose up --build
 - **Verification:** `tsc --noEmit` passes (0 errors). `docker compose build` succeeds.
 - **Files created:** `src/app/faq/page.tsx`, `src/styles/faq.css`
 - **Files modified:** `src/app/page.tsx`, `src/components/MobileNav.tsx`, `src/app/terms/page.tsx`, `src/app/privacy/page.tsx`
+
+### February 26, 2026 (Session 7) — Landing Page Revision + Production Deploy v0.9.8
+- **Landing page revision:** Removed comparison table and tagline section. Reordered sections: How It Works moved up after trust bar, Value Props (4 outcome-focused blocks) replaces comparison + free showcase. Pricing moved before NFC accessories. Trimmed use cases from 6 to 4 (cut Students, DJs). Hero rewritten: "Meet better." / "One tap. They've got your whole page." How It Works step 3 rewritten from upsell to empowerment. Impression body split into 3 focused paragraphs. Revised pricing headline, free tier badge copy, NFC closing note, final CTA sub.
+- **Nav updated:** Removed "Why Imprynt" anchor link from desktop nav and MobileNav (comparison section deleted).
+- **Production deploy:** All changes from sessions 3-7 deployed to production via `deploy.ps1`. Database backed up, migrations ran, app healthy.
+- **What shipped:**
+  - System cleanup (v0.9.6): dropped abandoned tables, removed legacy admin portal (/p-8k3x), archived deprecated docs, regenerated init.sql, fixed migration gap
+  - Event enhancements (v0.9.7): timezone fix, Facebook event import, event link label updates
+  - Profile polish: photo lightbox with Save Contact, QR always-on for free tier, themed QR modal, free tier signup CTA
+  - FAQ/Trust page with grouped accordion Q&A, trust signals, signup CTA
+  - Landing page revision: removed comparison table, reordered sections (How it works moved up, pricing before products), outcome-focused value props, tightened hero copy, trimmed use cases from 6 to 4
+- **CC updated:** Changelog v0.9.8 (production deploy).
+- **Version:** v0.9.8
+- **Files modified:** `src/app/page.tsx`, `src/components/MobileNav.tsx`, `.gitignore`
 
 ---
 
