@@ -32,6 +32,10 @@ pgdata/
 
 # Backups
 backups/
+*.bak
 
 # Database dumps
 db_production_dump.sql
+
+# User uploads (local dev)
+public/uploads/
