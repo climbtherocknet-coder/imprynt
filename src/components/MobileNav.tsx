@@ -50,12 +50,15 @@ export default function MobileNav() {
 
       {open && (
         <div className="lp-mobile-menu">
+          <a href="#how" className="lp-mobile-link" onClick={close}>
+            How it works
+          </a>
+          <Link href="/explore" className="lp-mobile-link" onClick={close}>
+            Explore
+          </Link>
           <a href="#pricing" className="lp-mobile-link" onClick={close}>
             Pricing
           </a>
-          <Link href="/demo" className="lp-mobile-link" onClick={close}>
-            Demo
-          </Link>
           <Link href="/faq" className="lp-mobile-link" onClick={close}>
             FAQ
           </Link>
@@ -64,7 +67,7 @@ export default function MobileNav() {
           </Link>
           <div onClick={close}>
             <WaitlistButton className="lp-mobile-cta">
-              Join waitlist
+              Build yours free
             </WaitlistButton>
           </div>
         </div>

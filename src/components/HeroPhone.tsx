@@ -123,9 +123,9 @@ export default function HeroPhone() {
                 }}
               />
             </div>
-            {/* Overlay — catches clicks/swipes; tap→/demo, swipe→change profile */}
+            {/* Overlay — catches clicks/swipes; tap→/explore, swipe→change profile */}
             <a
-              href="/demo"
+              href="/explore"
               className="lp-phone-link"
               aria-label="See all demo profiles"
               onTouchStart={onOverlayTouchStart}

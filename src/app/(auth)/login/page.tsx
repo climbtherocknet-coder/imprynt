@@ -62,7 +62,7 @@ function LoginForm() {
 
       <div className="auth-card">
         <h1 className="auth-title">Welcome back</h1>
-        <p className="auth-subtitle">Sign in to your Imprynt account.</p>
+        <p className="auth-subtitle">Sign in to your account.</p>
 
         {verified && (
           <div className="auth-error" style={{

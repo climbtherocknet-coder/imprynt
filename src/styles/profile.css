@@ -1715,6 +1715,38 @@ a.pod-event-address:hover {
   background: color-mix(in srgb, var(--warm, #c49a6c) 85%, white);
 }
 
+/* Dark template overrides for pod-cta-btn text color (matches save-btn) */
+.t-midnight .pod-cta-btn,
+.t-studio .pod-cta-btn,
+.t-dusk .pod-cta-btn {
+  color: var(--bg);
+}
+
+/* Noir pod-cta-btn uses warm color for bg (matches save-btn) */
+.t-noir .pod-cta-btn {
+  background: var(--warm, #c49a6c);
+  color: var(--bg);
+}
+.t-noir .pod-cta-btn:hover {
+  background: color-mix(in srgb, var(--warm, #c49a6c) 85%, white);
+}
+
+/* Noir lightbox save button */
+.t-noir .photo-lightbox-card .save-btn {
+  background: var(--warm, #c49a6c);
+  color: var(--bg);
+}
+
+/* Dark template overrides for pod-event-cta (same pattern) */
+.t-noir .pod-event-cta {
+  background: var(--warm, #c49a6c);
+  color: var(--bg);
+}
+.t-noir .pod-event-cta:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--warm, #c49a6c) 85%, white);
+}
+
 /* ═══════════════════════════════════════════
    ANIMATIONS
    ═══════════════════════════════════════════ */

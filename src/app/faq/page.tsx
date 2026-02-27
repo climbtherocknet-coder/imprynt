@@ -22,7 +22,7 @@ const FAQ_DATA: FaqGroup[] = [
     items: [
       {
         q: 'What is Imprynt?',
-        a: 'Imprynt is a digital identity platform that gives you a single, shareable page for everything about you: contact info, social links, portfolio, booking links, payment methods, whatever you need. Think of it as a modern business card that actually works. Share it with a link, a QR code, or a tap of an NFC ring.',
+        a: 'Imprynt gives you a single, shareable page for everything about you: contact info, social links, portfolio, booking links, payment methods, whatever you need. Think of it as a modern business card that actually works. Share it with a link, a QR code, or a tap of an NFC ring.',
       },
       {
         q: 'How is this different from Linktree or other link-in-bio tools?',
@@ -187,7 +187,7 @@ export default function FaqPage() {
         <div className="faq-hero">
           <h1 className="faq-headline">How Imprynt works</h1>
           <p className="faq-sub">
-            Everything you need to know about building and sharing your digital identity.
+            Everything you need to know about building and sharing your page.
           </p>
         </div>
 

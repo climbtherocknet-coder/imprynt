@@ -26,11 +26,11 @@ export default function ThemeToggle() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: 'var(--text-muted)',
+        color: 'var(--text-muted, var(--lp-text-muted, #888))',
         transition: 'color 0.15s',
       }}
-      onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
-      onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+      onMouseEnter={e => (e.currentTarget.style.color = 'var(--text, var(--lp-text, #333))')}
+      onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted, var(--lp-text-muted, #888))')}
     >
       {theme === 'light' && (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

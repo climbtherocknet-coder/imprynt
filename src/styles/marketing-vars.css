@@ -1,0 +1,79 @@
+/* ═══════════════════════════════════════════
+   MARKETING SITE — Design Tokens
+   Colorado-warm palette: sandstone, aspen gold, sage
+   ═══════════════════════════════════════════ */
+
+:root {
+  /* Light mode (default) */
+  --lp-bg: #f2ede6;
+  --lp-bg-alt: #eae4db;
+  --lp-surface: #faf8f5;
+  --lp-surface-2: #f5f0e8;
+  --lp-text: #2a2520;
+  --lp-text-mid: #6b6058;
+  --lp-text-muted: #a09488;
+  --lp-accent: #c4873c;
+  --lp-accent-hover: #b07832;
+  --lp-accent-soft: rgba(196, 135, 60, 0.08);
+  --lp-accent-contrast: #ffffff;
+  --lp-border: #e2dbd2;
+  --lp-border-hover: #d4cbc0;
+  --lp-sage: #7a9a82;
+  --lp-sage-soft: rgba(122, 154, 130, 0.08);
+
+  /* Typography */
+  --lp-serif: 'Instrument Serif', Georgia, serif;
+  --lp-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Dark mode */
+[data-theme="dark"] {
+  --lp-bg: #0f1218;
+  --lp-bg-alt: #151a22;
+  --lp-surface: #1c2230;
+  --lp-surface-2: #232a3a;
+  --lp-text: #eceae4;
+  --lp-text-mid: #a8a098;
+  --lp-text-muted: #6b6660;
+  --lp-accent: #e8a849;
+  --lp-accent-hover: #f0b85e;
+  --lp-accent-soft: rgba(232, 168, 73, 0.08);
+  --lp-accent-contrast: #0f1218;
+  --lp-border: #252d3a;
+  --lp-border-hover: #313b4c;
+  --lp-sage: #8aaa92;
+  --lp-sage-soft: rgba(138, 170, 146, 0.08);
+}
+
+/* System preference fallback */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --lp-bg: #0f1218;
+    --lp-bg-alt: #151a22;
+    --lp-surface: #1c2230;
+    --lp-surface-2: #232a3a;
+    --lp-text: #eceae4;
+    --lp-text-mid: #a8a098;
+    --lp-text-muted: #6b6660;
+    --lp-accent: #e8a849;
+    --lp-accent-hover: #f0b85e;
+    --lp-accent-soft: rgba(232, 168, 73, 0.08);
+    --lp-accent-contrast: #0f1218;
+    --lp-border: #252d3a;
+    --lp-border-hover: #313b4c;
+    --lp-sage: #8aaa92;
+    --lp-sage-soft: rgba(138, 170, 146, 0.08);
+  }
+}
+
+/* Scroll-triggered fade-up animation */
+.fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

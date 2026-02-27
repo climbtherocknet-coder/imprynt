@@ -87,7 +87,7 @@ function RegisterForm() {
   return (
     <div className="auth-card">
       <h1 className="auth-title">Create your account</h1>
-      <p className="auth-subtitle">Get started with Imprynt. Build your page in minutes.</p>
+      <p className="auth-subtitle">Build your page in minutes. Free forever.</p>
 
       {error && <div className="auth-error">{error}</div>}
 

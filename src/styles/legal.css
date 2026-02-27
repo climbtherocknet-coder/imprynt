@@ -1,13 +1,14 @@
 /* ═══════════════════════════════════════════
    LEGAL PAGES (Terms, Privacy)
-   Dark navy + warm gold, consistent with landing
+   Warm palette via marketing-vars.css
    ═══════════════════════════════════════════ */
+@import './marketing-vars.css';
 
 .legal-page {
   min-height: 100vh;
-  background: var(--bg, #0c1017);
-  font-family: var(--sans, 'Inter', system-ui, -apple-system, sans-serif);
-  color: var(--text-mid, #a8adb8);
+  background: var(--lp-bg);
+  font-family: var(--lp-sans);
+  color: var(--lp-text-mid);
 }
 
 .legal-nav {
@@ -24,14 +25,14 @@
   align-items: center;
   gap: 0.5rem;
   text-decoration: none;
-  color: var(--text, #eceef2);
+  color: var(--lp-text);
 }
 
 .legal-nav-mark {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 2px solid var(--accent, #e8a849);
+  border: 2px solid var(--lp-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,7 +43,7 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--accent, #e8a849);
+  background: var(--lp-accent);
 }
 
 .legal-nav-text {
@@ -61,26 +62,26 @@
 }
 
 .legal-content h1 {
-  font-family: var(--serif, 'Instrument Serif', Georgia, serif);
+  font-family: var(--lp-serif);
   font-size: 2rem;
   font-weight: 400;
-  color: var(--text, #eceef2);
+  color: var(--lp-text);
   margin-bottom: 0.5rem;
 }
 
 .legal-content .legal-updated {
   font-size: 0.8125rem;
-  color: var(--text-muted, #5d6370);
+  color: var(--lp-text-muted);
   margin-bottom: 2rem;
 }
 
 .legal-content h2 {
-  font-family: var(--serif, 'Instrument Serif', Georgia, serif);
+  font-family: var(--lp-serif);
   font-size: 1.25rem;
   font-weight: 400;
   margin-top: 2.5rem;
   margin-bottom: 0.75rem;
-  color: var(--text, #eceef2);
+  color: var(--lp-text);
 }
 
 .legal-content p {
@@ -88,7 +89,7 @@
 }
 
 .legal-content a {
-  color: var(--accent, #e8a849);
+  color: var(--lp-accent);
   font-weight: 600;
   text-decoration: none;
 }
@@ -98,12 +99,12 @@
 }
 
 .legal-content strong {
-  color: var(--text, #eceef2);
+  color: var(--lp-text);
   font-weight: 600;
 }
 
 .legal-footer-note {
   margin-top: 2.5rem;
   font-size: 0.8125rem;
-  color: var(--text-muted, #5d6370);
+  color: var(--lp-text-muted);
 }

@@ -2,14 +2,14 @@
 
 **Purpose:** This file is the shared memory between Claude sessions. After each work session or push, update the relevant sections so context is never lost if a conversation resets.
 
-**Last updated:** February 26, 2026
-**Updated by:** Claude (session 7 — landing revision + production deploy v0.9.8)
+**Last updated:** February 27, 2026
+**Updated by:** Claude (session 9 — marketing site redesign)
 
 ---
 
 ## Current State Summary
 
-The Imprynt platform is a fully functional Next.js 15 app with a dark navy + warm gold design system. All 10 original MVP milestones are complete. The project has moved well past MVP into polish, admin tooling, and onboarding refinement.
+The Imprynt platform is a fully functional Next.js 15 app. Marketing pages (landing, auth, FAQ, legal, explore) use a warm Colorado-inspired palette (sandstone, aspen gold, sage) via `--lp-*` CSS variables. Dashboard and profile templates retain the dark navy + warm gold design system. All 10 original MVP milestones are complete. The project has moved well past MVP into polish, admin tooling, and onboarding refinement.
 
 ### What's Built and Working
 - **Auth:** Registration, login, JWT sessions, password reset, email verification (resend-verification + verify-email endpoints, VerificationBanner component, migration 021)
@@ -31,7 +31,7 @@ The Imprynt platform is a fully functional Next.js 15 app with a dark navy + war
 - **Link Display:** Labels mode (default) and Icons-only mode. Size (small/medium/large), shape (pills/stacked/full-width-pills), per-link button colors.
 - **Photo Lightbox:** ExpandablePhoto component with themed modal card showing full name, title/company, and Save Contact button. Backdrop blur overlay, CSS variable theming.
 - **Stripe:** Checkout sessions, webhooks, customer portal, trial support
-- **Landing Page:** Full redesign with hero, value props, pricing, CTA
+- **Landing Page:** Full experiential redesign with warm Colorado palette. Sections: nav → hero → how it works → interactive demo (iframe) → value blocks → hidden layer (impression) → use cases → content types → NFC teaser → pricing → CTA → footer. ScrollReveal fade-up animations. All marketing pages share `marketing-vars.css` color tokens.
 - **Legal Pages:** Terms, Privacy (redesigned)
 - **Branded Error Pages:** `/app/not-found.tsx` and `/app/error.tsx` with Imprynt branding
 - **Account Management:** Password change, account deletion (`/api/account/delete`), contact fields
@@ -200,6 +200,11 @@ docker compose up --build
 - **Files modified:** `themes.ts`, `ProfileTemplate.tsx`, `profile.css`, `cc.css`, `PodEditor.tsx`, `PodRenderer.tsx`, pods API routes (main + protected-pages), `[slug]/page.tsx`, `dashboard/admin/page.tsx`, `AdminClient.tsx`
 - **Files created:** `db/migrations/051_event_timezone.sql`
 
+### February 27, 2026 — Queued for Next Session
+- **Event timezone display bug (CRITICAL):** `event_start` and `event_end` are `TIMESTAMPTZ` columns. When PodEditor stores a raw datetime-local string like `2026-03-14T20:00`, PostgreSQL interprets it as UTC. The public profile renderer then displays UTC times (shows 2:00 PM instead of 8:00 PM for a Mountain Time event). Fix: write migration to change columns to `TEXT`, update API to store raw datetime-local strings, update PodRenderer to parse without timezone conversion. The `event_timezone` column stays for future display use.
+- **Landing page redesign (in progress):** Running CLAUDE_CODE_PROMPT_REDESIGN.md. Review results when complete.
+- **Short URL (impr.in):** Domain purchased, pending approval. Implementation queued.
+
 ### February 26, 2026 (Session 4) — Event Enhancements + Profile Polish
 - **Event timezone fix:** PodEditor datetime-local inputs no longer double-convert to/from UTC. Stores raw datetime-local values. Auto-detects and saves creator's timezone on first eventStart entry.
 - **Facebook event import:** New API endpoint `/api/events/facebook` using `facebook-event-scraper` npm package. PodEditor now has "Import from Facebook" section at top of event form. Auto-populates title, description, venue, address, dates, image, CTA. Graceful fallback on failure.
@@ -304,6 +309,34 @@ docker compose up --build
 - **CC updated:** Changelog v0.9.8 (production deploy).
 - **Version:** v0.9.8
 - **Files modified:** `src/app/page.tsx`, `src/components/MobileNav.tsx`, `.gitignore`
+
+### February 26, 2026 (Session 8) — Button Contrast Fix + Roadmap
+- **Fixed:** pod-cta-btn contrast on Noir (invisible white-on-cream), Midnight (white-on-neon-green), Dusk (white-on-gold), Studio (white-on-lavender). Added dark template overrides matching existing save-btn pattern.
+- **Fixed:** Noir lightbox save button now uses --warm color.
+- **Fixed:** Noir pod-event-cta now uses --warm color (same pattern as pod-cta-btn and save-btn).
+- **Fixed:** Soft template accent darkened from #5b8a72 to #4a7a62 for WCAG AA compliance (white text contrast >4.5:1).
+- **Verified:** All button types (save-btn, pod-cta-btn, pod-event-cta, link buttons) checked across all 10 templates. Auto-contrast system (`--accent-contrast`) handles most cases; explicit overrides added for Noir warm-color and dark template safety.
+- **Roadmap:** Added "Short URL domain (impr.in)" as high priority "now" item. Added "Landing page experiential redesign" to roadmap. Added Short URL Domain feature entry (planned, v1).
+- **Files modified:** `src/styles/profile.css`, `src/lib/themes.ts`
+
+### February 27, 2026 (Session 9) — Marketing Site Redesign
+- **Executed:** `CLAUDE_CODE_PROMPT_REDESIGN.md` — full marketing site redesign (11 tasks).
+- **New color system:** Created `src/styles/marketing-vars.css` with `--lp-*` CSS variables. Light mode: sandstone bg (#f2ede6), aspen gold accent (#c4873c), sage (#7a9a82). Dark mode via `[data-theme="dark"]`: dark bg (#0f1218), gold accent (#e8a849). System preference fallback via `@media (prefers-color-scheme: dark)`.
+- **Landing page rewrite:** New sections: nav, hero ("Make an introduction worth remembering"), how it works (3 steps), interactive demo (iframe), value blocks (4 outcome cards), hidden layer (impression feature), use cases (4 personas), content types (8 live + 4 coming soon with SVG icons), NFC teaser, pricing (free vs premium), CTA, footer. All major sections wrapped in `<ScrollReveal>` for fade-up animations.
+- **ScrollReveal component:** `src/components/ScrollReveal.tsx` — IntersectionObserver-based fade-up animation.
+- **Auth pages:** Updated `auth.css` to use `--lp-*` variables. Login subtitle → "Sign in to your account." Register subtitle → "Build your page in minutes. Free forever."
+- **FAQ page:** Updated `faq.css` to `--lp-*`. Fixed banned word "digital identity" → "a single, shareable page".
+- **Legal pages:** Updated `legal.css` to `--lp-*`.
+- **Route rename:** `/demo` → `/explore`. Created `src/app/explore/` with page.tsx and DemoShowcase.tsx. Old `/demo` path redirects via server-side `redirect()`. Updated all route links (HeroPhone, MobileNav, landing page, footer). Created `explore.css` from `demo.css` with `--lp-*` variables.
+- **ThemeToggle:** Added CSS variable fallbacks so toggle works on both dashboard (`--text-muted`) and marketing pages (`--lp-text-muted`).
+- **MobileNav:** Links updated to: How it works, Explore, Pricing, FAQ, Sign in, "Build yours free".
+- **Verification:** `tsc --noEmit` zero errors. Build compilation successful. All marketing CSS files use `--lp-*` exclusively. Dashboard files intentionally untouched.
+- **Design spec saved:** `docs/CLAUDE_CODE_PROMPT_REDESIGN.md` (archive of the prompt).
+- **NOT pushed** — local only, pending Tim's review.
+- **Version:** v0.10.0 (pending)
+- **Files created:** `src/styles/marketing-vars.css`, `src/components/ScrollReveal.tsx`, `src/app/explore/page.tsx`, `src/app/explore/DemoShowcase.tsx`, `src/styles/explore.css`, `docs/CLAUDE_CODE_PROMPT_REDESIGN.md`
+- **Files modified:** `src/app/page.tsx`, `src/styles/landing.css`, `src/styles/auth.css`, `src/styles/faq.css`, `src/styles/legal.css`, `src/components/MobileNav.tsx`, `src/components/ThemeToggle.tsx`, `src/components/HeroPhone.tsx`, `src/app/(auth)/login/page.tsx`, `src/app/(auth)/register/page.tsx`, `src/app/faq/page.tsx`, `src/app/demo/page.tsx` (redirect stub)
+- **Backups:** `backups/` directory contains pre-redesign versions of all modified files.
 
 ---
 

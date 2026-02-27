@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════
    FAQ / TRUST PAGE
-   Dark navy + warm gold, consistent with landing + legal
+   Warm palette via marketing-vars.css
    ═══════════════════════════════════════════ */
+@import './marketing-vars.css';
 
 /* ── Hero ── */
 .faq-hero {
@@ -12,15 +13,15 @@
 }
 
 .faq-headline {
-  font-family: var(--serif, 'Instrument Serif', Georgia, serif);
+  font-family: var(--lp-serif);
   font-size: 2.25rem;
   font-weight: 400;
-  color: var(--gold, #e8a849);
+  color: var(--lp-accent);
   margin: 0 0 0.75rem;
 }
 
 .faq-sub {
-  color: var(--text-muted, #5d6370);
+  color: var(--lp-text-muted);
   font-size: 1rem;
   margin: 0;
   line-height: 1.6;
@@ -38,13 +39,13 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--gold, #e8a849);
+  color: var(--lp-accent);
   margin: 2rem 0 0.75rem;
   padding-left: 0.25rem;
 }
 
 .faq-item {
-  border-bottom: 1px solid var(--border, #1a2030);
+  border-bottom: 1px solid var(--lp-border);
 }
 
 .faq-question {
@@ -57,7 +58,7 @@
   padding: 1rem 0.25rem;
   font-size: 0.9375rem;
   font-weight: 500;
-  color: var(--heading, #eceef2);
+  color: var(--lp-text);
   cursor: pointer;
   text-align: left;
   font-family: inherit;
@@ -66,7 +67,7 @@
 }
 
 .faq-question:hover {
-  color: var(--gold, #e8a849);
+  color: var(--lp-accent);
 }
 
 .faq-chevron {
@@ -74,7 +75,7 @@
   width: 16px;
   height: 16px;
   transition: transform 0.2s ease;
-  color: var(--text-muted, #5d6370);
+  color: var(--lp-text-muted);
 }
 
 .faq-chevron.open {
@@ -97,7 +98,7 @@
   margin: 0;
   font-size: 0.875rem;
   line-height: 1.7;
-  color: var(--text-secondary, #8a8f9a);
+  color: var(--lp-text-mid);
 }
 
 /* ── Trust Grid ── */
@@ -108,10 +109,10 @@
 }
 
 .faq-trust-headline {
-  font-family: var(--serif, 'Instrument Serif', Georgia, serif);
+  font-family: var(--lp-serif);
   font-size: 1.5rem;
   font-weight: 400;
-  color: var(--heading, #eceef2);
+  color: var(--lp-text);
   text-align: center;
   margin: 0 0 1.5rem;
 }
@@ -123,8 +124,8 @@
 }
 
 .faq-trust-card {
-  background: var(--card-bg, #111621);
-  border: 1px solid var(--border, #1a2030);
+  background: var(--lp-surface);
+  border: 1px solid var(--lp-border);
   border-radius: 0.75rem;
   padding: 1.25rem;
 }
@@ -132,13 +133,13 @@
 .faq-trust-card h4 {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--heading, #eceef2);
+  color: var(--lp-text);
   margin: 0 0 0.375rem;
 }
 
 .faq-trust-card p {
   font-size: 0.8125rem;
-  color: var(--text-muted, #5d6370);
+  color: var(--lp-text-muted);
   margin: 0;
   line-height: 1.5;
 }
@@ -152,15 +153,15 @@
 }
 
 .faq-cta h2 {
-  font-family: var(--serif, 'Instrument Serif', Georgia, serif);
+  font-family: var(--lp-serif);
   font-size: 1.75rem;
   font-weight: 400;
-  color: var(--heading, #eceef2);
+  color: var(--lp-text);
   margin: 0 0 0.5rem;
 }
 
 .faq-cta p {
-  color: var(--text-muted, #5d6370);
+  color: var(--lp-text-muted);
   margin: 0 0 1.5rem;
   font-size: 0.9375rem;
 }
@@ -170,8 +171,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.75rem;
-  background: var(--gold, #e8a849);
-  color: #0c1017;
+  background: var(--lp-accent);
+  color: var(--lp-accent-contrast);
   border: none;
   border-radius: 9999px;
   font-size: 0.9375rem;
@@ -196,9 +197,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border-top: 1px solid var(--border, #1a2030);
+  border-top: 1px solid var(--lp-border);
   font-size: 0.75rem;
-  color: var(--text-muted, #5d6370);
+  color: var(--lp-text-muted);
 }
 
 .faq-footer-left {
@@ -211,7 +212,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 1.5px solid var(--gold, #e8a849);
+  border: 1.5px solid var(--lp-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -222,7 +223,7 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--gold, #e8a849);
+  background: var(--lp-accent);
 }
 
 .faq-footer-links {
@@ -231,13 +232,13 @@
 }
 
 .faq-footer-links a {
-  color: var(--text-muted, #5d6370);
+  color: var(--lp-text-muted);
   text-decoration: none;
   transition: color 0.15s;
 }
 
 .faq-footer-links a:hover {
-  color: var(--heading, #eceef2);
+  color: var(--lp-text);
 }
 
 /* ── Responsive ── */
