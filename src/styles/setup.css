@@ -1328,10 +1328,11 @@
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .setup-preview-screen::-webkit-scrollbar {
-  width: 0;
+  display: none;
 }
 
 .setup-preview-screen .profile-page {
@@ -1412,6 +1413,11 @@
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.setup-mobile-preview-body::-webkit-scrollbar {
+  display: none;
 }
 
 .setup-mobile-preview-body .profile-page {

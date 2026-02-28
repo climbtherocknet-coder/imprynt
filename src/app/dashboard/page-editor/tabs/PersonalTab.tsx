@@ -5,6 +5,7 @@ import PodEditor from '@/components/pods/PodEditor';
 import ToggleSwitch from '@/components/ToggleSwitch';
 import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import ImageCropper from '@/components/ui/ImageCropper';
+import BackgroundPreview from '@/components/ui/BackgroundPreview';
 import CoverPreview from '@/components/ui/CoverPreview';
 import GalleryPicker from '@/components/ui/GalleryPicker';
 import ProtectedPagePreview from '@/components/templates/ProtectedPagePreview';
@@ -1133,14 +1134,19 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                 </button>
               </div>
               {bgImageUrl && (
-                <ImageCropper
+                <BackgroundPreview
                   src={bgImageUrl}
-                  frameShape="portrait"
                   positionX={bgImagePositionX}
                   positionY={bgImagePositionY}
                   zoom={bgImageZoom}
+                  opacity={bgImageOpacity}
                   onPositionChange={(x, y) => { setBgImagePositionX(x); setBgImagePositionY(y); }}
                   onZoomChange={setBgImageZoom}
+                  coverUrl={coverUrl || undefined}
+                  coverPositionX={coverPositionX}
+                  coverPositionY={coverPositionY}
+                  coverZoom={coverZoom}
+                  coverOpacity={coverOpacity}
                 />
               )}
               {bgImageUrl && (

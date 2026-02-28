@@ -1234,10 +1234,11 @@
 
 /* Hide scrollbar in preview for cleaner look */
 .preview-phone-screen::-webkit-scrollbar {
-  width: 0;
+  display: none;
 }
 .preview-phone-screen {
   scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 /* ═══════════════════════════════════════════

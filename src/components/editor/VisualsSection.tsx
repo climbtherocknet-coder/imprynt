@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 're
 import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import ImageCropper from '@/components/ui/ImageCropper';
 import CoverPreview from '@/components/ui/CoverPreview';
+import BackgroundPreview from '@/components/ui/BackgroundPreview';
 import GalleryPicker from '@/components/ui/GalleryPicker';
 import { labelStyle, sectionTitleStyle } from './constants';
 
@@ -667,14 +668,19 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
             </button>
           </div>
           {bgImageUrl && (
-            <ImageCropper
+            <BackgroundPreview
               src={bgImageUrl}
-              frameShape="portrait"
               positionX={bgImagePositionX}
               positionY={bgImagePositionY}
               zoom={bgImageZoom}
+              opacity={bgImageOpacity}
               onPositionChange={(x, y) => { setBgImagePositionX(x); setBgImagePositionY(y); }}
               onZoomChange={setBgImageZoom}
+              coverUrl={coverUrl || undefined}
+              coverPositionX={coverPositionX}
+              coverPositionY={coverPositionY}
+              coverZoom={coverZoom}
+              coverOpacity={coverOpacity}
             />
           )}
           {bgImageUrl && (

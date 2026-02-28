@@ -1485,19 +1485,25 @@ a.pod-event-address:hover {
   pointer-events: none;
 }
 
-/* Gradient: transparent top → theme bg at bottom */
+/* Cover only (no background image): fade to solid bg color */
 .profile-top[data-has-cover]::after {
   content: '';
   position: absolute;
   inset: 0;
+  background: linear-gradient(to bottom, transparent 30%, var(--bg) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Cover + background image: fade to transparent for crossfade */
+[data-has-bg="true"] .profile-top[data-has-cover]::after {
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    transparent 30%,
-    var(--bg) 100%
+    rgba(0, 0, 0, 0.15) 25%,
+    rgba(0, 0, 0, 0.35) 55%,
+    transparent 100%
   );
-  z-index: 1;
-  pointer-events: none;
 }
 
 /* All direct children of profile-top sit above the cover */
@@ -1519,6 +1525,12 @@ a.pod-event-address:hover {
    the fixed z-index:-1 bg image. Make it transparent so the bg image shows through. */
 [data-has-bg="true"] {
   background: transparent;
+}
+
+/* When both cover + background exist: background fades in below cover zone */
+[data-has-bg="true"][data-has-cover="true"] .profile-bg-image {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 15%, black 35%);
+  mask-image: linear-gradient(to bottom, transparent 0%, transparent 15%, black 35%);
 }
 
 /* In editor preview: contain the bg image within the phone frame */

@@ -165,6 +165,7 @@ export default function ProfileTemplate({
         {...dataAttrs}
         {...(contained ? { 'data-contained': 'true' } : {})}
         {...(bgImageUrl ? { 'data-has-bg': 'true' } : {})}
+        {...(coverUrl ? { 'data-has-cover': 'true' } : {})}
       >
         {/* ─── Background Photo (fixed, full page) ─── */}
         {bgImageUrl && (
