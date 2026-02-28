@@ -7,6 +7,7 @@ interface AdminStats {
   templateStats: { template: string; count: number; pct: number }[];
   protectedPages: number;
   vcardDownloads: number;
+  newsletterSubscribers?: number;
 }
 
 interface CCOverviewData {
@@ -97,6 +98,7 @@ export default function CCOverview({ accessLevel, onNavigate }: {
               { label: 'Paid Users', value: stats.users.paid },
               { label: 'Protected Pages', value: stats.protectedPages },
               { label: 'vCard Downloads', value: stats.vcardDownloads },
+              { label: 'Newsletter Subs', value: stats.newsletterSubscribers ?? 0 },
             ].map(s => (
               <div key={s.label} style={cardStyle}>
                 <p style={{ ...labelStyle, marginBottom: '0.375rem' }}>{s.label}</p>

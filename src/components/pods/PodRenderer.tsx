@@ -30,7 +30,7 @@ export interface PodData {
 }
 
 function parseDatetimeLocal(dateStr: string): { year: number; month: number; day: number; hour: number; minute: number } | null {
-  const m = dateStr.match(/(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/);
+  const m = dateStr.match(/(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/);
   if (!m) return null;
   return { year: Number(m[1]), month: Number(m[2]) - 1, day: Number(m[3]), hour: Number(m[4] ?? 0), minute: Number(m[5] ?? 0) };
 }

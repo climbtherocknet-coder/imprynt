@@ -168,6 +168,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
   const [modalPinConfirm, setModalPinConfirm] = useState('');
   const [modalPinError, setModalPinError] = useState('');
   const [pinDirty, setPinDirty] = useState(false);
+  const [pinError, setPinError] = useState('');
 
   // Keep preview template in sync when parent ProfileTab changes it live
   useEffect(() => {
@@ -305,16 +306,17 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
 
     if (isNew || pin) {
       if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
-        setError('PIN must be 4-6 digits');
+        setPinError('PIN must be 4-6 digits');
         setSaving(false);
         return;
       }
       if (pin !== pinConfirm) {
-        setError('PINs do not match');
+        setPinError('PINs don\u2019t match');
         setSaving(false);
         return;
       }
     }
+    setPinError('');
 
     try {
       if (isNew) {
@@ -1181,7 +1183,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           {isNew && (
             <div>
               <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem' }}>
-                Choose a 4-6 digit PIN. This is what you share with people to unlock your personal page.
+                Share this PIN with people to unlock your personal page.
               </p>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
                 <div style={{ flex: 1 }}>
@@ -1191,9 +1193,9 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                     inputMode="numeric"
                     maxLength={6}
                     value={pin}
-                    onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onChange={e => { setPin(e.target.value.replace(/\D/g, '').slice(0, 6)); setPinError(''); }}
                     placeholder="••••"
-                    style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center' }}
+                    style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center', ...(pinError ? { borderColor: '#f87171' } : {}) }}
                   />
                 </div>
                 <div style={{ flex: 1 }}>
@@ -1203,12 +1205,16 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                     inputMode="numeric"
                     maxLength={6}
                     value={pinConfirm}
-                    onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onChange={e => { setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6)); setPinError(''); }}
                     placeholder="••••"
-                    style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center' }}
+                    style={{ ...inputStyle, letterSpacing: '0.25em', textAlign: 'center', ...(pinError ? { borderColor: '#f87171' } : {}) }}
                   />
                 </div>
               </div>
+              {pinError
+                ? <p style={{ fontSize: '0.75rem', color: '#f87171', marginTop: '0.5rem' }}>{pinError}</p>
+                : <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', marginTop: '0.5rem' }}>4-6 digits</p>
+              }
             </div>
           )}
         </CollapsibleSection>

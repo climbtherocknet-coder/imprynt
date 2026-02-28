@@ -1800,6 +1800,22 @@ ALTER TABLE ONLY public.waitlist
 
 
 --
+-- Name: newsletter_subscribers; Type: TABLE
+--
+
+CREATE TABLE IF NOT EXISTS public.newsletter_subscribers (
+    id uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
+    email character varying(255) NOT NULL UNIQUE,
+    source character varying(50) DEFAULT 'footer'::character varying,
+    subscribed_at timestamp with time zone DEFAULT now(),
+    unsubscribed_at timestamp with time zone,
+    is_active boolean DEFAULT true
+);
+
+CREATE INDEX IF NOT EXISTS idx_newsletter_active ON public.newsletter_subscribers(is_active) WHERE is_active = true;
+
+
+--
 -- PostgreSQL database dump complete
 --
 

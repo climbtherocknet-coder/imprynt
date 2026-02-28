@@ -66,7 +66,8 @@ export async function POST(req: NextRequest) {
     const ext = ALL_TYPES[file.type];
     const isImage = !!IMAGE_TYPES[file.type];
     const subdir = isAudio ? 'audio' : isImage ? 'images' : 'documents';
-    const uploadDir = join(process.cwd(), 'public', 'uploads', subdir);
+    const userId = session.user.id;
+    const uploadDir = join(process.cwd(), 'public', 'uploads', userId, subdir);
 
     await mkdir(uploadDir, { recursive: true });
 
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     await writeFile(join(uploadDir, filename), Buffer.from(bytes));
 
-    const url = `/uploads/${subdir}/${filename}`;
+    const url = `/uploads/${userId}/${subdir}/${filename}`;
 
     return NextResponse.json({ url, type: isAudio ? 'audio' : isImage ? 'image' : 'document' });
   } catch (error) {

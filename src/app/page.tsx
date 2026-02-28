@@ -6,6 +6,7 @@ import MobileNav from '@/components/MobileNav';
 import HeroPhone from '@/components/HeroPhone';
 import HeroPreviewButton from '@/components/HeroPreviewButton';
 import ScrollReveal from '@/components/ScrollReveal';
+import NewsletterSignup from '@/components/NewsletterSignup';
 import '@/styles/landing.css';
 
 export default function HomePage() {
@@ -378,16 +379,22 @@ export default function HomePage() {
 
         {/* ═══════ FOOTER ═══════ */}
         <footer className="lp-footer">
-          <div className="lp-footer-left">
-            <span className="lp-footer-mark" />
-            &copy; 2026 Imprynt LLC
+          <div className="lp-footer-newsletter">
+            <p className="lp-footer-nl-heading">Stay in the loop</p>
+            <NewsletterSignup source="footer" />
           </div>
-          <div className="lp-footer-links">
-            <Link href="/explore" className="lp-footer-link">Explore</Link>
-            <Link href="/faq" className="lp-footer-link">FAQ</Link>
-            <Link href="/terms" className="lp-footer-link">Terms</Link>
-            <Link href="/privacy" className="lp-footer-link">Privacy</Link>
-            <a href="mailto:hello@imprynt.io" className="lp-footer-link">hello@imprynt.io</a>
+          <div className="lp-footer-bottom">
+            <div className="lp-footer-left">
+              <span className="lp-footer-mark" />
+              &copy; 2026 Imprynt LLC
+            </div>
+            <div className="lp-footer-links">
+              <Link href="/explore" className="lp-footer-link">Explore</Link>
+              <Link href="/faq" className="lp-footer-link">FAQ</Link>
+              <Link href="/terms" className="lp-footer-link">Terms</Link>
+              <Link href="/privacy" className="lp-footer-link">Privacy</Link>
+              <a href="mailto:hello@imprynt.io" className="lp-footer-link">hello@imprynt.io</a>
+            </div>
           </div>
         </footer>
       </div>

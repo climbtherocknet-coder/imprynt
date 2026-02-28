@@ -1813,3 +1813,76 @@
     padding-right: 1.25rem;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Newsletter Signup
+   ═══════════════════════════════════════════════════════════════ */
+
+.lp-footer-newsletter {
+  text-align: center;
+  padding: 2rem 0 2.5rem;
+  border-bottom: 1px solid var(--lp-border);
+  margin-bottom: 2rem;
+}
+
+.lp-footer-nl-heading {
+  font-family: var(--lp-serif);
+  font-size: 1.125rem;
+  margin-bottom: 1rem;
+}
+
+.lp-nl-form {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 400px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.lp-nl-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.5625rem 0.875rem;
+  border: 1px solid var(--lp-border);
+  border-radius: 2rem;
+  font-size: 0.875rem;
+  font-family: var(--lp-sans);
+  background: var(--lp-surface);
+  color: var(--lp-text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.lp-nl-input:focus { border-color: var(--lp-accent); }
+.lp-nl-input::placeholder { color: var(--lp-text-muted); }
+
+.lp-nl-btn {
+  padding: 0.5625rem 1.25rem;
+  background: var(--lp-accent);
+  color: var(--lp-accent-contrast);
+  border: none;
+  border-radius: 2rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: var(--lp-sans);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.lp-nl-btn:hover { background: var(--lp-accent-hover); }
+.lp-nl-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.lp-nl-success {
+  font-size: 0.875rem;
+  color: var(--lp-sage);
+  font-weight: 500;
+}
+
+.lp-nl-error {
+  font-size: 0.75rem;
+  color: #ef4444;
+  width: 100%;
+  text-align: center;
+  margin-top: 0.25rem;
+}

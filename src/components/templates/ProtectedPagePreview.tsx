@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import '@/styles/profile.css';
-import { getTheme, getCustomTheme, getThemeCSSVars, getTemplateDataAttrs, getAccentOverrideVars, isDarkTemplate, LINK_ICONS, type CustomThemeData } from '@/lib/themes';
+import { getTheme, getCustomTheme, getThemeCSSVars, getTemplateDataAttrs, getAccentOverrideVars, getAccentContrastColor, isDarkTemplate, LINK_ICONS, type CustomThemeData } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
 import SaveContactButton from '@/components/templates/SaveContactButton';
 
@@ -42,6 +42,8 @@ interface ProtectedPagePreviewProps {
   linkShape?: string;
   linkButtonColor?: string | null;
   linkDisplay?: string;
+  saveButtonStyle?: string;
+  saveButtonColor?: string | null;
 }
 
 function getPhotoStyles(shape: string, radius: number, size: string, posX: number, posY: number): React.CSSProperties {
@@ -109,6 +111,8 @@ export default function ProtectedPagePreview({
   linkShape = 'pill',
   linkButtonColor,
   linkDisplay = 'default',
+  saveButtonStyle = 'auto',
+  saveButtonColor,
 }: ProtectedPagePreviewProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -130,6 +134,13 @@ export default function ProtectedPagePreview({
     ),
     ...accentOverrides,
     ...(linkButtonColor ? { '--link-btn-color': linkButtonColor } : {}),
+    ...(saveButtonStyle === 'custom' && saveButtonColor
+      ? { '--save-btn-bg': saveButtonColor, '--save-btn-color': getAccentContrastColor(saveButtonColor, theme.colors.bg) }
+      : saveButtonStyle === 'inverted'
+      ? { '--save-btn-bg': theme.colors.text, '--save-btn-color': theme.colors.bg }
+      : saveButtonStyle === 'accent' && accent
+      ? { '--save-btn-bg': accent, '--save-btn-color': getAccentContrastColor(accent, theme.colors.bg) }
+      : {}),
   } as React.CSSProperties;
 
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
@@ -282,6 +293,7 @@ export default function ProtectedPagePreview({
         {links.length > 0 && (
           linkDisplay === 'icons' ? (
             <div className="link-icons-row">
+              {profileId && <SaveContactButton profileId={profileId} pinProtected={false} iconOnly={true} inline={true} />}
               {links.map((link, i) => {
                 const btnColor = link.buttonColor || linkButtonColor || null;
                 return (
@@ -322,23 +334,19 @@ export default function ProtectedPagePreview({
                 </a>
               );
             };
-            if (ls === 'stacked') return (
-              <div className="link-stacked">{links.map((l, i) => renderLink(l, i, 'link-stacked-item'))}</div>
-            );
-            if (ls === 'full-width-pills') return (
-              <div className="link-full-width">{links.map((l, i) => renderLink(l, i, 'link-full-width-item'))}</div>
-            );
             return (
-              <div className="link-row">{links.map((l, i) => renderLink(l, i, 'link-pill'))}</div>
+              <>
+                {profileId && <SaveContactButton profileId={profileId} pinProtected={false} />}
+                {ls === 'stacked' ? (
+                  <div className="link-stacked">{links.map((l, i) => renderLink(l, i, 'link-stacked-item'))}</div>
+                ) : ls === 'full-width-pills' ? (
+                  <div className="link-full-width">{links.map((l, i) => renderLink(l, i, 'link-full-width-item'))}</div>
+                ) : (
+                  <div className="link-row">{links.map((l, i) => renderLink(l, i, 'link-pill'))}</div>
+                )}
+              </>
             );
           })()
-        )}
-
-        {/* Save Contact */}
-        {profileId && (
-          <div style={{ marginTop: links.length > 0 ? '1.5rem' : '0' }}>
-            <SaveContactButton profileId={profileId} pinProtected={false} />
-          </div>
         )}
 
         {/* Resume (showcase only) */}

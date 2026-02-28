@@ -25,6 +25,7 @@ export async function GET(
             pp.photo_zoom as page_photo_zoom, pp.cover_position_x as page_cover_position_x, pp.cover_zoom as page_cover_zoom,
             pp.bg_image_position_x as page_bg_image_position_x, pp.bg_image_zoom as page_bg_image_zoom,
             p.link_size, p.link_shape, p.link_button_color, p.link_display,
+            p.save_button_style, p.save_button_color,
             p.template, p.primary_color, p.accent_color, p.font_pair,
             u.first_name, u.last_name, p.photo_url, p.title as profile_title,
             p.company, p.slug, p.id as profile_id
@@ -129,6 +130,8 @@ export async function GET(
       accentColor: page.accent_color,
       fontPair: page.font_pair,
       customTheme,
+      saveButtonStyle: page.save_button_style || 'auto',
+      saveButtonColor: page.save_button_color || null,
     },
     links: linksResult.rows.map((l: Record<string, unknown>) => ({
       id: l.id,

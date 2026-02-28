@@ -145,9 +145,44 @@ const ContactCardSection = forwardRef<ContactCardSectionRef, ContactCardSectionP
       letterSpacing: '0.03em',
     };
 
+    // Compute the current effective save button color for the swatch preview
+    const currentSaveBtnColor =
+      saveButtonStyle === 'custom' ? (saveButtonColor || '#e8a849') :
+      saveButtonStyle === 'accent' ? 'var(--accent, #e8a849)' :
+      saveButtonStyle === 'inverted' ? 'var(--text, #eceef2)' :
+      'var(--save-btn-bg, #e8a849)';
+
     // ── JSX ────────────────────────────────────────────
     return (
       <>
+        {/* ── Save Button Style (top of section) ───── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+          <label style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-mid, #a8adb8)', whiteSpace: 'nowrap' }}>Save button</label>
+          <div style={{
+            width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+            background: currentSaveBtnColor,
+            border: '1px solid var(--border, #1e2535)',
+          }} />
+          <select
+            value={saveButtonStyle}
+            onChange={e => setSaveButtonStyle(e.target.value)}
+            style={{ ...inputStyle, cursor: 'pointer', flex: 1, marginBottom: 0 }}
+          >
+            <option value="auto">Auto</option>
+            <option value="accent">Accent</option>
+            <option value="inverted">Inverted</option>
+            <option value="custom">Custom</option>
+          </select>
+          {saveButtonStyle === 'custom' && (
+            <input
+              type="color"
+              value={saveButtonColor || '#e8a849'}
+              onChange={e => setSaveButtonColor(e.target.value)}
+              style={{ width: 32, height: 32, border: 'none', background: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+            />
+          )}
+        </div>
+
         <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 1rem' }}>
           These fields are included when visitors save your contact. Toggle visibility for Business and Personal vCards.
         </p>
@@ -223,31 +258,6 @@ const ContactCardSection = forwardRef<ContactCardSectionRef, ContactCardSectionP
           + Add custom field
         </button>
 
-        {/* ── Save Button Style ─────────────────────────── */}
-        <div style={{ borderTop: '1px solid var(--border, #1e2535)', marginTop: '1.25rem', paddingTop: '1rem' }}>
-          <label style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-mid, #a8adb8)', display: 'block', marginBottom: '0.375rem' }}>Save button style</label>
-          <select
-            value={saveButtonStyle}
-            onChange={e => setSaveButtonStyle(e.target.value)}
-            style={{ ...inputStyle, cursor: 'pointer' }}
-          >
-            <option value="auto">Auto (matches template)</option>
-            <option value="accent">Accent color</option>
-            <option value="inverted">Inverted</option>
-            <option value="custom">Custom color</option>
-          </select>
-          {saveButtonStyle === 'custom' && (
-            <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>Color</label>
-              <input
-                type="color"
-                value={saveButtonColor || '#e8a849'}
-                onChange={e => setSaveButtonColor(e.target.value)}
-                style={{ width: 32, height: 32, border: '1px solid var(--border, #1e2535)', borderRadius: '0.375rem', padding: 0, cursor: 'pointer', background: 'none' }}
-              />
-            </div>
-          )}
-        </div>
       </>
     );
   },

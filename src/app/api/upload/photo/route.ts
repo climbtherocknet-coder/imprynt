@@ -7,7 +7,6 @@ import { randomBytes } from 'crypto';
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads', 'photos');
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -39,22 +38,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate unique filename
+    // Generate unique filename in user-specific directory
     const ext = file.type === 'image/jpeg' ? 'jpg'
       : file.type === 'image/png' ? 'png'
       : 'webp';
     const filename = `${randomBytes(16).toString('hex')}.${ext}`;
+    const uploadDir = join(process.cwd(), 'public', 'uploads', userId, 'photos');
 
     // Ensure upload directory exists
-    await mkdir(UPLOAD_DIR, { recursive: true });
+    await mkdir(uploadDir, { recursive: true });
 
     // Write file
     const bytes = await file.arrayBuffer();
-    const filepath = join(UPLOAD_DIR, filename);
+    const filepath = join(uploadDir, filename);
     await writeFile(filepath, Buffer.from(bytes));
 
     // URL path served by Next.js static files
-    const photoUrl = `/uploads/photos/${filename}`;
+    const photoUrl = `/uploads/${userId}/photos/${filename}`;
 
     // Update profile photo_url in database
     await query(

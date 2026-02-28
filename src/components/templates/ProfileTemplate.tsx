@@ -265,6 +265,7 @@ export default function ProfileTemplate({
             <>
               {linkDisplay === 'icons' ? (
                 <div className="link-icons-row fade-in d3">
+                  <SaveContactButton profileId={profileId} pinProtected={vcardPinEnabled} iconOnly={true} inline={true} />
                   {links.map(link => {
                     const btnColor = link.buttonColor || linkButtonColor || null;
                     return (
@@ -286,10 +287,12 @@ export default function ProfileTemplate({
                       </a>
                     );
                   })}
-                  <SaveContactButton profileId={profileId} pinProtected={vcardPinEnabled} iconOnly={true} inline={true} />
                 </div>
               ) : (
                 <>
+                  {/* Save Contact renders first, before link buttons */}
+                  <SaveContactButton profileId={profileId} pinProtected={vcardPinEnabled} iconOnly={false} />
+
                   {linkStyle === 'pills' && (
                     <div className="link-row fade-in d3">
                       {links.map(link => (
@@ -326,11 +329,6 @@ export default function ProfileTemplate({
                 </>
               )}
             </>
-          )}
-
-          {/* Save Contact — icon mode renders it inline above, label modes render it here */}
-          {linkDisplay !== 'icons' && (
-            <SaveContactButton profileId={profileId} pinProtected={vcardPinEnabled} iconOnly={false} />
           )}
         </div>
         </div>{/* end .profile-top */}

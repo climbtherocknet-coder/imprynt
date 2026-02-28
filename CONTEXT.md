@@ -2,8 +2,8 @@
 
 **Purpose:** This file is the shared memory between Claude sessions. After each work session or push, update the relevant sections so context is never lost if a conversation resets.
 
-**Last updated:** February 27, 2026
-**Updated by:** Claude (session 12 — ring photo + deploy)
+**Last updated:** February 28, 2026
+**Updated by:** Claude (session 14 — critical cleanup v0.10.5)
 
 ---
 
@@ -191,6 +191,31 @@ docker compose up --build
     2. Event pod timezone fix (store timezone, stop UTC conversion)
     3. Event pod public renderer (full build in PodRenderer.tsx)
     4. Admin portal consolidation into Command Center (add admin tabs, keep legacy alive until verified)
+
+### February 28, 2026 (Session 14) — Critical Cleanup (v0.10.5)
+- **Fixed:** Gallery images restored from local files (`gallery-seed.sql` with `/gallery/covers/` and `/gallery/backgrounds/` paths). Deleted bad Unsplash seed (`gallery_images.sql`).
+- **Fixed:** Event time regex accepts space separator from PostgreSQL TIMESTAMPTZ→TEXT conversion (`[T ]` instead of `T` in `parseDatetimeLocal`).
+- **Simplified:** ProfileFAB reduced from 5 items to 2 — Share (Web Share API / clipboard fallback) and Unlock (PIN entry, shown only when protected page exists). Main button is Imprynt circle-dot mark using `--accent` color. Removed QR, Portfolio, and "Back to Imprynt" buttons.
+- **Moved:** Save Contact button now renders FIRST in links (before social link icons/pills) across all three rendering contexts: ProfileTemplate (main profile), ProtectedPagePreview (editor preview), and ProtectedPageView (live protected page).
+- **Verified:** Photo zoom persistence fully wired (166 references across 14 files — API GET/PUT, editor, ProfileTemplate, protected pages). No additional work needed.
+- **Verified:** Save button differentiation fully wired (themes with saveBtnBg/saveBtnColor, CSS variables `--save-btn-bg`/`--save-btn-color`, editor customization, API GET/PUT). No additional work needed.
+- **Version:** v0.10.5
+- **Files modified:** `src/components/ProfileFAB.tsx` (rewritten — simplified interface), `src/app/[slug]/ProfileClient.tsx` (FAB props updated, save contact moved first), `src/styles/profile.css` (FAB CSS simplified), `src/components/templates/ProfileTemplate.tsx` (SaveContactButton moved to first position), `src/components/templates/ProtectedPagePreview.tsx` (SaveContactButton moved to first position), `src/components/pods/PodRenderer.tsx` (event time regex fix)
+- **Files deleted:** `db/seeds/gallery_images.sql`
+
+### February 28, 2026 (Session 13) — Gallery + FAB + Newsletter + Media Library (v0.10.4)
+- **Wired:** GalleryPicker component already integrated into cover photo and background image editors (VisualsSection). Seeded `image_gallery` table with curated Unsplash images (16 covers, 12 backgrounds) via `db/seeds/gallery_images.sql`.
+- **Verified:** Photo zoom/crop persistence already fully working (read/write/render). No fix needed.
+- **Fixed:** PIN validation UX — replaced top-of-page error with inline error below PIN fields. Added "4-6 digits" hint text. Error only shows on submit, not while typing. Applied to both PersonalTab and PortfolioTab.
+- **New:** ProfileFAB component (`src/components/ProfileFAB.tsx`) — single floating action button replaces scattered floating buttons (share, QR). Expands upward to reveal Personal, Portfolio, QR, Share, and "Back to Imprynt" sub-buttons with staggered animation. Impression circle-dot stays separate (it's part of the profile design, not navigation). CSS in profile.css.
+- **Fixed:** Personal page Save Contact now follows same `--save-btn-bg`/`--save-btn-color` styling as main profile. Added `save_button_style`/`save_button_color` to protected pages API response (`/api/protected-pages/[pageId]`), `ProtectedPageContent` interface, `ProtectedPageView` CSS variable overrides, and `ProtectedPagePreview` props.
+- **Moved:** Save button style control to top of Contact Card editor section with inline color swatch preview. Removed old bottom-of-section placement.
+- **New:** Newsletter signup system — `newsletter_subscribers` table (migration 055), `/api/newsletter` endpoint (upsert with reactivation), `NewsletterSignup` client component, footer integration on landing page, CSS in `landing.css`. Admin dashboard shows subscriber count in Platform Stats.
+- **Updated:** File uploads now use user-specific directories (`/uploads/{userId}/photos/`, `/uploads/{userId}/images/`, etc.). Existing file URLs remain valid.
+- **New:** User media gallery — `/dashboard/media` page shows all uploaded images/audio across profile, pods, and protected pages. Grid layout with click-to-copy URL. API at `/api/media`.
+- **Version:** v0.10.4
+- **Files created:** `src/components/ProfileFAB.tsx`, `src/components/NewsletterSignup.tsx`, `src/app/api/newsletter/route.ts`, `src/app/api/media/route.ts`, `src/app/dashboard/media/page.tsx`, `db/migrations/055_newsletter.sql`, `db/seeds/gallery_images.sql`
+- **Files modified:** `src/app/[slug]/ProfileClient.tsx` (FAB integration, removed ShareButton), `src/styles/profile.css` (FAB CSS), `src/app/dashboard/page-editor/tabs/PersonalTab.tsx` (PIN validation), `src/app/dashboard/page-editor/tabs/PortfolioTab.tsx` (PIN validation), `src/components/templates/ProtectedPagePreview.tsx` (save button styling), `src/app/api/protected-pages/[pageId]/route.ts` (save button fields), `src/components/editor/ContactCardSection.tsx` (save button UI repositioned), `src/app/page.tsx` (newsletter in footer), `src/styles/landing.css` (newsletter CSS), `src/components/admin/CCOverview.tsx` (newsletter stat), `src/app/api/admin/stats/route.ts` (newsletter count), `src/app/api/upload/photo/route.ts` (user directories), `src/app/api/upload/file/route.ts` (user directories), `src/app/dashboard/page.tsx` (My Media card), `db/init.sql` (newsletter table)
 
 ### February 26, 2026 — Four-Task Sprint Complete
 - **All 4 tasks from CLAUDE_CODE_PROMPT_2026-02-25.md completed:**

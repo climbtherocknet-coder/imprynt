@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { getTheme, getCustomTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, getAccentOverrideVars, isDarkTemplate, LINK_ICONS } from '@/lib/themes';
+import { getTheme, getCustomTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, getAccentOverrideVars, getAccentContrastColor, isDarkTemplate, LINK_ICONS } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
 import ProfileFeedbackButton from '@/components/ReportButton';
+import ProfileFAB from '@/components/ProfileFAB';
 import '@/styles/profile.css';
 
 // ── Types ──────────────────────────────────────────────
@@ -37,6 +38,7 @@ interface ProtectedPageContent {
     title: string; company: string; template: string;
     primaryColor: string; accentColor: string; fontPair: string;
     customTheme?: Record<string, string> | null;
+    saveButtonStyle?: string; saveButtonColor?: string | null;
   };
   links: { id: string; linkType: string; label: string; url: string; buttonColor?: string | null }[];
   pods?: PodData[];
@@ -365,6 +367,17 @@ function ProtectedPageView({
   const dataAttrs = getTemplateDataAttrs(theme);
   const googleFontsUrl = getGoogleFontsUrl(theme);
 
+  // Save button overrides
+  const sbStyle = content.profile.saveButtonStyle || 'auto';
+  const sbColor = content.profile.saveButtonColor;
+  const saveBtnOverrides: Record<string, string> = sbStyle === 'custom' && sbColor
+    ? { '--save-btn-bg': sbColor, '--save-btn-color': getAccentContrastColor(sbColor, theme.colors.bg) }
+    : sbStyle === 'inverted'
+    ? { '--save-btn-bg': theme.colors.text, '--save-btn-color': theme.colors.bg }
+    : sbStyle === 'accent' && accent
+    ? { '--save-btn-bg': accent, '--save-btn-color': getAccentContrastColor(accent, theme.colors.bg) }
+    : {};
+
   const cssVarStyle = {
     ...Object.fromEntries(
       cssVars.split('; ').map(v => {
@@ -373,6 +386,7 @@ function ProtectedPageView({
       })
     ),
     ...accentOverrides,
+    ...saveBtnOverrides,
   } as React.CSSProperties;
 
   const fullName = [content.profile.firstName, content.profile.lastName].filter(Boolean).join(' ');
@@ -583,6 +597,25 @@ function ProtectedPageView({
         {/* Divider */}
         <div style={{ width: 40, height: 2, backgroundColor: 'var(--border)', margin: '1.5rem auto', borderRadius: 1 }} />
 
+        {/* Save Contact — renders first, before links */}
+        {isPersonal && downloadToken && (
+          <div style={{ marginBottom: content.links.length > 0 ? '1rem' : '0' }}>
+            <a
+              href={`/api/vcard/${profileId}/personal?token=${downloadToken}`}
+              className="save-btn"
+            >
+              Save Personal Contact
+            </a>
+          </div>
+        )}
+        {!isPersonal && (
+          <div style={{ marginBottom: content.links.length > 0 ? '1rem' : '0' }}>
+            <a href={`/api/vcard/${profileId}`} className="save-btn">
+              Save Contact
+            </a>
+          </div>
+        )}
+
         {/* Links */}
         {content.links.length > 0 && (
           <>
@@ -639,26 +672,6 @@ function ProtectedPageView({
           </>
         )}
 
-        {/* Personal vCard download (impression pages only) */}
-        {isPersonal && downloadToken && (
-          <div style={{ marginTop: content.links.length > 0 ? '1rem' : '0' }}>
-            <a
-              href={`/api/vcard/${profileId}/personal?token=${downloadToken}`}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: '0.5rem', padding: '0.75rem 1.25rem',
-                borderRadius: 'var(--radius)', textDecoration: 'none',
-                fontWeight: 600, fontSize: '0.875rem',
-                backgroundColor: 'var(--accent-soft)',
-                color: accent,
-                border: '1px solid var(--accent-border)',
-              }}
-            >
-              Save Personal Contact
-            </a>
-          </div>
-        )}
-
         {/* Resume link (showcase pages only, when enabled) */}
         {!isPersonal && content.page.resumeUrl && content.page.showResume !== false && (
           <div style={{ marginTop: content.links.length > 0 ? '1rem' : '0' }}>
@@ -677,26 +690,6 @@ function ProtectedPageView({
               }}
             >
               View Resume
-            </a>
-          </div>
-        )}
-
-        {/* Save Contact (showcase pages only) */}
-        {!isPersonal && (
-          <div style={{ marginTop: content.links.length > 0 || (content.page.resumeUrl && content.page.showResume !== false) ? '1rem' : '0' }}>
-            <a
-              href={`/api/vcard/${profileId}`}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: '0.5rem', padding: '0.75rem 1.25rem',
-                borderRadius: 'var(--radius)', textDecoration: 'none',
-                fontWeight: 600, fontSize: '0.875rem',
-                backgroundColor: 'var(--accent-soft)',
-                color: accent,
-                border: '1px solid var(--accent-border)',
-              }}
-            >
-              Save Contact
             </a>
           </div>
         )}
@@ -828,92 +821,6 @@ function ProtectedPageView({
   );
 }
 
-// ── Share Button ─────────────────────────────────────────
-
-function ShareButton({ profileId, isDark }: { profileId: string; isDark: boolean }) {
-  const [copied, setCopied] = useState(false);
-
-  async function handleShare() {
-    const url = window.location.href;
-    const title = document.title;
-
-    // Log share event
-    fetch('/api/share', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profileId }),
-    }).catch(() => {});
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title, url });
-        return;
-      } catch {
-        // User cancelled or share failed — fall through to clipboard
-      }
-    }
-
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard failed silently
-    }
-  }
-
-  return (
-    <div style={{ position: 'relative' }}>
-      <button
-        onClick={handleShare}
-        aria-label="Share profile"
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: '50%',
-          border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)'}`,
-          backgroundColor: 'transparent',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 0,
-          opacity: copied ? 1 : 0.5,
-          transition: 'opacity 0.2s',
-          color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
-          WebkitTapHighlightColor: 'transparent',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.opacity = '1'; }}
-        onMouseLeave={e => { if (!copied) e.currentTarget.style.opacity = '0.5'; }}
-      >
-        {/* Share icon (arrow up from box) */}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-          <polyline points="16 6 12 2 8 6" />
-          <line x1="12" y1="2" x2="12" y2="15" />
-        </svg>
-      </button>
-      {copied && (
-        <div style={{
-          position: 'absolute',
-          bottom: '100%',
-          right: 0,
-          marginBottom: '0.375rem',
-          padding: '0.375rem 0.75rem',
-          borderRadius: '9999px',
-          backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.8)',
-          color: '#fff',
-          fontSize: '0.75rem',
-          fontWeight: 500,
-          whiteSpace: 'nowrap',
-          backdropFilter: 'blur(4px)',
-        }}>
-          Link copied!
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ── Main Client Component ──────────────────────────────
 
@@ -1054,56 +961,7 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
 
   return (
     <>
-      {/* Bottom-right floating buttons (stacked) */}
-      <div style={{
-        position: 'fixed',
-        bottom: 16,
-        right: 16,
-        zIndex: 50,
-        display: 'flex',
-        flexDirection: 'column-reverse',
-        gap: '0.5rem',
-        alignItems: 'center',
-      }}>
-        {/* Share button (bottom of stack) */}
-        {allowSharing && (
-          <ShareButton profileId={profileId} isDark={isDark} />
-        )}
-        {/* QR code button */}
-        {showQrButton && (
-          <button
-            onClick={() => { setShowQrModal(true); setQrImgLoaded(false); setQrImgError(false); }}
-            aria-label="Show QR code"
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)'}`,
-              backgroundColor: 'transparent',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-              opacity: 0.5,
-              WebkitTapHighlightColor: 'transparent',
-              transition: 'opacity 0.2s',
-              color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.opacity = '1'; }}
-            onMouseLeave={e => { e.currentTarget.style.opacity = '0.5'; }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/>
-              <path d="M14 14h2v2h-2zM18 14h3v3h-3zM14 18h2v3h-2z"/>
-            </svg>
-          </button>
-        )}
-      </div>
-
-      {/* Impression: circle-dot logo mark (also handles showcase/protected pages) */}
+      {/* Impression: circle-dot logo mark (stays on profile, separate from FAB) */}
       {hasPersonal && (
         <button
           onClick={() => setShowPinModal(true)}
@@ -1134,6 +992,14 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
           }} />
         </button>
       )}
+
+      {/* Floating Action Button */}
+      <ProfileFAB
+        hasProtectedPage={hasPersonal || portfolioPages.length > 0}
+        profileUrl={typeof window !== 'undefined' ? window.location.href : ''}
+        onUnlockClick={() => setShowPinModal(true)}
+        accent={accent}
+      />
 
       {/* PIN Modal */}
       {showPinModal && (
