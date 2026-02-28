@@ -333,6 +333,13 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           isPaid={isPaid}
           onChange={handleVisualsChange}
           onError={setError}
+          heroPreview={{
+            firstName: data.user?.firstName,
+            lastName: data.user?.lastName,
+            title: data.profile.title,
+            company: data.profile.company,
+            statusTags: data.profile.statusTags,
+          }}
         />
 
         {/* ─── Links Section ───────────────────────── */}

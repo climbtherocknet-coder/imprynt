@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import ImageCropper from '@/components/ui/ImageCropper';
+import CoverPreview from '@/components/ui/CoverPreview';
 import GalleryPicker from '@/components/ui/GalleryPicker';
 import { labelStyle, sectionTitleStyle } from './constants';
 
@@ -34,6 +35,13 @@ export interface VisualsSectionProps {
   isPaid: boolean;
   onChange: (state: VisualsState) => void;
   onError: (msg: string) => void;
+  heroPreview?: {
+    firstName?: string;
+    lastName?: string;
+    title?: string;
+    company?: string;
+    statusTags?: string[];
+  };
 }
 
 export interface VisualsSectionRef {
@@ -54,7 +62,7 @@ const sectionStyleLocal: React.CSSProperties = {
 // ── Component ────────────────────────────────────────────
 
 const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
-  ({ initial, isPaid, onChange, onError }, ref) => {
+  ({ initial, isPaid, onChange, onError, heroPreview }, ref) => {
     // ── VisualsState fields ──
     const [photoUrl, setPhotoUrl] = useState(initial.photoUrl);
     const [photoShape, setPhotoShape] = useState(initial.photoShape);
@@ -567,14 +575,20 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
             </button>
           </div>
           {coverUrl && (
-            <ImageCropper
+            <CoverPreview
               src={coverUrl}
-              frameShape="banner"
               positionX={coverPositionX}
               positionY={coverPositionY}
               zoom={coverZoom}
+              opacity={coverOpacity}
               onPositionChange={(x, y) => { setCoverPositionX(x); setCoverPositionY(y); }}
               onZoomChange={setCoverZoom}
+              photoUrl={photoUrl}
+              firstName={heroPreview?.firstName}
+              lastName={heroPreview?.lastName}
+              title={heroPreview?.title}
+              company={heroPreview?.company}
+              statusTags={heroPreview?.statusTags}
             />
           )}
           {coverUrl && (

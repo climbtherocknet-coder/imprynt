@@ -5,6 +5,7 @@ import PodEditor from '@/components/pods/PodEditor';
 import ToggleSwitch from '@/components/ToggleSwitch';
 import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import ImageCropper from '@/components/ui/ImageCropper';
+import CoverPreview from '@/components/ui/CoverPreview';
 import GalleryPicker from '@/components/ui/GalleryPicker';
 import ProtectedPagePreview from '@/components/templates/ProtectedPagePreview';
 import EditorFloatingButtons from '../EditorFloatingButtons';
@@ -1042,14 +1043,17 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                 </button>
               </div>
               {coverUrl && (
-                <ImageCropper
+                <CoverPreview
                   src={coverUrl}
-                  frameShape="banner"
                   positionX={coverPositionX}
                   positionY={coverPositionY}
                   zoom={coverZoom}
+                  opacity={coverOpacity}
                   onPositionChange={(x, y) => { setCoverPositionX(x); setCoverPositionY(y); }}
                   onZoomChange={setCoverZoom}
+                  photoUrl={(photoMode === 'custom' && photoUrl) ? photoUrl : profileData?.photoUrl}
+                  firstName={profileData?.firstName}
+                  lastName={profileData?.lastName}
                 />
               )}
               {coverUrl && (
