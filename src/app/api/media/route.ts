@@ -18,9 +18,13 @@ export async function GET() {
       UNION ALL
       SELECT bg_image_url AS url, 'background' AS type FROM profiles WHERE user_id = $1 AND bg_image_url IS NOT NULL AND bg_image_url != ''
       UNION ALL
-      SELECT image_url AS url, 'pod_image' AS type FROM pods WHERE user_id = $1 AND image_url IS NOT NULL AND image_url != ''
+      SELECT p.image_url AS url, 'pod_image' AS type FROM pods p JOIN profiles pr ON pr.id = p.profile_id WHERE pr.user_id = $1 AND p.image_url IS NOT NULL AND p.image_url != ''
       UNION ALL
-      SELECT audio_url AS url, 'audio' AS type FROM pods WHERE user_id = $1 AND audio_url IS NOT NULL AND audio_url != ''
+      SELECT p.audio_url AS url, 'audio' AS type FROM pods p JOIN profiles pr ON pr.id = p.profile_id WHERE pr.user_id = $1 AND p.audio_url IS NOT NULL AND p.audio_url != ''
+      UNION ALL
+      SELECT p.image_url AS url, 'pod_image' AS type FROM pods p JOIN protected_pages pp ON pp.id = p.protected_page_id WHERE pp.user_id = $1 AND p.image_url IS NOT NULL AND p.image_url != ''
+      UNION ALL
+      SELECT p.audio_url AS url, 'audio' AS type FROM pods p JOIN protected_pages pp ON pp.id = p.protected_page_id WHERE pp.user_id = $1 AND p.audio_url IS NOT NULL AND p.audio_url != ''
       UNION ALL
       SELECT pp.photo_url AS url, 'page_photo' AS type FROM protected_pages pp WHERE pp.user_id = $1 AND pp.photo_url IS NOT NULL AND pp.photo_url != ''
       UNION ALL

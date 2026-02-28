@@ -44,6 +44,21 @@ const descStyle: React.CSSProperties = {
   lineHeight: 1.5,
 };
 
+const compactBtnStyle: React.CSSProperties = {
+  fontSize: '0.6875rem',
+  fontWeight: 600,
+  padding: '0.25rem 0.5rem',
+  borderRadius: '0.375rem',
+  border: '1px solid var(--border-light, #283042)',
+  background: 'transparent',
+  color: 'var(--text-muted, #5d6370)',
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+  flexShrink: 0,
+  whiteSpace: 'nowrap',
+  transition: 'all 0.15s',
+};
+
 function CopyButton({ url, label }: { url: string; label: string }) {
   const [copied, setCopied] = useState(false);
   async function copy() {
@@ -81,6 +96,7 @@ export default function MyUrlsCard({ slug: initialSlug, redirectId }: Props) {
   const [rotating, setRotating] = useState(false);
   const [rotateError, setRotateError] = useState('');
   const [origin, setOrigin] = useState('');
+  const [compactCopied, setCompactCopied] = useState(false);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -107,6 +123,19 @@ export default function MyUrlsCard({ slug: initialSlug, redirectId }: Props) {
     }
   }
 
+  async function copyCompact() {
+    try { await navigator.clipboard.writeText(shareUrl); } catch { return; }
+    setCompactCopied(true);
+    setTimeout(() => setCompactCopied(false), 2000);
+  }
+
+  function downloadQr() {
+    const a = document.createElement('a');
+    a.href = '/api/profile/qr?format=png';
+    a.download = 'imprynt-qr.png';
+    a.click();
+  }
+
   return (
     <>
       {/* Compact display */}
@@ -122,23 +151,22 @@ export default function MyUrlsCard({ slug: initialSlug, redirectId }: Props) {
         }}>
           {displayUrl(shareUrl)}
         </span>
-        <CopyButton url={shareUrl} label="share link" />
         <button
-          onClick={() => setOpen(true)}
-          title="View all links"
+          onClick={copyCompact}
+          title="Copy share link"
           style={{
-            fontSize: '0.6875rem',
-            padding: '0.2rem 0.45rem',
-            borderRadius: '0.375rem',
-            border: '1px solid var(--border-light, #283042)',
-            background: 'transparent',
-            color: 'var(--text-muted, #5d6370)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            flexShrink: 0,
+            ...compactBtnStyle,
+            ...(compactCopied ? { background: 'rgba(34,197,94,0.12)', color: '#22c55e' } : {}),
           }}
         >
-          ···
+          {compactCopied ? '✓' : 'Copy'}
+        </button>
+        <button
+          onClick={() => setOpen(true)}
+          title="QR code & links"
+          style={compactBtnStyle}
+        >
+          QR
         </button>
       </div>
 
@@ -166,6 +194,8 @@ export default function MyUrlsCard({ slug: initialSlug, redirectId }: Props) {
               padding: '1.5rem',
               width: '100%',
               maxWidth: '480px',
+              maxHeight: '85vh',
+              overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
               gap: '1.25rem',
@@ -212,6 +242,45 @@ export default function MyUrlsCard({ slug: initialSlug, redirectId }: Props) {
               <p style={descStyle}>
                 Shortest link to your profile. Use for NFC rings, QR codes, and link-in-bio. Works even if you change your slug.
               </p>
+            </div>
+
+            {/* Divider */}
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border, #1e2535)', margin: 0 }} />
+
+            {/* QR Code */}
+            <div style={{ textAlign: 'center' }}>
+              <p style={labelStyle}>QR Code</p>
+              <p style={{ margin: '0 0 0.75rem', fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)' }}>
+                Scan to open your profile
+              </p>
+              <div style={{ background: '#ffffff', borderRadius: '0.75rem', padding: '0.75rem', display: 'inline-block' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/api/profile/qr"
+                  alt="QR code"
+                  width={160}
+                  height={160}
+                  style={{ display: 'block', borderRadius: '0.25rem' }}
+                />
+              </div>
+              <div style={{ marginTop: '0.5rem' }}>
+                <button
+                  onClick={downloadQr}
+                  style={{
+                    fontSize: '0.6875rem',
+                    fontWeight: 600,
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '0.375rem',
+                    border: '1px solid var(--border-light, #283042)',
+                    background: 'transparent',
+                    color: 'var(--text-muted, #5d6370)',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Download QR
+                </button>
+              </div>
             </div>
 
             {/* Divider */}

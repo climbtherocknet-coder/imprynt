@@ -1433,32 +1433,32 @@ a.pod-event-address:hover {
 }
 
 /* ═══════════════════════════════════════════
-   IMPRESSION ICON
+   IMPRESSION MENU (expandable circle-dot)
    ═══════════════════════════════════════════ */
-.impression-icon {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 26px;
-  height: 26px;
+.impression-menu-item {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 2px solid var(--accent);
+  border: 1px solid var(--border, rgba(255,255,255,0.15));
+  background: var(--surface, rgba(20,24,35,0.9));
+  color: var(--text, rgba(255,255,255,0.8));
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  opacity: 0.12;
-  transition: opacity 0.3s;
-  z-index: 50;
+  transition: opacity 0.15s ease, transform 0.15s ease, border-color 0.15s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 0;
 }
-.impression-icon::after {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
+.impression-menu-item:hover {
+  border-color: var(--accent);
 }
-.impression-icon:hover { opacity: 0.5; }
+.impression-menu-item-imprynt {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
 
 /* ═══════════════════════════════════════════
    COVER / BACKGROUND PHOTO
@@ -1959,75 +1959,3 @@ a.pod-event-address:hover {
   margin-top: 0.5rem;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   Profile FAB (Floating Action Button)
-   ═══════════════════════════════════════════════════════════════ */
-
-.profile-fab {
-  position: fixed;
-  bottom: 1.25rem;
-  right: 1.25rem;
-  z-index: 50;
-  display: flex;
-  flex-direction: column-reverse;
-  align-items: center;
-  gap: 0.625rem;
-}
-
-.fab-toggle {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-  transition: transform 0.2s;
-  z-index: 2;
-}
-
-.fab-toggle:hover { transform: scale(1.05); }
-
-.fab-items {
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 0.5rem;
-  pointer-events: none;
-}
-
-.fab-expanded .fab-items { pointer-events: auto; }
-
-.fab-item {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transform: translateY(8px) scale(0.8);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.fab-expanded .fab-item {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-.fab-item:hover {
-  border-color: var(--accent);
-}
-
-.fab-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 49;
-}

@@ -1,0 +1,1 @@
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS show_imprynt_link BOOLEAN DEFAULT true;

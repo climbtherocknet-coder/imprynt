@@ -3,7 +3,7 @@
 **Purpose:** This file is the shared memory between Claude sessions. After each work session or push, update the relevant sections so context is never lost if a conversation resets.
 
 **Last updated:** February 28, 2026
-**Updated by:** Claude (session 14 — critical cleanup v0.10.5)
+**Updated by:** Claude (session 15 — media gallery, QR, impression menu v0.10.6)
 
 ---
 
@@ -191,6 +191,19 @@ docker compose up --build
     2. Event pod timezone fix (store timezone, stop UTC conversion)
     3. Event pod public renderer (full build in PodRenderer.tsx)
     4. Admin portal consolidation into Command Center (add admin tabs, keep legacy alive until verified)
+
+### February 28, 2026 (Session 15) — Media Gallery + QR + Impression Menu (v0.10.6)
+- **Fixed:** My Media `/api/media` query — pods table uses `profile_id`, not `user_id`. Fixed with JOIN. Added protected page pod media.
+- **New:** "My Media" tab in GalleryPicker — users can pick their own uploaded images for cover/background photos. Filters out audio files.
+- **New:** QR code in My Links modal with download button. Dashboard card compact view shows QR shortcut button instead of "..." button.
+- **New:** Cover/background crossfade — when both exist, cover fades to transparent, bg image masked at top, smooth blend zone. Cover-only still fades to `--bg`.
+- **New:** BackgroundPreview component — phone-ratio (9:16) preview matching live rendering, with cover crossfade overlay. Replaces portrait ImageCropper.
+- **New:** CoverPreview component — phone-ratio cover preview with hero content overlay.
+- **Merged:** ProfileFAB deleted. Impression button now IS the expandable menu: Share, Unlock, QR Code, Imprynt link. Direction auto-detects from corner position (bottom = expand up, top = expand down). Imprynt link always shown (show_imprynt_link column added for future paid toggle).
+- **CSS:** Scrollbar hidden in phone preview containers (display:none). Old FAB and impression-icon CSS removed.
+- **Migration:** 056_show_imprynt_link.sql — `profiles.show_imprynt_link BOOLEAN DEFAULT true`
+- **Files deleted:** `src/components/ProfileFAB.tsx`
+- **Files created:** `src/components/ui/CoverPreview.tsx`, `src/components/ui/BackgroundPreview.tsx`
 
 ### February 28, 2026 (Session 14) — Critical Cleanup (v0.10.5)
 - **Fixed:** Gallery images restored from local files (`gallery-seed.sql` with `/gallery/covers/` and `/gallery/backgrounds/` paths). Deleted bad Unsplash seed (`gallery_images.sql`).

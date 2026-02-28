@@ -11,17 +11,38 @@ interface GalleryImage {
   tags?: string;
 }
 
+interface MediaItem {
+  url: string;
+  type: string;
+}
+
 interface GalleryPickerProps {
-  category: 'cover' | 'background';
+  category: 'cover' | 'background' | 'profile';
   currentUrl?: string;
   onSelect: (url: string) => void;
   onClose: () => void;
+  showMyMedia?: boolean;
 }
 
-export default function GalleryPicker({ category, currentUrl, onSelect, onClose }: GalleryPickerProps) {
+const tabBtnStyle = (active: boolean): React.CSSProperties => ({
+  padding: '0.375rem 0.75rem',
+  borderRadius: '9999px',
+  border: `1px solid ${active ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)'}`,
+  background: active ? 'var(--accent, #e8a849)' : 'transparent',
+  color: active ? 'var(--bg, #0c1017)' : 'var(--text-muted, #5d6370)',
+  fontSize: '0.75rem',
+  fontWeight: 500,
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+});
+
+export default function GalleryPicker({ category, currentUrl, onSelect, onClose, showMyMedia }: GalleryPickerProps) {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTag, setActiveTag] = useState('');
+  const [activeTab, setActiveTab] = useState<'gallery' | 'my-media'>('gallery');
+  const [myMedia, setMyMedia] = useState<MediaItem[]>([]);
+  const [myMediaLoading, setMyMediaLoading] = useState(false);
 
   useEffect(() => {
     fetch(`/api/gallery?category=${category}`)
@@ -29,6 +50,24 @@ export default function GalleryPicker({ category, currentUrl, onSelect, onClose 
       .then(data => { setImages(data.images || []); setLoading(false); })
       .catch(() => setLoading(false));
   }, [category]);
+
+  // Fetch my media when tab is activated
+  useEffect(() => {
+    if (activeTab === 'my-media' && myMedia.length === 0 && !myMediaLoading) {
+      setMyMediaLoading(true);
+      fetch('/api/media')
+        .then(r => r.json())
+        .then(data => {
+          // Filter to only image types (not audio)
+          const imageMedia = (data.media || []).filter((m: MediaItem) =>
+            !(/\.(mp3|wav|m4a|ogg|aac)$/i.test(m.url))
+          );
+          setMyMedia(imageMedia);
+        })
+        .catch(() => {})
+        .finally(() => setMyMediaLoading(false));
+    }
+  }, [activeTab, myMedia.length, myMediaLoading]);
 
   // Extract unique tags from images
   const tags = useMemo(() => {
@@ -48,6 +87,9 @@ export default function GalleryPicker({ category, currentUrl, onSelect, onClose 
       img.tags?.split(',').map(t => t.trim()).includes(activeTag)
     );
   }, [images, activeTag]);
+
+  const gridMin = category === 'cover' ? '180px' : '120px';
+  const aspectRatio = category === 'cover' ? '16/9' : '3/4';
 
   return (
     <div
@@ -79,7 +121,7 @@ export default function GalleryPicker({ category, currentUrl, onSelect, onClose 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexShrink: 0 }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text, #eceef2)', margin: 0 }}>
-            {category === 'cover' ? 'Cover Photos' : 'Backgrounds'}
+            {category === 'cover' ? 'Cover Photos' : category === 'profile' ? 'Profile Photos' : 'Backgrounds'}
           </h3>
           <button
             onClick={onClose}
@@ -97,143 +139,234 @@ export default function GalleryPicker({ category, currentUrl, onSelect, onClose 
           </button>
         </div>
 
-        {/* Tag filters */}
-        {tags.length > 1 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '0.75rem', flexShrink: 0 }}>
-            <button
-              onClick={() => setActiveTag('')}
-              style={{
-                padding: '0.25rem 0.625rem',
-                borderRadius: '9999px',
-                border: `1px solid ${!activeTag ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)'}`,
-                background: !activeTag ? 'var(--accent, #e8a849)' : 'transparent',
-                color: !activeTag ? 'var(--bg, #0c1017)' : 'var(--text-muted, #5d6370)',
-                fontSize: '0.75rem',
-                fontWeight: 500,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                textTransform: 'capitalize',
-              }}
-            >
-              All
+        {/* Tabs (Gallery / My Media) */}
+        {showMyMedia && (
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', flexShrink: 0 }}>
+            <button onClick={() => setActiveTab('gallery')} style={tabBtnStyle(activeTab === 'gallery')}>
+              Gallery
             </button>
-            {tags.map(tag => (
-              <button
-                key={tag}
-                onClick={() => setActiveTag(activeTag === tag ? '' : tag)}
-                style={{
-                  padding: '0.25rem 0.625rem',
-                  borderRadius: '9999px',
-                  border: `1px solid ${activeTag === tag ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)'}`,
-                  background: activeTag === tag ? 'var(--accent, #e8a849)' : 'transparent',
-                  color: activeTag === tag ? 'var(--bg, #0c1017)' : 'var(--text-muted, #5d6370)',
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {tag}
-              </button>
-            ))}
+            <button onClick={() => setActiveTab('my-media')} style={tabBtnStyle(activeTab === 'my-media')}>
+              My Media
+            </button>
           </div>
         )}
 
-        {/* Image grid */}
-        <div style={{ overflow: 'auto', flex: 1 }}>
-          {loading ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Loading...</p>
-          ) : filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-              <p style={{ color: 'var(--text-muted, #5d6370)', fontSize: '0.875rem' }}>
-                {images.length === 0 ? 'Gallery coming soon. Upload your own for now!' : 'No images match this filter.'}
-              </p>
-            </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: category === 'cover'
-                ? 'repeat(auto-fill, minmax(180px, 1fr))'
-                : 'repeat(auto-fill, minmax(120px, 1fr))',
-              gap: '0.5rem',
-            }}>
-              {filtered.map(img => {
-                const isSelected = currentUrl === img.url;
-                return (
+        {/* Gallery tab */}
+        {activeTab === 'gallery' && (
+          <>
+            {/* Tag filters */}
+            {tags.length > 1 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '0.75rem', flexShrink: 0 }}>
+                <button
+                  onClick={() => setActiveTag('')}
+                  style={{
+                    padding: '0.25rem 0.625rem',
+                    borderRadius: '9999px',
+                    border: `1px solid ${!activeTag ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)'}`,
+                    background: !activeTag ? 'var(--accent, #e8a849)' : 'transparent',
+                    color: !activeTag ? 'var(--bg, #0c1017)' : 'var(--text-muted, #5d6370)',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  All
+                </button>
+                {tags.map(tag => (
                   <button
-                    key={img.id}
-                    onClick={() => onSelect(img.url)}
+                    key={tag}
+                    onClick={() => setActiveTag(activeTag === tag ? '' : tag)}
                     style={{
-                      position: 'relative',
-                      background: 'none',
-                      border: `2px solid ${isSelected ? 'var(--accent, #e8a849)' : 'transparent'}`,
-                      borderRadius: '0.5rem',
-                      padding: 0,
+                      padding: '0.25rem 0.625rem',
+                      borderRadius: '9999px',
+                      border: `1px solid ${activeTag === tag ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)'}`,
+                      background: activeTag === tag ? 'var(--accent, #e8a849)' : 'transparent',
+                      color: activeTag === tag ? 'var(--bg, #0c1017)' : 'var(--text-muted, #5d6370)',
+                      fontSize: '0.75rem',
+                      fontWeight: 500,
                       cursor: 'pointer',
-                      overflow: 'hidden',
-                      aspectRatio: category === 'cover' ? '16/9' : '3/4',
-                      transition: 'transform 0.15s, border-color 0.15s',
-                    }}
-                    onMouseEnter={e => {
-                      (e.currentTarget as HTMLElement).style.transform = 'scale(1.03)';
-                      if (!isSelected) (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-light, #283042)';
-                    }}
-                    onMouseLeave={e => {
-                      (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
-                      if (!isSelected) (e.currentTarget as HTMLElement).style.borderColor = 'transparent';
+                      fontFamily: 'inherit',
+                      textTransform: 'capitalize',
                     }}
                   >
-                    <img
-                      src={img.thumbnail_url || img.url}
-                      alt={img.label || ''}
-                      loading="lazy"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                    />
-                    {/* Label overlay */}
-                    {img.label && (
-                      <span style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        padding: '0.75rem 0.5rem 0.375rem',
-                        background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
-                        color: '#fff',
-                        fontSize: '0.6875rem',
-                        fontWeight: 500,
-                        textAlign: 'left',
-                      }}>
-                        {img.label}
-                      </span>
-                    )}
-                    {/* Selected checkmark */}
-                    {isSelected && (
-                      <span style={{
-                        position: 'absolute',
-                        top: 6,
-                        right: 6,
-                        width: 22,
-                        height: 22,
-                        borderRadius: '50%',
-                        background: 'var(--accent, #e8a849)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.75rem',
-                        color: 'var(--bg, #0c1017)',
-                        fontWeight: 700,
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
-                      }}>
-                        ✓
-                      </span>
-                    )}
+                    {tag}
                   </button>
-                );
-              })}
+                ))}
+              </div>
+            )}
+
+            {/* Gallery image grid */}
+            <div style={{ overflow: 'auto', flex: 1 }}>
+              {loading ? (
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Loading...</p>
+              ) : filtered.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                  <p style={{ color: 'var(--text-muted, #5d6370)', fontSize: '0.875rem' }}>
+                    {images.length === 0 ? 'Gallery coming soon. Upload your own for now!' : 'No images match this filter.'}
+                  </p>
+                </div>
+              ) : (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(auto-fill, minmax(${gridMin}, 1fr))`,
+                  gap: '0.5rem',
+                }}>
+                  {filtered.map(img => {
+                    const isSelected = currentUrl === img.url;
+                    return (
+                      <button
+                        key={img.id}
+                        onClick={() => onSelect(img.url)}
+                        style={{
+                          position: 'relative',
+                          background: 'none',
+                          border: `2px solid ${isSelected ? 'var(--accent, #e8a849)' : 'transparent'}`,
+                          borderRadius: '0.5rem',
+                          padding: 0,
+                          cursor: 'pointer',
+                          overflow: 'hidden',
+                          aspectRatio,
+                          transition: 'transform 0.15s, border-color 0.15s',
+                        }}
+                        onMouseEnter={e => {
+                          (e.currentTarget as HTMLElement).style.transform = 'scale(1.03)';
+                          if (!isSelected) (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-light, #283042)';
+                        }}
+                        onMouseLeave={e => {
+                          (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+                          if (!isSelected) (e.currentTarget as HTMLElement).style.borderColor = 'transparent';
+                        }}
+                      >
+                        <img
+                          src={img.thumbnail_url || img.url}
+                          alt={img.label || ''}
+                          loading="lazy"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        />
+                        {img.label && (
+                          <span style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            padding: '0.75rem 0.5rem 0.375rem',
+                            background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+                            color: '#fff',
+                            fontSize: '0.6875rem',
+                            fontWeight: 500,
+                            textAlign: 'left',
+                          }}>
+                            {img.label}
+                          </span>
+                        )}
+                        {isSelected && (
+                          <span style={{
+                            position: 'absolute',
+                            top: 6,
+                            right: 6,
+                            width: 22,
+                            height: 22,
+                            borderRadius: '50%',
+                            background: 'var(--accent, #e8a849)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.75rem',
+                            color: 'var(--bg, #0c1017)',
+                            fontWeight: 700,
+                            boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+                          }}>
+                            ✓
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
+
+        {/* My Media tab */}
+        {activeTab === 'my-media' && (
+          <div style={{ overflow: 'auto', flex: 1 }}>
+            {myMediaLoading ? (
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Loading...</p>
+            ) : myMedia.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                <p style={{ color: 'var(--text-muted, #5d6370)', fontSize: '0.875rem' }}>
+                  No uploaded images yet. Upload images from the editor.
+                </p>
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(auto-fill, minmax(${gridMin}, 1fr))`,
+                gap: '0.5rem',
+              }}>
+                {myMedia.map(item => {
+                  const isSelected = currentUrl === item.url;
+                  return (
+                    <button
+                      key={item.url}
+                      onClick={() => onSelect(item.url)}
+                      style={{
+                        position: 'relative',
+                        background: 'none',
+                        border: `2px solid ${isSelected ? 'var(--accent, #e8a849)' : 'transparent'}`,
+                        borderRadius: '0.5rem',
+                        padding: 0,
+                        cursor: 'pointer',
+                        overflow: 'hidden',
+                        aspectRatio,
+                        transition: 'transform 0.15s, border-color 0.15s',
+                      }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLElement).style.transform = 'scale(1.03)';
+                        if (!isSelected) (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-light, #283042)';
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+                        if (!isSelected) (e.currentTarget as HTMLElement).style.borderColor = 'transparent';
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.url}
+                        alt=""
+                        loading="lazy"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      />
+                      {isSelected && (
+                        <span style={{
+                          position: 'absolute',
+                          top: 6,
+                          right: 6,
+                          width: 22,
+                          height: 22,
+                          borderRadius: '50%',
+                          background: 'var(--accent, #e8a849)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          color: 'var(--bg, #0c1017)',
+                          fontWeight: 700,
+                          boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+                        }}>
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

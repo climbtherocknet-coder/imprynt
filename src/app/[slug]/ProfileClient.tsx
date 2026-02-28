@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { getTheme, getCustomTheme, getThemeCSSVars, getTemplateDataAttrs, getGoogleFontsUrl, getAccentOverrideVars, getAccentContrastColor, isDarkTemplate, LINK_ICONS } from '@/lib/themes';
 import PodRenderer, { PodData } from '@/components/pods/PodRenderer';
 import ProfileFeedbackButton from '@/components/ReportButton';
-import ProfileFAB from '@/components/ProfileFAB';
 import '@/styles/profile.css';
 
 // ── Types ──────────────────────────────────────────────
@@ -834,6 +833,8 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
   const [showRememberPrompt, setShowRememberPrompt] = useState(false);
   const [lastUnlockedPageId, setLastUnlockedPageId] = useState<string | null>(null);
   const [isRemembered, setIsRemembered] = useState(false);
+  const [menuExpanded, setMenuExpanded] = useState(false);
+  const [menuCopied, setMenuCopied] = useState(false);
   const isDark = isDarkTemplate(theme);
 
   // Personal icon settings with defaults
@@ -961,45 +962,148 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
 
   return (
     <>
-      {/* Impression: circle-dot logo mark (stays on profile, separate from FAB) */}
-      {hasPersonal && (
-        <button
-          onClick={() => setShowPinModal(true)}
-          aria-label="Hidden content"
-          style={{
-            ...iconPosition,
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            border: `1.5px solid ${iconColor}`,
-            backgroundColor: 'transparent',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-            opacity: iconOpacity,
-            WebkitTapHighlightColor: 'transparent',
-            transition: 'opacity 0.2s',
-          }}
-        >
-          <span style={{
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            backgroundColor: iconColor,
-            display: 'block',
-          }} />
-        </button>
-      )}
+      {/* Impression menu (expandable circle-dot button) */}
+      {(() => {
+        const hasProtectedPage = hasPersonal || portfolioPages.length > 0;
+        const isTop = iconCorner.startsWith('top');
+        const profileUrl = typeof window !== 'undefined' ? window.location.href : '';
 
-      {/* Floating Action Button */}
-      <ProfileFAB
-        hasProtectedPage={hasPersonal || portfolioPages.length > 0}
-        profileUrl={typeof window !== 'undefined' ? window.location.href : ''}
-        onUnlockClick={() => setShowPinModal(true)}
-        accent={accent}
-      />
+        async function handleShare() {
+          if (navigator.share) {
+            try { await navigator.share({ url: profileUrl }); } catch { /* cancelled */ }
+          } else {
+            await navigator.clipboard.writeText(profileUrl);
+            setMenuCopied(true);
+            setTimeout(() => setMenuCopied(false), 2000);
+          }
+          setMenuExpanded(false);
+        }
+
+        const items = [
+          {
+            label: menuCopied ? 'Copied!' : 'Share',
+            onClick: handleShare,
+            show: true,
+            icon: (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+            ),
+          },
+          {
+            label: 'Unlock',
+            onClick: () => { setShowPinModal(true); setMenuExpanded(false); },
+            show: hasProtectedPage,
+            icon: (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0110 0v4" />
+              </svg>
+            ),
+          },
+          {
+            label: 'QR Code',
+            onClick: () => { setShowQrModal(true); setMenuExpanded(false); },
+            show: true,
+            icon: (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="3" height="3" />
+                <line x1="21" y1="14" x2="21" y2="17" /><line x1="17" y1="21" x2="21" y2="21" />
+              </svg>
+            ),
+          },
+          {
+            label: 'Imprynt',
+            onClick: () => { window.open('https://imprynt.io', '_blank'); setMenuExpanded(false); },
+            show: true,
+            icon: (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" />
+                <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+              </svg>
+            ),
+            className: 'impression-menu-item-imprynt',
+          },
+        ].filter(item => item.show);
+
+        return (
+          <>
+            <div style={{
+              ...iconPosition,
+              display: 'flex',
+              flexDirection: isTop ? 'column' : 'column-reverse',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}>
+              {/* Main impression button */}
+              <button
+                onClick={() => setMenuExpanded(!menuExpanded)}
+                aria-label={menuExpanded ? 'Close menu' : 'Menu'}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  border: `1.5px solid ${iconColor}`,
+                  backgroundColor: menuExpanded ? accent : 'transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
+                  opacity: menuExpanded ? 1 : iconOpacity,
+                  color: menuExpanded ? '#fff' : iconColor,
+                  WebkitTapHighlightColor: 'transparent',
+                  transition: 'all 0.2s',
+                  zIndex: 2,
+                }}
+              >
+                {menuExpanded ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                ) : (
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: iconColor, display: 'block' }} />
+                )}
+              </button>
+
+              {/* Menu items */}
+              <div style={{
+                display: 'flex',
+                flexDirection: isTop ? 'column' : 'column-reverse',
+                gap: '0.375rem',
+                pointerEvents: menuExpanded ? 'auto' : 'none',
+              }}>
+                {items.map((item, i) => (
+                  <button
+                    key={item.label}
+                    onClick={item.onClick}
+                    title={item.label}
+                    className={`impression-menu-item ${item.className || ''}`}
+                    style={{
+                      opacity: menuExpanded ? 1 : 0,
+                      transform: menuExpanded ? 'scale(1)' : 'scale(0.8)',
+                      transitionDelay: menuExpanded ? `${i * 0.04}s` : '0s',
+                    }}
+                  >
+                    {item.icon}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Backdrop to close */}
+            {menuExpanded && (
+              <div
+                style={{ position: 'fixed', inset: 0, zIndex: 49 }}
+                onClick={() => setMenuExpanded(false)}
+              />
+            )}
+          </>
+        );
+      })()}
 
       {/* PIN Modal */}
       {showPinModal && (

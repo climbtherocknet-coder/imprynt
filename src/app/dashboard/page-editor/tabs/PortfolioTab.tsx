@@ -1155,6 +1155,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
             {showGallery && (
               <GalleryPicker
                 category={showGallery}
+                showMyMedia
                 onSelect={(url) => {
                   if (showGallery === 'cover') setCoverUrl(url);
                   else setBgImageUrl(url);

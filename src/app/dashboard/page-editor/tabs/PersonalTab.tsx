@@ -158,7 +158,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
   const [coverZoom, setCoverZoom] = useState(100);
   const [bgImagePositionX, setBgImagePositionX] = useState(50);
   const [bgImageZoom, setBgImageZoom] = useState(100);
-  const [showGallery, setShowGallery] = useState<'cover' | 'background' | null>(null);
+  const [showGallery, setShowGallery] = useState<'cover' | 'background' | 'profile' | null>(null);
 
   // Creating vs editing
   const [isNew, setIsNew] = useState(true);
@@ -740,7 +740,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
               </div>
 
               {photoMode === 'custom' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
                   <button
                     onClick={() => photoRef.current?.click()}
                     disabled={photoUploading}
@@ -751,6 +751,16 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
                     }}
                   >
                     {photoUploading ? 'Uploading...' : photoUrl ? 'Replace' : 'Upload photo'}
+                  </button>
+                  <button
+                    onClick={() => setShowGallery('profile')}
+                    style={{
+                      padding: '0.375rem 0.75rem', backgroundColor: 'transparent', border: '1px solid var(--border-light, #283042)',
+                      borderRadius: '0.375rem', fontSize: '0.8125rem', fontWeight: 500,
+                      cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-mid, #a8adb8)',
+                    }}
+                  >
+                    Browse Gallery
                   </button>
                   {photoUrl && (
                     <button
@@ -1169,8 +1179,10 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
             {showGallery && (
               <GalleryPicker
                 category={showGallery}
+                showMyMedia
                 onSelect={(url) => {
                   if (showGallery === 'cover') setCoverUrl(url);
+                  else if (showGallery === 'profile') setPhotoUrl(url);
                   else setBgImageUrl(url);
                   setShowGallery(null);
                 }}
