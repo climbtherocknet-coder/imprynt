@@ -2,6 +2,23 @@ www.{$DOMAIN:localhost} {
     redir https://{$DOMAIN:localhost}{uri} permanent
 }
 
+www.impr.in {
+    redir https://impr.in{uri} permanent
+}
+
+impr.in {
+    rewrite * /go{uri}
+    reverse_proxy app:3000 {
+        lb_try_duration 5s
+        lb_try_interval 250ms
+        transport http {
+            dial_timeout 5s
+            keepalive 30s
+            keepalive_idle_conns 10
+        }
+    }
+}
+
 analytics.{$DOMAIN:localhost} {
     reverse_proxy umami:3000
 }
