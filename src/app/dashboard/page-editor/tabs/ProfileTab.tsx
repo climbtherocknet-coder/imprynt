@@ -25,8 +25,9 @@ interface PreviewState {
   template: string; accentColor: string; customTheme: CustomThemeData;
   photoUrl: string; photoShape: string; photoRadius: number; photoSize: string;
   photoPositionX: number; photoPositionY: number; photoZoom: number;
-  photoAnimation: string; photoAlign: string;
-  coverUrl: string; coverPositionX: number; coverPositionY: number;
+  photoAnimation: string; photoAlign: string; photoMode: string;
+  coverUrl: string; coverMode: string; coverLogoPosition: string;
+  coverPositionX: number; coverPositionY: number;
   coverOpacity: number; coverZoom: number;
   bgImageUrl: string; bgImagePositionX: number; bgImagePositionY: number;
   bgImageOpacity: number; bgImageZoom: number;
@@ -99,8 +100,9 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           photoSize: d.profile.photoSize || 'medium',
           photoPositionX: d.profile.photoPositionX ?? 50, photoPositionY: d.profile.photoPositionY ?? 50,
           photoZoom: d.profile.photoZoom ?? 100, photoAnimation: d.profile.photoAnimation || 'none',
-          photoAlign: d.profile.photoAlign || 'left',
-          coverUrl: d.profile.coverUrl || '', coverPositionX: d.profile.coverPositionX ?? 50,
+          photoAlign: d.profile.photoAlign || 'left', photoMode: d.profile.photoMode || 'photo',
+          coverUrl: d.profile.coverUrl || '', coverMode: d.profile.coverMode || 'photo',
+          coverLogoPosition: d.profile.coverLogoPosition || 'above', coverPositionX: d.profile.coverPositionX ?? 50,
           coverPositionY: d.profile.coverPositionY ?? 50, coverOpacity: d.profile.coverOpacity ?? 70,
           coverZoom: d.profile.coverZoom ?? 100,
           bgImageUrl: d.profile.bgImageUrl || '', bgImagePositionX: d.profile.bgImagePositionX ?? 50,
@@ -233,9 +235,12 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
         photoPositionY={previewState.photoPositionY}
         photoAnimation={previewState.photoAnimation}
         photoAlign={previewState.photoAlign}
+        photoMode={previewState.photoMode}
         vcardPinEnabled={vcardPinEnabled}
         customTheme={previewState.template === 'custom' ? previewState.customTheme : undefined}
         coverUrl={previewState.coverUrl || undefined}
+        coverMode={previewState.coverMode}
+        coverLogoPosition={previewState.coverLogoPosition}
         coverPositionY={previewState.coverPositionY}
         coverOpacity={previewState.coverOpacity}
         bgImageUrl={previewState.bgImageUrl || undefined}
@@ -311,6 +316,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           ref={visualsRef}
           initial={{
             photoUrl: data.profile.photoUrl,
+            photoMode: data.profile.photoMode || 'photo',
             photoShape: data.profile.photoShape || 'circle',
             photoRadius: data.profile.photoRadius ?? 50,
             photoSize: data.profile.photoSize || 'medium',
@@ -320,6 +326,8 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
             photoAnimation: data.profile.photoAnimation || 'none',
             photoAlign: data.profile.photoAlign || 'left',
             coverUrl: data.profile.coverUrl || '',
+            coverMode: data.profile.coverMode || 'photo',
+            coverLogoPosition: data.profile.coverLogoPosition || 'above',
             coverPositionX: data.profile.coverPositionX ?? 50,
             coverPositionY: data.profile.coverPositionY ?? 50,
             coverOpacity: data.profile.coverOpacity ?? 70,

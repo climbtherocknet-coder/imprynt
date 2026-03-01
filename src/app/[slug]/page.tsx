@@ -63,6 +63,9 @@ interface ProfileData {
   link_button_color: string | null;
   save_button_style: string;
   save_button_color: string | null;
+  photo_mode: string;
+  cover_mode: string;
+  cover_logo_position: string;
 }
 
 interface LinkData {
@@ -209,6 +212,20 @@ async function getProfileAny(slug: string) {
       profile.link_button_color = null;
       profile.save_button_style = 'auto';
       profile.save_button_color = null;
+    }
+    // Fetch photo_mode (migration 057)
+    try {
+      const pmResult = await query('SELECT photo_mode FROM profiles WHERE id = $1', [profile.profile_id]);
+      profile.photo_mode = pmResult.rows[0]?.photo_mode || 'photo';
+    } catch { profile.photo_mode = 'photo'; }
+    // Fetch cover_mode + cover_logo_position (migration 058)
+    try {
+      const cmResult = await query('SELECT cover_mode, cover_logo_position FROM profiles WHERE id = $1', [profile.profile_id]);
+      profile.cover_mode = cmResult.rows[0]?.cover_mode || 'photo';
+      profile.cover_logo_position = cmResult.rows[0]?.cover_logo_position || 'above';
+    } catch {
+      profile.cover_mode = 'photo';
+      profile.cover_logo_position = 'above';
     }
   }
   return profile;
@@ -431,9 +448,12 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         photoPositionY={profile.photo_position_y ?? 50}
         photoAnimation={profile.photo_animation || 'none'}
         photoAlign={profile.photo_align || 'left'}
+        photoMode={profile.photo_mode || 'photo'}
         vcardPinEnabled={!!profile.vcard_pin_hash}
         customTheme={profile.template === 'custom' ? (profile.custom_theme || undefined) : undefined}
         coverUrl={profile.cover_url || undefined}
+        coverMode={profile.cover_mode || 'photo'}
+        coverLogoPosition={profile.cover_logo_position || 'above'}
         coverPositionY={profile.cover_position_y ?? 50}
         coverOpacity={profile.cover_opacity ?? 70}
         bgImageUrl={profile.bg_image_url || undefined}

@@ -138,11 +138,14 @@ export interface ProfileData {
     photoPositionY: number;
     photoAnimation: string;
     photoAlign: string;
+    photoMode: string;
     vcardPinEnabled: boolean;
     showQrButton: boolean;
     linkDisplay: string;
     customTheme: CustomThemeData | null;
     coverUrl: string | null;
+    coverMode: string;
+    coverLogoPosition: string;
     coverPositionY: number;
     coverOpacity: number;
     bgImageUrl: string | null;

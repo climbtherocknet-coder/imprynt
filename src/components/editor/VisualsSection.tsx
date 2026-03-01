@@ -11,6 +11,7 @@ import { labelStyle, sectionTitleStyle } from './constants';
 
 export interface VisualsState {
   photoUrl: string;
+  photoMode: string;
   photoShape: string;
   photoRadius: number;
   photoSize: string;
@@ -20,6 +21,8 @@ export interface VisualsState {
   photoAnimation: string;
   photoAlign: string;
   coverUrl: string;
+  coverMode: string;
+  coverLogoPosition: string;
   coverPositionX: number;
   coverPositionY: number;
   coverOpacity: number;
@@ -66,6 +69,7 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
   ({ initial, isPaid, onChange, onError, heroPreview }, ref) => {
     // ── VisualsState fields ──
     const [photoUrl, setPhotoUrl] = useState(initial.photoUrl);
+    const [photoMode, setPhotoMode] = useState(initial.photoMode || 'photo');
     const [photoShape, setPhotoShape] = useState(initial.photoShape);
     const [photoRadius, setPhotoRadius] = useState(initial.photoRadius);
     const [photoSize, setPhotoSize] = useState(initial.photoSize);
@@ -75,6 +79,8 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
     const [photoAnimation, setPhotoAnimation] = useState(initial.photoAnimation);
     const [photoAlign, setPhotoAlign] = useState(initial.photoAlign);
     const [coverUrl, setCoverUrl] = useState(initial.coverUrl);
+    const [coverMode, setCoverMode] = useState(initial.coverMode || 'photo');
+    const [coverLogoPosition, setCoverLogoPosition] = useState(initial.coverLogoPosition || 'above');
     const [coverPositionX, setCoverPositionX] = useState(initial.coverPositionX);
     const [coverPositionY, setCoverPositionY] = useState(initial.coverPositionY);
     const [coverOpacity, setCoverOpacity] = useState(initial.coverOpacity);
@@ -101,6 +107,7 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
     // ── getState helper ──
     const getState = (): VisualsState => ({
       photoUrl,
+      photoMode,
       photoShape,
       photoRadius,
       photoSize,
@@ -110,6 +117,8 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
       photoAnimation,
       photoAlign,
       coverUrl,
+      coverMode,
+      coverLogoPosition,
       coverPositionX,
       coverPositionY,
       coverOpacity,
@@ -126,10 +135,10 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
       onChange(getState());
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
-      photoUrl, photoShape, photoRadius, photoSize,
+      photoUrl, photoMode, photoShape, photoRadius, photoSize,
       photoPositionX, photoPositionY, photoZoom,
       photoAnimation, photoAlign,
-      coverUrl, coverPositionX, coverPositionY, coverOpacity, coverZoom,
+      coverUrl, coverMode, coverLogoPosition, coverPositionX, coverPositionY, coverOpacity, coverZoom,
       bgImageUrl, bgImagePositionX, bgImagePositionY, bgImageOpacity, bgImageZoom,
     ]);
 
@@ -208,6 +217,7 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             section: 'profile',
+            photoMode,
             photoShape,
             photoRadius: photoShape === 'custom' ? photoRadius : null,
             photoSize,
@@ -217,6 +227,8 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
             photoAnimation,
             photoAlign,
             coverUrl: coverUrl || null,
+            coverMode,
+            coverLogoPosition,
             coverPositionX,
             coverPositionY,
             coverOpacity,
@@ -351,6 +363,39 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
           </div>
 
           {showPhotoSettings && (<>
+          {/* Photo / Logo mode toggle */}
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+            <button
+              onClick={() => setPhotoMode('photo')}
+              style={{
+                flex: 1, padding: '0.5rem', borderRadius: '0.5rem',
+                border: `1px solid ${photoMode === 'photo' ? 'var(--accent, #e8a849)' : 'var(--border, #1e2535)'}`,
+                background: photoMode === 'photo' ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
+                color: photoMode === 'photo' ? 'var(--accent, #e8a849)' : 'var(--text-muted, #5d6370)',
+                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              Photo
+            </button>
+            <button
+              onClick={() => setPhotoMode('logo')}
+              style={{
+                flex: 1, padding: '0.5rem', borderRadius: '0.5rem',
+                border: `1px solid ${photoMode === 'logo' ? 'var(--accent, #e8a849)' : 'var(--border, #1e2535)'}`,
+                background: photoMode === 'logo' ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
+                color: photoMode === 'logo' ? 'var(--accent, #e8a849)' : 'var(--text-muted, #5d6370)',
+                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              Logo
+            </button>
+          </div>
+          {photoMode === 'logo' && (
+            <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.75rem' }}>
+              Logo mode removes the frame and border. Use a transparent PNG for best results.
+            </p>
+          )}
+
           {/* Size picker */}
           <div style={{ marginBottom: '0.75rem' }}>
             <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Size</label>
@@ -377,7 +422,8 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
             </div>
           </div>
 
-          {/* Shape picker */}
+          {/* Shape picker (hidden in logo mode) */}
+          {photoMode !== 'logo' && (
           <div style={{ marginBottom: '0.75rem' }}>
             <label style={{ ...labelStyle, fontSize: '0.6875rem' }}>Shape</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', alignItems: 'center' }}>
@@ -455,6 +501,7 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
               </div>
             )}
           </div>
+          )}
 
           {/* Animation picker */}
           <div>
@@ -533,8 +580,37 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
 
         <div style={{ borderTop: '1px solid var(--border, #1e2535)', margin: '1.25rem 0' }} />
 
-        {/* ── Cover Photo ── */}
+        {/* ── Cover Photo / Logo ── */}
         <CollapsibleSection title="Cover Photo" flat defaultOpen={!!coverUrl}>
+          {/* Mode toggle */}
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+            <button
+              onClick={() => setCoverMode('photo')}
+              style={{
+                flex: 1, padding: '0.5rem', borderRadius: '0.5rem',
+                border: `1px solid ${coverMode === 'photo' ? 'var(--accent, #e8a849)' : 'var(--border, #1e2535)'}`,
+                background: coverMode === 'photo' ? 'var(--accent, #e8a849)' : 'transparent',
+                color: coverMode === 'photo' ? 'var(--bg, #0c1017)' : 'var(--text-muted, #5d6370)',
+                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              Photo
+            </button>
+            <button
+              onClick={() => setCoverMode('logo')}
+              style={{
+                flex: 1, padding: '0.5rem', borderRadius: '0.5rem',
+                border: `1px solid ${coverMode === 'logo' ? 'var(--accent, #e8a849)' : 'var(--border, #1e2535)'}`,
+                background: coverMode === 'logo' ? 'var(--accent, #e8a849)' : 'transparent',
+                color: coverMode === 'logo' ? 'var(--bg, #0c1017)' : 'var(--text-muted, #5d6370)',
+                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              Logo
+            </button>
+          </div>
+
+          {/* Upload / Replace / Remove / Browse Gallery — same for both modes */}
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
             <button
               onClick={() => coverFileInputRef.current?.click()}
@@ -591,35 +667,103 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
               Browse Gallery
             </button>
           </div>
-          {coverUrl && (
-            <CoverPreview
-              src={coverUrl}
-              positionX={coverPositionX}
-              positionY={coverPositionY}
-              zoom={coverZoom}
-              opacity={coverOpacity}
-              onPositionChange={(x, y) => { setCoverPositionX(x); setCoverPositionY(y); }}
-              onZoomChange={setCoverZoom}
-              photoUrl={photoUrl}
-              firstName={heroPreview?.firstName}
-              lastName={heroPreview?.lastName}
-              title={heroPreview?.title}
-              company={heroPreview?.company}
-              statusTags={heroPreview?.statusTags}
-            />
+
+          {/* Logo-specific options */}
+          {coverMode === 'logo' && coverUrl && (
+            <>
+              <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.75rem' }}>
+                Logo mode displays your image without overlays or dimming. Use a transparent PNG for best results.
+              </p>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted, #5d6370)', marginBottom: '0.25rem', display: 'block' }}>
+                  Logo Position
+                </label>
+                <div style={{ display: 'flex', gap: '0.375rem' }}>
+                  <button
+                    onClick={() => setCoverLogoPosition('above')}
+                    style={{
+                      flex: 1, padding: '0.375rem', borderRadius: '0.375rem',
+                      border: `1px solid ${coverLogoPosition === 'above' ? 'var(--accent, #e8a849)' : 'var(--border, #1e2535)'}`,
+                      background: coverLogoPosition === 'above' ? 'color-mix(in srgb, var(--accent, #e8a849) 15%, transparent)' : 'transparent',
+                      color: coverLogoPosition === 'above' ? 'var(--accent, #e8a849)' : 'var(--text-muted, #5d6370)',
+                      fontSize: '0.6875rem', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    Above photo
+                  </button>
+                  <button
+                    onClick={() => setCoverLogoPosition('beside')}
+                    style={{
+                      flex: 1, padding: '0.375rem', borderRadius: '0.375rem',
+                      border: `1px solid ${coverLogoPosition === 'beside' ? 'var(--accent, #e8a849)' : 'var(--border, #1e2535)'}`,
+                      background: coverLogoPosition === 'beside' ? 'color-mix(in srgb, var(--accent, #e8a849) 15%, transparent)' : 'transparent',
+                      color: coverLogoPosition === 'beside' ? 'var(--accent, #e8a849)' : 'var(--text-muted, #5d6370)',
+                      fontSize: '0.6875rem', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    Beside name
+                  </button>
+                </div>
+              </div>
+              <label style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted, #5d6370)' }}>Size</label>
+              <input
+                type="range" min={50} max={200} value={coverZoom}
+                onChange={e => setCoverZoom(Number(e.target.value))}
+                style={{ width: '100%', accentColor: 'var(--accent, #e8a849)' }}
+              />
+              <label style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted, #5d6370)', marginTop: '0.5rem', display: 'block' }}>
+                Horizontal Position
+              </label>
+              <input
+                type="range" min={0} max={100} value={coverPositionX}
+                onChange={e => setCoverPositionX(Number(e.target.value))}
+                style={{ width: '100%', accentColor: 'var(--accent, #e8a849)' }}
+              />
+              {coverLogoPosition === 'above' && (
+                <>
+                  <label style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted, #5d6370)', marginTop: '0.5rem', display: 'block' }}>
+                    Vertical Position
+                  </label>
+                  <input
+                    type="range" min={0} max={100} value={coverPositionY}
+                    onChange={e => setCoverPositionY(Number(e.target.value))}
+                    style={{ width: '100%', accentColor: 'var(--accent, #e8a849)' }}
+                  />
+                </>
+              )}
+            </>
           )}
-          {coverUrl && (
-            <div style={{ marginTop: '0.75rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Opacity</label>
-                <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{coverOpacity}%</span>
+
+          {/* Photo-specific options: preview, opacity, zoom */}
+          {coverMode === 'photo' && coverUrl && (
+            <>
+              <CoverPreview
+                src={coverUrl}
+                positionX={coverPositionX}
+                positionY={coverPositionY}
+                zoom={coverZoom}
+                opacity={coverOpacity}
+                onPositionChange={(x, y) => { setCoverPositionX(x); setCoverPositionY(y); }}
+                onZoomChange={setCoverZoom}
+                photoUrl={photoUrl}
+                firstName={heroPreview?.firstName}
+                lastName={heroPreview?.lastName}
+                title={heroPreview?.title}
+                company={heroPreview?.company}
+                statusTags={heroPreview?.statusTags}
+              />
+              <div style={{ marginTop: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                  <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Opacity</label>
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>{coverOpacity}%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Subtle</span>
+                  <input type="range" min={10} max={100} value={coverOpacity} onChange={e => setCoverOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }} />
+                  <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Bold</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Subtle</span>
-                <input type="range" min={10} max={100} value={coverOpacity} onChange={e => setCoverOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: 'var(--accent, #e8a849)' }} />
-                <span style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', whiteSpace: 'nowrap' }}>Bold</span>
-              </div>
-            </div>
+            </>
           )}
         </CollapsibleSection>
 

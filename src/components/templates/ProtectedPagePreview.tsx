@@ -25,9 +25,12 @@ interface ProtectedPagePreviewProps {
   photoPositionY?: number;
   photoAnimation?: string;
   photoAlign?: string;
+  photoMode?: string;
   profileId?: string;
   customTheme?: CustomThemeData | null;
   coverUrl?: string;
+  coverMode?: string;
+  coverLogoPosition?: string;
   coverOpacity?: number;
   coverPositionY?: number;
   bgImageUrl?: string;
@@ -94,9 +97,12 @@ export default function ProtectedPagePreview({
   photoPositionY = 50,
   photoAnimation,
   photoAlign = 'center',
+  photoMode = 'photo',
   profileId,
   customTheme,
   coverUrl,
+  coverMode = 'photo',
+  coverLogoPosition = 'above',
   coverOpacity = 30,
   coverPositionY = 50,
   bgImageUrl,
@@ -167,6 +173,9 @@ export default function ProtectedPagePreview({
     <div
       className={`profile-page t-${template}`}
       {...dataAttrs}
+      data-photo-mode={photoMode || 'photo'}
+      data-cover-mode={coverMode || 'photo'}
+      data-cover-logo-pos={coverLogoPosition || 'above'}
       {...(bgImageUrl ? { 'data-has-bg': 'true' } : {})}
       style={{
         ...cssVarStyle,
@@ -197,8 +206,8 @@ export default function ProtectedPagePreview({
       {/* Cover + Content */}
       <div
         className="profile-top"
-        {...(coverUrl ? { 'data-has-cover': 'true' } : {})}
-        style={coverUrl ? {
+        {...(coverUrl && coverMode !== 'logo' ? { 'data-has-cover': 'true' } : {})}
+        style={coverUrl && coverMode !== 'logo' ? {
           '--cover-url': `url('${coverUrl}')`,
           '--cover-opacity': `${coverOpacity / 100}`,
           '--cover-pos': `${coverPositionX}% ${coverPositionY}%`,
@@ -230,10 +239,47 @@ export default function ProtectedPagePreview({
           </div>
         )}
 
+        {/* Cover logo — above position */}
+        {coverUrl && coverMode === 'logo' && coverLogoPosition === 'above' && (
+          <div className="cover-logo cover-logo-above">
+            <img src={coverUrl} alt="" className="cover-logo-img"
+              style={{
+                maxHeight: '120px',
+                objectFit: 'contain',
+                transform: `scale(${(coverZoom || 100) / 100}) translate(${((coverPositionX ?? 50) - 50) * 2}%, ${((coverPositionY ?? 50) - 50) * 2}%)`,
+                transformOrigin: 'center center',
+              }} />
+          </div>
+        )}
+
         {/* Photo + Name section with alignment */}
         <div style={alignStyle} data-photo-align={photoAlign}>
-          {/* Photo */}
+          {/* Photo / Logo */}
           {(() => {
+            if (photoMode === 'logo' && photoUrl) {
+              const logoSizeMap: Record<string, string> = { small: '80px', medium: '120px', large: '160px', xl: '200px' };
+              const logoSize = logoSizeMap[photoSize] || '120px';
+              return (
+                <div className="profile-logo" style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  margin: '0 auto 0.75rem',
+                }}>
+                  <img
+                    src={photoUrl}
+                    alt={fullName}
+                    className="logo-img"
+                    style={{
+                      maxWidth: logoSize,
+                      maxHeight: logoSize,
+                      objectFit: 'contain',
+                      objectPosition: `${photoPositionX}% ${photoPositionY}%`,
+                      transform: photoZoom > 100 ? `scale(${photoZoom / 100})` : undefined,
+                    }}
+                  />
+                </div>
+              );
+            }
             const ps = getPhotoStyles(photoShape, photoRadius, photoSize, photoPositionX, photoPositionY);
             const marginStyle = photoAlign === 'left' ? { margin: '0 0 0.75rem' } :
                                 photoAlign === 'right' ? { margin: '0 0 0.75rem', marginLeft: 'auto' } :
@@ -264,6 +310,16 @@ export default function ProtectedPagePreview({
             );
           })()}
 
+          {/* Cover logo — beside position */}
+          {coverUrl && coverMode === 'logo' && coverLogoPosition === 'beside' && (
+            <img src={coverUrl} alt="" className="cover-logo-img cover-logo-beside"
+              style={{
+                maxHeight: '48px',
+                marginBottom: '0.375rem',
+                objectFit: 'contain',
+                transform: `scale(${(coverZoom || 100) / 100}) translateX(${((coverPositionX ?? 50) - 50) * 2}%)`,
+              }} />
+          )}
           {/* Name */}
           <h1 style={{
             fontSize: '1.5rem', fontWeight: 800, fontFamily: 'var(--font-heading)',

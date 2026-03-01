@@ -136,6 +136,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
     linkSize: string;
     linkShape: string;
     linkButtonColor: string | null;
+    photoMode: string;
   } | null>(null);
   const [previewPods, setPreviewPods] = useState<PodData[]>([]);
 
@@ -152,6 +153,8 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
 
   // Cover & background photo (per-page)
   const [coverUrl, setCoverUrl] = useState('');
+  const [coverMode, setCoverMode] = useState('photo');
+  const [coverLogoPosition, setCoverLogoPosition] = useState('above');
   const [coverOpacity, setCoverOpacity] = useState(30);
   const [coverPositionY, setCoverPositionY] = useState(50);
   const [coverUploading, setCoverUploading] = useState(false);
@@ -198,6 +201,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
           linkSize: d.profile.linkSize || 'medium',
           linkShape: d.profile.linkShape || 'pill',
           linkButtonColor: d.profile.linkButtonColor || null,
+          photoMode: d.profile.photoMode || 'photo',
         });
         // Set profile photo settings as defaults (overridden by page data if it exists)
         setPhotoShape(d.profile.photoShape || 'circle');
@@ -240,6 +244,8 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
           if (p.photoAlign) setPhotoAlign(p.photoAlign);
           // Load per-page cover/bg
           setCoverUrl(p.coverUrl || '');
+          setCoverMode(p.coverMode || 'photo');
+          setCoverLogoPosition(p.coverLogoPosition || 'above');
           setCoverOpacity(p.coverOpacity ?? 30);
           setCoverPositionY(p.coverPositionY ?? 50);
           setBgImageUrl(p.bgImageUrl || '');
@@ -354,7 +360,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
           photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize,
           photoPositionX, photoPositionY, photoAnimation, photoAlign,
           // Per-page cover/bg
-          coverUrl: coverUrl || null, coverOpacity, coverPositionY,
+          coverUrl: coverUrl || null, coverMode, coverLogoPosition, coverOpacity, coverPositionY,
           bgImageUrl: bgImageUrl || null, bgImageOpacity, bgImagePositionY,
           photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom,
         };
@@ -381,7 +387,7 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
     } finally {
       setSaving(false);
     }
-  }, [isNew, page, pageTitle, buttonLabel, bioText, resumeUrl, showResume, pin, pinConfirm, isActive, allowRemember, photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, coverUrl, coverOpacity, coverPositionY, bgImageUrl, bgImageOpacity, bgImagePositionY, photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom]);
+  }, [isNew, page, pageTitle, buttonLabel, bioText, resumeUrl, showResume, pin, pinConfirm, isActive, allowRemember, photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, coverUrl, coverMode, coverLogoPosition, coverOpacity, coverPositionY, bgImageUrl, bgImageOpacity, bgImagePositionY, photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom]);
 
   // Resume upload
   async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -489,7 +495,10 @@ export default function PortfolioTab({ planStatus, onTrialActivated, currentTemp
         photoPositionY={photoPositionY}
         photoAnimation={photoAnimation}
         photoAlign={photoAlign}
+        photoMode={profileData.photoMode || 'photo'}
         coverUrl={coverUrl || undefined}
+        coverMode={coverMode}
+        coverLogoPosition={coverLogoPosition}
         coverOpacity={coverOpacity}
         coverPositionY={coverPositionY}
         bgImageUrl={bgImageUrl || undefined}

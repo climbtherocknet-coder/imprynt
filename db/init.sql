@@ -499,6 +499,9 @@ CREATE TABLE public.profiles (
     link_button_color character varying(7),
     save_button_style character varying(20) DEFAULT 'auto'::character varying,
     save_button_color character varying(9),
+    photo_mode character varying(10) DEFAULT 'photo'::character varying,
+    cover_mode character varying(10) DEFAULT 'photo'::character varying,
+    cover_logo_position character varying(20) DEFAULT 'above'::character varying,
     CONSTRAINT profiles_bg_image_opacity_check CHECK (((bg_image_opacity >= 5) AND (bg_image_opacity <= 100))),
     CONSTRAINT profiles_bg_image_position_y_check CHECK (((bg_image_position_y >= 0) AND (bg_image_position_y <= 100))),
     CONSTRAINT profiles_cover_opacity_check CHECK (((cover_opacity >= 10) AND (cover_opacity <= 100))),
@@ -554,6 +557,9 @@ CREATE TABLE public.protected_pages (
     bg_image_zoom smallint DEFAULT 100 NOT NULL,
     link_size character varying(10) DEFAULT 'medium'::character varying NOT NULL,
     link_shape character varying(10) DEFAULT 'pill'::character varying NOT NULL,
+    photo_mode character varying(10) DEFAULT 'photo'::character varying,
+    cover_mode character varying(10) DEFAULT 'photo'::character varying,
+    cover_logo_position character varying(20) DEFAULT 'above'::character varying,
     CONSTRAINT protected_pages_visibility_mode_check CHECK (((visibility_mode)::text = ANY (ARRAY[('hidden'::character varying)::text, ('visible'::character varying)::text])))
 );
 

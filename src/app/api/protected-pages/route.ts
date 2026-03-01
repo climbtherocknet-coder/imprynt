@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
            pp.icon_color, pp.icon_opacity, pp.icon_corner, pp.allow_remember,
            pp.photo_url, pp.profile_id,
            pp.photo_shape, pp.photo_radius, pp.photo_size, pp.photo_position_x, pp.photo_position_y,
-           pp.photo_animation, pp.photo_align, pp.cover_url, pp.cover_opacity, pp.cover_position_y,
+           pp.photo_animation, pp.photo_align, pp.cover_url, pp.cover_mode, pp.cover_logo_position, pp.cover_opacity, pp.cover_position_y,
            pp.bg_image_url, pp.bg_image_opacity, pp.bg_image_position_y,
            pp.photo_zoom, pp.cover_position_x, pp.cover_zoom, pp.bg_image_position_x, pp.bg_image_zoom,
            p.link_size, p.link_shape, p.link_button_color
@@ -72,6 +72,8 @@ export async function GET(req: NextRequest) {
       photoAnimation: row.photo_animation || 'none',
       photoAlign: row.photo_align || 'center',
       coverUrl: row.cover_url || '',
+      coverMode: row.cover_mode || 'photo',
+      coverLogoPosition: row.cover_logo_position || 'above',
       coverOpacity: row.cover_opacity ?? 30,
       coverPositionY: row.cover_position_y ?? 50,
       bgImageUrl: row.bg_image_url || '',
@@ -183,7 +185,7 @@ export async function PUT(req: NextRequest) {
   const body = await req.json();
   const { id, pageTitle, bioText, buttonLabel, resumeUrl, showResume, pin, isActive, iconColor, iconOpacity, iconCorner, allowRemember, photoUrl,
     photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign,
-    coverUrl, coverOpacity, coverPositionY, bgImageUrl, bgImageOpacity, bgImagePositionY,
+    coverUrl, coverMode, coverLogoPosition, coverOpacity, coverPositionY, bgImageUrl, bgImageOpacity, bgImagePositionY,
     photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom } = body;
 
   if (!id) {
@@ -285,6 +287,14 @@ export async function PUT(req: NextRequest) {
   if (coverUrl !== undefined) {
     updates.push(`cover_url = $${paramIdx++}`);
     params.push(coverUrl?.trim()?.slice(0, 500) || null);
+  }
+  if (coverMode !== undefined) {
+    updates.push(`cover_mode = $${paramIdx++}`);
+    params.push(['photo', 'logo'].includes(coverMode) ? coverMode : 'photo');
+  }
+  if (coverLogoPosition !== undefined) {
+    updates.push(`cover_logo_position = $${paramIdx++}`);
+    params.push(['above', 'beside'].includes(coverLogoPosition) ? coverLogoPosition : 'above');
   }
   if (coverOpacity !== undefined) {
     updates.push(`cover_opacity = $${paramIdx++}`);

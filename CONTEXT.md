@@ -3,7 +3,7 @@
 **Purpose:** This file is the shared memory between Claude sessions. After each work session or push, update the relevant sections so context is never lost if a conversation resets.
 
 **Last updated:** March 1, 2026
-**Updated by:** Claude (session 16 — impr.in short domain activated, v0.11.0)
+**Updated by:** Claude (session 16b — status tags + logo mode, v0.11.1)
 
 ---
 
@@ -30,6 +30,8 @@ The Imprynt platform is a fully functional Next.js 15 app. Marketing pages (land
 - **Templates:** 10 templates (Clean, Warm, Classic, Soft, Midnight, Editorial, Noir, Signal, Studio, Dusk), 4 free + 6 premium. Accent contrast auto-computed for button readability on light accents (Noir, Midnight).
 - **Link Display:** Labels mode (default) and Icons-only mode. Size (small/medium/large), shape (pills/stacked/full-width-pills), per-link button colors.
 - **Photo Lightbox:** ExpandablePhoto component with themed modal card showing full name, title/company, and Save Contact button. Backdrop blur overlay, CSS variable theming.
+- **Logo Mode:** Profile photo toggle between Photo (shaped headshot) and Logo (transparent-friendly, no frame, object-fit contain). Migration 057. Cascades to protected page previews. `data-photo-mode` CSS attribute for layout overrides.
+- **Cover Logo Mode:** Cover photo slot Photo/Logo toggle. Logo mode renders transparent PNGs cleanly (no overlay/gradient). Position: "above photo" or "beside name". Migration 058. `data-cover-mode` + `data-cover-logo-pos` attributes.
 - **Stripe:** Checkout sessions, webhooks, customer portal, trial support
 - **Landing Page:** Full experiential redesign with warm Colorado palette. Sections: nav → hero → how it works → interactive demo (iframe) → value blocks → hidden layer (impression) → use cases → content types → NFC teaser → pricing → CTA → footer. ScrollReveal fade-up animations. All marketing pages share `marketing-vars.css` color tokens.
 - **Legal Pages:** Terms, Privacy (redesigned)
@@ -43,7 +45,7 @@ The Imprynt platform is a fully functional Next.js 15 app. Marketing pages (land
 - **Command Center API:** Full CRUD at `/api/admin/cc/` for features, roadmap, changelog, docs, overview
 - **On Air Toggle:** `DashboardOnAir.tsx` component, `is_published` on profiles table. Offline profiles show branded offline page.
 - **QR Code:** Generation API (`/api/profile/qr` and `/api/profile/[profileId]/qr`), PNG/SVG formats. Toggle on public profile (`show_qr_button`). Themed modal overlay (CSS variable-based). Always-on for free tier profiles, opt-in toggle for paid users. Floating buttons stacked in bottom-right corner.
-- **Status Tags:** Customizable status badges with color picker (migration 018)
+- **Status Tags:** Customizable status badges with color picker (migration 018). Rendered below name/title as glassmorphic pills with backdrop-filter blur.
 - **Impression Page Photo:** Separate photo for protected pages (migration 022), toggle between profile photo and custom photo
 - **Site-Wide Theme Infrastructure:** ThemeProvider + ThemeToggle components, `data-theme` attribute on documentElement, system/light/dark preference stored in localStorage. CSS palettes for light mode NOT yet built in stylesheets.
 - **Link Click Tracking:** `LinkTracker.tsx` component on public profiles, fires beacon to `/api/analytics/link-click`
@@ -130,7 +132,7 @@ src/
 ```
 
 ### Database
-- Schema: `db/init.sql` (regenerated Feb 26, 2026), migrations in `db/migrations/` (001-054, no gaps)
+- Schema: `db/init.sql` (regenerated Feb 26, 2026), migrations in `db/migrations/` (001-058)
 - 28 tables: users, profiles, links, contact_fields, protected_pages, pods, showcase_items, analytics_events, pin_attempts, accessories, invite_codes, waitlist, feedback, hardware_waitlist, image_gallery, connections, score_events, user_scores, vcard_download_tokens, email_verification_tokens, password_resets, contacts, cc_features, cc_roadmap, cc_changelog, cc_docs, cc_votes, cc_comments
 
 ### Running Locally
@@ -199,6 +201,29 @@ docker compose up --build
 - **Also deployed:** Gallery "Browse Gallery" button added to profile photo sections (VisualsSection + PersonalTab). GalleryPicker category type expanded to include `'profile'`.
 - **Result:** `impr.in/TkfXM_CKmuVQ` → 302 → `https://imprynt.io/razponMT`. Dashboard share links, QR codes, and NFC URLs now use `impr.in/{redirectId}`. Main domain `/go/` fallback preserved.
 - **Version bump:** v0.11.0
+
+### March 1, 2026 (Session 16c) — Cover Logo Mode (v0.11.2) — SANDBOX ONLY
+- **New:** Cover photo slot has Photo/Logo mode toggle. Logo mode renders transparent PNGs cleanly, no opacity overlay, no gradient, no dimming.
+- **New:** Cover logo position: "above photo" (centered header) or "beside name" (inline brand). Size controlled via zoom slider.
+- **Confirmed:** Status tags below name/title in hero section.
+- **DB:** `cover_mode` (VARCHAR 10), `cover_logo_position` (VARCHAR 20) added to profiles and protected_pages (migration 058).
+- **Editor:** VisualsSection shows Photo/Logo toggle for cover. Logo mode shows position picker + size slider. Photo mode shows CoverPreview + opacity slider (unchanged).
+- **Rendering:** `hasCoverPhoto` (background `::before`) vs `hasCoverLogo` (foreground `<img>`) mutually exclusive via `coverMode`. `data-cover-mode` and `data-cover-logo-pos` data attributes for CSS layout.
+- **Wiring:** coverMode/coverLogoPosition through entire chain: profile API, protected-pages API, ProfileTemplate, ProtectedPagePreview, ProfileTab, PersonalTab, PortfolioTab, SetupWizard, slug/page.tsx.
+- **Files created:** `db/migrations/058_cover_mode.sql`
+- **Files modified:** `profile.css`, `ProfileTemplate.tsx`, `VisualsSection.tsx`, `profile API route.ts`, `protected-pages API route.ts`, `[pageId] API route.ts`, `slug/page.tsx`, `ProtectedPagePreview.tsx`, `PersonalTab.tsx`, `PortfolioTab.tsx`, `ProfileTab.tsx`, `SetupWizard.tsx`, `constants.ts`, `db/init.sql`, `cc-update-mar01.sql`
+- **NOT deployed** — sandbox/dev only per prompt instructions.
+- **Version bump:** v0.11.2
+
+### March 1, 2026 (Session 16b) — Status Tags + Logo Mode (v0.11.1) — SANDBOX ONLY
+- **Status tags relocated:** Moved from above the cover photo to below name/title in the hero section. Now rendered inside `.hero` div after HeroContent, before links. Styled as glassmorphic pills with `backdrop-filter: blur(4px)`, centered via flexbox. Light template adjustments for .t-clean, .t-warm, .t-classic, .t-soft.
+- **Logo mode:** New `photo_mode` column on `profiles` and `protected_pages` tables (migration 057). Toggle in Photo Settings between Photo (shaped headshot) and Logo (transparent-friendly, no frame, `object-fit: contain`). Logo sizes: small=80px, medium=120px, large=160px, xl=200px. Shape picker hidden in logo mode.
+- **Logo layout:** `[data-photo-mode="logo"]` CSS rules force column/centered layout for hero. Logo always centers above name regardless of `photoAlign` setting.
+- **Wiring:** `photoMode` passed through entire chain: API GET/PUT → VisualsSection editor → ProfileTab preview → ProfileTemplate → slug page.tsx → ProtectedPagePreview → PersonalTab → PortfolioTab.
+- **Files created:** `db/migrations/057_photo_mode.sql`, `db/seeds/cc-update-mar01.sql`
+- **Files modified:** `profile.css`, `ProfileTemplate.tsx`, `VisualsSection.tsx`, `profile API route.ts`, `slug/page.tsx`, `ProtectedPagePreview.tsx`, `PersonalTab.tsx`, `PortfolioTab.tsx`, `ProfileTab.tsx`, `db/init.sql`
+- **NOT deployed** — sandbox/dev only per prompt instructions.
+- **Version bump:** v0.11.1
 
 ### February 28, 2026 (Session 15) — Media Gallery + QR + Impression Menu (v0.10.6)
 - **Fixed:** My Media `/api/media` query — pods table uses `profile_id`, not `user_id`. Fixed with JOIN. Added protected page pod media.

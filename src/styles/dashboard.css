@@ -1242,6 +1242,32 @@
 }
 
 /* ═══════════════════════════════════════════
+   HIDE SCROLLBARS IN PHONE PREVIEW
+   Covers ALL descendants — still scrollable via mousewheel/touch
+   ═══════════════════════════════════════════ */
+
+.preview-phone-screen,
+.preview-phone-screen *,
+.mobile-preview-body,
+.mobile-preview-body *,
+[data-contained="true"],
+[data-contained="true"] * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.preview-phone-screen::-webkit-scrollbar,
+.preview-phone-screen *::-webkit-scrollbar,
+.mobile-preview-body::-webkit-scrollbar,
+.mobile-preview-body *::-webkit-scrollbar,
+[data-contained="true"]::-webkit-scrollbar,
+[data-contained="true"] *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* ═══════════════════════════════════════════
    COLLAPSIBLE HEADERS — touch-friendly targets
    ═══════════════════════════════════════════ */
 

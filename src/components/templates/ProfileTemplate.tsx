@@ -33,6 +33,7 @@ export interface ProfileTemplateProps {
   photoPositionX?: number;
   photoPositionY?: number;
   photoAnimation?: string;
+  photoMode?: string; // 'photo' | 'logo'
   vcardPinEnabled?: boolean;
   accentColor?: string;
   linkDisplay?: string;
@@ -42,6 +43,8 @@ export interface ProfileTemplateProps {
   coverUrl?: string;
   coverPositionY?: number;
   coverOpacity?: number; // 10-100, default 70
+  coverMode?: string;           // 'photo' | 'logo'
+  coverLogoPosition?: string;   // 'above' | 'beside'
   // Background photo (full page behind profile)
   bgImageUrl?: string;
   bgImageOpacity?: number;
@@ -93,6 +96,7 @@ export default function ProfileTemplate({
   photoPositionX,
   photoPositionY,
   photoAnimation,
+  photoMode = 'photo',
   vcardPinEnabled = false,
   accentColor,
   linkDisplay = 'default',
@@ -101,6 +105,8 @@ export default function ProfileTemplate({
   coverUrl,
   coverPositionY = 50,
   coverOpacity = 70,
+  coverMode = 'photo',
+  coverLogoPosition = 'above',
   bgImageUrl,
   bgImageOpacity = 20,
   bgImagePositionY = 50,
@@ -138,12 +144,19 @@ export default function ProfileTemplate({
   // Always set data-photo-align so CSS rules apply consistently
   const effectivePhotoAlign = photoAlign || 'left';
   dataAttrs['data-photo-align'] = effectivePhotoAlign;
+  dataAttrs['data-photo-mode'] = photoMode || 'photo';
+  dataAttrs['data-cover-mode'] = coverMode || 'photo';
+  dataAttrs['data-cover-logo-pos'] = coverLogoPosition || 'above';
   if (linkSize && linkSize !== 'medium') dataAttrs['data-link-size'] = linkSize;
   if (linkShape && linkShape !== 'pill') dataAttrs['data-link-shape'] = linkShape;
   const googleFontsUrl = getGoogleFontsUrl(theme);
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
   const subtitle = [title, company].filter(Boolean).join(' · ');
   const linkStyle = theme.modifiers.linkStyle;
+
+  // Cover mode: photo renders as background, logo renders as foreground element
+  const hasCoverPhoto = coverUrl && coverMode !== 'logo';
+  const hasCoverLogo = coverUrl && coverMode === 'logo';
 
   return (
     <>
@@ -165,7 +178,7 @@ export default function ProfileTemplate({
         {...dataAttrs}
         {...(contained ? { 'data-contained': 'true' } : {})}
         {...(bgImageUrl ? { 'data-has-bg': 'true' } : {})}
-        {...(coverUrl ? { 'data-has-cover': 'true' } : {})}
+        {...(hasCoverPhoto ? { 'data-has-cover': 'true' } : {})}
       >
         {/* ─── Background Photo (fixed, full page) ─── */}
         {bgImageUrl && (
@@ -187,8 +200,8 @@ export default function ProfileTemplate({
         {/* ─── Profile Top: cover photo + status tags + hero ─── */}
         <div
           className="profile-top"
-          {...(coverUrl ? { 'data-has-cover': 'true' } : {})}
-          style={coverUrl ? {
+          {...(hasCoverPhoto ? { 'data-has-cover': 'true' } : {})}
+          style={hasCoverPhoto ? {
             '--cover-url': `url('${coverUrl}')`,
             '--cover-opacity': `${coverOpacity / 100}`,
             '--cover-pos': `${coverPositionX}% ${coverPositionY}%`,
@@ -196,28 +209,25 @@ export default function ProfileTemplate({
           } as React.CSSProperties : undefined}
         >
 
-        {/* ─── Status Tags ─── */}
-        {statusTags.length > 0 && (
-          <div className="hero" style={{ paddingBottom: 0 }}>
-            <div
-              className="status-tags fade-in d1"
-              style={statusTagColor ? {
-                '--accent': statusTagColor,
-                '--accent-soft': `${statusTagColor}0f`,
-              } as React.CSSProperties : undefined}
-            >
-              {statusTags.map(slug => (
-                <span key={slug} className="status-tag">
-                  <span className="status-tag-dot" />
-                  {STATUS_TAG_LABELS[slug] || slug}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* ─── Hero ─── */}
         <div className="hero">
+          {/* Cover logo — above position (rendered before hero content) */}
+          {hasCoverLogo && coverLogoPosition === 'above' && (
+            <div className="cover-logo cover-logo-above fade-in d1">
+              <img
+                src={coverUrl}
+                alt=""
+                className="cover-logo-img"
+                style={{
+                  maxHeight: '120px',
+                  objectFit: 'contain',
+                  transform: `scale(${(coverZoom || 100) / 100}) translate(${((coverPositionX ?? 50) - 50) * 2}%, ${((coverPositionY ?? 50) - 50) * 2}%)`,
+                  transformOrigin: 'center center',
+                }}
+              />
+            </div>
+          )}
+
           {/* Soft: hero card wrap */}
           {theme.effects?.heroCardWrap ? (
             <div className="hero-card fade-in d1">
@@ -233,6 +243,13 @@ export default function ProfileTemplate({
                 photoPositionX={photoPositionX}
                 photoPositionY={photoPositionY}
                 photoZoom={photoZoom}
+                photoMode={photoMode}
+                photoSize={photoSize}
+                photoAlign={effectivePhotoAlign}
+                coverLogoUrl={hasCoverLogo ? coverUrl : undefined}
+                coverLogoPosition={coverLogoPosition}
+                coverZoom={coverZoom}
+                coverPositionX={coverPositionX}
                 title={title}
                 company={company}
                 profileId={profileId}
@@ -251,11 +268,39 @@ export default function ProfileTemplate({
               photoRadius={photoRadius}
               photoPositionX={photoPositionX}
               photoPositionY={photoPositionY}
+              photoZoom={photoZoom}
+              photoMode={photoMode}
+              photoSize={photoSize}
+              photoAlign={effectivePhotoAlign}
+              coverLogoUrl={hasCoverLogo ? coverUrl : undefined}
+              coverLogoPosition={coverLogoPosition}
+              coverZoom={coverZoom}
+              coverPositionX={coverPositionX}
               title={title}
               company={company}
               profileId={profileId}
               vcardPinEnabled={vcardPinEnabled}
             />
+          )}
+
+          {/* Status tags — below name/title, above links */}
+          {statusTags.length > 0 && (
+            <div
+              className="status-tags fade-in d2"
+              style={statusTagColor ? {
+                '--accent': statusTagColor,
+                '--accent-soft': `${statusTagColor}0f`,
+              } as React.CSSProperties : undefined}
+            >
+              <div className="status-tags-list">
+                {statusTags.map(slug => (
+                  <span key={slug} className="status-tag">
+                    <span className="status-tag-dot" />
+                    {STATUS_TAG_LABELS[slug] || slug}
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Hero rule (Classic, Editorial) */}
@@ -368,6 +413,8 @@ export default function ProfileTemplate({
 // ── Hero sub-component (used in both wrapped and unwrapped modes)
 function HeroContent({
   photoUrl, fullName, firstName, subtitle, tagline, hasTagline, photoShape, photoRadius, photoPositionX, photoPositionY, photoZoom,
+  photoMode, photoSize, photoAlign,
+  coverLogoUrl, coverLogoPosition, coverZoom, coverPositionX,
   title, company, profileId, vcardPinEnabled,
 }: {
   photoUrl: string; fullName: string; firstName: string;
@@ -375,6 +422,8 @@ function HeroContent({
   photoShape?: string; photoRadius?: number | null;
   photoPositionX?: number; photoPositionY?: number;
   photoZoom?: number;
+  photoMode?: string; photoSize?: string; photoAlign?: string;
+  coverLogoUrl?: string; coverLogoPosition?: string; coverZoom?: number; coverPositionX?: number;
   title?: string; company?: string; profileId: string; vcardPinEnabled?: boolean;
 }) {
   const customPhotoStyle: React.CSSProperties | undefined =
@@ -382,25 +431,61 @@ function HeroContent({
       ? { borderRadius: `${photoRadius}%` }
       : undefined;
 
+  const logoSizeMap: Record<string, string> = { small: '80px', medium: '120px', large: '160px', xl: '200px' };
+  const logoSize = logoSizeMap[photoSize || 'medium'] || '120px';
+
   return (
     <>
       <div className="hero-top fade-in d1">
-        <ExpandablePhoto
-          photoUrl={photoUrl}
-          fullName={fullName}
-          customPhotoStyle={customPhotoStyle}
-          positionStyle={{
-            objectPosition: `${photoPositionX ?? 50}% ${photoPositionY ?? 50}%`,
-            transform: (photoZoom ?? 100) > 100 ? `scale(${(photoZoom ?? 100) / 100})` : undefined,
-            transformOrigin: `${photoPositionX ?? 50}% ${photoPositionY ?? 50}%`,
-          }}
-          initials={(firstName?.[0] || '').toUpperCase()}
-          title={title}
-          company={company}
-          profileId={profileId}
-          vcardPinEnabled={vcardPinEnabled}
-        />
+        {photoMode === 'logo' && photoUrl ? (
+          <div className="profile-logo" style={{
+            display: 'flex',
+            justifyContent: photoAlign === 'center' ? 'center' : photoAlign === 'right' ? 'flex-end' : 'flex-start',
+          }}>
+            <img
+              src={photoUrl}
+              alt={fullName}
+              className="logo-img"
+              style={{
+                maxWidth: logoSize,
+                maxHeight: logoSize,
+                objectFit: 'contain',
+                objectPosition: `${photoPositionX ?? 50}% ${photoPositionY ?? 50}%`,
+                transform: (photoZoom ?? 100) > 100 ? `scale(${(photoZoom ?? 100) / 100})` : undefined,
+              }}
+            />
+          </div>
+        ) : (
+          <ExpandablePhoto
+            photoUrl={photoUrl}
+            fullName={fullName}
+            customPhotoStyle={customPhotoStyle}
+            positionStyle={{
+              objectPosition: `${photoPositionX ?? 50}% ${photoPositionY ?? 50}%`,
+              transform: (photoZoom ?? 100) > 100 ? `scale(${(photoZoom ?? 100) / 100})` : undefined,
+              transformOrigin: `${photoPositionX ?? 50}% ${photoPositionY ?? 50}%`,
+            }}
+            initials={(firstName?.[0] || '').toUpperCase()}
+            title={title}
+            company={company}
+            profileId={profileId}
+            vcardPinEnabled={vcardPinEnabled}
+          />
+        )}
         <div className="hero-identity">
+          {coverLogoUrl && coverLogoPosition === 'beside' && (
+            <img
+              src={coverLogoUrl}
+              alt=""
+              className="cover-logo-img cover-logo-beside"
+              style={{
+                maxHeight: '48px',
+                marginBottom: '0.375rem',
+                objectFit: 'contain',
+                transform: `scale(${(coverZoom ?? 100) / 100}) translateX(${((coverPositionX ?? 50) - 50) * 2}%)`,
+              }}
+            />
+          )}
           <h1 className="hero-name">{fullName}</h1>
           {subtitle && <p className="hero-title">{subtitle}</p>}
           {tagline && hasTagline && <p className="hero-tagline">{tagline}</p>}

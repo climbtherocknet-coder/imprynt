@@ -127,6 +127,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
     linkSize: string;
     linkShape: string;
     linkButtonColor: string | null;
+    photoMode: string;
   } | null>(null);
   const [previewPods, setPreviewPods] = useState<PodData[]>([]);
 
@@ -144,6 +145,8 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
 
   // Cover & background photo (per-page)
   const [coverUrl, setCoverUrl] = useState('');
+  const [coverMode, setCoverMode] = useState('photo');
+  const [coverLogoPosition, setCoverLogoPosition] = useState('above');
   const [coverOpacity, setCoverOpacity] = useState(30);
   const [coverPositionY, setCoverPositionY] = useState(50);
   const [coverUploading, setCoverUploading] = useState(false);
@@ -204,6 +207,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           linkSize: d.profile.linkSize || 'medium',
           linkShape: d.profile.linkShape || 'pill',
           linkButtonColor: d.profile.linkButtonColor || null,
+          photoMode: d.profile.photoMode || 'photo',
         });
         // Set profile photo settings as defaults (will be overridden by page data if it exists)
         setPhotoShape(d.profile.photoShape || 'circle');
@@ -248,6 +252,8 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           if (p.photoAlign) setPhotoAlign(p.photoAlign);
           // Load per-page cover/bg settings
           setCoverUrl(p.coverUrl || '');
+          setCoverMode(p.coverMode || 'photo');
+          setCoverLogoPosition(p.coverLogoPosition || 'above');
           setCoverOpacity(p.coverOpacity ?? 30);
           setCoverPositionY(p.coverPositionY ?? 50);
           setBgImageUrl(p.bgImageUrl || '');
@@ -356,7 +362,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
           photoShape, photoRadius: photoShape === 'custom' ? photoRadius : null, photoSize,
           photoPositionX, photoPositionY, photoAnimation, photoAlign,
           // Per-page cover/bg
-          coverUrl: coverUrl || null, coverOpacity, coverPositionY,
+          coverUrl: coverUrl || null, coverMode, coverLogoPosition, coverOpacity, coverPositionY,
           bgImageUrl: bgImageUrl || null, bgImageOpacity, bgImagePositionY,
           photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom,
         };
@@ -383,7 +389,7 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
     } finally {
       setSaving(false);
     }
-  }, [isNew, page, pageTitle, bioText, pin, pinConfirm, isActive, iconColor, iconOpacity, iconCorner, allowRemember, photoMode, photoUrl, photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, coverUrl, coverOpacity, coverPositionY, bgImageUrl, bgImageOpacity, bgImagePositionY, photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom]);
+  }, [isNew, page, pageTitle, bioText, pin, pinConfirm, isActive, iconColor, iconOpacity, iconCorner, allowRemember, photoMode, photoUrl, photoShape, photoRadius, photoSize, photoPositionX, photoPositionY, photoAnimation, photoAlign, coverUrl, coverMode, coverLogoPosition, coverOpacity, coverPositionY, bgImageUrl, bgImageOpacity, bgImagePositionY, photoZoom, coverPositionX, coverZoom, bgImagePositionX, bgImageZoom]);
 
   // Cover photo upload
   async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -478,7 +484,10 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
         photoPositionY={photoPositionY}
         photoAnimation={photoAnimation}
         photoAlign={photoAlign}
+        photoMode={profileData.photoMode || 'photo'}
         coverUrl={coverUrl || undefined}
+        coverMode={coverMode}
+        coverLogoPosition={coverLogoPosition}
         coverOpacity={coverOpacity}
         coverPositionY={coverPositionY}
         bgImageUrl={bgImageUrl || undefined}

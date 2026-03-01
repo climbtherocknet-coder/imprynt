@@ -116,6 +116,22 @@ export async function GET() {
     saveButtonColor = sbResult.rows[0]?.save_button_color || null;
   } catch { /* columns don't exist yet */ }
 
+  // Fetch photo_mode (migration 057)
+  let photoMode = 'photo';
+  try {
+    const pmResult = await query('SELECT photo_mode FROM profiles WHERE id = $1', [profile.id]);
+    photoMode = pmResult.rows[0]?.photo_mode || 'photo';
+  } catch { /* column doesn't exist yet */ }
+
+  // Fetch cover_mode + cover_logo_position (migration 058)
+  let coverMode = 'photo';
+  let coverLogoPosition = 'above';
+  try {
+    const cmResult = await query('SELECT cover_mode, cover_logo_position FROM profiles WHERE id = $1', [profile.id]);
+    coverMode = cmResult.rows[0]?.cover_mode || 'photo';
+    coverLogoPosition = cmResult.rows[0]?.cover_logo_position || 'above';
+  } catch { /* columns don't exist yet */ }
+
   const linksResult = await query(
     `SELECT id, link_type, label, url, display_order, show_business, show_personal, show_showcase, button_color
      FROM links
@@ -179,6 +195,9 @@ export async function GET() {
       linkButtonColor,
       saveButtonStyle,
       saveButtonColor,
+      photoMode,
+      coverMode,
+      coverLogoPosition,
     },
     links: linksResult.rows.map((l: Record<string, unknown>) => ({
       id: l.id,
@@ -302,6 +321,23 @@ export async function PUT(req: NextRequest) {
           await query('UPDATE profiles SET photo_align = $1 WHERE user_id = $2', [alignVal, userId]);
         } catch { /* column doesn't exist yet */ }
       }
+      // photo_mode update separately (migration 057)
+      const { photoMode: photoModeVal } = body;
+      if (photoModeVal && ['photo', 'logo'].includes(photoModeVal)) {
+        try {
+          await query('UPDATE profiles SET photo_mode = $1 WHERE user_id = $2', [photoModeVal, userId]);
+        } catch { /* column doesn't exist yet */ }
+      }
+      // cover_mode + cover_logo_position update (migration 058)
+      const { coverMode: coverModeVal, coverLogoPosition: coverLogoPosVal } = body;
+      try {
+        if (coverModeVal && ['photo', 'logo'].includes(coverModeVal)) {
+          await query('UPDATE profiles SET cover_mode = $1 WHERE user_id = $2', [coverModeVal, userId]);
+        }
+        if (coverLogoPosVal && ['above', 'beside'].includes(coverLogoPosVal)) {
+          await query('UPDATE profiles SET cover_logo_position = $1 WHERE user_id = $2', [coverLogoPosVal, userId]);
+        }
+      } catch { /* columns don't exist yet */ }
       // link button settings (migration 046)
       const { linkSize, linkShape } = body;
       try {
@@ -465,6 +501,23 @@ export async function PUT(req: NextRequest) {
           await query('UPDATE profiles SET photo_align = $1 WHERE user_id = $2', [alignVal, userId]);
         } catch { /* column doesn't exist yet */ }
       }
+      // photo_mode — update separately (migration 057)
+      const { photoMode: photoModeValP } = body;
+      if (photoModeValP && ['photo', 'logo'].includes(photoModeValP)) {
+        try {
+          await query('UPDATE profiles SET photo_mode = $1 WHERE user_id = $2', [photoModeValP, userId]);
+        } catch { /* column doesn't exist yet */ }
+      }
+      // cover_mode + cover_logo_position — update separately (migration 058)
+      const { coverMode: coverModeValP, coverLogoPosition: coverLogoPosValP } = body;
+      try {
+        if (coverModeValP && ['photo', 'logo'].includes(coverModeValP)) {
+          await query('UPDATE profiles SET cover_mode = $1 WHERE user_id = $2', [coverModeValP, userId]);
+        }
+        if (coverLogoPosValP && ['above', 'beside'].includes(coverLogoPosValP)) {
+          await query('UPDATE profiles SET cover_logo_position = $1 WHERE user_id = $2', [coverLogoPosValP, userId]);
+        }
+      } catch { /* columns don't exist yet */ }
       // custom_theme — update separately (migration 036)
       const { customTheme } = body;
       if (template === 'custom' && customTheme && typeof customTheme === 'object') {

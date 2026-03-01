@@ -1339,6 +1339,19 @@
   min-height: 100%;
 }
 
+/* Hide scrollbars in setup phone preview — all descendants */
+.setup-preview-screen *,
+.setup-mobile-preview-body * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.setup-preview-screen *::-webkit-scrollbar,
+.setup-mobile-preview-body *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 /* ── Mobile preview floating button ── */
 .setup-mobile-preview-btn {
   display: none;

@@ -103,6 +103,8 @@ interface PreviewState {
   photoZoom: number;
   photoAnimation: string;
   coverUrl: string;
+  coverMode: string;
+  coverLogoPosition: string;
   coverPositionX: number;
   coverPositionY: number;
   coverOpacity: number;
@@ -191,7 +193,7 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
     customTheme: null,
     photoUrl: '', photoShape: 'circle', photoSize: 'medium', photoAlign: 'left',
     photoPositionX: 50, photoPositionY: 50, photoZoom: 100, photoAnimation: 'none',
-    coverUrl: '', coverPositionX: 50, coverPositionY: 50, coverOpacity: 70, coverZoom: 100,
+    coverUrl: '', coverMode: 'photo', coverLogoPosition: 'above', coverPositionX: 50, coverPositionY: 50, coverOpacity: 70, coverZoom: 100,
     bgImageUrl: '', bgImagePositionX: 50, bgImagePositionY: 50, bgImageOpacity: 20, bgImageZoom: 100,
     links: [], linkDisplay: 'default', linkSize: 'medium', linkShape: 'pill', linkButtonColor: null,
     pods: [],
@@ -223,6 +225,8 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
       photoZoom: d.profile.photoZoom ?? 100,
       photoAnimation: d.profile.photoAnimation || 'none',
       coverUrl: d.profile.coverUrl || '',
+      coverMode: d.profile.coverMode || 'photo',
+      coverLogoPosition: d.profile.coverLogoPosition || 'above',
       coverPositionX: d.profile.coverPositionX ?? 50,
       coverPositionY: d.profile.coverPositionY ?? 50,
       coverOpacity: d.profile.coverOpacity ?? 70,
@@ -270,6 +274,8 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
       photoZoom: state.photoZoom,
       photoAnimation: state.photoAnimation,
       coverUrl: state.coverUrl,
+      coverMode: state.coverMode,
+      coverLogoPosition: state.coverLogoPosition,
       coverPositionX: state.coverPositionX,
       coverPositionY: state.coverPositionY,
       coverOpacity: state.coverOpacity,
@@ -499,14 +505,15 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
 
   function getVisualsInitial(): VisualsState {
     if (!profileData) return {
-      photoUrl: '', photoShape: 'circle', photoRadius: 0, photoSize: 'medium',
+      photoUrl: '', photoMode: 'photo', photoShape: 'circle', photoRadius: 0, photoSize: 'medium',
       photoPositionX: 50, photoPositionY: 50, photoZoom: 100, photoAnimation: 'none', photoAlign: 'left',
-      coverUrl: '', coverPositionX: 50, coverPositionY: 50, coverOpacity: 70, coverZoom: 100,
+      coverUrl: '', coverMode: 'photo', coverLogoPosition: 'above', coverPositionX: 50, coverPositionY: 50, coverOpacity: 70, coverZoom: 100,
       bgImageUrl: '', bgImagePositionX: 50, bgImagePositionY: 50, bgImageOpacity: 20, bgImageZoom: 100,
     };
     const d = profileData.profile;
     return {
       photoUrl: d.photoUrl || '',
+      photoMode: d.photoMode || 'photo',
       photoShape: d.photoShape || 'circle',
       photoRadius: d.photoRadius ?? 0,
       photoSize: d.photoSize || 'medium',
@@ -516,6 +523,8 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
       photoAnimation: d.photoAnimation || 'none',
       photoAlign: d.photoAlign || 'left',
       coverUrl: d.coverUrl || '',
+      coverMode: d.coverMode || 'photo',
+      coverLogoPosition: d.coverLogoPosition || 'above',
       coverPositionX: d.coverPositionX ?? 50,
       coverPositionY: d.coverPositionY ?? 50,
       coverOpacity: d.coverOpacity ?? 70,
@@ -592,6 +601,8 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
         linkShape={preview.linkShape}
         linkButtonColor={preview.linkButtonColor}
         coverUrl={preview.coverUrl}
+        coverMode={preview.coverMode}
+        coverLogoPosition={preview.coverLogoPosition}
         coverPositionX={preview.coverPositionX}
         coverPositionY={preview.coverPositionY}
         coverOpacity={preview.coverOpacity}
