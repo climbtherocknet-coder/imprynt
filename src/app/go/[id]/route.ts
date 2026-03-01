@@ -13,8 +13,10 @@ export async function GET(
       [id]
     );
 
+    const base = process.env.NEXT_PUBLIC_APP_URL || req.url;
+
     if (result.rows.length === 0) {
-      return NextResponse.redirect(new URL('/', req.url));
+      return NextResponse.redirect(new URL('/', base));
     }
 
     const { slug, is_published, profile_id } = result.rows[0];
@@ -28,9 +30,10 @@ export async function GET(
       ).catch(() => {});
     }
 
-    return NextResponse.redirect(new URL(`/${slug}`, req.url), 302);
+    return NextResponse.redirect(new URL(`/${slug}`, base), 302);
   } catch (error) {
     console.error('NFC redirect error:', error);
-    return NextResponse.redirect(new URL('/', req.url));
+    const fallback = process.env.NEXT_PUBLIC_APP_URL || req.url;
+    return NextResponse.redirect(new URL('/', fallback), 302);
   }
 }
