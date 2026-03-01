@@ -2,8 +2,8 @@
 
 **Purpose:** This file is the shared memory between Claude sessions. After each work session or push, update the relevant sections so context is never lost if a conversation resets.
 
-**Last updated:** February 28, 2026
-**Updated by:** Claude (session 15 — media gallery, QR, impression menu v0.10.6)
+**Last updated:** March 1, 2026
+**Updated by:** Claude (session 16 — impr.in short domain activated, v0.11.0)
 
 ---
 
@@ -191,6 +191,14 @@ docker compose up --build
     2. Event pod timezone fix (store timezone, stop UTC conversion)
     3. Event pod public renderer (full build in PodRenderer.tsx)
     4. Admin portal consolidation into Command Center (add admin tabs, keep legacy alive until verified)
+
+### March 1, 2026 (Session 16) — impr.in Short Domain Activated (v0.11.0)
+- **Infrastructure:** impr.in DNS already pointed to Hetzner (5.78.85.128). Added Caddy rewrite rule (`impr.in/* → /go/*`) with `reverse_proxy app:3000`. Added `www.impr.in` permanent redirect to `impr.in`. Caddy auto-provisioned Let's Encrypt TLS certs for both.
+- **Build pipeline:** Added `NEXT_PUBLIC_SHORT_DOMAIN` as build arg in `Dockerfile.prod` and `docker-compose.prod.yml`. Set to `impr.in` in server `.env.production`.
+- **Bug fix:** `/go/[id]/route.ts` was using `req.url` as redirect base, which resolved to `0.0.0.0:3000` behind Caddy reverse proxy. Fixed to use `process.env.NEXT_PUBLIC_APP_URL` for correct external redirects. This pre-existing bug affected both `imprynt.io/go/` and `impr.in/` redirects.
+- **Also deployed:** Gallery "Browse Gallery" button added to profile photo sections (VisualsSection + PersonalTab). GalleryPicker category type expanded to include `'profile'`.
+- **Result:** `impr.in/TkfXM_CKmuVQ` → 302 → `https://imprynt.io/razponMT`. Dashboard share links, QR codes, and NFC URLs now use `impr.in/{redirectId}`. Main domain `/go/` fallback preserved.
+- **Version bump:** v0.11.0
 
 ### February 28, 2026 (Session 15) — Media Gallery + QR + Impression Menu (v0.10.6)
 - **Fixed:** My Media `/api/media` query — pods table uses `profile_id`, not `user_id`. Fixed with JOIN. Added protected page pod media.
