@@ -616,6 +616,25 @@ CREATE TABLE public.user_scores (
 
 
 --
+-- Name: user_media; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_media (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    filename character varying(255) NOT NULL,
+    original_filename character varying(255),
+    mime_type character varying(50) NOT NULL,
+    file_size integer DEFAULT 0 NOT NULL,
+    url character varying(500) NOT NULL,
+    thumbnail_url character varying(500),
+    width integer,
+    height integer,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -897,6 +916,22 @@ ALTER TABLE ONLY public.profiles
 
 ALTER TABLE ONLY public.protected_pages
     ADD CONSTRAINT protected_pages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_media user_media_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_media
+    ADD CONSTRAINT user_media_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_media unique_user_media_url; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_media
+    ADD CONSTRAINT unique_user_media_url UNIQUE (user_id, url);
 
 
 --
@@ -1299,6 +1334,20 @@ CREATE INDEX idx_profiles_slug ON public.profiles USING btree (slug);
 --
 
 CREATE INDEX idx_profiles_user ON public.profiles USING btree (user_id);
+
+
+--
+-- Name: idx_user_media_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_user_media_user ON public.user_media USING btree (user_id);
+
+
+--
+-- Name: idx_user_media_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_user_media_created ON public.user_media USING btree (user_id, created_at DESC);
 
 
 --
@@ -1739,6 +1788,14 @@ ALTER TABLE ONLY public.pods
 
 ALTER TABLE ONLY public.profiles
     ADD CONSTRAINT profiles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_media user_media_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_media
+    ADD CONSTRAINT user_media_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --

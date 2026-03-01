@@ -3,7 +3,7 @@
 **Purpose:** This file is the shared memory between Claude sessions. After each work session or push, update the relevant sections so context is never lost if a conversation resets.
 
 **Last updated:** March 1, 2026
-**Updated by:** Claude (session 16b — status tags + logo mode, v0.11.1)
+**Updated by:** Claude (session 16d — Media Manager, v0.11.3)
 
 ---
 
@@ -52,6 +52,7 @@ The Imprynt platform is a fully functional Next.js 15 app. Marketing pages (land
 - **Analytics Dashboard:** `/dashboard/analytics` with total views, unique visitors, views today/week/month, views by day chart, top links by clicks, event breakdown (page_view/link_click/vcard_download/pin_success/pin_attempt/nfc_tap), scoring
 - **NFC Redirect + Short URLs:** `/go/[id]` route resolves `redirect_id` to profile slug. Logs `nfc_tap` analytics event. `/r/[id]` kept as backward-compatible alias. Short domain (impr.in) configurable via `NEXT_PUBLIC_SHORT_DOMAIN` env var — `getShareUrl()` helper returns `impr.in/{id}` when set, `/go/{id}` fallback. QR codes encode share URL.
 - **Save Contact Button:** Template-aware styling via `--save-btn-bg`/`--save-btn-color` CSS variables. Each template has distinct save button colors. User customization: auto (template default), accent, inverted, or custom color picker. Migration 054.
+- **Media Manager:** Central `user_media` table tracks all uploads per user. Full management UI at `/dashboard/media` with storage usage bar (color-coded), upload, and delete. GalleryPicker "My Media" tab with inline upload button. DELETE clears all references across profiles, pods, protected_pages. Backfill on first load. Storage limits: 50MB free / 500MB paid. Migration 059.
 - **Additional Features:** Waitlist modal, feedback button, announcement banner, breadcrumbs, verification banner, demo profiles system, gallery/stock photo picker, vCard download with optional PIN protection
 
 ### What's In Progress
@@ -132,8 +133,8 @@ src/
 ```
 
 ### Database
-- Schema: `db/init.sql` (regenerated Feb 26, 2026), migrations in `db/migrations/` (001-058)
-- 28 tables: users, profiles, links, contact_fields, protected_pages, pods, showcase_items, analytics_events, pin_attempts, accessories, invite_codes, waitlist, feedback, hardware_waitlist, image_gallery, connections, score_events, user_scores, vcard_download_tokens, email_verification_tokens, password_resets, contacts, cc_features, cc_roadmap, cc_changelog, cc_docs, cc_votes, cc_comments
+- Schema: `db/init.sql` (regenerated Feb 26, 2026), migrations in `db/migrations/` (001-059)
+- 29 tables: users, profiles, links, contact_fields, protected_pages, pods, showcase_items, analytics_events, pin_attempts, accessories, invite_codes, waitlist, feedback, hardware_waitlist, image_gallery, connections, score_events, user_scores, vcard_download_tokens, email_verification_tokens, password_resets, contacts, cc_features, cc_roadmap, cc_changelog, cc_docs, cc_votes, cc_comments, user_media
 
 ### Running Locally
 ```bash
@@ -201,6 +202,19 @@ docker compose up --build
 - **Also deployed:** Gallery "Browse Gallery" button added to profile photo sections (VisualsSection + PersonalTab). GalleryPicker category type expanded to include `'profile'`.
 - **Result:** `impr.in/TkfXM_CKmuVQ` → 302 → `https://imprynt.io/razponMT`. Dashboard share links, QR codes, and NFC URLs now use `impr.in/{redirectId}`. Main domain `/go/` fallback preserved.
 - **Version bump:** v0.11.0
+
+### March 1, 2026 (Session 16d) — Media Manager (v0.11.3) — SANDBOX ONLY
+- **New:** Central `user_media` table (migration 059) tracks all uploaded files per user with storage limits enforcement.
+- **New:** Full media API rewrite — `GET /api/media` with backfill (populates user_media from existing scattered references on first load), `POST /api/media` with storage limit checking and user-specific directories, `DELETE /api/media/[id]` clears all references across profiles, pods, and protected_pages before deleting.
+- **New:** `MediaManager.tsx` component — storage usage bar (green/yellow/red), upload button with 10MB client limit, grid display with thumbnails, delete with confirmation.
+- **Updated:** Dashboard `/dashboard/media` page replaced with MediaManager component.
+- **Updated:** `GalleryPicker.tsx` "My Media" tab — uses new API response format (objects with id, filename, mime_type, thumbnail_url instead of just url/type), filters by `mime_type` instead of file extension regex, added inline upload button.
+- **Storage limits:** 50MB free, 500MB paid.
+- **DB:** `user_media` table with `UNIQUE(user_id, url)` constraint, indexes on user_id and (user_id, created_at DESC).
+- **Files created:** `db/migrations/059_user_media.sql`, `src/app/api/media/[id]/route.ts`, `src/components/dashboard/MediaManager.tsx`
+- **Files modified:** `db/init.sql`, `src/app/api/media/route.ts`, `src/app/dashboard/media/page.tsx`, `src/components/ui/GalleryPicker.tsx`, `db/seeds/command-center-seed.sql`, `CONTEXT.md`
+- **NOT deployed** — sandbox/dev only per prompt instructions.
+- **Version bump:** v0.11.3
 
 ### March 1, 2026 (Session 16c) — Cover Logo Mode (v0.11.2) — SANDBOX ONLY
 - **New:** Cover photo slot has Photo/Logo mode toggle. Logo mode renders transparent PNGs cleanly, no opacity overlay, no gradient, no dimming.

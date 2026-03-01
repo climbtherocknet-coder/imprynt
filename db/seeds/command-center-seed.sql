@@ -50,6 +50,15 @@ INSERT INTO cc_changelog (title, body, version, entry_date, tags) VALUES
   ('10 Templates', 'Shipped Clean, Warm, Classic, Soft, Midnight, Editorial, Noir, Signal, Studio, and Dusk templates.', 'v1.0', '2026-02-20', '{templates}'),
   ('Demo Profiles', '10 curated demo accounts across target segments with protected pages and content blocks.', 'v1.0', '2026-02-20', '{marketing,demos}');
 
+-- Media Manager feature + changelog (v0.11.3)
+INSERT INTO cc_features (name, description, category, status, release_phase, priority) VALUES
+  ('Media Manager', 'Central media library with upload, delete, storage limits (50MB free / 500MB paid), backfill from existing uploads, GalleryPicker integration', 'ux', 'shipped', 'v1', 21)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO cc_changelog (title, body, version, entry_date, tags) VALUES
+  ('Media Manager', 'Central user_media table tracks all uploaded files per user. Full media manager UI at /dashboard/media with storage usage bar, upload, and delete. GalleryPicker "My Media" tab updated with new API format and inline upload button. DELETE endpoint clears all references across profiles, pods, and protected pages. Backfill on first load populates table from existing scattered uploads. Storage limits: 50MB free, 500MB paid.', 'v0.11.3', '2026-03-01', '{ux,media,uploads}')
+ON CONFLICT DO NOTHING;
+
 -- Docs
 INSERT INTO cc_docs (title, body, doc_type, visibility, is_pinned, tags) VALUES
   ('V1 MVP Specification', 'The full product spec is maintained in the project repository as sygnet-mvp-spec.md. This document covers: product summary, target audience, value propositions, feature specifications, pricing tiers, technical architecture, sourcing/fulfillment, and success metrics.', 'design_spec', 'advisory', true, '{product,spec,v1}'),

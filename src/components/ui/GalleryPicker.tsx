@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 
 interface GalleryImage {
   id: string;
@@ -12,8 +12,16 @@ interface GalleryImage {
 }
 
 interface MediaItem {
+  id: string;
+  filename: string;
+  original_filename: string;
+  mime_type: string;
+  file_size: number;
   url: string;
-  type: string;
+  thumbnail_url: string | null;
+  width: number | null;
+  height: number | null;
+  created_at: string;
 }
 
 interface GalleryPickerProps {
@@ -43,6 +51,8 @@ export default function GalleryPicker({ category, currentUrl, onSelect, onClose,
   const [activeTab, setActiveTab] = useState<'gallery' | 'my-media'>('gallery');
   const [myMedia, setMyMedia] = useState<MediaItem[]>([]);
   const [myMediaLoading, setMyMediaLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch(`/api/gallery?category=${category}`)
@@ -60,7 +70,7 @@ export default function GalleryPicker({ category, currentUrl, onSelect, onClose,
         .then(data => {
           // Filter to only image types (not audio)
           const imageMedia = (data.media || []).filter((m: MediaItem) =>
-            !(/\.(mp3|wav|m4a|ogg|aac)$/i.test(m.url))
+            m.mime_type?.startsWith('image/')
           );
           setMyMedia(imageMedia);
         })
@@ -68,6 +78,27 @@ export default function GalleryPicker({ category, currentUrl, onSelect, onClose,
         .finally(() => setMyMediaLoading(false));
     }
   }, [activeTab, myMedia.length, myMediaLoading]);
+
+  async function handleUploadInPicker(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { alert('File must be under 10MB'); return; }
+    setUploading(true);
+    const form = new FormData();
+    form.append('file', file);
+    try {
+      const res = await fetch('/api/media', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || 'Upload failed'); return; }
+      const item = data.media as MediaItem;
+      if (item.mime_type?.startsWith('image/')) {
+        setMyMedia(prev => [item, ...prev]);
+      }
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
 
   // Extract unique tags from images
   const tags = useMemo(() => {
@@ -293,12 +324,44 @@ export default function GalleryPicker({ category, currentUrl, onSelect, onClose,
         {/* My Media tab */}
         {activeTab === 'my-media' && (
           <div style={{ overflow: 'auto', flex: 1 }}>
+            {/* Upload button */}
+            <div style={{ marginBottom: '0.75rem' }}>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                style={{
+                  padding: '0.375rem 0.75rem',
+                  borderRadius: '0.5rem',
+                  border: '1px solid var(--accent, #e8a849)',
+                  background: 'var(--accent, #e8a849)',
+                  color: 'var(--bg, #0c1017)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: uploading ? 'wait' : 'pointer',
+                  opacity: uploading ? 0.6 : 1,
+                  fontFamily: 'inherit',
+                }}
+              >
+                {uploading ? 'Uploading...' : 'Upload Image'}
+              </button>
+              <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginLeft: '0.5rem' }}>
+                JPEG, PNG, WebP. Max 10MB.
+              </span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleUploadInPicker}
+                style={{ display: 'none' }}
+              />
+            </div>
+
             {myMediaLoading ? (
               <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Loading...</p>
             ) : myMedia.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
                 <p style={{ color: 'var(--text-muted, #5d6370)', fontSize: '0.875rem' }}>
-                  No uploaded images yet. Upload images from the editor.
+                  No uploaded images yet. Use the button above to upload.
                 </p>
               </div>
             ) : (
@@ -311,7 +374,7 @@ export default function GalleryPicker({ category, currentUrl, onSelect, onClose,
                   const isSelected = currentUrl === item.url;
                   return (
                     <button
-                      key={item.url}
+                      key={item.id}
                       onClick={() => onSelect(item.url)}
                       style={{
                         position: 'relative',
@@ -335,8 +398,8 @@ export default function GalleryPicker({ category, currentUrl, onSelect, onClose,
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={item.url}
-                        alt=""
+                        src={item.thumbnail_url || item.url}
+                        alt={item.original_filename || item.filename}
                         loading="lazy"
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                       />
