@@ -459,12 +459,12 @@ function HeroContent({
           <ExpandablePhoto
             photoUrl={photoUrl}
             fullName={fullName}
-            customPhotoStyle={customPhotoStyle}
-            positionStyle={{
-              objectPosition: `${photoPositionX ?? 50}% ${photoPositionY ?? 50}%`,
-              transform: (photoZoom ?? 100) > 100 ? `scale(${(photoZoom ?? 100) / 100})` : undefined,
-              transformOrigin: `${photoPositionX ?? 50}% ${photoPositionY ?? 50}%`,
-            }}
+            customPhotoStyle={{
+              ...customPhotoStyle,
+              '--photo-zoom': photoZoom && photoZoom > 100 ? `${photoZoom / 100}` : '1',
+              '--photo-pos-x': `${photoPositionX ?? 50}%`,
+              '--photo-pos-y': `${photoPositionY ?? 50}%`,
+            } as React.CSSProperties}
             initials={(firstName?.[0] || '').toUpperCase()}
             title={title}
             company={company}

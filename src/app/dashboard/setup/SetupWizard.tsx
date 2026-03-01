@@ -95,6 +95,7 @@ interface PreviewState {
   fontPair: string;
   customTheme: CustomThemeData | null;
   photoUrl: string;
+  photoMode: string;
   photoShape: string;
   photoSize: string;
   photoAlign: string;
@@ -191,7 +192,7 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
     firstName: '', lastName: '', title: '', company: '', tagline: '',
     template: 'clean', accentColor: '', fontPair: '',
     customTheme: null,
-    photoUrl: '', photoShape: 'circle', photoSize: 'medium', photoAlign: 'left',
+    photoUrl: '', photoMode: 'photo', photoShape: 'circle', photoSize: 'medium', photoAlign: 'left',
     photoPositionX: 50, photoPositionY: 50, photoZoom: 100, photoAnimation: 'none',
     coverUrl: '', coverMode: 'photo', coverLogoPosition: 'above', coverPositionX: 50, coverPositionY: 50, coverOpacity: 70, coverZoom: 100,
     bgImageUrl: '', bgImagePositionX: 50, bgImagePositionY: 50, bgImageOpacity: 20, bgImageZoom: 100,
@@ -217,6 +218,7 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
       fontPair: d.profile.fontPair || '',
       customTheme: d.profile.customTheme || null,
       photoUrl: d.profile.photoUrl || '',
+      photoMode: d.profile.photoMode || 'photo',
       photoShape: d.profile.photoShape || 'circle',
       photoSize: d.profile.photoSize || 'medium',
       photoAlign: d.profile.photoAlign || 'left',
@@ -266,6 +268,7 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
     setPreview(p => ({
       ...p,
       photoUrl: state.photoUrl,
+      photoMode: state.photoMode,
       photoShape: state.photoShape,
       photoSize: state.photoSize,
       photoAlign: state.photoAlign,
@@ -584,6 +587,7 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
         company={preview.company}
         tagline={preview.tagline}
         photoUrl={preview.photoUrl}
+        photoMode={preview.photoMode}
         links={previewLinks}
         pods={preview.pods}
         isPaid={isPaid}

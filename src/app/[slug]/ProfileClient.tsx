@@ -856,7 +856,10 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
   const feedbackCorner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' =
     iconCorner === 'top-right' ? 'top-left' : 'top-right';
 
-  // Check for remembered pages on mount
+  // Check if device is remembered (but DON'T auto-load the page)
+  const [hasRemembered, setHasRemembered] = useState(false);
+  const [rememberedPageId, setRememberedPageId] = useState<string | null>(null);
+
   const loadPageContent = useCallback(async (pageId: string) => {
     try {
       const res = await fetch(`/api/protected-pages/${pageId}`);
@@ -874,21 +877,30 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
         if (!res.ok) return;
         const data = await res.json();
         if (data.rememberedPages?.length > 0) {
-          // Auto-load the first remembered page
-          const remembered = data.rememberedPages[0];
-          const content = await loadPageContent(remembered.pageId);
-          if (content) {
-            setProtectedContent(content);
-            setLastUnlockedPageId(remembered.pageId);
-            setIsRemembered(true);
-          }
+          setHasRemembered(true);
+          setRememberedPageId(data.rememberedPages[0].pageId);
         }
       } catch {
         // Silent — don't break the page
       }
     }
     checkRemembered();
-  }, [profileId, loadPageContent]);
+  }, [profileId]);
+
+  async function handleUnlock() {
+    if (hasRemembered && rememberedPageId) {
+      // Bypass PIN — load the page directly
+      const content = await loadPageContent(rememberedPageId);
+      if (content) {
+        setProtectedContent(content);
+        setLastUnlockedPageId(rememberedPageId);
+        setIsRemembered(true);
+        return;
+      }
+    }
+    // Not remembered — show PIN modal
+    setShowPinModal(true);
+  }
 
   async function handlePinSuccess(pageId: string, downloadToken?: string) {
     setShowPinModal(false);
@@ -994,13 +1006,22 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
           },
           {
             label: 'Unlock',
-            onClick: () => { setShowPinModal(true); setMenuExpanded(false); },
+            onClick: () => { handleUnlock(); setMenuExpanded(false); },
             show: hasProtectedPage,
             icon: (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0110 0v4" />
-              </svg>
+              <span style={{ position: 'relative', display: 'inline-flex' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0110 0v4" />
+                </svg>
+                {hasRemembered && (
+                  <span style={{
+                    position: 'absolute', top: -1, right: -1,
+                    width: 6, height: 6, borderRadius: '50%',
+                    backgroundColor: '#22c55e',
+                  }} />
+                )}
+              </span>
             ),
           },
           {

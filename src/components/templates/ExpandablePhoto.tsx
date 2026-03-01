@@ -20,7 +20,7 @@ export default function ExpandablePhoto({
   photoUrl,
   fullName,
   customPhotoStyle,
-  positionStyle,
+  positionStyle: _positionStyle,
   initials,
   title,
   company,
@@ -48,7 +48,6 @@ export default function ExpandablePhoto({
             src={photoUrl}
             alt={fullName}
             className="photo-expandable"
-            style={positionStyle}
             onClick={() => setLightboxOpen(true)}
           />
         ) : (
