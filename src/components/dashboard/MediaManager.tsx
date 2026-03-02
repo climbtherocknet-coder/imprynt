@@ -79,7 +79,11 @@ export default function MediaManager() {
       if (res.ok) {
         setMedia(prev => prev.filter(m => m.id !== item.id));
         setUsage(data.usage);
+      } else {
+        alert(data.error || 'Failed to delete');
       }
+    } catch {
+      alert('Failed to delete file');
     } finally {
       setDeleting(null);
     }

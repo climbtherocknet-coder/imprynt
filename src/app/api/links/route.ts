@@ -5,7 +5,8 @@ import { query } from '@/lib/db';
 const VALID_LINK_TYPES = [
   'linkedin', 'website', 'email', 'phone', 'booking',
   'instagram', 'twitter', 'facebook', 'github',
-  'tiktok', 'youtube', 'custom', 'vcard', 'spotify'
+  'tiktok', 'youtube', 'custom', 'vcard', 'spotify',
+  'resume',
 ];
 
 // POST - Add a new link

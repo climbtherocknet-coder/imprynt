@@ -597,7 +597,13 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
               Photo
             </button>
             <button
-              onClick={() => setCoverMode('logo')}
+              onClick={() => {
+                setCoverMode('logo');
+                // Set smart position defaults for logo mode
+                const isAbove = coverLogoPosition === 'above';
+                setCoverPositionX(isAbove ? 60 : 40);
+                setCoverPositionY(isAbove ? 20 : 50);
+              }}
               style={{
                 flex: 1, padding: '0.5rem', borderRadius: '0.5rem',
                 border: `1px solid ${coverMode === 'logo' ? 'var(--accent, #e8a849)' : 'var(--border, #1e2535)'}`,
@@ -680,7 +686,7 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
                 </label>
                 <div style={{ display: 'flex', gap: '0.375rem' }}>
                   <button
-                    onClick={() => setCoverLogoPosition('above')}
+                    onClick={() => { setCoverLogoPosition('above'); setCoverPositionX(60); setCoverPositionY(20); }}
                     style={{
                       flex: 1, padding: '0.375rem', borderRadius: '0.375rem',
                       border: `1px solid ${coverLogoPosition === 'above' ? 'var(--accent, #e8a849)' : 'var(--border, #1e2535)'}`,
@@ -692,7 +698,7 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
                     Above photo
                   </button>
                   <button
-                    onClick={() => setCoverLogoPosition('beside')}
+                    onClick={() => { setCoverLogoPosition('beside'); setCoverPositionX(40); setCoverPositionY(50); }}
                     style={{
                       flex: 1, padding: '0.375rem', borderRadius: '0.375rem',
                       border: `1px solid ${coverLogoPosition === 'beside' ? 'var(--accent, #e8a849)' : 'var(--border, #1e2535)'}`,

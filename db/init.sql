@@ -368,7 +368,7 @@ CREATE TABLE public.links (
     show_personal boolean DEFAULT false NOT NULL,
     show_showcase boolean DEFAULT false NOT NULL,
     button_color character varying(7),
-    CONSTRAINT links_link_type_check CHECK (((link_type)::text = ANY (ARRAY[('linkedin'::character varying)::text, ('website'::character varying)::text, ('email'::character varying)::text, ('phone'::character varying)::text, ('booking'::character varying)::text, ('instagram'::character varying)::text, ('twitter'::character varying)::text, ('facebook'::character varying)::text, ('github'::character varying)::text, ('tiktok'::character varying)::text, ('youtube'::character varying)::text, ('custom'::character varying)::text, ('vcard'::character varying)::text, ('spotify'::character varying)::text])))
+    CONSTRAINT links_link_type_check CHECK (((link_type)::text = ANY (ARRAY[('linkedin'::character varying)::text, ('website'::character varying)::text, ('email'::character varying)::text, ('phone'::character varying)::text, ('booking'::character varying)::text, ('instagram'::character varying)::text, ('twitter'::character varying)::text, ('facebook'::character varying)::text, ('github'::character varying)::text, ('tiktok'::character varying)::text, ('youtube'::character varying)::text, ('custom'::character varying)::text, ('vcard'::character varying)::text, ('spotify'::character varying)::text, ('resume'::character varying)::text])))
 );
 
 
