@@ -17,6 +17,7 @@ const ALLOWED_TYPES: Record<string, string> = {
   'image/png': 'png',
   'image/webp': 'webp',
   'audio/mpeg': 'mp3',
+  'application/pdf': 'pdf',
 };
 
 async function getUsage(userId: string, plan: string) {
@@ -139,7 +140,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!ALLOWED_TYPES[file.type]) {
-      return NextResponse.json({ error: 'Invalid file type. Use JPEG, PNG, WebP, or MP3.' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid file type. Use JPEG, PNG, WebP, MP3, or PDF.' }, { status: 400 });
     }
 
     if (file.size > MAX_FILE_SIZE) {
@@ -161,7 +162,7 @@ export async function POST(req: NextRequest) {
     // Save file
     const ext = ALLOWED_TYPES[file.type];
     const isImage = file.type.startsWith('image/');
-    const subdir = isImage ? 'images' : 'audio';
+    const subdir = isImage ? 'images' : file.type === 'application/pdf' ? 'documents' : 'audio';
     const uploadDir = join(process.cwd(), 'public', 'uploads', userId, subdir);
     await mkdir(uploadDir, { recursive: true });
 

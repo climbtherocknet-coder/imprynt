@@ -435,6 +435,39 @@ const LinksSection = forwardRef<LinksSectionRef, LinksSectionProps>(
                   </div>
                 </div>
               )}
+
+              {/* Resume: upload PDF option */}
+              {link.linkType === 'resume' && (
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.25rem', paddingLeft: '1.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)' }}>or</span>
+                  <label style={{
+                    padding: '0.375rem 0.75rem', borderRadius: '0.5rem',
+                    border: '1px solid var(--border, #1e2535)', fontSize: '0.75rem',
+                    cursor: 'pointer', color: 'var(--text-mid, #9ca3af)',
+                  }}>
+                    Upload PDF
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      style={{ display: 'none' }}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 10 * 1024 * 1024) { alert('File must be under 10MB'); return; }
+                        const form = new FormData();
+                        form.append('file', file);
+                        try {
+                          const res = await fetch('/api/media', { method: 'POST', body: form });
+                          const data = await res.json();
+                          if (!res.ok) { alert(data.error || 'Upload failed'); return; }
+                          updateLink(link.id!, 'url', data.media.url);
+                          saveLinkUpdate({ ...link, url: data.media.url });
+                        } catch { alert('Upload failed'); }
+                      }}
+                    />
+                  </label>
+                </div>
+              )}
             </div>
           ))}
         </div>
