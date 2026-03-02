@@ -44,11 +44,6 @@ interface ProtectedPageContent {
   showcaseItems?: ShowcaseItemData[];
 }
 
-interface PortfolioPage {
-  id: string;
-  buttonLabel: string;
-}
-
 interface PersonalIcon {
   color: string;
   opacity: number;
@@ -61,7 +56,6 @@ interface ProfileClientProps {
   theme: string;
   hasPersonal: boolean;
   personalIcon?: PersonalIcon;
-  portfolioPages: PortfolioPage[];
   allowSharing?: boolean;
   allowFeedback?: boolean;
   showQrButton?: boolean;
@@ -823,7 +817,7 @@ function ProtectedPageView({
 
 // ── Main Client Component ──────────────────────────────
 
-export default function ProfileClient({ profileId, accent, theme, hasPersonal, personalIcon, portfolioPages, allowSharing, allowFeedback, showQrButton }: ProfileClientProps) {
+export default function ProfileClient({ profileId, accent, theme, hasPersonal, personalIcon, allowSharing, allowFeedback, showQrButton }: ProfileClientProps) {
   const [showPinModal, setShowPinModal] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
   const [qrImgLoaded, setQrImgLoaded] = useState(false);
@@ -976,7 +970,7 @@ export default function ProfileClient({ profileId, accent, theme, hasPersonal, p
     <>
       {/* Impression menu (expandable circle-dot button) */}
       {(() => {
-        const hasProtectedPage = hasPersonal || portfolioPages.length > 0;
+        const hasProtectedPage = hasPersonal;
         const isTop = iconCorner.startsWith('top');
         const profileUrl = typeof window !== 'undefined' ? window.location.href : '';
 

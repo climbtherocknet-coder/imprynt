@@ -7,7 +7,6 @@ import ThemeToggle from '@/components/ThemeToggle';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import ProfileTab from './tabs/ProfileTab';
 import PersonalTab from './tabs/PersonalTab';
-import PortfolioTab from './tabs/PortfolioTab';
 
 export interface PlanStatusClient {
   plan: string;
@@ -29,7 +28,6 @@ interface Props {
 const TABS = [
   { id: 'profile', label: 'Profile', description: 'What everyone sees when they visit your page.' },
   { id: 'personal', label: 'Personal', description: 'A hidden layer for people you trust. Share the PIN, they see the real you.', premium: true },
-  { id: 'portfolio', label: 'Portfolio', description: 'Projects, work samples, or anything you want to share selectively.', premium: true },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
@@ -165,7 +163,7 @@ export default function PageEditor({ userId, planStatus: initialPlanStatus, init
           backgroundColor: 'var(--surface)',
           borderBottom: '1px solid var(--border)',
         }}>
-          Your trial ended. Personal and Portfolio are saved but hidden.{' '}
+          Your trial ended. Personal page is saved but hidden.{' '}
           <a href="/dashboard/account#upgrade" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
             Subscribe to bring them back
           </a>
@@ -195,7 +193,6 @@ export default function PageEditor({ userId, planStatus: initialPlanStatus, init
       <div className="page-editor-content">
         {activeTab === 'profile' && <ProfileTab planStatus={planStatus} onTemplateChange={handleTemplateChange} />}
         {activeTab === 'personal' && <PersonalTab planStatus={planStatus} onTrialActivated={refreshPlanStatus} currentTemplate={currentTemplate} currentAccentColor={currentAccentColor} templateLoaded={templateLoaded} />}
-        {activeTab === 'portfolio' && <PortfolioTab planStatus={planStatus} onTrialActivated={refreshPlanStatus} currentTemplate={currentTemplate} currentAccentColor={currentAccentColor} templateLoaded={templateLoaded} />}
       </div>
     </div>
   );

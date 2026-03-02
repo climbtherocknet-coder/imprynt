@@ -133,7 +133,7 @@ export async function GET() {
   } catch { /* columns don't exist yet */ }
 
   const linksResult = await query(
-    `SELECT id, link_type, label, url, display_order, show_business, show_personal, show_showcase, button_color
+    `SELECT id, link_type, label, url, display_order, show_business, show_personal, show_showcase, button_color, COALESCE(featured, false) as featured
      FROM links
      WHERE profile_id = $1 AND is_active = true
      ORDER BY display_order ASC`,
@@ -209,6 +209,7 @@ export async function GET() {
       showBusiness: l.show_business,
       showPersonal: l.show_personal,
       showShowcase: l.show_showcase,
+      featured: l.featured || false,
     })),
   }, { headers: { 'Cache-Control': 'no-store' } });
 }

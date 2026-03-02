@@ -32,6 +32,7 @@ export const LINK_TYPES = [
   { type: 'tiktok', label: 'TikTok', placeholder: 'https://tiktok.com/@handle', icon: '🎵' },
   { type: 'youtube', label: 'YouTube', placeholder: 'https://youtube.com/@channel', icon: '▶️' },
   { type: 'spotify', label: 'Spotify', placeholder: 'https://open.spotify.com/...', icon: '🎧' },
+  { type: 'resume', label: 'Resume', placeholder: 'https://drive.google.com/... or link to your resume', icon: '📄' },
   { type: 'custom', label: 'Custom', placeholder: 'https://...', icon: '🔗' },
   { type: 'vcard', label: 'vCard', placeholder: 'Download contact card', icon: '📇' },
 ];
@@ -108,6 +109,7 @@ export interface LinkItem {
   showPersonal: boolean;
   showShowcase: boolean;
   buttonColor?: string | null;
+  featured?: boolean;
 }
 
 export interface ProfileData {

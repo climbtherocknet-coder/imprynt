@@ -74,12 +74,7 @@ interface LinkData {
   label: string;
   url: string;
   button_color: string | null;
-}
-
-interface ProtectedPageData {
-  id: string;
-  visibility_mode: string;
-  button_label: string;
+  featured: boolean;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -233,7 +228,7 @@ async function getProfileAny(slug: string) {
 
 async function getLinks(profileId: string) {
   const result = await query(
-    `SELECT id, link_type, label, url, button_color FROM links
+    `SELECT id, link_type, label, url, button_color, COALESCE(featured, false) as featured FROM links
      WHERE profile_id = $1 AND show_business = true AND is_active = true
      ORDER BY display_order ASC`,
     [profileId]
@@ -284,16 +279,6 @@ async function getPods(profileId: string): Promise<PodData[]> {
     audioUrl: (r.audio_url as string) || '',
     audioDuration: (r.audio_duration as number) || 0,
   }));
-}
-
-async function getVisibleProtectedPages(profileId: string) {
-  const result = await query(
-    `SELECT id, visibility_mode, button_label FROM protected_pages
-     WHERE profile_id = $1 AND is_active = true AND visibility_mode = 'visible'
-     ORDER BY display_order ASC`,
-    [profileId]
-  );
-  return result.rows as ProtectedPageData[];
 }
 
 async function getPersonalSettings(profileId: string) {
@@ -390,10 +375,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
     // Owner viewing their off-air profile — show full profile with banner
   }
 
-  const [links, pods, visibleProtectedPages] = await Promise.all([
+  const [links, pods] = await Promise.all([
     getLinks(profile.profile_id),
     getPods(profile.profile_id),
-    getVisibleProtectedPages(profile.profile_id),
   ]);
 
   const personalSettings = profile.plan !== 'free' ? await getPersonalSettings(profile.profile_id) : null;
@@ -436,7 +420,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         company={profile.company}
         tagline={profile.tagline}
         photoUrl={profile.photo_url}
-        links={links.map(l => ({ id: l.id, link_type: l.link_type, label: l.label, url: l.url, buttonColor: l.button_color }))}
+        links={links.map(l => ({ id: l.id, link_type: l.link_type, label: l.label, url: l.url, buttonColor: l.button_color, featured: l.featured }))}
         pods={pods}
         isPaid={isPaid}
         statusTags={profile.status_tags || []}
@@ -476,9 +460,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         profileId={profile.profile_id}
         accent={accent}
         theme={theme.id}
-        hasPersonal={!!personalSettings || visibleProtectedPages.length > 0}
+        hasPersonal={!!personalSettings}
         personalIcon={personalSettings || undefined}
-        portfolioPages={visibleProtectedPages.map(p => ({ id: p.id, buttonLabel: p.button_label }))}
         allowSharing={profile.allow_sharing !== false}
         allowFeedback={profile.allow_feedback !== false}
         showQrButton={!isPaid || !!profile.show_qr_button}

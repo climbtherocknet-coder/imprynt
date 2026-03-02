@@ -3,7 +3,7 @@
 **Purpose:** This file is the shared memory between Claude sessions. After each work session or push, update the relevant sections so context is never lost if a conversation resets.
 
 **Last updated:** March 1, 2026
-**Updated by:** Claude (session 16d — Media Manager, v0.11.3)
+**Updated by:** Claude (session 16e — Bug Fixes + Portfolio Simplification, v0.12.0)
 
 ---
 
@@ -194,6 +194,32 @@ docker compose up --build
     2. Event pod timezone fix (store timezone, stop UTC conversion)
     3. Event pod public renderer (full build in PodRenderer.tsx)
     4. Admin portal consolidation into Command Center (add admin tabs, keep legacy alive until verified)
+
+### March 1, 2026 (Session 16e) — Bug Fixes + Portfolio Simplification (v0.12.0)
+**Part A (deployed to production):**
+- Fixed resume link type: added `'resume'` to `VALID_LINK_TYPES` in `/api/links/route.ts`.
+- Fixed Media Manager: root cause was missing `user_media` table (migration 059 not run). Added delete error feedback (alert on failure).
+- Fixed photo zoom not rendering on live profile — CSS custom properties on `.photo` container.
+- Fixed cover logo position-specific defaults: above=60/20, beside=40/50. Smart defaults applied on mode/position switch.
+- Fixed remembered device auto-loading — Unlock bypasses PIN if remembered. Green dot hint.
+- Scrollbar audit: already hardened.
+- Wizard audit: added missing `photoMode`.
+
+**Part B (sandbox only — NOT deployed):**
+- Migration 060: Moved portfolio pods to main profile, made portfolio links visible, converted resume URLs, soft-deleted portfolio pages.
+- Migration 061: Added `featured` boolean column to links table.
+- Resume link type with document icon. "Display as content block" toggle (`featured` column) renders resume as card after pods.
+- Content block tiers: `src/lib/tiers.ts` — Free: 3 blocks (text, text+image, CTA, link preview), Paid: 20 blocks. Enforced client + server. Block counter + locked type labels.
+- Removed PortfolioTab from PageEditor. Editor tabs: Profile, Personal only.
+- Removed PORTFOLIO visibility toggle from LinksSection. Renamed BIZ → PROFILE.
+- Removed portfolio step from SetupWizard. Wizard: 6 steps.
+- Removed portfolioPages from ProfileClient. Unlock personal-only.
+- Removed getVisibleProtectedPages() from [slug]/page.tsx.
+- Removed portfolio from dashboard page.
+- CC seed: Portfolio Merged, Content Block Tiers, Resume Link features; Live Edit roadmap; v0.12.0 changelog.
+- **Files created:** `db/migrations/060_portfolio_to_profile.sql`, `db/migrations/061_links_featured.sql`, `src/lib/tiers.ts`
+- **Files modified:** `ProfileTemplate.tsx`, `ExpandablePhoto.tsx`, `profile.css`, `VisualsSection.tsx`, `SetupWizard.tsx`, `ProfileClient.tsx`, `[slug]/page.tsx`, `PageEditor.tsx`, `LinksSection.tsx`, `PodEditor.tsx`, `/api/pods/route.ts`, `/api/links/route.ts`, `/api/profile/route.ts`, `MediaManager.tsx`, `themes.ts`, `constants.ts`, `dashboard/page.tsx`, `command-center-seed.sql`, `CONTEXT.md`
+- **Version bump:** v0.12.0
 
 ### March 1, 2026 (Session 16) — impr.in Short Domain Activated (v0.11.0)
 - **Infrastructure:** impr.in DNS already pointed to Hetzner (5.78.85.128). Added Caddy rewrite rule (`impr.in/* → /go/*`) with `reverse_proxy app:3000`. Added `www.impr.in` permanent redirect to `impr.in`. Caddy auto-provisioned Let's Encrypt TLS certs for both.

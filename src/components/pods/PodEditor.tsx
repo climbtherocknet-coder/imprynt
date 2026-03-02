@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import RichTextEditor from '@/components/pods/RichTextEditor';
+import { TIER_LIMITS } from '@/lib/tiers';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -213,7 +214,9 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
   const fetchedUrlsRef = useRef<Set<string>>(new Set());
   const autoFetchTimerRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const maxPods = parentType === 'profile' ? (isPaid ? 6 : 2) : 6;
+  const tierLimits = isPaid ? TIER_LIMITS.paid : TIER_LIMITS.free;
+  const maxPods = parentType === 'profile' ? tierLimits.maxPods : tierLimits.maxPods;
+  const allowedTypes = tierLimits.allowedPodTypes as readonly string[];
   const apiBase = parentType === 'profile' ? '/api/pods' : '/api/protected-pages/pods';
   const isShowcase = visibilityMode === 'visible';
 
@@ -238,6 +241,18 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
   async function addPod(podType: string) {
     if (!podType) return;
     onError('');
+
+    // Enforce tier limits
+    const activePods = pods.filter(p => p.isActive !== false);
+    if (activePods.length >= maxPods) {
+      onError(`You've reached the limit of ${maxPods} content blocks.${!isPaid ? ' Upgrade to add more.' : ''}`);
+      return;
+    }
+    if (!allowedTypes.includes(podType)) {
+      onError(`${podType} blocks require a paid plan.`);
+      return;
+    }
+
     try {
       const body: Record<string, unknown> = { podType, label: '', title: '', podBody: '' };
       if (parentType === 'protected_page') {
@@ -1736,8 +1751,13 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
         })}
       </div>
 
+      {/* Block counter */}
+      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', textAlign: 'right', margin: '0.25rem 0' }}>
+        {pods.filter(p => p.isActive !== false).length} / {maxPods} blocks used
+      </p>
+
       {/* Add pod dropdown */}
-      {pods.length < maxPods && (
+      {pods.filter(p => p.isActive !== false).length < maxPods && (
         <select
           value=""
           onChange={e => {
@@ -1758,19 +1778,19 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
         >
           <option value="">+ Add content block...</option>
           {POD_TYPE_DEFS.map(pt => {
-            const locked = pt.premium && !isPaid;
+            const locked = !allowedTypes.includes(pt.type);
             return (
               <option key={pt.type} value={pt.type} disabled={locked}>
-                {pt.icon} {pt.label}{locked ? ' (Pro)' : ''}
+                {pt.icon} {pt.label}{locked ? ' (PRO)' : ''}
               </option>
             );
           })}
         </select>
       )}
 
-      {pods.length >= maxPods && !isPaid && parentType === 'profile' && (
+      {pods.filter(p => p.isActive !== false).length >= maxPods && !isPaid && parentType === 'profile' && (
         <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', textAlign: 'center', marginTop: '0.5rem' }}>
-          Upgrade to Pro for up to 6 content blocks.
+          Upgrade to Pro for up to {TIER_LIMITS.paid.maxPods} content blocks and all block types.
         </p>
       )}
     </div>

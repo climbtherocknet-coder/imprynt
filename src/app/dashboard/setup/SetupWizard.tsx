@@ -32,7 +32,7 @@ interface SetupWizardProps {
   initialStep: number;
 }
 
-type StepId = 'who' | 'look' | 'links' | 'content' | 'personal' | 'portfolio' | 'launch';
+type StepId = 'who' | 'look' | 'links' | 'content' | 'personal' | 'launch';
 
 interface StepDef {
   id: StepId;
@@ -46,8 +46,7 @@ const ALL_STEPS: StepDef[] = [
   { id: 'links', label: 'Links', apiStep: 3 },
   { id: 'content', label: 'Content', apiStep: 4 },
   { id: 'personal', label: 'Personal', apiStep: 5 },
-  { id: 'portfolio', label: 'Portfolio', apiStep: 6 },
-  { id: 'launch', label: 'Launch', apiStep: 7 },
+  { id: 'launch', label: 'Launch', apiStep: 6 },
 ];
 
 // Step headings for the editor panel
@@ -71,10 +70,6 @@ const STEP_HEADINGS: Record<StepId, { title: string; subtitle: string }> = {
   personal: {
     title: 'Personal Page',
     subtitle: 'A PIN-protected page for close contacts — share personal links and info.',
-  },
-  portfolio: {
-    title: 'Portfolio Page',
-    subtitle: 'A showcase page for your work — resumes, projects, and case studies.',
   },
   launch: {
     title: 'Ready to go live?',
@@ -153,7 +148,7 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
   // ── Steps (filter for free users) ──────────────────
   const steps = isPaid
     ? ALL_STEPS
-    : ALL_STEPS.filter(s => !['personal', 'portfolio'].includes(s.id));
+    : ALL_STEPS.filter(s => s.id !== 'personal');
   const TOTAL_STEPS = steps.length;
 
   // Resolve initial step index from API step number
@@ -721,27 +716,6 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
           </div>
         );
 
-      case 'portfolio':
-        return (
-          <div>
-            <div className="setup-info-card">
-              <h3 className="setup-info-title">What is the Portfolio Page?</h3>
-              <p className="setup-info-text">
-                Your Portfolio Page is a showcase for your work. Add projects, case studies,
-                resumes, and anything that demonstrates your expertise.
-              </p>
-              <ul className="setup-info-list">
-                <li>Showcase your best work and projects</li>
-                <li>Upload a resume or portfolio images</li>
-                <li>Share with recruiters, clients, and collaborators</li>
-              </ul>
-              <p className="setup-info-note">
-                You can set this up anytime from your dashboard.
-              </p>
-            </div>
-          </div>
-        );
-
       case 'launch':
         if (published) return null; // handled by full-screen launch
         return (
@@ -1058,7 +1032,7 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
                 <button onClick={handlePublish} disabled={finishing} className="setup-btn-primary">
                   {finishing ? 'Publishing...' : 'Publish Profile'}
                 </button>
-              ) : currentStep.id === 'content' || currentStep.id === 'personal' || currentStep.id === 'portfolio' ? (
+              ) : currentStep.id === 'content' || currentStep.id === 'personal' ? (
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button onClick={handleSkipStep} className="setup-btn-ghost" style={{ fontSize: '0.875rem' }}>
                     Set up later

@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
+import { TIER_LIMITS } from '@/lib/tiers';
 
 const VALID_POD_TYPES = ['text', 'text_image', 'stats', 'cta', 'link_preview', 'project', 'listing', 'event', 'music'] as const;
-const MAX_PODS_FREE = 2;
-const MAX_PODS_PAID = 6;
-const FREE_POD_TYPES = ['text', 'text_image', 'cta', 'link_preview', 'project', 'listing', 'event', 'music'];
 
 // GET - Load all pods for the current user's profile
 export async function GET() {
@@ -93,7 +91,8 @@ export async function POST(req: NextRequest) {
   const userResult = await query('SELECT plan FROM users WHERE id = $1', [userId]);
   const plan = userResult.rows[0]?.plan || 'free';
   const isPaid = plan !== 'free';
-  const maxPods = isPaid ? MAX_PODS_PAID : MAX_PODS_FREE;
+  const tierLimits = isPaid ? TIER_LIMITS.paid : TIER_LIMITS.free;
+  const maxPods = tierLimits.maxPods;
 
   const countResult = await query(
     'SELECT COUNT(*)::int as count FROM pods WHERE profile_id = $1 AND is_active = true',
@@ -101,7 +100,7 @@ export async function POST(req: NextRequest) {
   );
   if (countResult.rows[0].count >= maxPods) {
     return NextResponse.json({
-      error: `You can have up to ${maxPods} pods on your current plan.`,
+      error: `You can have up to ${maxPods} content blocks on your current plan.`,
     }, { status: 403 });
   }
 
@@ -115,9 +114,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid pod type' }, { status: 400 });
   }
 
-  // Free users can't use stats pods
-  if (!isPaid && !FREE_POD_TYPES.includes(podType)) {
-    return NextResponse.json({ error: 'Stats pods require a premium plan' }, { status: 403 });
+  // Enforce tier-allowed pod types
+  if (!(tierLimits.allowedPodTypes as readonly string[]).includes(podType)) {
+    return NextResponse.json({ error: `${podType} blocks require a paid plan.` }, { status: 403 });
   }
 
   // Get next display order

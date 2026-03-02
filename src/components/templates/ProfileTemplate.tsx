@@ -22,7 +22,7 @@ export interface ProfileTemplateProps {
   company: string;
   tagline: string;
   photoUrl: string;
-  links: { id: string; link_type: string; label: string; url: string; buttonColor?: string | null }[];
+  links: { id: string; link_type: string; label: string; url: string; buttonColor?: string | null; featured?: boolean }[];
   pods: PodData[];
   isPaid: boolean;
   statusTags?: string[];
@@ -384,6 +384,25 @@ export default function ProfileTemplate({
           <div key={pod.id}>
             <div className="divider"><hr /></div>
             <PodRenderer pod={pod} delay={5 + i} />
+          </div>
+        ))}
+
+        {/* ─── Featured Resume Links ─── */}
+        {links.filter(l => l.link_type === 'resume' && l.featured && l.url).map(link => (
+          <div key={`featured-${link.id}`}>
+            <div className="divider"><hr /></div>
+            <div className="pod fade-in">
+              <a href={link.url} target="_blank" rel="noopener noreferrer"
+                 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', color: 'inherit' }}>
+                <div style={{ width: 48, height: 48, borderRadius: '0.5rem', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS.resume || '' }} />
+                </div>
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: '0.9375rem', margin: 0 }}>{link.label || 'Resume'}</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Tap to view →</p>
+                </div>
+              </a>
+            </div>
           </div>
         ))}
 

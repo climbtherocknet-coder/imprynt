@@ -59,6 +59,22 @@ INSERT INTO cc_changelog (title, body, version, entry_date, tags) VALUES
   ('Media Manager', 'Central user_media table tracks all uploaded files per user. Full media manager UI at /dashboard/media with storage usage bar, upload, and delete. GalleryPicker "My Media" tab updated with new API format and inline upload button. DELETE endpoint clears all references across profiles, pods, and protected pages. Backfill on first load populates table from existing scattered uploads. Storage limits: 50MB free, 500MB paid.', 'v0.11.3', '2026-03-01', '{ux,media,uploads}')
 ON CONFLICT DO NOTHING;
 
+-- v0.12.0: Portfolio Simplification + Content Tiers
+INSERT INTO cc_features (name, description, category, status, release_phase, priority) VALUES
+  ('Portfolio Merged into Profile', 'Portfolio page removed. Content migrated to main profile. Two page types: Profile (public) and Personal (PIN-protected).', 'architecture', 'shipped', 'v1', 22),
+  ('Content Block Tiers', 'Free: 3 blocks (text, text+image, CTA, link preview). Paid: 20 blocks with all types. Enforced client and server.', 'monetization', 'shipped', 'v1', 23),
+  ('Resume Link Type', 'Resume link with document icon + optional "Display as content block" toggle. Featured resumes render as cards after pods.', 'profile', 'shipped', 'v1', 24)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO cc_roadmap (title, description, phase, category, priority) VALUES
+  ('Inline Field Editing (Phase 2)', 'Tap name/tagline/link on live profile to edit inline. Saves on blur. Existing editor remains for complex settings (template, colors, fonts).', 'planned', 'editor', 6),
+  ('Full Live Edit (Phase 3)', 'Profile IS the editor. Floating toolbar for Add Block, Settings, Preview as Visitor. Pod drag-and-drop on actual page. Cover photo tap-to-reposition. Dashboard becomes analytics + account only.', 'planned', 'editor', 9)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO cc_changelog (title, body, version, entry_date, tags) VALUES
+  ('v0.12.0: Bug Fixes + Portfolio Simplification', 'Part A: Fixed resume link type (missing from API validation). Fixed media manager (user_media table + delete error feedback). Fixed photo zoom (CSS custom properties). Cover logo position-specific defaults (above=60/20, beside=40/50). Fixed remembered page auto-load. Scrollbar kill. Wizard audit. Part B: Removed portfolio page. Resume "feature on profile" toggle (featured column + card render). Content tiers (free: 3, paid: 20). Wizard 6 steps. Live edit roadmap.', '0.12.0', '2026-03-01', '{bugfix,portfolio,simplification,tiers,resume,media,architecture}')
+ON CONFLICT DO NOTHING;
+
 -- Docs
 INSERT INTO cc_docs (title, body, doc_type, visibility, is_pinned, tags) VALUES
   ('V1 MVP Specification', 'The full product spec is maintained in the project repository as sygnet-mvp-spec.md. This document covers: product summary, target audience, value propositions, feature specifications, pricing tiers, technical architecture, sourcing/fulfillment, and success metrics.', 'design_spec', 'advisory', true, '{product,spec,v1}'),

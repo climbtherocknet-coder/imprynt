@@ -97,6 +97,7 @@ const LinksSection = forwardRef<LinksSectionRef, LinksSectionProps>(
             showPersonal: link.showPersonal,
             showShowcase: link.showShowcase,
             buttonColor: link.buttonColor ?? null,
+            featured: link.featured ?? false,
           }),
         });
       } catch {
@@ -261,7 +262,7 @@ const LinksSection = forwardRef<LinksSectionRef, LinksSectionProps>(
 
         {/* Description */}
         <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem', marginTop: '0.25rem' }}>
-          Your social links, contact info, and web presence. Drag to reorder. Toggle visibility for your Business, Personal, and Portfolio pages.
+          Your social links, contact info, and web presence. Drag to reorder. Toggle visibility for your Profile and Personal pages.
         </p>
 
         {/* Link cards */}
@@ -370,9 +371,9 @@ const LinksSection = forwardRef<LinksSectionRef, LinksSectionProps>(
                       opacity: link.showBusiness ? 1 : 0.7,
                       transition: 'all 0.15s',
                     }}
-                    title="Show on public business profile"
+                    title="Show on public profile"
                   >
-                    BIZ
+                    PROFILE
                   </button>
                   <button
                     onClick={() => {
@@ -391,24 +392,6 @@ const LinksSection = forwardRef<LinksSectionRef, LinksSectionProps>(
                     title="Show on personal page"
                   >
                     PERSONAL
-                  </button>
-                  <button
-                    onClick={() => {
-                      updateLink(link.id!, 'showShowcase', !link.showShowcase);
-                      saveLinkUpdate({ ...link, showShowcase: !link.showShowcase });
-                    }}
-                    style={{
-                      fontSize: '0.625rem', fontWeight: 600, padding: '0.2rem 0.5rem',
-                      borderRadius: '9999px', border: 'none', textTransform: 'uppercase',
-                      letterSpacing: '0.03em', cursor: 'pointer', fontFamily: 'inherit',
-                      backgroundColor: link.showShowcase ? 'rgba(251, 191, 36, 0.15)' : 'var(--border, #1e2535)',
-                      color: link.showShowcase ? '#fbbf24' : 'var(--text-muted, #5d6370)',
-                      opacity: link.showShowcase ? 1 : 0.7,
-                      transition: 'all 0.15s',
-                    }}
-                    title="Show on portfolio page"
-                  >
-                    PORTFOLIO
                   </button>
                   {/* Per-link color dot */}
                   <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -467,6 +450,22 @@ const LinksSection = forwardRef<LinksSectionRef, LinksSectionProps>(
                     />
                   </label>
                 </div>
+              )}
+
+              {/* Resume: feature on profile toggle */}
+              {link.linkType === 'resume' && (
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', paddingLeft: '1.5rem', marginTop: '0.25rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={link.featured || false}
+                    onChange={e => {
+                      updateLink(link.id!, 'featured', e.target.checked);
+                      saveLinkUpdate({ ...link, featured: e.target.checked });
+                    }}
+                    style={{ accentColor: 'var(--accent, #e8a849)' }}
+                  />
+                  Display as content block on profile
+                </label>
               )}
             </div>
           ))}

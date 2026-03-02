@@ -132,19 +132,17 @@ export default async function DashboardPage({
 
   // Fetch PIN status + icon color for protected pages
   let personalPinSet = false;
-  let portfolioPinSet = false;
   let personalIconColor = '';
   try {
     const pinResult = await query(
       `SELECT visibility_mode, pin_hash IS NOT NULL as has_pin, icon_color
        FROM protected_pages
-       WHERE user_id = $1 AND is_active = true`,
+       WHERE user_id = $1 AND is_active = true AND visibility_mode = 'hidden'`,
       [userId]
     );
     for (const row of pinResult.rows) {
-      if (row.visibility_mode === 'hidden' && row.has_pin) personalPinSet = true;
-      if (row.visibility_mode === 'hidden' && row.icon_color) personalIconColor = row.icon_color;
-      if (row.visibility_mode === 'visible' && row.has_pin) portfolioPinSet = true;
+      if (row.has_pin) personalPinSet = true;
+      if (row.icon_color) personalIconColor = row.icon_color;
     }
   } catch { /* protected_pages table may not exist yet */ }
 
@@ -224,7 +222,7 @@ export default async function DashboardPage({
                 </div>
                 <div>
                   <h3 className="dash-nav-title">My Page</h3>
-                  <p className="dash-nav-desc">Edit profile, pages, portfolio</p>
+                  <p className="dash-nav-desc">Edit profile and pages</p>
                 </div>
               </a>
 
@@ -287,24 +285,6 @@ export default async function DashboardPage({
                       color: personalPinSet ? '#10b981' : '#ef4444',
                     }}>
                       {personalPinSet ? 'PIN set' : 'No PIN'}
-                    </span>
-                  </a>
-                  <a href="/dashboard/page-editor?tab=portfolio" style={{
-                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    textDecoration: 'none', color: 'inherit', padding: '0.375rem 0',
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
-                      style={{ flexShrink: 0 }}>
-                      <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                    <span style={{ flex: 1, fontSize: '0.8125rem', fontWeight: 500 }}>Portfolio</span>
-                    <span style={{
-                      fontSize: '0.6875rem', fontWeight: 600,
-                      padding: '0.125rem 0.5rem', borderRadius: '9999px',
-                      backgroundColor: portfolioPinSet ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-                      color: portfolioPinSet ? '#10b981' : '#ef4444',
-                    }}>
-                      {portfolioPinSet ? 'PIN set' : 'No PIN'}
                     </span>
                   </a>
                 </div>
