@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getShareUrl } from '@/lib/shortUrl';
 
-// Public endpoint — no auth required. Returns QR code only if show_qr_button is enabled.
+// Public endpoint — no auth required. Returns QR code for any valid profile.
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ profileId: string }> }
@@ -10,12 +10,12 @@ export async function GET(
   const { profileId } = await params;
 
   const result = await query(
-    'SELECT slug, redirect_id, show_qr_button FROM profiles WHERE id = $1',
+    'SELECT slug, redirect_id FROM profiles WHERE id = $1',
     [profileId]
   );
 
   const row = result.rows[0];
-  if (!row || !row.show_qr_button) {
+  if (!row) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
