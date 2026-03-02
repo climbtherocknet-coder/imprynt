@@ -12,6 +12,9 @@ export interface PodData {
   ctaUrl: string;
   tags?: string;
   imagePosition?: string;
+  imageLayout?: string;
+  imageWidth?: string;
+  imageOpacity?: number;
   listingStatus?: string;
   listingPrice?: string;
   listingDetails?: { beds?: string; baths?: string; sqft?: string };
@@ -102,10 +105,53 @@ export default function PodRenderer({ pod, delay }: { pod: PodData; delay: numbe
   }
 
   if (pod.podType === 'text_image') {
+    const layout = pod.imageLayout || 'split';
+
+    // Background mode
+    if (layout === 'background' && pod.imageUrl) {
+      const opacity = (pod.imageOpacity ?? 30) / 100;
+      return (
+        <div className={`pod fade-in ${delayClass}`} style={{
+          position: 'relative',
+          overflow: 'hidden',
+          borderRadius: 'var(--radius-lg)',
+          padding: '1.5rem',
+          minHeight: 120,
+        }}>
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url('${pod.imageUrl}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity,
+            zIndex: 0,
+          }} />
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(135deg, var(--bg) 0%, transparent 100%)',
+            opacity: 0.7,
+            zIndex: 1,
+          }} />
+          <div style={{ position: 'relative', zIndex: 2 }}>
+            {pod.label && <p className="pod-label">{pod.label}</p>}
+            {pod.title && <h3 className="pod-title">{pod.title}</h3>}
+            {pod.body && <div className="pod-body pod-body-md">{renderMarkdown(pod.body)}</div>}
+          </div>
+        </div>
+      );
+    }
+
+    // Split mode (with width control)
     const isRight = pod.imagePosition === 'right';
+    const imgWidth = pod.imageWidth || '33';
     return (
       <div className={`pod fade-in ${delayClass}`}>
-        <div className={`pod-split${isRight ? ' pod-split-reverse' : ''}`}>
+        <div
+          className={`pod-split${isRight ? ' pod-split-reverse' : ''}`}
+          style={{ '--pod-img-width': `${imgWidth}%` } as React.CSSProperties}
+        >
           {pod.imageUrl ? (
             <img src={pod.imageUrl} alt={pod.title || ''} className="pod-img" referrerPolicy="no-referrer" />
           ) : (

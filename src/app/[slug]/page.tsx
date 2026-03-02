@@ -239,6 +239,7 @@ async function getLinks(profileId: string) {
 async function getPods(profileId: string): Promise<PodData[]> {
   const result = await query(
     `SELECT id, pod_type, label, title, body, image_url, stats, cta_label, cta_url, tags, image_position,
+            image_layout, image_width, image_opacity,
             listing_status, listing_price, listing_details, source_domain,
             event_start, event_end, event_venue, event_address, event_status, event_auto_hide, event_timezone,
             audio_url, audio_duration
@@ -265,6 +266,9 @@ async function getPods(profileId: string): Promise<PodData[]> {
     ctaUrl: (r.cta_url as string) || '',
     tags: (r.tags as string) || '',
     imagePosition: (r.image_position as string) || 'left',
+    imageLayout: (r.image_layout as string) || 'split',
+    imageWidth: (r.image_width as string) || '33',
+    imageOpacity: (r.image_opacity as number) ?? 100,
     listingStatus: (r.listing_status as string) || 'active',
     listingPrice: (r.listing_price as string) || '',
     listingDetails: (r.listing_details as { beds?: string; baths?: string; sqft?: string }) || {},

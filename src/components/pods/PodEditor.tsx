@@ -19,6 +19,9 @@ export interface PodItem {
   ctaUrl: string;
   tags: string;
   imagePosition: string;
+  imageLayout: string;
+  imageWidth: string;
+  imageOpacity: number;
   showOnProfile: boolean;
   isActive: boolean;
   listingStatus: string;
@@ -281,6 +284,9 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
         ctaUrl: '',
         tags: '',
         imagePosition: 'left',
+        imageLayout: 'split',
+        imageWidth: '33',
+        imageOpacity: 100,
         showOnProfile: false,
         isActive: true,
         listingStatus: 'active',
@@ -392,6 +398,9 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
         ctaUrl: pod.ctaUrl,
         tags: pod.tags,
         imagePosition: pod.imagePosition,
+        imageLayout: pod.imageLayout,
+        imageWidth: pod.imageWidth,
+        imageOpacity: pod.imageOpacity,
       };
       if (isShowcase) {
         body.showOnProfile = pod.showOnProfile;
@@ -788,7 +797,7 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                     </>
                   )}
 
-                  {/* Text+Image: image URL + position */}
+                  {/* Text+Image: image URL + layout controls */}
                   {pod.podType === 'text_image' && (
                     <>
                       <div style={{ marginBottom: '0.625rem' }}>
@@ -818,34 +827,108 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                           </div>
                         )}
                       </div>
+                      {/* Layout mode toggle */}
                       <div style={{ marginBottom: '0.625rem' }}>
-                        <label style={labelStyle}>Image position</label>
+                        <label style={labelStyle}>Image Layout</label>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          {(['left', 'right'] as const).map(pos => (
+                          {(['split', 'background'] as const).map(layout => (
                             <button
-                              key={pos}
+                              key={layout}
                               type="button"
-                              onClick={() => updatePodField(pod.id, 'imagePosition', pos)}
+                              onClick={() => updatePodField(pod.id, 'imageLayout', layout)}
                               style={{
                                 flex: 1,
                                 padding: '0.375rem 0.75rem',
                                 borderRadius: '0.375rem',
                                 border: '1px solid',
-                                borderColor: pod.imagePosition === pos ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
-                                backgroundColor: pod.imagePosition === pos ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
-                                color: pod.imagePosition === pos ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                                borderColor: (pod.imageLayout || 'split') === layout ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
+                                backgroundColor: (pod.imageLayout || 'split') === layout ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
+                                color: (pod.imageLayout || 'split') === layout ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
                                 fontSize: '0.8125rem',
                                 fontWeight: 500,
                                 cursor: 'pointer',
                                 fontFamily: 'inherit',
-                                textTransform: 'capitalize',
                               }}
                             >
-                              {pos}
+                              {layout === 'split' ? 'Side by Side' : 'Background'}
                             </button>
                           ))}
                         </div>
                       </div>
+                      {/* Split mode: image width */}
+                      {(pod.imageLayout || 'split') === 'split' && (
+                        <div style={{ marginBottom: '0.625rem' }}>
+                          <label style={labelStyle}>Image Size</label>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {([{ v: '25', l: 'Small' }, { v: '33', l: 'Medium' }, { v: '50', l: 'Large' }] as const).map(opt => (
+                              <button
+                                key={opt.v}
+                                type="button"
+                                onClick={() => updatePodField(pod.id, 'imageWidth', opt.v)}
+                                style={{
+                                  flex: 1,
+                                  padding: '0.375rem',
+                                  borderRadius: '0.375rem',
+                                  border: '1px solid',
+                                  borderColor: (pod.imageWidth || '33') === opt.v ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
+                                  backgroundColor: (pod.imageWidth || '33') === opt.v ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
+                                  color: (pod.imageWidth || '33') === opt.v ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                                  fontSize: '0.75rem',
+                                  cursor: 'pointer',
+                                  fontFamily: 'inherit',
+                                }}
+                              >
+                                {opt.l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {/* Background mode: opacity slider */}
+                      {pod.imageLayout === 'background' && (
+                        <div style={{ marginBottom: '0.625rem' }}>
+                          <label style={labelStyle}>Image Opacity: {pod.imageOpacity ?? 30}%</label>
+                          <input
+                            type="range"
+                            min={5}
+                            max={100}
+                            value={pod.imageOpacity ?? 30}
+                            onChange={e => updatePodField(pod.id, 'imageOpacity', parseInt(e.target.value))}
+                            style={{ width: '100%' }}
+                          />
+                        </div>
+                      )}
+                      {/* Image position (left/right) — only in split mode */}
+                      {(pod.imageLayout || 'split') === 'split' && (
+                        <div style={{ marginBottom: '0.625rem' }}>
+                          <label style={labelStyle}>Image position</label>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {(['left', 'right'] as const).map(pos => (
+                              <button
+                                key={pos}
+                                type="button"
+                                onClick={() => updatePodField(pod.id, 'imagePosition', pos)}
+                                style={{
+                                  flex: 1,
+                                  padding: '0.375rem 0.75rem',
+                                  borderRadius: '0.375rem',
+                                  border: '1px solid',
+                                  borderColor: pod.imagePosition === pos ? 'var(--accent, #e8a849)' : 'var(--border-light, #283042)',
+                                  backgroundColor: pod.imagePosition === pos ? 'rgba(232, 168, 73, 0.1)' : 'transparent',
+                                  color: pod.imagePosition === pos ? 'var(--accent, #e8a849)' : 'var(--text-mid, #a8adb8)',
+                                  fontSize: '0.8125rem',
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                  fontFamily: 'inherit',
+                                  textTransform: 'capitalize',
+                                }}
+                              >
+                                {pos}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
 

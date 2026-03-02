@@ -1,0 +1,4 @@
+-- Migration 063: Text+Image pod layout options
+ALTER TABLE pods ADD COLUMN IF NOT EXISTS image_layout VARCHAR(20) DEFAULT 'split';
+ALTER TABLE pods ADD COLUMN IF NOT EXISTS image_width VARCHAR(10) DEFAULT '33';
+ALTER TABLE pods ADD COLUMN IF NOT EXISTS image_opacity INTEGER DEFAULT 100;

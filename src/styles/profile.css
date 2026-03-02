@@ -662,8 +662,8 @@ body::-webkit-scrollbar {
 
 /* ── Pod: Text + Image ── */
 .pod-split {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 1.25rem;
   background: var(--bg-alt);
   border: 1px solid var(--border);
@@ -672,14 +672,30 @@ body::-webkit-scrollbar {
 }
 @media (min-width: 520px) {
   .pod-split {
-    grid-template-columns: 1fr 1fr;
+    flex-direction: row;
     gap: 1.5rem;
+    align-items: flex-start;
   }
 }
 
 @media (min-width: 520px) {
-  .pod-split-reverse .pod-img { order: 2; }
-  .pod-split-reverse .pod-split-body { order: 1; }
+  .pod-split-reverse { flex-direction: row-reverse; }
+}
+
+.pod-split .pod-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+@media (min-width: 520px) {
+  .pod-split .pod-img {
+    width: var(--pod-img-width, 33%);
+    min-width: var(--pod-img-width, 33%);
+  }
 }
 
 .pod-img {
@@ -692,6 +708,8 @@ body::-webkit-scrollbar {
 }
 
 .pod-split-body {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;

@@ -24,6 +24,7 @@ export async function GET() {
   const result = await query(
     `SELECT id, pod_type, display_order, label, title, body,
             image_url, stats, cta_label, cta_url, tags, image_position, is_active,
+            image_layout, image_width, image_opacity,
             listing_status, listing_price, listing_details, source_domain, auto_remove_at, sold_at,
             event_start, event_end, event_venue, event_address, event_status, event_auto_hide, event_timezone,
             audio_url, audio_duration
@@ -48,6 +49,9 @@ export async function GET() {
     ctaUrl: r.cta_url || '',
     tags: r.tags || '',
     imagePosition: r.image_position || 'left',
+    imageLayout: r.image_layout || 'split',
+    imageWidth: r.image_width || '33',
+    imageOpacity: r.image_opacity ?? 100,
     isActive: r.is_active,
     listingStatus: r.listing_status || 'active',
     listingPrice: r.listing_price || '',
@@ -106,6 +110,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const { podType, label, title, podBody, imageUrl, stats, ctaLabel, ctaUrl, tags,
+          imagePosition, imageLayout, imageWidth, imageOpacity,
           listingStatus, listingPrice, listingDetails, sourceDomain,
           eventStart, eventEnd, eventVenue, eventAddress, eventStatus, eventAutoHide, eventTimezone,
           audioUrl, audioDuration } = body;
@@ -128,10 +133,11 @@ export async function POST(req: NextRequest) {
 
   const result = await query(
     `INSERT INTO pods (profile_id, pod_type, display_order, label, title, body, image_url, stats, cta_label, cta_url, tags,
+                       image_position, image_layout, image_width, image_opacity,
                        listing_status, listing_price, listing_details, source_domain,
                        event_start, event_end, event_venue, event_address, event_status, event_auto_hide, event_timezone,
                        audio_url, audio_duration)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
      RETURNING id`,
     [
       profileId,
@@ -145,6 +151,10 @@ export async function POST(req: NextRequest) {
       ctaLabel?.trim()?.slice(0, 100) || null,
       ctaUrl?.trim()?.slice(0, 500) || null,
       tags?.trim()?.slice(0, 500) || null,
+      podType === 'text_image' ? (imagePosition === 'right' ? 'right' : 'left') : null,
+      podType === 'text_image' ? (imageLayout || 'split') : null,
+      podType === 'text_image' ? (imageWidth || '33') : null,
+      podType === 'text_image' ? (imageOpacity ?? 100) : null,
       podType === 'listing' ? (listingStatus || 'active') : null,
       podType === 'listing' ? (listingPrice?.trim()?.slice(0, 50) || null) : null,
       podType === 'listing' && listingDetails ? JSON.stringify(listingDetails) : null,
@@ -196,6 +206,7 @@ export async function PUT(req: NextRequest) {
 
   // Single pod update
   const { id, label, title, podBody, imageUrl, stats, ctaLabel, ctaUrl, tags, isActive,
+          imageLayout, imageWidth, imageOpacity,
           listingStatus, listingPrice, listingDetails, sourceDomain, autoRemoveAt,
           eventStart, eventEnd, eventVenue, eventAddress, eventStatus, eventAutoHide, eventTimezone,
           audioUrl, audioDuration } = body;
@@ -225,6 +236,9 @@ export async function PUT(req: NextRequest) {
   if (ctaUrl !== undefined) { updates.push(`cta_url = $${idx++}`); params.push(ctaUrl.trim().slice(0, 500) || null); }
   if (tags !== undefined) { updates.push(`tags = $${idx++}`); params.push(tags.trim().slice(0, 500) || null); }
   if (body.imagePosition !== undefined) { updates.push(`image_position = $${idx++}`); params.push(body.imagePosition === 'right' ? 'right' : 'left'); }
+  if (imageLayout !== undefined) { updates.push(`image_layout = $${idx++}`); params.push(imageLayout === 'background' ? 'background' : 'split'); }
+  if (imageWidth !== undefined) { updates.push(`image_width = $${idx++}`); params.push(['25', '33', '50'].includes(imageWidth) ? imageWidth : '33'); }
+  if (imageOpacity !== undefined) { updates.push(`image_opacity = $${idx++}`); params.push(Math.max(0, Math.min(100, Number(imageOpacity) || 100))); }
   if (isActive !== undefined) { updates.push(`is_active = $${idx++}`); params.push(isActive); }
   if (listingStatus !== undefined) {
     const validStatuses = ['active', 'pending', 'sold', 'off_market', 'rented', 'leased', 'open_house'];
