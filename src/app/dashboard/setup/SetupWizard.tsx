@@ -9,6 +9,7 @@ import type { PodData } from '@/components/pods/PodRenderer';
 import type { PodItem as EditorPodItem } from '@/components/pods/PodEditor';
 import QRCode from 'qrcode';
 import '@/styles/setup.css';
+import '@/styles/dashboard.css';
 
 // Section components (the wizard IS the editor, one section at a time)
 import IdentitySection from '@/components/editor/IdentitySection';
@@ -1005,10 +1006,10 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
         ))}
       </div>
 
-      {/* Split layout: editor + preview */}
-      <main className="setup-split">
-        {/* Editor side (55%) */}
-        <div className="setup-editor">
+      {/* Split layout: editor + preview (reuses editor/dashboard CSS classes) */}
+      <div className="editor-split" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        {/* Editor side */}
+        <main className="editor-panel" style={{ flex: '0 0 55%', overflowY: 'auto', padding: '2.5rem 1.5rem' }}>
           <div className="setup-content">
             <p className="setup-step-label">
               Step {stepIndex + 1} of {TOTAL_STEPS}
@@ -1048,24 +1049,22 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
               )}
             </div>
           </div>
-        </div>
+        </main>
 
-        {/* Preview side (45%) */}
-        <aside className="setup-preview-panel">
-          <div>
-            <div className="setup-preview-phone">
-              <div className="setup-preview-notch" />
-              <div className="setup-preview-screen">
-                {renderPreview()}
-              </div>
+        {/* Preview side — same classes as PageEditor/ProfileTab */}
+        <aside className="preview-panel">
+          <div className="preview-phone">
+            <div className="preview-phone-notch" />
+            <div className="preview-phone-screen">
+              {renderPreview()}
             </div>
           </div>
         </aside>
-      </main>
+      </div>
 
       {/* Mobile preview floating button */}
       <button
-        className="setup-mobile-preview-btn"
+        className="mobile-preview-btn"
         onClick={() => setShowMobilePreview(true)}
       >
         Preview
@@ -1073,13 +1072,15 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
 
       {/* Mobile preview overlay */}
       {showMobilePreview && (
-        <div className="setup-mobile-overlay" onClick={() => setShowMobilePreview(false)}>
-          <div className="setup-mobile-preview-container" onClick={(e) => e.stopPropagation()}>
-            <div className="setup-mobile-preview-header">
-              <span>Preview</span>
-              <button onClick={() => setShowMobilePreview(false)}>Close</button>
+        <div className="mobile-preview-overlay" onClick={() => setShowMobilePreview(false)}>
+          <div className="mobile-preview-container" onClick={(e) => e.stopPropagation()}>
+            <div className="mobile-preview-header">
+              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text)' }}>Preview</span>
+              <button onClick={() => setShowMobilePreview(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.25rem', cursor: 'pointer', padding: '0.25rem', lineHeight: 1 }}
+              >✕</button>
             </div>
-            <div className="setup-mobile-preview-body">
+            <div className="mobile-preview-body">
               {renderPreview()}
             </div>
           </div>

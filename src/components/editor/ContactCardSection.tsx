@@ -155,9 +155,10 @@ const ContactCardSection = forwardRef<ContactCardSectionRef, ContactCardSectionP
     // ── JSX ────────────────────────────────────────────
     return (
       <>
-        {/* ── Save Button Style (top of section) ───── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-          <label style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-mid, #a8adb8)', whiteSpace: 'nowrap' }}>Save button</label>
+        {/* ── Contact Card Button Style (top of section) ───── */}
+        <div style={{ marginBottom: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <label style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-mid, #a8adb8)', whiteSpace: 'nowrap' }}>Contact Card Button</label>
           <div style={{
             width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
             background: currentSaveBtnColor,
@@ -181,6 +182,10 @@ const ContactCardSection = forwardRef<ContactCardSectionRef, ContactCardSectionP
               style={{ width: 32, height: 32, border: 'none', background: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }}
             />
           )}
+          </div>
+          <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', marginTop: '0.25rem' }}>
+            Controls how the &ldquo;Save Contact&rdquo; button appears on your profile
+          </p>
         </div>
 
         <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: '0 0 1rem' }}>

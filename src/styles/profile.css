@@ -5,19 +5,8 @@
    Template-specific overrides via .t-{id} class.
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Kill scrollbar on html/body (for iframe preview) ── */
-html {
-  scrollbar-width: none;
-}
-html::-webkit-scrollbar {
-  display: none;
-}
 body {
-  scrollbar-width: none;
   overflow-x: hidden;
-}
-body::-webkit-scrollbar {
-  display: none;
 }
 
 /* ── Reset ── */
