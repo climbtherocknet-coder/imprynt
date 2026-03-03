@@ -87,8 +87,8 @@
 .setup-main {
   flex: 1;
   display: flex;
-  justify-content: center;
-  padding: 2.5rem 1rem;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .setup-content {
@@ -664,10 +664,6 @@
 
 /* ── Responsive ── */
 @media (max-width: 640px) {
-  .setup-main {
-    padding: 1.5rem 1rem;
-  }
-
   .setup-heading {
     font-size: 1.5rem;
   }
@@ -1257,8 +1253,7 @@
 /* Desktop: editor + preview side by side */
 @media (min-width: 1024px) {
   .setup-split {
-    gap: 1.5rem;
-    padding-right: 1.5rem;
+    overflow: hidden;
   }
   .setup-editor {
     flex: 0 0 55%;
@@ -1266,12 +1261,15 @@
   .setup-preview-panel {
     display: flex;
     flex: 0 0 45%;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
-    padding-top: 1.5rem;
+    padding: 2rem;
     position: sticky;
     top: 0;
-    height: calc(100vh - 80px);
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg-darker, #0a0e18);
+    border-left: 1px solid var(--border, #1e2535);
   }
 }
 

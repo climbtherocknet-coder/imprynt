@@ -21,6 +21,9 @@ export default function AdminWaitlistTab() {
   const [marking, setMarking] = useState('');
   const [planChoices, setPlanChoices] = useState<Record<string, string>>({});
 
+  const [resending, setResending] = useState('');
+  const [resendMsg, setResendMsg] = useState<Record<string, string>>({});
+
   const [addEmail, setAddEmail] = useState('');
   const [adding, setAdding] = useState(false);
   const [addMsg, setAddMsg] = useState('');
@@ -45,6 +48,29 @@ export default function AdminWaitlistTab() {
       });
       if (res.ok) loadEntries();
     } catch { /* silent */ } finally { setMarking(''); }
+  }
+
+  async function handleResend(id: string) {
+    setResending(id);
+    setResendMsg(prev => ({ ...prev, [id]: '' }));
+    try {
+      const res = await fetch('/api/admin/waitlist', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResendMsg(prev => ({ ...prev, [id]: 'Sent' }));
+        setTimeout(() => setResendMsg(prev => ({ ...prev, [id]: '' })), 3000);
+      } else {
+        setResendMsg(prev => ({ ...prev, [id]: data.error || 'Failed' }));
+      }
+    } catch {
+      setResendMsg(prev => ({ ...prev, [id]: 'Failed' }));
+    } finally {
+      setResending('');
+    }
   }
 
   async function handleAdd(e: React.FormEvent) {
@@ -132,13 +158,27 @@ export default function AdminWaitlistTab() {
           <h3 className="admin-section-title">Invited ({invited.length})</h3>
           <table className="admin-table">
             <thead>
-              <tr><th>Email</th><th>Invited On</th></tr>
+              <tr><th>Email</th><th>Invited On</th><th></th></tr>
             </thead>
             <tbody>
               {invited.map((e) => (
                 <tr key={e.id}>
                   <td>{e.email}</td>
                   <td>{e.invitedAt ? fmtDate(e.invitedAt) : '\u2014'}</td>
+                  <td>
+                    <button
+                      className="admin-btn admin-btn--ghost admin-btn--small"
+                      onClick={() => handleResend(e.id)}
+                      disabled={resending === e.id}
+                    >
+                      {resending === e.id ? 'Sending...' : 'Resend'}
+                    </button>
+                    {resendMsg[e.id] && (
+                      <span style={{ fontSize: '0.75rem', color: resendMsg[e.id] === 'Sent' ? '#22c55e' : '#f87171', marginLeft: '0.5rem' }}>
+                        {resendMsg[e.id]}
+                      </span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

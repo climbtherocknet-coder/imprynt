@@ -76,3 +76,37 @@ export async function PUT(req: NextRequest) {
 
   return NextResponse.json({ success: true, email, inviteCode });
 }
+
+export async function PATCH(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.email || !isAdmin(session.user.email)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = await req.json();
+  if (!id) return NextResponse.json({ error: 'Waitlist entry ID required' }, { status: 400 });
+
+  const result = await query(
+    `SELECT w.id, w.email, w.invited, ic.code
+     FROM waitlist w
+     LEFT JOIN invite_codes ic ON ic.id = w.invite_code_id
+     WHERE w.id = $1`,
+    [id]
+  );
+
+  if (result.rows.length === 0) {
+    return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
+  }
+
+  const entry = result.rows[0];
+  if (!entry.invited || !entry.code) {
+    return NextResponse.json({ error: 'Entry has not been invited yet' }, { status: 400 });
+  }
+
+  const sent = await sendWaitlistInviteEmail(entry.email, entry.code);
+  if (!sent) {
+    return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true, email: entry.email });
+}
