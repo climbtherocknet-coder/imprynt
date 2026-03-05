@@ -1232,23 +1232,58 @@
   min-height: 100%;
 }
 
-/* Hide scrollbar in preview for cleaner look */
-.preview-phone-screen::-webkit-scrollbar {
-  display: none;
-}
+/* Subtle scrollbar inside phone preview — visible but blends with dark UI */
 .preview-phone-screen {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.preview-phone-screen::-webkit-scrollbar {
+  width: 3px;
+}
+
+.preview-phone-screen::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.preview-phone-screen::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.preview-phone-screen::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Subtle scrollbar for mobile preview overlay */
+.mobile-preview-body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.mobile-preview-body::-webkit-scrollbar {
+  width: 3px;
+}
+
+.mobile-preview-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mobile-preview-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.mobile-preview-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* ═══════════════════════════════════════════
-   HIDE SCROLLBARS IN PHONE PREVIEW
-   Covers ALL descendants — still scrollable via mousewheel/touch
+   HIDE SCROLLBARS ON NESTED ELEMENTS IN PREVIEWS
+   Only descendants — the main containers above have subtle scrollbars
    ═══════════════════════════════════════════ */
 
-.preview-phone-screen,
 .preview-phone-screen *,
-.mobile-preview-body,
 .mobile-preview-body *,
 [data-contained="true"],
 [data-contained="true"] * {
@@ -1256,9 +1291,7 @@
   -ms-overflow-style: none !important;
 }
 
-.preview-phone-screen::-webkit-scrollbar,
 .preview-phone-screen *::-webkit-scrollbar,
-.mobile-preview-body::-webkit-scrollbar,
 .mobile-preview-body *::-webkit-scrollbar,
 [data-contained="true"]::-webkit-scrollbar,
 [data-contained="true"] *::-webkit-scrollbar {
