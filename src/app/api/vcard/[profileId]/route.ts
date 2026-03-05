@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { recordScore } from '@/lib/scoring';
+import { safeDecrypt } from '@/lib/crypto';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
@@ -58,7 +59,10 @@ export async function GET(
     [profileId]
   );
 
-  const links = linksResult.rows;
+  const links = linksResult.rows.map((l: { link_type: string; label: string; url: string }) => ({
+    ...l,
+    url: ['phone', 'email'].includes(l.link_type) ? (safeDecrypt(l.url) || l.url) : l.url,
+  }));
 
   // Fetch business contact fields
   const contactResult = await query(
@@ -70,7 +74,7 @@ export async function GET(
   );
   const contactFields: Record<string, string> = {};
   for (const row of contactResult.rows) {
-    contactFields[row.field_type] = row.field_value;
+    contactFields[row.field_type] = safeDecrypt(row.field_value) || row.field_value;
   }
 
   // Build vCard 3.0

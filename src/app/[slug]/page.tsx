@@ -5,12 +5,16 @@ import { query } from '@/lib/db';
 import { getTheme } from '@/lib/themes';
 import { auth } from '@/lib/auth';
 import { recordScore } from '@/lib/scoring';
+import { generatePageToken } from '@/lib/crypto';
 import { Metadata } from 'next';
 import ProfileTemplate from '@/components/templates/ProfileTemplate';
 import ProfileClient from './ProfileClient';
 import LinkTracker from './LinkTracker';
 import OffAirBanner from './OffAirBanner';
+import ContactLinksLoader from './ContactLinksLoader';
 import type { PodData } from '@/components/pods/PodRenderer';
+
+const SENSITIVE_LINK_TYPES = ['phone', 'email'];
 
 export const dynamic = 'force-dynamic';
 
@@ -233,7 +237,12 @@ async function getLinks(profileId: string) {
      ORDER BY display_order ASC`,
     [profileId]
   );
-  return result.rows as LinkData[];
+  // Mask phone/email URLs in SSR to prevent scraping
+  return (result.rows as LinkData[]).map(link =>
+    SENSITIVE_LINK_TYPES.includes(link.link_type)
+      ? { ...link, url: '#' }
+      : link
+  );
 }
 
 async function getPods(profileId: string): Promise<PodData[]> {
@@ -470,6 +479,15 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         allowFeedback={profile.allow_feedback !== false}
         showQrButton={!isPaid || !!profile.show_qr_button}
       />
+
+      {/* Client-side contact link loader (anti-scraping) */}
+      {links.some(l => SENSITIVE_LINK_TYPES.includes(l.link_type)) && (
+        <ContactLinksLoader
+          profileId={profile.profile_id}
+          pageToken={generatePageToken(profile.profile_id)}
+          linkIds={links.filter(l => SENSITIVE_LINK_TYPES.includes(l.link_type)).map(l => l.id)}
+        />
+      )}
 
       {/* Link click tracking */}
       <LinkTracker profileId={profile.profile_id} links={links.map(l => ({ id: l.id, url: l.url }))} />

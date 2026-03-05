@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { safeDecrypt } from '@/lib/crypto';
 
 // GET - Fetch protected page content (public, after PIN verification)
 // The client must have verified the PIN first via /api/pin
@@ -139,7 +140,9 @@ export async function GET(
       id: l.id,
       linkType: l.link_type,
       label: l.label || '',
-      url: l.url,
+      url: ['phone', 'email'].includes(l.link_type as string)
+        ? safeDecrypt(l.url as string) || l.url
+        : l.url,
       buttonColor: (l.button_color as string) || null,
     })),
     pods: podsResult.rows.map((r: Record<string, unknown>) => ({

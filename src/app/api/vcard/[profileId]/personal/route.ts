@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { safeDecrypt } from '@/lib/crypto';
 import crypto from 'crypto';
 
 // GET - Generate personal vCard (all contact fields, public + personal)
@@ -54,7 +55,10 @@ export async function GET(
      ORDER BY link_type, url, display_order ASC`,
     [profileId]
   );
-  const links = linksResult.rows;
+  const links = linksResult.rows.map((l: { link_type: string; label: string; url: string }) => ({
+    ...l,
+    url: ['phone', 'email'].includes(l.link_type) ? (safeDecrypt(l.url) || l.url) : l.url,
+  }));
 
   // Fetch personal contact fields (show_personal = true)
   const contactResult = await query(
@@ -66,7 +70,7 @@ export async function GET(
   );
   const contactFields: Record<string, string> = {};
   for (const row of contactResult.rows) {
-    contactFields[row.field_type] = row.field_value;
+    contactFields[row.field_type] = safeDecrypt(row.field_value) || row.field_value;
   }
 
   // Build vCard 3.0 (personal — all fields included)

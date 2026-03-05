@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
 import { isValidTemplate, isFreeTier } from '@/lib/themes';
+import { safeDecrypt } from '@/lib/crypto';
 import bcrypt from 'bcryptjs';
+
+const SENSITIVE_LINK_TYPES = ['phone', 'email'];
 
 // GET - Load full profile data for the editor
 export async function GET() {
@@ -204,7 +207,9 @@ export async function GET() {
       linkType: l.link_type,
       label: l.label || '',
       buttonColor: (l.button_color as string) || null,
-      url: l.url,
+      url: SENSITIVE_LINK_TYPES.includes(l.link_type as string)
+        ? safeDecrypt(l.url as string) || l.url
+        : l.url,
       displayOrder: l.display_order,
       showBusiness: l.show_business,
       showPersonal: l.show_personal,

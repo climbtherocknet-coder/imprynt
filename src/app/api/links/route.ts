@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
+import { encrypt, safeDecrypt } from '@/lib/crypto';
+
+const SENSITIVE_LINK_TYPES = ['phone', 'email'];
 
 const VALID_LINK_TYPES = [
   'linkedin', 'website', 'email', 'phone', 'booking',
@@ -46,7 +49,9 @@ export async function POST(req: NextRequest) {
     [
       userId, profileId, linkType,
       label?.trim()?.slice(0, 100) || null,
-      (url || '').trim().slice(0, 500),
+      SENSITIVE_LINK_TYPES.includes(linkType)
+        ? encrypt((url || '').trim().slice(0, 500))
+        : (url || '').trim().slice(0, 500),
       nextOrder,
       showBusiness !== false,
       showPersonal === true,
@@ -59,7 +64,9 @@ export async function POST(req: NextRequest) {
     id: link.id,
     linkType: link.link_type,
     label: link.label || '',
-    url: link.url,
+    url: SENSITIVE_LINK_TYPES.includes(link.link_type)
+      ? safeDecrypt(link.url) || link.url
+      : link.url,
     displayOrder: link.display_order,
     showBusiness: link.show_business,
     showPersonal: link.show_personal,
@@ -113,7 +120,16 @@ export async function PUT(req: NextRequest) {
 
   if (linkType !== undefined) { updates.push(`link_type = $${p++}`); values.push(linkType); }
   if (label !== undefined) { updates.push(`label = $${p++}`); values.push(label?.trim()?.slice(0, 100)); }
-  if (url !== undefined) { updates.push(`url = $${p++}`); values.push(url?.trim()?.slice(0, 500)); }
+  if (url !== undefined) {
+    updates.push(`url = $${p++}`);
+    const effectiveType = linkType;
+    const trimmedUrl = url?.trim()?.slice(0, 500);
+    values.push(
+      SENSITIVE_LINK_TYPES.includes(effectiveType) && trimmedUrl
+        ? encrypt(trimmedUrl)
+        : trimmedUrl
+    );
+  }
   if (showBusiness !== undefined) { updates.push(`show_business = $${p++}`); values.push(!!showBusiness); }
   if (showPersonal !== undefined) { updates.push(`show_personal = $${p++}`); values.push(!!showPersonal); }
   if (showShowcase !== undefined) { updates.push(`show_showcase = $${p++}`); values.push(!!showShowcase); }

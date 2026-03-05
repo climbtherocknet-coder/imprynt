@@ -317,6 +317,7 @@ export default function ProfileTemplate({
                     return (
                       <a
                         key={link.id}
+                        data-link-id={link.id}
                         href={getLinkHref(link)}
                         target={getLinkTarget(link.link_type)}
                         rel="noopener noreferrer"
@@ -342,7 +343,7 @@ export default function ProfileTemplate({
                   {linkStyle === 'pills' && (
                     <div className="link-row fade-in d3">
                       {links.map(link => (
-                        <a key={link.id} href={getLinkHref(link)} target={getLinkTarget(link.link_type)} rel="noopener noreferrer" className="link-pill"
+                        <a key={link.id} data-link-id={link.id} href={getLinkHref(link)} target={getLinkTarget(link.link_type)} rel="noopener noreferrer" className="link-pill"
                           style={link.buttonColor ? { '--link-btn-color': link.buttonColor } as React.CSSProperties : undefined}>
                           <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[link.link_type] || LINK_ICONS.custom }} />
                           {link.label || link.link_type}
@@ -353,7 +354,7 @@ export default function ProfileTemplate({
                   {linkStyle === 'stacked' && (
                     <div className="link-stacked fade-in d3">
                       {links.map(link => (
-                        <a key={link.id} href={getLinkHref(link)} target={getLinkTarget(link.link_type)} rel="noopener noreferrer" className="link-stacked-item"
+                        <a key={link.id} data-link-id={link.id} href={getLinkHref(link)} target={getLinkTarget(link.link_type)} rel="noopener noreferrer" className="link-stacked-item"
                           style={link.buttonColor ? { '--link-btn-color': link.buttonColor } as React.CSSProperties : undefined}>
                           <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[link.link_type] || LINK_ICONS.custom }} />
                           {link.label || link.link_type}
@@ -364,7 +365,7 @@ export default function ProfileTemplate({
                   {linkStyle === 'full-width-pills' && (
                     <div className="link-full-width fade-in d3">
                       {links.map(link => (
-                        <a key={link.id} href={getLinkHref(link)} target={getLinkTarget(link.link_type)} rel="noopener noreferrer" className="link-full-width-item"
+                        <a key={link.id} data-link-id={link.id} href={getLinkHref(link)} target={getLinkTarget(link.link_type)} rel="noopener noreferrer" className="link-full-width-item"
                           style={link.buttonColor ? { '--link-btn-color': link.buttonColor } as React.CSSProperties : undefined}>
                           <span className="icon" dangerouslySetInnerHTML={{ __html: LINK_ICONS[link.link_type] || LINK_ICONS.custom }} />
                           {link.label || link.link_type}

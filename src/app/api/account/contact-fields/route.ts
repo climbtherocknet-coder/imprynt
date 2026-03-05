@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
+import { encrypt, safeDecrypt } from '@/lib/crypto';
+
+const SENSITIVE_FIELD_TYPES = [
+  'phone_cell', 'phone_work', 'phone_personal',
+  'email_work', 'email_personal',
+  'address_work', 'address_home',
+];
 
 const VALID_FIELD_TYPES = [
   'phone_cell', 'phone_work', 'phone_personal',
@@ -27,7 +34,9 @@ export async function GET() {
   const fields = result.rows.map(row => ({
     id: row.id,
     fieldType: row.field_type,
-    fieldValue: row.field_value,
+    fieldValue: SENSITIVE_FIELD_TYPES.includes(row.field_type)
+      ? safeDecrypt(row.field_value) || row.field_value
+      : row.field_value,
     customLabel: row.custom_label || null,
     showBusiness: row.show_business,
     showPersonal: row.show_personal,
@@ -76,7 +85,9 @@ export async function PUT(req: NextRequest) {
       [
         userId,
         f.fieldType,
-        f.fieldValue.trim().slice(0, 500),
+        SENSITIVE_FIELD_TYPES.includes(f.fieldType)
+          ? encrypt(f.fieldValue.trim().slice(0, 500))
+          : f.fieldValue.trim().slice(0, 500),
         f.fieldType === 'custom' ? (f.customLabel as string)?.trim()?.slice(0, 100) || null : null,
         f.showBusiness !== false, // default true
         f.showPersonal !== false, // default true
