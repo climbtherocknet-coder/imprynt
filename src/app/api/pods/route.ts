@@ -131,47 +131,52 @@ export async function POST(req: NextRequest) {
   );
   const nextOrder = orderResult.rows[0].next_order;
 
-  const result = await query(
-    `INSERT INTO pods (profile_id, pod_type, display_order, label, title, body, image_url, stats, cta_label, cta_url, tags,
-                       image_position, image_layout, image_width, image_opacity,
-                       listing_status, listing_price, listing_details, source_domain,
-                       event_start, event_end, event_venue, event_address, event_status, event_auto_hide, event_timezone,
-                       audio_url, audio_duration)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
-     RETURNING id`,
-    [
-      profileId,
-      podType,
-      nextOrder,
-      label?.trim()?.slice(0, 50) || null,
-      title?.trim()?.slice(0, 200) || null,
-      podBody?.trim() || null,
-      imageUrl?.trim()?.slice(0, 500) || null,
-      stats ? JSON.stringify(stats) : null,
-      ctaLabel?.trim()?.slice(0, 100) || null,
-      ctaUrl?.trim()?.slice(0, 500) || null,
-      tags?.trim()?.slice(0, 500) || null,
-      podType === 'text_image' ? (imagePosition === 'right' ? 'right' : 'left') : null,
-      podType === 'text_image' ? (imageLayout || 'split') : null,
-      podType === 'text_image' ? (imageWidth || '33') : null,
-      podType === 'text_image' ? (imageOpacity ?? 100) : null,
-      podType === 'listing' ? (listingStatus || 'active') : null,
-      podType === 'listing' ? (listingPrice?.trim()?.slice(0, 50) || null) : null,
-      podType === 'listing' && listingDetails ? JSON.stringify(listingDetails) : null,
-      podType === 'listing' ? (sourceDomain?.trim()?.slice(0, 100) || null) : null,
-      podType === 'event' ? (eventStart || null) : null,
-      podType === 'event' ? (eventEnd || null) : null,
-      podType === 'event' ? (eventVenue?.trim()?.slice(0, 200) || null) : null,
-      podType === 'event' ? (eventAddress?.trim()?.slice(0, 300) || null) : null,
-      podType === 'event' ? (eventStatus || 'upcoming') : null,
-      podType === 'event' ? (eventAutoHide !== false) : true,
-      podType === 'event' ? (eventTimezone?.trim()?.slice(0, 50) || null) : null,
-      podType === 'music' ? (audioUrl?.trim()?.slice(0, 500) || null) : null,
-      podType === 'music' ? (audioDuration || null) : null,
-    ]
-  );
+  try {
+    const result = await query(
+      `INSERT INTO pods (profile_id, pod_type, display_order, label, title, body, image_url, stats, cta_label, cta_url, tags,
+                         image_position, image_layout, image_width, image_opacity,
+                         listing_status, listing_price, listing_details, source_domain,
+                         event_start, event_end, event_venue, event_address, event_status, event_auto_hide, event_timezone,
+                         audio_url, audio_duration)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
+       RETURNING id`,
+      [
+        profileId,
+        podType,
+        nextOrder,
+        label?.trim()?.slice(0, 50) || null,
+        title?.trim()?.slice(0, 200) || null,
+        podBody?.trim() || null,
+        imageUrl?.trim()?.slice(0, 500) || null,
+        stats ? JSON.stringify(stats) : null,
+        ctaLabel?.trim()?.slice(0, 100) || null,
+        ctaUrl?.trim()?.slice(0, 500) || null,
+        tags?.trim()?.slice(0, 500) || null,
+        podType === 'text_image' ? (imagePosition === 'right' ? 'right' : 'left') : 'left',
+        podType === 'text_image' ? (imageLayout || 'split') : null,
+        podType === 'text_image' ? (imageWidth || '33') : null,
+        podType === 'text_image' ? (imageOpacity ?? 100) : null,
+        podType === 'listing' ? (listingStatus || 'active') : null,
+        podType === 'listing' ? (listingPrice?.trim()?.slice(0, 50) || null) : null,
+        podType === 'listing' && listingDetails ? JSON.stringify(listingDetails) : null,
+        podType === 'listing' ? (sourceDomain?.trim()?.slice(0, 100) || null) : null,
+        podType === 'event' ? (eventStart || null) : null,
+        podType === 'event' ? (eventEnd || null) : null,
+        podType === 'event' ? (eventVenue?.trim()?.slice(0, 200) || null) : null,
+        podType === 'event' ? (eventAddress?.trim()?.slice(0, 300) || null) : null,
+        podType === 'event' ? (eventStatus || 'upcoming') : null,
+        podType === 'event' ? (eventAutoHide !== false) : true,
+        podType === 'event' ? (eventTimezone?.trim()?.slice(0, 50) || null) : null,
+        podType === 'music' ? (audioUrl?.trim()?.slice(0, 500) || null) : null,
+        podType === 'music' ? (audioDuration || null) : null,
+      ]
+    );
 
-  return NextResponse.json({ id: result.rows[0].id, success: true });
+    return NextResponse.json({ id: result.rows[0].id, success: true });
+  } catch (err) {
+    console.error('Pod creation failed:', err);
+    return NextResponse.json({ error: 'Failed to create content block' }, { status: 500 });
+  }
 }
 
 // PUT - Update a pod or reorder pods
