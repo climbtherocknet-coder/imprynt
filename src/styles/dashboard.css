@@ -1142,9 +1142,6 @@
   }
 }
 
-/* Old preview-phone styles removed — now uses shared PhoneFrame component */
-/* phone-frame.css handles scrollbar styling for phone frames */
-
 /* data-contained scrollbar hiding (for editor preview containment) */
 [data-contained="true"],
 [data-contained="true"] * {

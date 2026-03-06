@@ -288,10 +288,10 @@
   align-items: flex-start;
 }
 
-/* Phone frame — now uses shared PhoneFrame component + phone-frame.css */
+/* Phone frame wrapper — holds PhoneFrame + nav arrows */
 .demo-phone-wrap {
   flex-shrink: 0;
-  width: 375px;
+  width: 380px;
   position: relative;
 }
 
@@ -483,14 +483,14 @@
 
 /* ── Responsive ── */
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .demo-split { gap: 2.5rem; }
 
-  .demo-phone-wrap { width: 340px; }
-  .demo-phone-wrap .phone-frame-wrap { width: 340px !important; }
-  .demo-phone-wrap .phone-frame { width: 340px !important; height: auto !important; aspect-ratio: 9 / 19.5; border-radius: 2.75rem !important; padding: 11px !important; }
-  .demo-phone-wrap .phone-frame-notch { width: 91px !important; height: 25px !important; border-radius: 12px !important; top: 12px; }
-  .demo-phone-wrap .phone-frame-screen { border-radius: 2rem !important; }
+  .demo-phone-wrap { width: 300px; }
+  .demo-split .phone-frame-wrap { width: 300px !important; }
+  .demo-split .phone-frame { width: 300px !important; height: 640px !important; border-radius: 2.25rem !important; padding: 8px !important; }
+  .demo-split .phone-frame-notch { width: 70px !important; height: 20px !important; border-radius: 10px !important; }
+  .demo-split .phone-frame-screen { border-radius: 1.875rem !important; }
 }
 
 @media (max-width: 768px) {
@@ -512,20 +512,16 @@
   }
 
   /* Strip all phone chrome on mobile */
-  .demo-phone-wrap .phone-frame-wrap { width: 100% !important; }
-  .demo-phone-wrap .phone-frame {
+  .demo-split .phone-frame-wrap { width: 100% !important; max-width: 100% !important; }
+  .demo-split .phone-frame {
     width: 100% !important;
-    height: 75vh !important;
-    min-height: 500px;
-    aspect-ratio: unset !important;
+    height: 70vh !important;
     border-radius: 0 !important;
-    background: transparent !important;
     padding: 0 !important;
     box-shadow: none !important;
   }
-  .demo-phone-wrap .phone-frame-notch { display: none !important; }
-  .demo-phone-wrap .phone-frame-screen { border-radius: 0 !important; background: transparent !important; }
-  .demo-phone-wrap .phone-frame-loading { border-radius: 0; }
+  .demo-split .phone-frame-notch { display: none !important; }
+  .demo-split .phone-frame-screen { border-radius: 0 !important; }
 
   /* Info panel hidden on mobile — profile speaks for itself */
   .demo-info { display: none; }

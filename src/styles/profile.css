@@ -2067,10 +2067,4 @@ body:has(.profile-page) {
   }
 }
 
-/* Don't apply desktop framing inside phone previews */
-.preview-phone-screen .profile-page {
-  max-width: none;
-  box-shadow: none;
-  border: none;
-}
 

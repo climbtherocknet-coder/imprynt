@@ -11,7 +11,7 @@ interface PhoneFrameProps {
 const SIZES = {
   sm: { width: 280, height: 600, borderRadius: '2.25rem', padding: 8, notchWidth: 70, notchHeight: 20 },
   md: { width: 340, height: 720, borderRadius: '2.75rem', padding: 10, notchWidth: 85, notchHeight: 24 },
-  lg: { width: 375, height: 812, borderRadius: '3rem', padding: 12, notchWidth: 100, notchHeight: 28 },
+  lg: { width: 380, height: 812, borderRadius: '3rem', padding: 12, notchWidth: 100, notchHeight: 28 },
 };
 
 export default function PhoneFrame({ children, size = 'md', className = '' }: PhoneFrameProps) {
