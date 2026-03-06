@@ -64,6 +64,8 @@ export interface ProfileTemplateProps {
   saveButtonColor?: string | null;
   // Editor preview containment (prevent position:fixed from escaping preview)
   contained?: boolean;
+  // Display company as primary name instead of first/last
+  useCompanyAsDisplay?: boolean;
 }
 
 function getLinkHref(link: { link_type: string; url: string }) {
@@ -121,6 +123,7 @@ export default function ProfileTemplate({
   saveButtonStyle = 'auto',
   saveButtonColor,
   contained = false,
+  useCompanyAsDisplay = false,
 }: ProfileTemplateProps) {
   const theme = template === 'custom' ? getCustomTheme(customTheme as CustomThemeData) : getTheme(template);
   const cssVars = getThemeCSSVars(theme);
@@ -150,8 +153,11 @@ export default function ProfileTemplate({
   if (linkSize && linkSize !== 'medium') dataAttrs['data-link-size'] = linkSize;
   if (linkShape && linkShape !== 'pill') dataAttrs['data-link-shape'] = linkShape;
   const googleFontsUrl = getGoogleFontsUrl(theme);
-  const fullName = [firstName, lastName].filter(Boolean).join(' ');
-  const subtitle = [title, company].filter(Boolean).join(' · ');
+  const personalName = [firstName, lastName].filter(Boolean).join(' ');
+  const fullName = useCompanyAsDisplay && company ? company : personalName;
+  const subtitle = useCompanyAsDisplay
+    ? [personalName, title].filter(Boolean).join(' · ')
+    : [title, company].filter(Boolean).join(' · ');
   const linkStyle = theme.modifiers.linkStyle;
 
   // Cover mode: photo renders as background, logo renders as foreground element

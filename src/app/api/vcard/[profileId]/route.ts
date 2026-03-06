@@ -21,7 +21,7 @@ export async function GET(
   // Fetch profile + user data
   const result = await query(
     `SELECT u.id as user_id, u.first_name, u.last_name, p.title, p.company,
-            p.tagline, p.bio, p.photo_url, p.slug
+            p.tagline, p.bio, p.photo_url, p.slug, u.use_company_as_display
      FROM profiles p
      JOIN users u ON u.id = p.user_id
      WHERE p.id = $1 AND p.is_published = true AND u.account_status = 'active'`,
@@ -88,7 +88,8 @@ export async function GET(
   const lastName = profile.last_name || '';
   const suffix = contactFields.name_suffix || '';
   lines.push(`N:${escapeVCard(lastName)};${escapeVCard(firstName)};;;${escapeVCard(suffix)}`);
-  const fullName = [firstName, lastName].filter(Boolean).join(' ') + (suffix ? `, ${suffix}` : '');
+  const personalName = [firstName, lastName].filter(Boolean).join(' ') + (suffix ? `, ${suffix}` : '');
+  const fullName = profile.use_company_as_display && profile.company ? profile.company : personalName;
   lines.push(`FN:${escapeVCard(fullName)}`);
 
   // Org and title (contact field company overrides profile company if present)

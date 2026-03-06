@@ -568,6 +568,39 @@ CREATE TABLE public.protected_pages (
 
 
 --
+-- Name: shell_batches; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.shell_batches (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(100) NOT NULL,
+    quantity integer NOT NULL,
+    tag character varying(50),
+    created_by character varying(255) NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: shells; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.shells (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    batch_id uuid NOT NULL,
+    nfc_id character varying(20) NOT NULL,
+    invite_code character varying(20) NOT NULL,
+    profile_id uuid,
+    claimed_by uuid,
+    status character varying(20) DEFAULT 'available'::character varying NOT NULL,
+    claimed_at timestamp with time zone,
+    disabled_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT shells_status_check CHECK (((status)::text = ANY (ARRAY[('available'::character varying)::text, ('claimed'::character varying)::text, ('disabled'::character varying)::text])))
+);
+
+
+--
 -- Name: score_events; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -664,6 +697,7 @@ CREATE TABLE public.users (
     trial_ends_at timestamp with time zone,
     is_demo boolean DEFAULT false NOT NULL,
     setup_step smallint DEFAULT 1 NOT NULL,
+    use_company_as_display boolean DEFAULT false NOT NULL,
     CONSTRAINT users_account_status_check CHECK (((account_status)::text = ANY (ARRAY[('active'::character varying)::text, ('suspended'::character varying)::text]))),
     CONSTRAINT users_plan_check CHECK (((plan)::text = ANY (ARRAY[('free'::character varying)::text, ('premium_monthly'::character varying)::text, ('premium_annual'::character varying)::text, ('advisory'::character varying)::text])))
 );
@@ -919,6 +953,38 @@ ALTER TABLE ONLY public.profiles
 
 ALTER TABLE ONLY public.protected_pages
     ADD CONSTRAINT protected_pages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: shell_batches shell_batches_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shell_batches
+    ADD CONSTRAINT shell_batches_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: shells shells_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shells
+    ADD CONSTRAINT shells_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: shells shells_nfc_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shells
+    ADD CONSTRAINT shells_nfc_id_key UNIQUE (nfc_id);
+
+
+--
+-- Name: shells shells_invite_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shells
+    ADD CONSTRAINT shells_invite_code_key UNIQUE (invite_code);
 
 
 --
@@ -1365,6 +1431,34 @@ CREATE INDEX idx_protected_pages_profile ON public.protected_pages USING btree (
 --
 
 CREATE INDEX idx_protected_pages_user ON public.protected_pages USING btree (user_id);
+
+
+--
+-- Name: idx_shells_nfc_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_shells_nfc_id ON public.shells USING btree (nfc_id);
+
+
+--
+-- Name: idx_shells_invite_code; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_shells_invite_code ON public.shells USING btree (invite_code);
+
+
+--
+-- Name: idx_shells_batch_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_shells_batch_id ON public.shells USING btree (batch_id);
+
+
+--
+-- Name: idx_shells_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_shells_status ON public.shells USING btree (status);
 
 
 --
@@ -1815,6 +1909,30 @@ ALTER TABLE ONLY public.protected_pages
 
 ALTER TABLE ONLY public.protected_pages
     ADD CONSTRAINT protected_pages_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: shells shells_batch_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shells
+    ADD CONSTRAINT shells_batch_id_fkey FOREIGN KEY (batch_id) REFERENCES public.shell_batches(id) ON DELETE CASCADE;
+
+
+--
+-- Name: shells shells_profile_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shells
+    ADD CONSTRAINT shells_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
+-- Name: shells shells_claimed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.shells
+    ADD CONSTRAINT shells_claimed_by_fkey FOREIGN KEY (claimed_by) REFERENCES public.users(id) ON DELETE SET NULL;
 
 
 --

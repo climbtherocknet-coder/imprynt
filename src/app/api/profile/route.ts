@@ -17,7 +17,7 @@ export async function GET() {
   const userId = session.user.id;
 
   const userResult = await query(
-    'SELECT first_name, last_name, plan, trial_started_at, trial_ends_at FROM users WHERE id = $1',
+    'SELECT first_name, last_name, plan, trial_started_at, trial_ends_at, use_company_as_display FROM users WHERE id = $1',
     [userId]
   );
   const user = userResult.rows[0];
@@ -150,6 +150,7 @@ export async function GET() {
       plan: user.plan,
       trialStartedAt: user.trial_started_at || null,
       trialEndsAt: user.trial_ends_at || null,
+      useCompanyAsDisplay: user.use_company_as_display || false,
     },
     profile: {
       id: profile.id,
@@ -232,11 +233,11 @@ export async function PUT(req: NextRequest) {
 
   try {
     if (section === 'identity') {
-      // Name, title, company, tagline
-      const { firstName, lastName, title, company, tagline } = body;
+      // Name, title, company, tagline, display name toggle
+      const { firstName, lastName, title, company, tagline, useCompanyAsDisplay } = body;
       await query(
-        'UPDATE users SET first_name = $1, last_name = $2 WHERE id = $3',
-        [firstName?.trim() || null, lastName?.trim() || null, userId]
+        'UPDATE users SET first_name = $1, last_name = $2, use_company_as_display = COALESCE($3, use_company_as_display) WHERE id = $4',
+        [firstName?.trim() || null, lastName?.trim() || null, useCompanyAsDisplay ?? null, userId]
       );
 
       await query(

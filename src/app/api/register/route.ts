@@ -45,32 +45,47 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const codeResult = await query(
-      'SELECT id, max_uses, use_count, expires_at, granted_plan FROM invite_codes WHERE code = $1',
-      [inviteCode.trim().toUpperCase()]
-    );
+    const normalizedCode = inviteCode.trim().toUpperCase();
+    let codeId: string | null = null;
+    let plan = 'free';
+    let isShellCode = false;
 
-    if (codeResult.rows.length === 0) {
-      return NextResponse.json(
-        { error: 'Invalid invite code' },
-        { status: 400 }
+    // Check if this is a shell invite code (SH-* prefix)
+    if (normalizedCode.startsWith('SH-')) {
+      const shellResult = await query(
+        'SELECT id, status FROM shells WHERE invite_code = $1',
+        [normalizedCode]
       );
-    }
-
-    const code = codeResult.rows[0];
-
-    if (code.expires_at && new Date(code.expires_at) < new Date()) {
-      return NextResponse.json(
-        { error: 'This invite code has expired' },
-        { status: 400 }
+      if (shellResult.rows.length === 0) {
+        return NextResponse.json({ error: 'Invalid invite code' }, { status: 400 });
+      }
+      if (shellResult.rows[0].status !== 'available') {
+        return NextResponse.json({ error: 'This invite code has already been used' }, { status: 400 });
+      }
+      isShellCode = true;
+    } else {
+      // Standard invite code validation
+      const codeResult = await query(
+        'SELECT id, max_uses, use_count, expires_at, granted_plan FROM invite_codes WHERE code = $1',
+        [normalizedCode]
       );
-    }
 
-    if (code.max_uses !== null && code.use_count >= code.max_uses) {
-      return NextResponse.json(
-        { error: 'This invite code has already been used' },
-        { status: 400 }
-      );
+      if (codeResult.rows.length === 0) {
+        return NextResponse.json({ error: 'Invalid invite code' }, { status: 400 });
+      }
+
+      const code = codeResult.rows[0];
+
+      if (code.expires_at && new Date(code.expires_at) < new Date()) {
+        return NextResponse.json({ error: 'This invite code has expired' }, { status: 400 });
+      }
+
+      if (code.max_uses !== null && code.use_count >= code.max_uses) {
+        return NextResponse.json({ error: 'This invite code has already been used' }, { status: 400 });
+      }
+
+      codeId = code.id;
+      plan = code.granted_plan || 'free';
     }
 
     // Check if user already exists
@@ -86,21 +101,22 @@ export async function POST(req: NextRequest) {
     const passwordHash = await hash(password, 12);
 
     // Create user with invite code reference and granted plan
-    const plan = code.granted_plan || 'free';
     const result = await query(
       `INSERT INTO users (email, password_hash, first_name, last_name, invite_code_id, plan)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, email`,
-      [email.toLowerCase(), passwordHash, firstName || null, lastName || null, code.id, plan]
+      [email.toLowerCase(), passwordHash, firstName || null, lastName || null, codeId, plan]
     );
 
     const user = result.rows[0];
 
-    // Increment invite code use count
-    await query(
-      'UPDATE invite_codes SET use_count = use_count + 1 WHERE id = $1',
-      [code.id]
-    );
+    // Increment invite code use count (only for standard codes)
+    if (codeId) {
+      await query(
+        'UPDATE invite_codes SET use_count = use_count + 1 WHERE id = $1',
+        [codeId]
+      );
+    }
 
     // Create profile with random slug and redirect ID
     const slug = nanoid(8);

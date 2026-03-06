@@ -70,6 +70,7 @@ interface ProfileData {
   photo_mode: string;
   cover_mode: string;
   cover_logo_position: string;
+  use_company_as_display: boolean;
 }
 
 interface LinkData {
@@ -86,7 +87,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   try {
     const result = await query(
-      `SELECT u.first_name, u.last_name, p.title, u.plan
+      `SELECT u.first_name, u.last_name, p.title, p.company, u.plan, u.use_company_as_display
        FROM users u
        JOIN profiles p ON p.user_id = u.id
        WHERE p.slug = $1 AND u.account_status = 'active'`,
@@ -98,7 +99,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
 
     const row = result.rows[0];
-    const name = [row.first_name, row.last_name].filter(Boolean).join(' ');
+    const personalName = [row.first_name, row.last_name].filter(Boolean).join(' ');
+    const name = row.use_company_as_display && row.company ? row.company : personalName;
     const role = row.title || '';
     const isFree = row.plan === 'free';
 
@@ -123,7 +125,7 @@ async function getProfileAny(slug: string) {
   const result = await query(
     `SELECT p.id as profile_id, p.user_id, u.first_name, u.last_name, p.title, p.company,
             p.tagline, p.bio_heading, p.bio, p.photo_url, p.template,
-            p.primary_color, p.accent_color, p.font_pair, p.link_display, u.plan, p.status_tags, p.is_published, p.allow_sharing, p.allow_feedback, p.show_qr_button, p.status_tag_color, p.photo_shape, p.photo_radius, p.photo_size, p.photo_position_x, p.photo_position_y, p.photo_animation
+            p.primary_color, p.accent_color, p.font_pair, p.link_display, u.plan, p.status_tags, p.is_published, p.allow_sharing, p.allow_feedback, p.show_qr_button, p.status_tag_color, p.photo_shape, p.photo_radius, p.photo_size, p.photo_position_x, p.photo_position_y, p.photo_animation, u.use_company_as_display
      FROM profiles p
      JOIN users u ON u.id = p.user_id
      WHERE p.slug = $1 AND u.account_status = 'active'`,
@@ -466,6 +468,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         linkButtonColor={profile.link_button_color || null}
         saveButtonStyle={profile.save_button_style || 'auto'}
         saveButtonColor={profile.save_button_color || null}
+        useCompanyAsDisplay={profile.use_company_as_display || false}
       />
 
       {/* Client-side interactive elements (PIN modal, protected pages) */}

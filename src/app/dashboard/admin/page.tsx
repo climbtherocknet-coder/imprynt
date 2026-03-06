@@ -13,16 +13,18 @@ import AdminCodesTab from '@/components/admin/AdminCodesTab';
 import AdminWaitlistTab from '@/components/admin/AdminWaitlistTab';
 import AdminFeedbackTab from '@/components/admin/AdminFeedbackTab';
 import AdminTrafficTab from '@/components/admin/AdminTrafficTab';
+import AdminShellsTab from '@/components/admin/AdminShellsTab';
 import '@/styles/dashboard.css';
 import '@/styles/cc.css';
 import '@/styles/admin.css';
 
-type TabKey = 'overview' | 'users' | 'codes' | 'waitlist' | 'feedback' | 'traffic' | 'features' | 'roadmap' | 'changelog' | 'docs' | 'schema';
+type TabKey = 'overview' | 'users' | 'codes' | 'shells' | 'waitlist' | 'feedback' | 'traffic' | 'features' | 'roadmap' | 'changelog' | 'docs' | 'schema';
 
 const ALL_TABS: { key: TabKey; label: string; group?: 'admin' | 'cc' }[] = [
   { key: 'overview', label: 'Overview', group: 'admin' },
   { key: 'users', label: 'Users', group: 'admin' },
   { key: 'codes', label: 'Codes', group: 'admin' },
+  { key: 'shells', label: 'Shells', group: 'admin' },
   { key: 'waitlist', label: 'Waitlist', group: 'admin' },
   { key: 'feedback', label: 'Feedback', group: 'admin' },
   { key: 'traffic', label: 'Traffic', group: 'admin' },
@@ -160,6 +162,7 @@ function CommandCenterInner() {
         {activeTab === 'overview' && <CCOverview accessLevel={accessLevel} onNavigate={(tab) => switchTab(tab as TabKey)} />}
         {activeTab === 'users' && <AdminUsersTab />}
         {activeTab === 'codes' && <AdminCodesTab />}
+        {activeTab === 'shells' && <AdminShellsTab />}
         {activeTab === 'waitlist' && <AdminWaitlistTab />}
         {activeTab === 'feedback' && <AdminFeedbackTab />}
         {activeTab === 'traffic' && <AdminTrafficTab />}
