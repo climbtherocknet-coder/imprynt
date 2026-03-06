@@ -1234,48 +1234,50 @@
 
 /* Subtle scrollbar inside phone preview — visible but blends with dark UI */
 .preview-phone-screen {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent !important;
 }
 
 .preview-phone-screen::-webkit-scrollbar {
-  width: 3px;
+  display: block !important;
+  width: 3px !important;
 }
 
 .preview-phone-screen::-webkit-scrollbar-track {
-  background: transparent;
+  background: transparent !important;
 }
 
 .preview-phone-screen::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.15) !important;
   border-radius: 3px;
 }
 
 .preview-phone-screen::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.25) !important;
 }
 
 /* Subtle scrollbar for mobile preview overlay */
 .mobile-preview-body {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent !important;
 }
 
 .mobile-preview-body::-webkit-scrollbar {
-  width: 3px;
+  display: block !important;
+  width: 3px !important;
 }
 
 .mobile-preview-body::-webkit-scrollbar-track {
-  background: transparent;
+  background: transparent !important;
 }
 
 .mobile-preview-body::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.15) !important;
   border-radius: 3px;
 }
 
 .mobile-preview-body::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.25) !important;
 }
 
 /* ═══════════════════════════════════════════
