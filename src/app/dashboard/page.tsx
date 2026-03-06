@@ -9,7 +9,6 @@ import MyUrlsCard from './MyUrlsCard';
 import ThemeToggle from '@/components/ThemeToggle';
 import CheckoutToast from './CheckoutToast';
 import VerificationBanner from './VerificationBanner';
-import DashboardPreview from './DashboardPreview';
 import PhoneFrame from '@/components/PhoneFrame';
 import GreetingText from './GreetingText';
 import '@/styles/dashboard.css';
@@ -131,20 +130,15 @@ export default async function DashboardPage({
     }
   }
 
-  // Fetch PIN status + icon color for protected pages
-  let personalPinSet = false;
+  // Fetch icon color for protected pages (used for logo accent)
   let personalIconColor = '';
   try {
     const pinResult = await query(
-      `SELECT visibility_mode, pin_hash IS NOT NULL as has_pin, icon_color
-       FROM protected_pages
-       WHERE user_id = $1 AND is_active = true AND visibility_mode = 'hidden'`,
+      `SELECT icon_color FROM protected_pages
+       WHERE user_id = $1 AND is_active = true AND icon_color IS NOT NULL LIMIT 1`,
       [userId]
     );
-    for (const row of pinResult.rows) {
-      if (row.has_pin) personalPinSet = true;
-      if (row.icon_color) personalIconColor = row.icon_color;
-    }
+    if (pinResult.rows[0]?.icon_color) personalIconColor = pinResult.rows[0].icon_color;
   } catch { /* protected_pages table may not exist yet */ }
 
   const viewCount = parseInt(analytics.total_views);
@@ -164,7 +158,7 @@ export default async function DashboardPage({
           <span className={`dash-plan-badge ${planStatus.isPaid ? 'dash-plan-badge--paid' : 'dash-plan-badge--free'}`}>
             {planStatus.badgeLabel}
           </span>
-          <a href="/dashboard" className="dash-user-name" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <a href="/dashboard/account" className="dash-user-name" style={{ textDecoration: 'none', color: 'inherit' }}>
             {session.user.name || session.user.email}
           </a>
           <SignOutButton />
@@ -267,48 +261,25 @@ export default async function DashboardPage({
                 </a>
               )}
 
-              <div className="dash-card" style={{ padding: '0.75rem 1rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <a href="/dashboard/page-editor?tab=personal" style={{
-                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    textDecoration: 'none', color: 'inherit', padding: '0.375rem 0',
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2"
-                      style={{ color: personalIconColor || 'var(--accent, #e8a849)', flexShrink: 0 }}>
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" fill="none"/>
-                      <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
+              <a href="/dashboard/media" className="dash-nav-card">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  <div style={iconWrap}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <path d="M21 15l-5-5L5 21" />
                     </svg>
-                    <span style={{ flex: 1, fontSize: '0.8125rem', fontWeight: 500 }}>Personal</span>
-                    <span style={{
-                      fontSize: '0.6875rem', fontWeight: 600,
-                      padding: '0.125rem 0.5rem', borderRadius: '9999px',
-                      backgroundColor: personalPinSet ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-                      color: personalPinSet ? '#10b981' : '#ef4444',
-                    }}>
-                      {personalPinSet ? 'PIN set' : 'No PIN'}
-                    </span>
-                  </a>
+                  </div>
+                  <span className="dash-nav-arrow">&rarr;</span>
                 </div>
-              </div>
+                <div>
+                  <h3 className="dash-nav-title">My Media</h3>
+                  <p className="dash-nav-desc">Uploaded images and audio</p>
+                </div>
+              </a>
             </div>
 
-            {/* My Media — full width */}
-            <a href="/dashboard/media" className="dash-nav-card" style={{ marginTop: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #e8a849)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <path d="M21 15l-5-5L5 21" />
-                </svg>
-                <span className="dash-nav-arrow">&rarr;</span>
-              </div>
-              <div>
-                <h3 className="dash-nav-title">My Media</h3>
-                <p className="dash-nav-desc">View all uploaded images and audio</p>
-              </div>
-            </a>
-
-            {/* Command Center — full width below grid */}
+            {/* Command Center — admin only, below grid */}
             {ccAccess !== 'none' && (
               <a href="/dashboard/admin" className="dash-nav-card" style={{ marginTop: '0.75rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
@@ -338,8 +309,6 @@ export default async function DashboardPage({
           )}
         </div>
 
-        {/* Mobile preview button — visible only on small screens */}
-        {profile && <DashboardPreview slug={profile.slug} />}
       </main>
     </div>
   );

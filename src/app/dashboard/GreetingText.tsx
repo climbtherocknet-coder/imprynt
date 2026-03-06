@@ -11,5 +11,5 @@ export default function GreetingText({ name }: { name: string }) {
     else setGreeting('Good evening');
   }, []);
 
-  return <>{greeting ? `${greeting}, ${name}.` : `Hey, ${name}.`}</>;
+  return <>{greeting ? (name ? `${greeting}, ${name}.` : `${greeting}.`) : (name ? `Hey, ${name}.` : 'Hey.')}</>;
 }

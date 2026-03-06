@@ -452,12 +452,13 @@ function ProtectedPageView({
         className={`profile-page t-${content.profile.template}`}
         {...dataAttrs}
         {...(bgImageUrl ? { 'data-has-bg': 'true' } : {})}
+        data-page-type="protected"
         style={{
           ...cssVarStyle,
           ...(linkButtonColor ? { '--link-btn-color': linkButtonColor } : {}),
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'var(--bg)',
+          backgroundColor: bgImageUrl ? 'transparent' : 'var(--bg)',
           fontFamily: 'var(--font-body)',
           color: 'var(--text)',
           overflowY: 'auto',

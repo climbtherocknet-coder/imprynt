@@ -1630,9 +1630,11 @@ a.pod-event-address:hover {
   overflow: hidden;
 }
 
-[data-contained="true"] .profile-bg-image {
+[data-contained="true"] .profile-bg-image,
+[data-page-type="protected"] .profile-bg-image {
   position: absolute;
 }
+
 
 .profile-bg-image img {
   width: 100%;

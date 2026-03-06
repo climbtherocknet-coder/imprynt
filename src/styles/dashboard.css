@@ -871,50 +871,25 @@
   color: #4ade80;
 }
 
-/* Mobile: single column grid, hide right column entirely */
+/* Hide phone preview below 1200px */
+.dash-right {
+  display: none;
+}
+
+@media (min-width: 1200px) {
+  .dash-right {
+    display: flex;
+  }
+}
+
+/* Mobile: single column grid */
 @media (max-width: 768px) {
   .dash-split {
     flex-direction: column;
   }
-  .dash-right,
-  .dash-split-right {
-    display: none !important;
-  }
   .dash-grid-2col,
   .dash-nav-grid {
     grid-template-columns: 1fr !important;
-  }
-}
-
-/* Dashboard mobile preview button */
-.dash-mobile-preview-btn {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .dash-mobile-preview-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-    position: fixed;
-    bottom: 1.25rem;
-    right: 1.25rem;
-    padding: 0.625rem 1rem;
-    border-radius: 9999px;
-    border: 1px solid var(--accent-border, rgba(232, 168, 73, 0.3));
-    background: var(--surface, #161c28);
-    color: var(--accent, #e8a849);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-    z-index: 100;
-    transition: transform 0.15s, box-shadow 0.15s;
-  }
-
-  .dash-mobile-preview-btn:active {
-    transform: scale(0.95);
   }
 }
 
@@ -1212,7 +1187,7 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -1226,10 +1201,8 @@
   max-height: 95vh;
   display: flex;
   flex-direction: column;
-  border-radius: 1.5rem;
   overflow: hidden;
-  background: var(--bg);
-  border: 1px solid var(--border);
+  background: transparent;
 }
 
 .mobile-preview-header {
@@ -1237,19 +1210,23 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.mobile-preview-header button {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.mobile-preview-header span {
+  color: rgba(255, 255, 255, 0.8) !important;
 }
 
 .mobile-preview-body {
   flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.mobile-preview-body .profile-page,
-.mobile-preview-body .protected-page {
-  min-height: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem;
 }
 
 /* ═══════════════════════════════════════════
