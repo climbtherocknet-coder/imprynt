@@ -7,6 +7,7 @@ import ProfileTemplate from '@/components/templates/ProfileTemplate';
 import ToggleSwitch from '@/components/ToggleSwitch';
 import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import EditorFloatingButtons from '../EditorFloatingButtons';
+import PhoneFrame from '@/components/PhoneFrame';
 import type { PlanStatusClient } from '../PageEditor';
 import '@/styles/dashboard.css';
 import '@/styles/profile.css';
@@ -592,12 +593,9 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
 
       {/* ─── Live Preview Panel (desktop only) ──────── */}
       <aside className="preview-panel">
-        <div className="preview-phone">
-          <div className="preview-phone-notch" />
-          <div className="preview-phone-screen">
-            {renderPreview()}
-          </div>
-        </div>
+        <PhoneFrame size="md">
+          {renderPreview()}
+        </PhoneFrame>
       </aside>
       </div>
 
@@ -613,7 +611,9 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
               >✕</button>
             </div>
             <div className="mobile-preview-body">
-              {renderPreview()}
+              <PhoneFrame size="sm">
+                {renderPreview()}
+              </PhoneFrame>
             </div>
           </div>
         </div>

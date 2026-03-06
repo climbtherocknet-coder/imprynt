@@ -8,6 +8,7 @@ import ProfileTemplate from '@/components/templates/ProfileTemplate';
 import type { PodData } from '@/components/pods/PodRenderer';
 import type { PodItem as EditorPodItem } from '@/components/pods/PodEditor';
 import QRCode from 'qrcode';
+import PhoneFrame from '@/components/PhoneFrame';
 import '@/styles/setup.css';
 import '@/styles/dashboard.css';
 
@@ -798,8 +799,8 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
             </p>
 
             {/* Phone frame mini-preview */}
-            <div className="setup-phone-frame">
-              <div className="setup-phone-screen" style={{ backgroundColor: currentTheme?.colors.bg || '#fff' }}>
+            <PhoneFrame size="sm" className="setup-launch-phone">
+              <div style={{ backgroundColor: currentTheme?.colors.bg || '#fff', minHeight: '100%' }}>
                 {preview.coverUrl && (
                   <div style={{
                     height: 80,
@@ -836,7 +837,7 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
                   ))}
                 </div>
               </div>
-            </div>
+            </PhoneFrame>
 
             {/* URL + copy */}
             <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
@@ -1053,12 +1054,9 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
 
         {/* Preview side — same classes as PageEditor/ProfileTab */}
         <aside className="preview-panel">
-          <div className="preview-phone">
-            <div className="preview-phone-notch" />
-            <div className="preview-phone-screen">
-              {renderPreview()}
-            </div>
-          </div>
+          <PhoneFrame size="md">
+            {renderPreview()}
+          </PhoneFrame>
         </aside>
       </div>
 
@@ -1081,7 +1079,9 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
               >✕</button>
             </div>
             <div className="mobile-preview-body">
-              {renderPreview()}
+              <PhoneFrame size="sm">
+                {renderPreview()}
+              </PhoneFrame>
             </div>
           </div>
         </div>

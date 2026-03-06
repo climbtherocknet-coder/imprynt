@@ -3,6 +3,7 @@ import Script from 'next/script';
 import { Inter, Instrument_Serif } from 'next/font/google';
 import ThemeProvider from '@/components/ThemeProvider';
 import '@/styles/theme.css';
+import '@/styles/phone-frame.css';
 
 const inter = Inter({
   subsets: ['latin'],

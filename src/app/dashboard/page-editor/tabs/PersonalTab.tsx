@@ -10,6 +10,7 @@ import CoverPreview from '@/components/ui/CoverPreview';
 import GalleryPicker from '@/components/ui/GalleryPicker';
 import ProtectedPagePreview from '@/components/templates/ProtectedPagePreview';
 import EditorFloatingButtons from '../EditorFloatingButtons';
+import PhoneFrame from '@/components/PhoneFrame';
 import type { PodData } from '@/components/pods/PodRenderer';
 import type { PlanStatusClient } from '../PageEditor';
 import '@/styles/dashboard.css';
@@ -1305,12 +1306,9 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
 
       {/* ─── Live Preview Panel (desktop only) ──────── */}
       <aside className="preview-panel">
-        <div className="preview-phone">
-          <div className="preview-phone-notch" />
-          <div className="preview-phone-screen">
-            {renderPreview()}
-          </div>
-        </div>
+        <PhoneFrame size="md">
+          {renderPreview()}
+        </PhoneFrame>
       </aside>
       </div>
 
@@ -1371,7 +1369,9 @@ export default function PersonalTab({ planStatus, onTrialActivated, currentTempl
               >✕</button>
             </div>
             <div className="mobile-preview-body">
-              {renderPreview()}
+              <PhoneFrame size="sm">
+                {renderPreview()}
+              </PhoneFrame>
             </div>
           </div>
         </div>

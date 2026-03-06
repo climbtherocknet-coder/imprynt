@@ -1,0 +1,126 @@
+/* ══════════════════════════════════════════
+   Shared Phone Frame — used everywhere
+   Dashboard, Editor, Wizard, Demo
+   ══════════════════════════════════════════ */
+
+.phone-frame-wrap {
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible;
+}
+
+.phone-frame {
+  position: relative;
+  background: #1a1a1a;
+  box-shadow:
+    0 0 0 2px #333,
+    0 24px 80px rgba(0, 0, 0, 0.5),
+    inset 0 0 2px rgba(255, 255, 255, 0.05);
+}
+
+.phone-frame-notch {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000;
+  z-index: 10;
+}
+
+.phone-frame-screen {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overflow-y: auto;
+  background: #000;
+  position: relative;
+
+  /* Subtle scrollbar inside the frame */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+.phone-frame-screen::-webkit-scrollbar {
+  width: 3px;
+}
+
+.phone-frame-screen::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.phone-frame-screen::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+
+.phone-frame-screen::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Hide scrollbars on all nested elements inside the phone */
+.phone-frame-screen *,
+.phone-frame-screen *::before,
+.phone-frame-screen *::after {
+  scrollbar-width: none !important;
+}
+
+.phone-frame-screen *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Profile page inside the frame should fill it */
+.phone-frame-screen .profile-page {
+  min-height: 100%;
+  max-width: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  margin: 0 !important;
+}
+
+/* Loading spinner overlay */
+.phone-frame-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phone-frame-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(232, 168, 73, 0.2);
+  border-top-color: var(--accent, #e8a849);
+  border-radius: 50%;
+  animation: phoneFrameSpin 0.7s linear infinite;
+}
+
+@keyframes phoneFrameSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Dashboard home: iframe scaling inside sm frame ── */
+.phone-frame-screen iframe {
+  display: block;
+  border: none;
+}
+
+/* ── Dashboard home phone: scale native 375 -> 264 (280 - 16 padding) ── */
+.dash-right .phone-frame-screen iframe {
+  width: 375px;
+  height: 812px;
+  transform: scale(0.704);
+  transform-origin: top left;
+  position: absolute;
+  top: 0;
+  left: 0;
+  scrollbar-width: none;
+}
+
+.dash-right .phone-frame-screen iframe::-webkit-scrollbar {
+  display: none;
+}

@@ -288,70 +288,12 @@
   align-items: flex-start;
 }
 
-/* ── Phone frame ── */
+/* Phone frame — now uses shared PhoneFrame component + phone-frame.css */
 .demo-phone-wrap {
   flex-shrink: 0;
   width: 375px;
   position: relative;
 }
-
-.demo-phone {
-  position: relative;
-  width: 375px;
-  aspect-ratio: 9 / 19.5;
-  border-radius: 3rem;
-  background: #1a1a1a;
-  padding: 12px;
-  box-shadow:
-    0 0 0 2px #333,
-    0 24px 80px rgba(0, 0, 0, 0.5),
-    inset 0 0 2px rgba(255, 255, 255, 0.05);
-}
-
-/* Dynamic Island */
-.demo-phone::before {
-  content: '';
-  position: absolute;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100px;
-  height: 28px;
-  background: #000;
-  border-radius: 14px;
-  z-index: 10;
-}
-
-.demo-phone-screen {
-  width: 100%;
-  height: 100%;
-  border-radius: 2.25rem;
-  overflow: hidden;
-  background: #000;
-  position: relative;
-}
-
-.demo-phone-loading {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 2.25rem;
-}
-
-.demo-phone-spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid rgba(232, 168, 73, 0.2);
-  border-top-color: var(--lp-accent);
-  border-radius: 50%;
-  animation: demoSpin 0.7s linear infinite;
-}
-
-@keyframes demoSpin { to { transform: rotate(360deg); } }
 
 /* ── Phone nav arrows (prev/next) ── */
 .phone-nav-arrow {
@@ -545,22 +487,10 @@
   .demo-split { gap: 2.5rem; }
 
   .demo-phone-wrap { width: 340px; }
-
-  .demo-phone {
-    width: 340px;
-    border-radius: 2.75rem;
-    padding: 11px;
-  }
-
-  .demo-phone::before {
-    width: 91px;
-    height: 25px;
-    border-radius: 12px;
-    top: 12px;
-  }
-
-  .demo-phone-screen { border-radius: 2rem; }
-  .demo-phone-loading { border-radius: 2rem; }
+  .demo-phone-wrap .phone-frame-wrap { width: 340px !important; }
+  .demo-phone-wrap .phone-frame { width: 340px !important; height: auto !important; aspect-ratio: 9 / 19.5; border-radius: 2.75rem !important; padding: 11px !important; }
+  .demo-phone-wrap .phone-frame-notch { width: 91px !important; height: 25px !important; border-radius: 12px !important; top: 12px; }
+  .demo-phone-wrap .phone-frame-screen { border-radius: 2rem !important; }
 }
 
 @media (max-width: 768px) {
@@ -582,26 +512,20 @@
   }
 
   /* Strip all phone chrome on mobile */
-  .demo-phone {
-    width: 100%;
-    height: 75vh;
+  .demo-phone-wrap .phone-frame-wrap { width: 100% !important; }
+  .demo-phone-wrap .phone-frame {
+    width: 100% !important;
+    height: 75vh !important;
     min-height: 500px;
-    aspect-ratio: unset;
-    border-radius: 0;
-    background: transparent;
-    padding: 0;
-    box-shadow: none;
+    aspect-ratio: unset !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    box-shadow: none !important;
   }
-
-  /* Hide Dynamic Island notch */
-  .demo-phone::before { display: none; }
-
-  .demo-phone-screen {
-    border-radius: 0;
-    background: transparent;
-  }
-
-  .demo-phone-loading { border-radius: 0; }
+  .demo-phone-wrap .phone-frame-notch { display: none !important; }
+  .demo-phone-wrap .phone-frame-screen { border-radius: 0 !important; background: transparent !important; }
+  .demo-phone-wrap .phone-frame-loading { border-radius: 0; }
 
   /* Info panel hidden on mobile — profile speaks for itself */
   .demo-info { display: none; }

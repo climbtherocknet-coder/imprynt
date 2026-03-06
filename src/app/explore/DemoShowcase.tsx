@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { getTheme, FREE_TEMPLATES } from '@/lib/themes';
+import PhoneFrame from '@/components/PhoneFrame';
 import type { DemoProfile } from './page';
 
 const LeftArrow = () => (
@@ -436,28 +437,26 @@ export default function DemoShowcase({ profiles }: Props) {
               <button className="phone-nav-arrow phone-nav-arrow--left" onClick={goPrev} aria-label="Previous profile">
                 <LeftArrow />
               </button>
-              <div className="demo-phone">
-                <div className="demo-phone-screen">
-                  {loading && (
-                    <div className="demo-phone-loading">
-                      <div className="demo-phone-spinner" />
-                    </div>
-                  )}
-                  <iframe
-                    key={iframeKey}
-                    src={`/${selectedProfile.slug}?v=${iframeKey}`}
-                    title={`${selectedProfile.firstName} ${selectedProfile.lastName} — live profile`}
-                    onLoad={() => setLoading(false)}
-                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      border: 'none',
-                      display: 'block',
-                    }}
-                  />
-                </div>
-              </div>
+              <PhoneFrame size="lg">
+                {loading && (
+                  <div className="phone-frame-loading">
+                    <div className="phone-frame-spinner" />
+                  </div>
+                )}
+                <iframe
+                  key={iframeKey}
+                  src={`/${selectedProfile.slug}?v=${iframeKey}`}
+                  title={`${selectedProfile.firstName} ${selectedProfile.lastName} — live profile`}
+                  onLoad={() => setLoading(false)}
+                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                    display: 'block',
+                  }}
+                />
+              </PhoneFrame>
               <button className="phone-nav-arrow phone-nav-arrow--right" onClick={goNext} aria-label="Next profile">
                 <RightArrow />
               </button>

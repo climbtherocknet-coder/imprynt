@@ -836,59 +836,6 @@
   align-items: center;
 }
 
-.dash-phone {
-  position: relative;
-  width: 260px;
-  height: 563px; /* 260 * (19.5/9) */
-  border-radius: 2.25rem;
-  background: #1a1a1a;
-  padding: 8px;
-  box-shadow: 0 0 0 2px #333, 0 16px 48px rgba(0, 0, 0, 0.4);
-  flex-shrink: 0;
-}
-
-.dash-phone-screen {
-  width: 100%;
-  height: 100%;
-  border-radius: 1.75rem;
-  overflow: hidden;
-  background: #0c1017;
-  position: relative;
-}
-
-/* Notch floats over the iframe content */
-.dash-phone-screen::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 70px;
-  height: 22px;
-  background: #1a1a1a;
-  border-radius: 0 0 11px 11px;
-  z-index: 3;
-}
-
-/* Render iframe at native mobile size, scale down to fit frame.
-   Inner width = 260 - 16 padding = 244px. Scale = 244/375 ≈ 0.65 */
-.dash-phone-screen iframe {
-  display: block;
-  width: 375px;
-  height: 812px;
-  border: none;
-  transform: scale(0.65);
-  transform-origin: top left;
-  position: absolute;
-  top: 0;
-  left: 0;
-  /* Hide iframe's own scrollbar */
-  scrollbar-width: none;  /* Firefox */
-}
-.dash-phone-screen iframe::-webkit-scrollbar {
-  display: none;  /* Chrome/Safari */
-}
-
 /* PIN status above phone */
 .dash-pin-status {
   display: flex;
@@ -1195,106 +1142,16 @@
   }
 }
 
-/* Phone frame mockup */
-.preview-phone {
-  width: 375px;
-  height: 720px;
-  border: 3px solid var(--border-light, #283042);
-  border-radius: 2.5rem;
-  overflow: hidden;
-  position: relative;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(40, 48, 66, 0.3);
-  flex-shrink: 0;
-}
+/* Old preview-phone styles removed — now uses shared PhoneFrame component */
+/* phone-frame.css handles scrollbar styling for phone frames */
 
-.preview-phone-notch {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80px;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--border-light, #283042);
-  z-index: 10;
-}
-
-.preview-phone-screen {
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Scope the profile preview to not interfere with dashboard styles */
-.preview-phone-screen .profile-page {
-  min-height: 100%;
-}
-
-/* Subtle scrollbar inside phone preview — visible but blends with dark UI */
-.preview-phone-screen {
-  scrollbar-width: thin !important;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent !important;
-}
-
-.preview-phone-screen::-webkit-scrollbar {
-  display: block !important;
-  width: 3px !important;
-}
-
-.preview-phone-screen::-webkit-scrollbar-track {
-  background: transparent !important;
-}
-
-.preview-phone-screen::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15) !important;
-  border-radius: 3px;
-}
-
-.preview-phone-screen::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
-}
-
-/* Subtle scrollbar for mobile preview overlay */
-.mobile-preview-body {
-  scrollbar-width: thin !important;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent !important;
-}
-
-.mobile-preview-body::-webkit-scrollbar {
-  display: block !important;
-  width: 3px !important;
-}
-
-.mobile-preview-body::-webkit-scrollbar-track {
-  background: transparent !important;
-}
-
-.mobile-preview-body::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15) !important;
-  border-radius: 3px;
-}
-
-.mobile-preview-body::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
-}
-
-/* ═══════════════════════════════════════════
-   HIDE SCROLLBARS ON NESTED ELEMENTS IN PREVIEWS
-   Only descendants — the main containers above have subtle scrollbars
-   ═══════════════════════════════════════════ */
-
-.preview-phone-screen *,
-.mobile-preview-body *,
+/* data-contained scrollbar hiding (for editor preview containment) */
 [data-contained="true"],
 [data-contained="true"] * {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
 
-.preview-phone-screen *::-webkit-scrollbar,
-.mobile-preview-body *::-webkit-scrollbar,
 [data-contained="true"]::-webkit-scrollbar,
 [data-contained="true"] *::-webkit-scrollbar {
   display: none !important;

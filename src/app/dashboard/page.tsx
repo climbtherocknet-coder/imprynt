@@ -10,6 +10,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import CheckoutToast from './CheckoutToast';
 import VerificationBanner from './VerificationBanner';
 import DashboardPreview from './DashboardPreview';
+import PhoneFrame from '@/components/PhoneFrame';
 import GreetingText from './GreetingText';
 import '@/styles/dashboard.css';
 
@@ -325,16 +326,14 @@ export default async function DashboardPage({
           {/* Right: Phone preview (sticky) */}
           {profile && (
             <div className="dash-right">
-              <div className="dash-phone">
-                <div className="dash-phone-screen">
-                  <iframe
-                    src={`/${profile.slug}`}
-                    title="Live profile preview"
-                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                    tabIndex={-1}
-                  />
-                </div>
-              </div>
+              <PhoneFrame size="sm">
+                <iframe
+                  src={`/${profile.slug}`}
+                  title="Live profile preview"
+                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                  tabIndex={-1}
+                />
+              </PhoneFrame>
             </div>
           )}
         </div>
