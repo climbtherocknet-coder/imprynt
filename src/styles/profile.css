@@ -5,6 +5,13 @@
    Template-specific overrides via .t-{id} class.
    ═══════════════════════════════════════════════════════════════ */
 
+html, body {
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
 body {
   overflow-x: hidden;
 }
