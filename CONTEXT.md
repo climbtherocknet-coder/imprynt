@@ -487,6 +487,12 @@ docker compose up --build
 - **Demo responsive:** Updated to use `.demo-split .phone-frame-*` scoping. Breakpoints at 1200px, 768px, 480px.
 - **Deployed:** Commits `ecd9c9e`, `e4c7c55`, `2c85007`, `a5b1b02`
 
+### March 6, 2026 — Profile Page Scrollbar Fix
+- Added `scrollbar-width: none` to `html`/`body` in `profile.css`
+- This kills the scrollbar inside the dashboard phone preview iframe — parent CSS cannot style cross-origin iframe internals, so the fix must be in the profile page's own stylesheet
+- `profile.css` only loads on `/[slug]` routes so dashboard/editor/admin scrollbars are unaffected
+- **Deployed:** Commit `5bef55d`
+
 ---
 
 ## How to Use This File
