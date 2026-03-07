@@ -477,6 +477,16 @@ docker compose up --build
 - **Files modified:** `src/app/page.tsx`, `src/styles/landing.css`, `src/styles/auth.css`, `src/styles/faq.css`, `src/styles/legal.css`, `src/components/MobileNav.tsx`, `src/components/ThemeToggle.tsx`, `src/components/HeroPhone.tsx`, `src/app/(auth)/login/page.tsx`, `src/app/(auth)/register/page.tsx`, `src/app/faq/page.tsx`, `src/app/demo/page.tsx` (redirect stub)
 - **Backups:** `backups/` directory contains pre-redesign versions of all modified files.
 
+### March 6, 2026 — Unified PhoneFrame + Dashboard Redesign + Bug Fixes
+- **PhoneFrame component:** Created shared `src/components/PhoneFrame.tsx` (3 sizes: sm/md/lg) and `src/styles/phone-frame.css`. Replaced 4 separate phone frame implementations (dashboard, editor, wizard, demo showcase). Removed ~400 lines of duplicate CSS across dashboard.css, explore.css, setup.css, profile.css.
+- **Phone scrollbar:** 3px semi-transparent scrollbar on `.phone-frame-screen`, nested scrollbars hidden. Dashboard phone preview uses `overflow: hidden` on the scaled iframe container (375→264px CSS transform was causing scrollbar).
+- **Dashboard redesign:** Removed Personal card (accessible from editor). My Media moved into 2x2 grid. Command Center stays admin-only. Username in header links to `/dashboard/account`. Phone preview hidden below 1200px (no mobile preview button).
+- **Greeting fix:** Empty name no longer shows "Good afternoon, ." — gracefully falls back to "Good afternoon."
+- **Mobile preview modal:** Dark overlay (`rgba(0,0,0,0.85)`), transparent container background (PhoneFrame provides its own bezel).
+- **Personal page fix:** Background image now uses `position: absolute` via `[data-page-type="protected"]` CSS selector — was invisible with `position: fixed; z-index: -1` behind the overlay. Also fixed solid bg covering bg image.
+- **Demo responsive:** Updated to use `.demo-split .phone-frame-*` scoping. Breakpoints at 1200px, 768px, 480px.
+- **Deployed:** Commits `ecd9c9e`, `e4c7c55`, `2c85007`, `a5b1b02`
+
 ---
 
 ## How to Use This File
