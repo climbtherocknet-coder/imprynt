@@ -6,11 +6,26 @@
    ═══════════════════════════════════════════════════════════════ */
 
 html, body {
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
-  display: none;
+  width: 4px;
+  background: transparent;
+}
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: transparent;
+}
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 body {
   overflow-x: hidden;
@@ -42,11 +57,23 @@ body {
   line-height: 1.55;
   overflow-x: hidden;
   max-width: 100%;
-  /* Hide scrollbar in iframe previews while keeping scroll functional */
-  scrollbar-width: none;  /* Firefox */
+  /* Thin semi-transparent scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }
 .profile-page::-webkit-scrollbar {
-  display: none;  /* Chrome/Safari */
+  width: 4px;
+  background: transparent;
+}
+.profile-page::-webkit-scrollbar-track {
+  background: transparent;
+}
+.profile-page::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+.profile-page::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .profile-page a { color: inherit; text-decoration: none; }
