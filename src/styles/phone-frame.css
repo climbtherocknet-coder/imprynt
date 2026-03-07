@@ -110,6 +110,9 @@
 }
 
 /* ── Dashboard home phone: scale native 375 -> 264 (280 - 16 padding) ── */
+.dash-right .phone-frame-screen {
+  overflow: hidden !important;
+}
 .dash-right .phone-frame-screen iframe {
   width: 375px;
   height: 812px;
