@@ -260,6 +260,68 @@ const LinksSection = forwardRef<LinksSectionRef, LinksSectionProps>(
           )}
         </div>
 
+        {/* ── Link Style Preview ── */}
+        {(() => {
+          const btnColor = linkButtonColor || accentColor || '#e8a849';
+          const radiusMap: Record<string, string> = { pill: '9999px', rounded: '0.625rem', square: '0.25rem' };
+          const radius = radiusMap[linkShape] || '9999px';
+          const padMap: Record<string, string> = { small: '0.3rem 0.7rem', medium: '0.5rem 1rem', large: '0.7rem 1.2rem' };
+          const pad = padMap[linkSize] || '0.5rem 1rem';
+          const fontMap: Record<string, string> = { small: '0.6875rem', medium: '0.8125rem', large: '0.875rem' };
+          const font = fontMap[linkSize] || '0.8125rem';
+          const iconSizeMap: Record<string, number> = { small: 36, medium: 44, large: 52 };
+          const iconPx = iconSizeMap[linkSize] || 44;
+          const isIcons = linkDisplay === 'icons';
+          const samples = [
+            { icon: '💼', label: 'LinkedIn' },
+            { icon: '🌐', label: 'Website' },
+            { icon: '📅', label: 'Booking' },
+          ];
+          return (
+            <div style={{
+              marginBottom: '0.75rem', padding: '0.75rem',
+              backgroundColor: 'var(--bg, #0c1017)', borderRadius: '0.75rem',
+              border: '1px solid var(--border, #1e2535)',
+            }}>
+              <label style={{ fontSize: '0.625rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.5rem', display: 'block' }}>
+                Style Preview
+              </label>
+              <div style={{ display: 'flex', gap: isIcons ? '0.375rem' : '0.375rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                {samples.map(s => isIcons ? (
+                  <div key={s.label} style={{
+                    width: iconPx, height: iconPx,
+                    borderRadius: radius,
+                    border: `1px solid ${btnColor}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: iconPx * 0.4,
+                    color: btnColor,
+                    transition: 'all 0.2s',
+                  }}>
+                    {s.icon}
+                  </div>
+                ) : (
+                  <div key={s.label} style={{
+                    padding: pad,
+                    borderRadius: radius,
+                    border: `1px solid ${btnColor}`,
+                    color: btnColor,
+                    fontSize: font,
+                    fontWeight: 500,
+                    fontFamily: 'inherit',
+                    display: 'flex', alignItems: 'center', gap: '0.375rem',
+                    transition: 'all 0.2s',
+                    flex: 1, justifyContent: 'center',
+                    minWidth: 0,
+                  }}>
+                    <span style={{ fontSize: '0.75em' }}>{s.icon}</span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Description */}
         <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '1rem', marginTop: '0.25rem' }}>
           Your social links, contact info, and web presence. Drag to reorder. Toggle visibility for your Profile and Personal pages.

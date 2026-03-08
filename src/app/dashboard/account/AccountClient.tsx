@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
 import { validatePassword } from '@/lib/password-validation';
+import ToggleSwitch from '@/components/ToggleSwitch';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import '@/styles/dashboard.css';
 
@@ -79,6 +80,33 @@ export default function AccountClient({ user, accessories }: AccountProps) {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const isPaid = user.plan !== 'free';
+
+  // Sharing & Privacy state (loaded from profile)
+  const [allowSharing, setAllowSharing] = useState(true);
+  const [allowFeedback, setAllowFeedback] = useState(true);
+  const [showQrButton, setShowQrButton] = useState(false);
+  const [vcardPinEnabled, setVcardPinEnabled] = useState(false);
+  const [vcardPinInput, setVcardPinInput] = useState('');
+  const [vcardPinSaving, setVcardPinSaving] = useState(false);
+  const [vcardPinSaved, setVcardPinSaved] = useState(false);
+  const [sharingLoaded, setSharingLoaded] = useState(false);
+  const [qrLoaded, setQrLoaded] = useState(false);
+  const [qrError, setQrError] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/profile')
+      .then(r => r.json())
+      .then(d => {
+        if (d.profile) {
+          setAllowSharing(d.profile.allowSharing !== false);
+          setAllowFeedback(d.profile.allowFeedback !== false);
+          setShowQrButton(!!d.profile.showQrButton);
+          setVcardPinEnabled(!!d.profile.vcardPinEnabled);
+          setSharingLoaded(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleUpgrade(plan: 'monthly' | 'annual', accessory?: 'ring' | 'band') {
     setUpgrading(true);
@@ -595,6 +623,185 @@ export default function AccountClient({ user, accessories }: AccountProps) {
                 {resetLoading ? 'Resetting...' : 'Reset Test Account'}
               </button>
             )}
+          </div>
+        )}
+
+        {/* Sharing & Privacy */}
+        {sharingLoaded && (
+          <div style={sectionStyle}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--text, #eceef2)' }}>Sharing & Privacy</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+              <ToggleSwitch
+                checked={allowSharing}
+                onChange={async (val) => {
+                  setAllowSharing(val);
+                  try {
+                    await fetch('/api/profile', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ section: 'sharing', allowSharing: val }),
+                    });
+                  } catch { /* silent */ }
+                }}
+                label="Allow visitors to share your profile"
+                description="Shows a share button on your public profile page."
+              />
+              <ToggleSwitch
+                checked={allowFeedback}
+                onChange={async (val) => {
+                  setAllowFeedback(val);
+                  try {
+                    await fetch('/api/profile', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ section: 'feedback', allowFeedback: val }),
+                    });
+                  } catch { /* silent */ }
+                }}
+                label="Show feedback button on your profile"
+                description="Allows visitors to send feedback or report your profile."
+              />
+              {!isPaid ? (
+                <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', padding: '0.5rem 0' }}>
+                  QR code button is always shown on free profiles. Upgrade for more sharing options.
+                </div>
+              ) : (
+                <ToggleSwitch
+                  checked={showQrButton}
+                  onChange={async (val) => {
+                    setShowQrButton(val);
+                    try {
+                      await fetch('/api/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ section: 'qrButton', showQrButton: val }),
+                      });
+                    } catch { /* silent */ }
+                  }}
+                  label="Show QR code button on your profile"
+                  description="Adds a QR code icon visitors can tap to share your profile URL."
+                />
+              )}
+
+              {/* vCard PIN protection */}
+              <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
+                <ToggleSwitch
+                  checked={vcardPinEnabled}
+                  onChange={async (val) => {
+                    if (!val) {
+                      setVcardPinEnabled(false);
+                      setVcardPinInput('');
+                      try {
+                        await fetch('/api/profile', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ section: 'vcardPin', vcardPin: null }),
+                        });
+                      } catch { /* silent */ }
+                    } else {
+                      setVcardPinEnabled(true);
+                    }
+                  }}
+                  label="PIN-protect Save Contact"
+                  description="Require a PIN before visitors can download your contact card."
+                />
+                {vcardPinEnabled && (
+                  <div style={{ marginTop: '0.625rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      maxLength={8}
+                      value={vcardPinInput}
+                      onChange={e => { setVcardPinInput(e.target.value); setVcardPinSaved(false); }}
+                      placeholder="4-8 digit PIN"
+                      style={{
+                        width: 140,
+                        padding: '0.5rem 0.75rem',
+                        background: 'var(--bg, #0c1017)',
+                        border: '1px solid var(--border-light, #283042)',
+                        borderRadius: '0.5rem',
+                        color: 'var(--text, #eceef2)',
+                        fontSize: '0.875rem',
+                        fontFamily: 'inherit',
+                        outline: 'none',
+                        textAlign: 'center',
+                        letterSpacing: '0.15em',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                    <button
+                      onClick={async () => {
+                        if (vcardPinInput.length < 4) { setError('PIN must be at least 4 characters'); return; }
+                        setVcardPinSaving(true);
+                        try {
+                          const res = await fetch('/api/profile', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ section: 'vcardPin', vcardPin: vcardPinInput }),
+                          });
+                          if (!res.ok) {
+                            const d = await res.json();
+                            setError(d.error || 'Failed to save PIN');
+                          } else {
+                            setVcardPinSaved(true);
+                            setTimeout(() => setVcardPinSaved(false), 2000);
+                          }
+                        } catch { setError('Failed to save PIN'); }
+                        finally { setVcardPinSaving(false); }
+                      }}
+                      disabled={vcardPinSaving || vcardPinInput.length < 4}
+                      className="dash-btn"
+                      style={{
+                        padding: '0.5rem 0.75rem',
+                        fontSize: '0.8125rem',
+                        opacity: vcardPinSaving || vcardPinInput.length < 4 ? 0.5 : 1,
+                      }}
+                    >
+                      {vcardPinSaving ? '...' : vcardPinSaved ? '\u2713' : 'Set PIN'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* QR Code download */}
+              <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
+                <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.625rem' }}>QR Code</p>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
+                  Share your profile without NFC. Print it, add it to slides, or show it on your phone.
+                </p>
+                {qrError ? (
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>
+                    Unable to generate QR code. Try refreshing the page.
+                  </p>
+                ) : (
+                  <>
+                    {!qrLoaded && (
+                      <div style={{ padding: '2rem 0' }}>
+                        <div style={{ width: 24, height: 24, border: '2px solid var(--border-light)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+                        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                      </div>
+                    )}
+                    <div style={{ display: qrLoaded ? 'block' : 'none', textAlign: 'center' }}>
+                      <div style={{ display: 'inline-block', padding: '1rem', backgroundColor: '#fff', borderRadius: '0.75rem', marginBottom: '0.75rem' }}>
+                        <img
+                          src="/api/profile/qr"
+                          alt="QR code for your profile"
+                          width={180}
+                          height={180}
+                          style={{ display: 'block' }}
+                          onLoad={() => setQrLoaded(true)}
+                          onError={() => { setQrError(true); setQrLoaded(false); }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <a href="/api/profile/qr?format=png" download="imprynt-qr.png" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download PNG</a>
+                        <a href="/api/profile/qr?format=svg" download="imprynt-qr.svg" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download SVG</a>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

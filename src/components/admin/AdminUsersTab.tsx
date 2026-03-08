@@ -65,7 +65,12 @@ export default function AdminUsersTab() {
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [detailAnalytics, setDetailAnalytics] = useState<{ totalEvents: number; pageViews: number; linkClicks: number } | null>(null);
   const [planEdit, setPlanEdit] = useState('');
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editSetupCompleted, setEditSetupCompleted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editSaved, setEditSaved] = useState(false);
   const [actionLoading, setActionLoading] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
@@ -111,21 +116,35 @@ export default function AdminUsersTab() {
         setDetail(data.user);
         setDetailAnalytics(data.analytics);
         setPlanEdit(data.user.plan);
+        setEditFirstName(data.user.firstName || '');
+        setEditLastName(data.user.lastName || '');
+        setEditEmail(data.user.email || '');
+        setEditSetupCompleted(data.user.setupCompleted || false);
+        setEditSaved(false);
       })
       .catch(() => {});
   }
 
-  async function savePlan(userId: string) {
+  async function saveUserEdits(userId: string) {
     setSaving(true);
+    setEditSaved(false);
     try {
-      const res = await fetch(`/api/admin/users/${userId}/plan`, {
-        method: 'PUT',
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planEdit }),
+        body: JSON.stringify({
+          firstName: editFirstName,
+          lastName: editLastName,
+          email: editEmail,
+          plan: planEdit,
+          setupCompleted: editSetupCompleted,
+        }),
       });
       if (res.ok) {
         loadUsers();
-        if (detail) setDetail({ ...detail, plan: planEdit });
+        if (detail) setDetail({ ...detail, firstName: editFirstName, lastName: editLastName, email: editEmail, plan: planEdit, setupCompleted: editSetupCompleted });
+        setEditSaved(true);
+        setTimeout(() => setEditSaved(false), 2000);
       }
     } catch { /* silent */ } finally { setSaving(false); }
   }
@@ -261,12 +280,53 @@ export default function AdminUsersTab() {
                           <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Loading...</p>
                         ) : (
                           <>
+                            {/* Editable Fields */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem', marginBottom: '0.75rem' }}>
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>First Name</label>
+                                <input className="admin-input" value={editFirstName} onChange={e => setEditFirstName(e.target.value)} style={{ width: '100%', fontSize: '0.8125rem', padding: '0.375rem 0.5rem' }} />
+                              </div>
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Last Name</label>
+                                <input className="admin-input" value={editLastName} onChange={e => setEditLastName(e.target.value)} style={{ width: '100%', fontSize: '0.8125rem', padding: '0.375rem 0.5rem' }} />
+                              </div>
+                              <div style={{ gridColumn: '1 / -1' }}>
+                                <label style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Email</label>
+                                <input className="admin-input" type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} style={{ width: '100%', fontSize: '0.8125rem', padding: '0.375rem 0.5rem' }} />
+                              </div>
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Plan</label>
+                                <select className="admin-input" value={planEdit} onChange={e => setPlanEdit(e.target.value)} style={{ width: '100%', fontSize: '0.8125rem', padding: '0.375rem 0.5rem' }}>
+                                  <option value="free">Free</option>
+                                  <option value="premium_monthly">Premium Monthly</option>
+                                  <option value="premium_annual">Premium Annual</option>
+                                  <option value="advisory">Advisory</option>
+                                </select>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '0.25rem' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: 'var(--text-mid)', cursor: 'pointer' }}>
+                                  <input type="checkbox" checked={editSetupCompleted} onChange={e => setEditSetupCompleted(e.target.checked)} />
+                                  Setup Complete
+                                </label>
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                              <button className="admin-btn admin-btn--primary admin-btn--small" onClick={() => saveUserEdits(u.id)} disabled={saving}>
+                                {saving ? 'Saving...' : editSaved ? '\u2713 Saved' : 'Save Changes'}
+                              </button>
+                              {planEdit !== detail.plan && (
+                                <span style={{ fontSize: '0.6875rem', color: '#f59e0b', opacity: 0.8 }}>
+                                  Plan change overrides Stripe. Use for gifting/testing only.
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Read-only info */}
                             <div className="admin-detail-grid">
                               {[
                                 { label: 'Title', value: detail.profileTitle },
                                 { label: 'Company', value: detail.company },
                                 { label: 'Template', value: detail.template },
-                                { label: 'Setup Done', value: detail.setupCompleted ? 'Yes' : 'No' },
                                 { label: 'Published', value: detail.isPublished ? 'Yes' : 'No' },
                               ].map(item => (
                                 <div key={item.label} className="admin-detail-item">
@@ -297,27 +357,6 @@ export default function AdminUsersTab() {
                                   <div className="admin-detail-label">Stripe Customer</div>
                                   <div className="admin-detail-value" style={{ fontSize: '0.75rem', wordBreak: 'break-all' }}>{detail.stripeCustomerId}</div>
                                 </div>
-                              )}
-                            </div>
-
-                            {/* Plan Change */}
-                            <div style={{ marginTop: '1rem' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Plan:</span>
-                                <select className="admin-input" value={planEdit} onChange={(e) => setPlanEdit(e.target.value)} style={{ fontSize: '0.8125rem', padding: '0.3rem 0.5rem' }}>
-                                  <option value="free">Free</option>
-                                  <option value="premium_monthly">Premium Monthly</option>
-                                  <option value="premium_annual">Premium Annual</option>
-                                  <option value="advisory">Advisory</option>
-                                </select>
-                                <button className="admin-btn admin-btn--primary admin-btn--small" onClick={() => savePlan(u.id)} disabled={saving || planEdit === detail.plan}>
-                                  {saving ? 'Saving...' : 'Save'}
-                                </button>
-                              </div>
-                              {planEdit !== detail.plan && (
-                                <p style={{ fontSize: '0.6875rem', color: '#f59e0b', marginTop: '0.375rem', opacity: 0.8 }}>
-                                  This overrides the Stripe subscription status. Use for gifting or testing only.
-                                </p>
                               )}
                             </div>
 

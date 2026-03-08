@@ -119,6 +119,10 @@ export async function PATCH(
     updates.push(`account_status = $${idx++}`);
     values.push(body.accountStatus);
   }
+  if (body.setupCompleted !== undefined) {
+    updates.push(`setup_completed = $${idx++}`);
+    values.push(!!body.setupCompleted);
+  }
 
   if (updates.length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 });

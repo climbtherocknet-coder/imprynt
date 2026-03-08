@@ -20,6 +20,9 @@ export default async function AnalyticsPage() {
             <div className="dash-logo-mark" />
             <span className="dash-logo-text">Analytics</span>
           </a>
+          <a href="/dashboard" style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', textDecoration: 'none' }}>
+            &#8592; Dashboard
+          </a>
         </header>
         <main className="dash-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
           <div style={{ textAlign: 'center', maxWidth: 360 }}>

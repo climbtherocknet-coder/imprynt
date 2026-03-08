@@ -87,7 +87,8 @@ export async function POST(req: NextRequest) {
 
   // Check plan
   const planResult = await query('SELECT plan FROM users WHERE id = $1', [userId]);
-  if (planResult.rows[0]?.plan === 'free') {
+  const plan = planResult.rows[0]?.plan || 'free';
+  if (plan === 'free') {
     return NextResponse.json({ error: 'Premium required' }, { status: 403 });
   }
 
@@ -106,19 +107,37 @@ export async function POST(req: NextRequest) {
 
   // Verify ownership
   const ownerCheck = await query(
-    'SELECT id FROM protected_pages WHERE id = $1 AND user_id = $2',
+    'SELECT id, profile_id FROM protected_pages WHERE id = $1 AND user_id = $2',
     [protectedPageId, userId]
   );
   if (ownerCheck.rows.length === 0) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  // Check limits
+  // Total pod count across profile + personal pages
+  const ppProfileId = ownerCheck.rows[0].profile_id;
+  const { TIER_LIMITS } = await import('@/lib/tiers');
+  const maxPods = (plan !== 'free' ? TIER_LIMITS.paid : TIER_LIMITS.free).maxPods;
   const countResult = await query(
+    `SELECT COUNT(*)::int as count FROM pods
+     WHERE is_active = true AND (
+       profile_id = $1
+       OR protected_page_id IN (SELECT id FROM protected_pages WHERE profile_id = $1)
+     )`,
+    [ppProfileId]
+  );
+  if (countResult.rows[0].count >= maxPods) {
+    return NextResponse.json({
+      error: `You can have up to ${maxPods} content blocks total on your current plan.`,
+    }, { status: 403 });
+  }
+
+  // Check per-page limits
+  const pageCountResult = await query(
     'SELECT COUNT(*)::int as count FROM pods WHERE protected_page_id = $1 AND is_active = true',
     [protectedPageId]
   );
-  if (countResult.rows[0].count >= MAX_PODS) {
+  if (pageCountResult.rows[0].count >= MAX_PODS) {
     return NextResponse.json({ error: `You can have up to ${MAX_PODS} content blocks per page.` }, { status: 403 });
   }
 

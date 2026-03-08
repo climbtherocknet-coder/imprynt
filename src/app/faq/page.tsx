@@ -182,6 +182,9 @@ export default function FaqPage() {
             <span className="legal-nav-mark" />
             <span className="legal-nav-text">Imprynt</span>
           </Link>
+          <Link href="/" style={{ fontSize: '0.8125rem', color: 'var(--lp-text-muted)', textDecoration: 'none' }}>
+            &#8592; Home
+          </Link>
         </nav>
 
         <div className="faq-hero">

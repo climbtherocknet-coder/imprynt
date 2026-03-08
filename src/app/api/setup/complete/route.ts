@@ -35,8 +35,8 @@ async function generateCleanSlug(firstName: string | null, lastName: string | nu
   return null; // Give up — keep the random slug
 }
 
-// POST - Mark setup complete and publish profile
-export async function POST() {
+// POST - Mark setup complete and optionally publish profile
+export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -44,12 +44,23 @@ export async function POST() {
 
   const userId = session.user.id;
 
+  // Check if this is a draft save (don't publish)
+  let draft = false;
+  try {
+    const body = await req.json();
+    draft = body.draft === true;
+  } catch { /* no body = publish */ }
+
   try {
     // Mark user setup as completed
     await query(
       'UPDATE users SET setup_completed = true WHERE id = $1',
       [userId]
     );
+
+    if (draft) {
+      return NextResponse.json({ success: true, draft: true });
+    }
 
     // Publish the profile
     await query(

@@ -578,6 +578,47 @@ const VisualsSection = forwardRef<VisualsSectionRef, VisualsSectionProps>(
           </>)}
         </div>
 
+        {/* ── Live Photo Preview ── */}
+        {photoUrl && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', margin: '0.75rem 0' }}>
+            <label style={{ ...labelStyle, fontSize: '0.6875rem', marginBottom: 0 }}>Preview</label>
+            {(() => {
+              const sizeMap: Record<string, number> = { small: 56, medium: 72, large: 96 };
+              const px = sizeMap[photoSize] || 72;
+              const isClipShape = photoShape === 'hexagon' || photoShape === 'diamond';
+              const clipMap: Record<string, string> = {
+                hexagon: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+                diamond: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+              };
+              const radiusMap: Record<string, string> = {
+                circle: '50%', rounded: '16px', soft: '8px', square: '0',
+                custom: photoRadius != null ? `${photoRadius}%` : '50%',
+              };
+              return (
+                <div style={{
+                  width: px, height: px,
+                  borderRadius: isClipShape ? 0 : (radiusMap[photoShape] || '50%'),
+                  clipPath: isClipShape ? clipMap[photoShape] : undefined,
+                  overflow: 'hidden',
+                  border: photoMode === 'logo' ? 'none' : '2px solid var(--border-light, #283042)',
+                  transition: 'all 0.2s ease',
+                }}>
+                  <img
+                    src={photoUrl}
+                    alt="Preview"
+                    style={{
+                      width: '100%', height: '100%',
+                      objectFit: photoMode === 'logo' ? 'contain' : 'cover',
+                      objectPosition: `${photoPositionX}% ${photoPositionY}%`,
+                      transform: photoZoom > 100 ? `scale(${photoZoom / 100})` : undefined,
+                    }}
+                  />
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
         <div style={{ borderTop: '1px solid var(--border, #1e2535)', margin: '1.25rem 0' }} />
 
         {/* ── Cover Photo / Logo ── */}

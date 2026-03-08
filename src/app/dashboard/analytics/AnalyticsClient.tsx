@@ -119,6 +119,9 @@ export default function AnalyticsClient() {
           <div className="dash-logo-mark" />
           <span className="dash-logo-text">Analytics</span>
         </a>
+        <a href="/dashboard" style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', textDecoration: 'none', transition: 'color 0.15s' }}>
+          &#8592; Dashboard
+        </a>
       </header>
 
       <main className="dash-main">

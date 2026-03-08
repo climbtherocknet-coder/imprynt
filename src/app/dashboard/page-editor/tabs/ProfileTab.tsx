@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { getTheme, type CustomThemeData } from '@/lib/themes';
 import PodEditor from '@/components/pods/PodEditor';
 import ProfileTemplate from '@/components/templates/ProfileTemplate';
-import ToggleSwitch from '@/components/ToggleSwitch';
 import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import EditorFloatingButtons from '../EditorFloatingButtons';
 import PhoneFrame from '@/components/PhoneFrame';
@@ -17,12 +16,13 @@ import TemplateSection, { type TemplateSectionRef, type TemplateState } from '@/
 import VisualsSection, { type VisualsSectionRef, type VisualsState } from '@/components/editor/VisualsSection';
 import LinksSection, { type LinksSectionRef, type LinksState } from '@/components/editor/LinksSection';
 import ContactCardSection, { type ContactCardSectionRef } from '@/components/editor/ContactCardSection';
-import { type ProfileData, type LinkItem, inputStyle, saveBtnStyle, labelStyle } from '@/components/editor/constants';
+import { type ProfileData, type LinkItem } from '@/components/editor/constants';
 
 // ── Preview State ──────────────────────────────────────
 
 interface PreviewState {
   firstName: string; lastName: string; title: string; company: string; tagline: string;
+  useCompanyAsDisplay?: boolean;
   template: string; accentColor: string; customTheme: CustomThemeData;
   photoUrl: string; photoShape: string; photoRadius: number; photoSize: string;
   photoPositionX: number; photoPositionY: number; photoZoom: number;
@@ -54,16 +54,8 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
   const [previewKey, setPreviewKey] = useState(0);
   const [previewState, setPreviewState] = useState<PreviewState | null>(null);
 
-  // Sharing & Privacy state
-  const [allowSharing, setAllowSharing] = useState(true);
-  const [allowFeedback, setAllowFeedback] = useState(true);
-  const [showQrButton, setShowQrButton] = useState(false);
+  // Privacy state (used by preview)
   const [vcardPinEnabled, setVcardPinEnabled] = useState(false);
-  const [vcardPinInput, setVcardPinInput] = useState('');
-  const [vcardPinSaving, setVcardPinSaving] = useState(false);
-  const [vcardPinSaved, setVcardPinSaved] = useState(false);
-  const [qrLoaded, setQrLoaded] = useState(false);
-  const [qrError, setQrError] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
   const [showUrlPopup, setShowUrlPopup] = useState(false);
   const [nfcCopied, setNfcCopied] = useState(false);
@@ -115,9 +107,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           saveButtonStyle: d.profile.saveButtonStyle || 'auto', saveButtonColor: d.profile.saveButtonColor || null,
         });
 
-        setAllowSharing(d.profile.allowSharing !== false);
-        setAllowFeedback(d.profile.allowFeedback !== false);
-        setShowQrButton(!!d.profile.showQrButton);
         setVcardPinEnabled(!!d.profile.vcardPinEnabled);
 
         setLoading(false);
@@ -257,6 +246,7 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
         linkButtonColor={previewState.linkButtonColor}
         saveButtonStyle={previewState.saveButtonStyle}
         saveButtonColor={previewState.saveButtonColor}
+        useCompanyAsDisplay={previewState.useCompanyAsDisplay}
         contained={true}
       />
     );
@@ -307,10 +297,31 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
             title: data.profile.title,
             company: data.profile.company,
             tagline: data.profile.tagline,
+            useCompanyAsDisplay: data.user.useCompanyAsDisplay || false,
           }}
           onChange={handleIdentityChange}
           onError={setError}
         />
+
+        {/* ─── Template & Theme Section ─────────────── */}
+        <CollapsibleSection title="Template & Theme">
+          <TemplateSection
+            ref={templateRef}
+            initial={{
+              template: data.profile.template,
+              accentColor: (() => {
+                const a = data.profile.accentColor || '';
+                return a === getTheme(data.profile.template).colors.accent ? '' : a;
+              })(),
+              fontPair: data.profile.fontPair,
+              customTheme: data.profile.customTheme || {},
+            }}
+            isPaid={isPaid}
+            onChange={handleTemplateChange}
+            onTemplateChange={onTemplateChange}
+            onError={setError}
+          />
+        </CollapsibleSection>
 
         {/* ─── Visuals Section ─────────────────────── */}
         <VisualsSection
@@ -351,44 +362,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           }}
         />
 
-        {/* ─── Links Section ───────────────────────── */}
-        <CollapsibleSection title="Links">
-          <LinksSection
-            ref={linksRef}
-            initial={{
-              links: data.links,
-              linkDisplay: data.profile.linkDisplay || 'default',
-              linkSize: data.profile.linkSize || 'medium',
-              linkShape: data.profile.linkShape || 'pill',
-              linkButtonColor: data.profile.linkButtonColor || null,
-            }}
-            isPaid={isPaid}
-            accentColor={previewState?.accentColor || ''}
-            onChange={handleLinksChange}
-            onError={setError}
-          />
-        </CollapsibleSection>
-
-        {/* ─── Template & Theme Section ─────────────── */}
-        <CollapsibleSection title="Template & Theme">
-          <TemplateSection
-            ref={templateRef}
-            initial={{
-              template: data.profile.template,
-              accentColor: (() => {
-                const a = data.profile.accentColor || '';
-                return a === getTheme(data.profile.template).colors.accent ? '' : a;
-              })(),
-              fontPair: data.profile.fontPair,
-              customTheme: data.profile.customTheme || {},
-            }}
-            isPaid={isPaid}
-            onChange={handleTemplateChange}
-            onTemplateChange={onTemplateChange}
-            onError={setError}
-          />
-        </CollapsibleSection>
-
         {/* ─── Contact Card Section ─────────────────── */}
         <CollapsibleSection title="Contact Card">
           <ContactCardSection
@@ -409,6 +382,24 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
           />
         </CollapsibleSection>
 
+        {/* ─── Links Section ───────────────────────── */}
+        <CollapsibleSection title="Links">
+          <LinksSection
+            ref={linksRef}
+            initial={{
+              links: data.links,
+              linkDisplay: data.profile.linkDisplay || 'default',
+              linkSize: data.profile.linkSize || 'medium',
+              linkShape: data.profile.linkShape || 'pill',
+              linkButtonColor: data.profile.linkButtonColor || null,
+            }}
+            isPaid={isPaid}
+            accentColor={previewState?.accentColor || ''}
+            onChange={handleLinksChange}
+            onError={setError}
+          />
+        </CollapsibleSection>
+
         {/* ─── Content Boxes Section ────────────────── */}
         <CollapsibleSection title="Content Boxes">
           <PodEditor
@@ -419,174 +410,6 @@ export default function ProfileTab({ planStatus, onTemplateChange }: { planStatu
             onPodsChange={handlePodsChange}
             onPodSaved={() => setPreviewKey(k => k + 1)}
           />
-        </CollapsibleSection>
-
-        {/* ─── Sharing & Privacy Section ────────────── */}
-        <CollapsibleSection title="Sharing & Privacy">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-            <ToggleSwitch
-              checked={allowSharing}
-              onChange={async (val) => {
-                setAllowSharing(val);
-                try {
-                  await fetch('/api/profile', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ section: 'sharing', allowSharing: val }),
-                  });
-                } catch { /* silent */ }
-              }}
-              label="Allow visitors to share your profile"
-              description="Shows a share button on your public profile page."
-            />
-            <ToggleSwitch
-              checked={allowFeedback}
-              onChange={async (val) => {
-                setAllowFeedback(val);
-                try {
-                  await fetch('/api/profile', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ section: 'feedback', allowFeedback: val }),
-                  });
-                } catch { /* silent */ }
-              }}
-              label="Show feedback button on your profile"
-              description="Allows visitors to send feedback or report your profile."
-            />
-            {!isPaid ? (
-              <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', padding: '0.5rem 0' }}>
-                QR code button is always shown on free profiles. Upgrade for more sharing options.
-              </div>
-            ) : (
-              <ToggleSwitch
-                checked={showQrButton}
-                onChange={async (val) => {
-                  setShowQrButton(val);
-                  try {
-                    await fetch('/api/profile', {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ section: 'qrButton', showQrButton: val }),
-                    });
-                  } catch { /* silent */ }
-                }}
-                label="Show QR code button on your profile"
-                description="Adds a QR code icon visitors can tap to share your profile URL."
-              />
-            )}
-
-            {/* vCard PIN protection */}
-            <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
-              <ToggleSwitch
-                checked={vcardPinEnabled}
-                onChange={async (val) => {
-                  if (!val) {
-                    setVcardPinEnabled(false);
-                    setVcardPinInput('');
-                    try {
-                      await fetch('/api/profile', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ section: 'vcardPin', vcardPin: null }),
-                      });
-                    } catch { /* silent */ }
-                  } else {
-                    setVcardPinEnabled(true);
-                  }
-                }}
-                label="PIN-protect Save Contact"
-                description="Require a PIN before visitors can download your contact card."
-              />
-              {vcardPinEnabled && (
-                <div style={{ marginTop: '0.625rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <input
-                    type="password"
-                    inputMode="numeric"
-                    maxLength={8}
-                    value={vcardPinInput}
-                    onChange={e => { setVcardPinInput(e.target.value); setVcardPinSaved(false); }}
-                    placeholder="4-8 digit PIN"
-                    style={{
-                      ...inputStyle,
-                      width: 140,
-                      textAlign: 'center',
-                      letterSpacing: '0.15em',
-                    }}
-                  />
-                  <button
-                    onClick={async () => {
-                      if (vcardPinInput.length < 4) { setError('PIN must be at least 4 characters'); return; }
-                      setVcardPinSaving(true);
-                      try {
-                        const res = await fetch('/api/profile', {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ section: 'vcardPin', vcardPin: vcardPinInput }),
-                        });
-                        if (!res.ok) {
-                          const d = await res.json();
-                          setError(d.error || 'Failed to save PIN');
-                        } else {
-                          setVcardPinSaved(true);
-                          setTimeout(() => setVcardPinSaved(false), 2000);
-                        }
-                      } catch { setError('Failed to save PIN'); }
-                      finally { setVcardPinSaving(false); }
-                    }}
-                    disabled={vcardPinSaving || vcardPinInput.length < 4}
-                    style={{
-                      ...saveBtnStyle,
-                      padding: '0.5rem 0.75rem',
-                      fontSize: '0.8125rem',
-                      opacity: vcardPinSaving || vcardPinInput.length < 4 ? 0.5 : 1,
-                    }}
-                  >
-                    {vcardPinSaving ? '...' : vcardPinSaved ? '\u2713' : 'Set PIN'}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* QR Code download */}
-            <div style={{ borderTop: '1px solid var(--border, #1e2535)', paddingTop: '0.875rem' }}>
-              <p style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #5d6370)', margin: '0 0 0.625rem' }}>QR Code</p>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
-                Share your profile without NFC. Print it, add it to slides, or show it on your phone.
-              </p>
-              {qrError ? (
-                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)' }}>
-                  Unable to generate QR code. Try refreshing the page.
-                </p>
-              ) : (
-                <>
-                  {!qrLoaded && (
-                    <div style={{ padding: '2rem 0' }}>
-                      <div style={{ width: 24, height: 24, border: '2px solid var(--border-light)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
-                      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                    </div>
-                  )}
-                  <div style={{ display: qrLoaded ? 'block' : 'none', textAlign: 'center' }}>
-                    <div style={{ display: 'inline-block', padding: '1rem', backgroundColor: '#fff', borderRadius: '0.75rem', marginBottom: '0.75rem' }}>
-                      <img
-                        src="/api/profile/qr"
-                        alt="QR code for your profile"
-                        width={180}
-                        height={180}
-                        style={{ display: 'block' }}
-                        onLoad={() => setQrLoaded(true)}
-                        onError={() => { setQrError(true); setQrLoaded(false); }}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                      <a href="/api/profile/qr?format=png" download="imprynt-qr.png" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download PNG</a>
-                      <a href="/api/profile/qr?format=svg" download="imprynt-qr.svg" className="dash-btn-ghost" style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}>Download SVG</a>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
         </CollapsibleSection>
 
       </main>

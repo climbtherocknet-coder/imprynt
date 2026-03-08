@@ -11,6 +11,7 @@ export interface IdentityState {
   title: string;
   company: string;
   tagline: string;
+  useCompanyAsDisplay?: boolean;
 }
 
 export interface IdentitySectionProps {
@@ -33,13 +34,14 @@ const IdentitySection = forwardRef<IdentitySectionRef, IdentitySectionProps>(
     const [title, setTitle] = useState(initial.title);
     const [company, setCompany] = useState(initial.company);
     const [tagline, setTagline] = useState(initial.tagline);
+    const [useCompanyAsDisplay, setUseCompanyAsDisplay] = useState(initial.useCompanyAsDisplay || false);
 
-    const getState = (): IdentityState => ({ firstName, lastName, title, company, tagline });
+    const getState = (): IdentityState => ({ firstName, lastName, title, company, tagline, useCompanyAsDisplay });
 
     // Notify parent of changes
     useEffect(() => {
       onChange(getState());
-    }, [firstName, lastName, title, company, tagline]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [firstName, lastName, title, company, tagline, useCompanyAsDisplay]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Expose save + getState to parent
     useImperativeHandle(ref, () => ({
@@ -55,6 +57,7 @@ const IdentitySection = forwardRef<IdentitySectionRef, IdentitySectionProps>(
               title: title.trim(),
               company: company.trim(),
               tagline: tagline.trim(),
+              useCompanyAsDisplay,
             }),
           });
           if (!res.ok) {
@@ -67,18 +70,18 @@ const IdentitySection = forwardRef<IdentitySectionRef, IdentitySectionProps>(
         }
       },
       getState,
-    }), [firstName, lastName, title, company, tagline, onError]);
+    }), [firstName, lastName, title, company, tagline, useCompanyAsDisplay, onError]);
 
     return (
       <div style={{ ...sectionStyle, marginBottom: '1rem' }}>
         <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
           <div style={{ flex: 1 }}>
             <label style={labelStyle}>First name</label>
-            <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} style={inputStyle} />
+            <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} required placeholder="Required" style={inputStyle} />
           </div>
           <div style={{ flex: 1 }}>
             <label style={labelStyle}>Last name</label>
-            <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} style={inputStyle} />
+            <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Optional" style={inputStyle} />
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -91,6 +94,24 @@ const IdentitySection = forwardRef<IdentitySectionRef, IdentitySectionProps>(
             <input type="text" value={company} onChange={e => setCompany(e.target.value)} placeholder="Acme Inc." style={inputStyle} />
           </div>
         </div>
+        {company && company.trim().length > 0 && (
+          <div style={{ marginTop: '0.5rem', marginBottom: '0.75rem' }}>
+            <label style={{
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+              fontSize: '0.8125rem', color: 'var(--text-mid, #a8adb8)', cursor: 'pointer',
+            }}>
+              <input
+                type="checkbox"
+                checked={useCompanyAsDisplay}
+                onChange={e => setUseCompanyAsDisplay(e.target.checked)}
+              />
+              Use &ldquo;{company.trim()}&rdquo; as my display name
+            </label>
+            <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)', marginTop: '0.25rem', marginLeft: '1.5rem' }}>
+              Your company or band name will appear instead of your personal name on your profile
+            </p>
+          </div>
+        )}
         <div style={{ marginTop: '0.75rem' }}>
           <label style={labelStyle}>
             Tagline

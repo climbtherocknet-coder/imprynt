@@ -772,6 +772,22 @@
   }
 }
 
+/* ── Very narrow screens ── */
+@media (max-width: 480px) {
+  .dash-main {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .dash-header {
+    padding: 0.5rem 0.625rem;
+  }
+
+  .dash-plan-badge {
+    font-size: 0.5625rem;
+    padding: 0.125rem 0.375rem;
+  }
+}
+
 /* ── Dashboard hero nav card ── */
 .dash-nav-card--hero {
   background: linear-gradient(135deg, var(--surface, #161c28) 0%, rgba(232, 168, 73, 0.04) 100%);
@@ -886,6 +902,7 @@
 @media (max-width: 768px) {
   .dash-split {
     flex-direction: column;
+    align-items: stretch;
   }
   .dash-grid-2col,
   .dash-nav-grid {
@@ -1265,5 +1282,48 @@
   }
   .editor-float-preview {
     display: flex !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-editor-content {
+    padding: 0 0.5rem 5rem;
+  }
+
+  .collapsible-section-body {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   GLOBAL MOBILE OVERRIDES
+   Applied system-wide for mobile-first consistency
+   ═══════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+  /* All text inputs full width */
+  .dash-page input[type="text"],
+  .dash-page input[type="email"],
+  .dash-page input[type="url"],
+  .dash-page input[type="password"],
+  .dash-page input[type="number"],
+  .dash-page input[type="tel"],
+  .dash-page textarea,
+  .dash-page select {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Prevent horizontal overflow */
+  .dash-page {
+    overflow-x: hidden;
+  }
+
+  /* Minimum tap target for buttons */
+  .dash-page button,
+  .dash-page .btn,
+  .dash-page [class*="btn-"] {
+    min-height: 44px;
   }
 }

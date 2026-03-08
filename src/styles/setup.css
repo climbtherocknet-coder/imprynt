@@ -1500,3 +1500,38 @@
   max-width: 100%;
   overflow-x: hidden;
 }
+
+/* ── Very narrow screens ── */
+@media (max-width: 480px) {
+  .setup-editor {
+    padding: 1rem 0.5rem;
+  }
+
+  .setup-nav {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .setup-nav button,
+  .setup-nav > div {
+    width: 100%;
+  }
+
+  .setup-nav > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .setup-nav > div button {
+    width: 100%;
+  }
+
+  .setup-header {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .setup-logo-text {
+    display: none;
+  }
+}

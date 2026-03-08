@@ -98,13 +98,18 @@ export async function POST(req: NextRequest) {
   const tierLimits = isPaid ? TIER_LIMITS.paid : TIER_LIMITS.free;
   const maxPods = tierLimits.maxPods;
 
+  // Count ALL active pods across profile + personal pages (total limit)
   const countResult = await query(
-    'SELECT COUNT(*)::int as count FROM pods WHERE profile_id = $1 AND is_active = true',
+    `SELECT COUNT(*)::int as count FROM pods
+     WHERE is_active = true AND (
+       profile_id = $1
+       OR protected_page_id IN (SELECT id FROM protected_pages WHERE profile_id = $1)
+     )`,
     [profileId]
   );
   if (countResult.rows[0].count >= maxPods) {
     return NextResponse.json({
-      error: `You can have up to ${maxPods} content blocks on your current plan.`,
+      error: `You can have up to ${maxPods} content blocks total on your current plan.`,
     }, { status: 403 });
   }
 

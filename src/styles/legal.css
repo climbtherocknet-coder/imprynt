@@ -108,3 +108,16 @@
   font-size: 0.8125rem;
   color: var(--lp-text-muted);
 }
+
+/* ── Mobile spacing ── */
+@media (max-width: 640px) {
+  .legal-nav {
+    padding: 1rem 1rem;
+  }
+  .legal-content {
+    padding: 1.25rem 1rem 3rem;
+  }
+  .legal-content h1 {
+    font-size: 1.5rem;
+  }
+}

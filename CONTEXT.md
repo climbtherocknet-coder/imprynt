@@ -2,8 +2,8 @@
 
 **Purpose:** This file is the shared memory between Claude sessions. After each work session or push, update the relevant sections so context is never lost if a conversation resets.
 
-**Last updated:** March 1, 2026
-**Updated by:** Claude (session 16e — Bug Fixes + Portfolio Simplification, v0.12.0)
+**Last updated:** March 7, 2026
+**Updated by:** Claude (session 19 — Mobile-First Audit & Comprehensive Fix)
 
 ---
 
@@ -16,8 +16,8 @@ The Imprynt platform is a fully functional Next.js 15 app. Marketing pages (land
 - **Password Validation:** `@/lib/password-validation` with PasswordStrengthMeter component, used in AccountClient, AdminClient, AdminUsersTab
 - **Profiles:** Full public profile page with 10 templates, color customization, mobile-first responsive
 - **Custom Theme Builder:** Full custom theme with 13 color variables (bg, bgAlt, surface, surface2, text, textMid, textMuted, accent, accentSoft, accentBorder, accentHover, border, borderHover) plus layout modifiers (photoShape, linkStyle, buttonStyle, radiusBase). Template selector includes 'custom' option.
-- **Page Editor:** Three-tab editor (Profile, Personal/Impression, Portfolio) at `/dashboard/page-editor`
-  - ProfileTab: identity, bio, links (with icon-only mode + label mode toggle, size/shape controls, per-link colors), contact card, visuals (photo shape/size/position/animation/align/zoom, cover photo, background image), pods, template + custom theme
+- **Page Editor:** Two-tab editor (Profile, Personal/Impression) at `/dashboard/page-editor`
+  - ProfileTab sections (in order): Identity, Template & Theme, Visuals (photo/cover/bg), Contact Card, Links (with icon-only mode + label mode toggle, size/shape controls, per-link colors, inline style preview), Content Boxes (pods)
   - PersonalTab: hidden PIN-gated personal layer (Impression/Easter Egg) with separate photo support (profile vs custom toggle), cover/bg image, pods
   - PortfolioTab: visible PIN-gated portfolio/showcase layer with same customization
 - **Editor Components:** Reusable sections extracted into `src/components/editor/`
@@ -36,7 +36,7 @@ The Imprynt platform is a fully functional Next.js 15 app. Marketing pages (land
 - **Landing Page:** Full experiential redesign with warm Colorado palette. Sections: nav → hero → how it works → interactive demo (iframe) → value blocks → hidden layer (impression) → use cases → content types → NFC teaser → pricing → CTA → footer. ScrollReveal fade-up animations. All marketing pages share `marketing-vars.css` color tokens.
 - **Legal Pages:** Terms, Privacy (redesigned)
 - **Branded Error Pages:** `/app/not-found.tsx` and `/app/error.tsx` with Imprynt branding
-- **Account Management:** Password change, account deletion (`/api/account/delete`), contact fields
+- **Account Management:** Password change, account deletion (`/api/account/delete`), contact fields, sharing & privacy settings (allow sharing, feedback, QR button, vCard PIN, QR download)
 - **Admin/Command Center:** Consolidated tabbed admin at `/dashboard/admin` with:
   - Admin tabs (admin-only): Users, Codes, Waitlist, Feedback, Traffic
   - CC tabs: Overview, Features, Roadmap, Changelog, Docs, Schema
@@ -167,6 +167,34 @@ docker compose up --build
 
 ## Session Log
 
+### March 7, 2026 (Session 19) — Mobile-First Audit & Comprehensive Fix
+**Root cause fix:** `.dash-split` had `align-items: flex-start` which caused ~60px right gap on mobile when `flex-direction: column` was applied. Fixed with `align-items: stretch` at ≤768px.
+**Dashboard mobile:** Added 480px breakpoint for tighter padding (`dash-main: 0.75rem 0.5rem`, `dash-header: 0.5rem 0.625rem`), smaller plan badge.
+**Page editor mobile:** Added 480px breakpoint with `page-editor-content: 0 0.5rem 5rem` and `collapsible-section-body: 0.75rem 0.5rem`.
+**Setup wizard mobile:** Added 480px breakpoint with full-width nav buttons (column layout), tighter editor padding, hidden logo text.
+**Profile page mobile:** Added `margin-top: 0.5rem` to `.status-tags` and `.link-icons-row` for hero element spacing. Added 400px breakpoint for reduced pod padding and hero top padding.
+**Admin console mobile:** Made tables horizontally scrollable at 640px (`display: block; overflow-x: auto`), full-width search bar, tighter section padding.
+**Marketing pages mobile:** Added 480px breakpoint to landing.css reducing hero/nav/section padding to 1rem. Added FAQ trust section padding reduction.
+**Global mobile overrides:** Added to dashboard.css — all inputs full-width, `overflow-x: hidden`, 44px min button tap targets (scoped to `.dash-page`).
+- **Files modified:** `dashboard.css`, `setup.css`, `profile.css`, `admin.css`, `landing.css`, `faq.css`, `CONTEXT.md`
+
+### March 6, 2026 (Session 18) — Mobile Fixes, UX Improvements, Navigation
+**Task 1: Fix hero overlap on mobile** — Added `!important` to `[data-cover-mode="logo"]` CSS rules so they properly override `[data-photo-align]` rules. Added `@media (max-width: 400px)` safety net forcing column layout on narrow screens.
+**Task 2: Mobile spacing** — Reduced padding on mobile for legal pages (`legal.css` — nav and content padding at 640px), FAQ pages (`faq.css` — hero/section/footer padding at 600px), and profile pages (`profile.css` — `--pad: 1rem` at ≤400px).
+**Task 3: Back buttons** — Added `← Dashboard` back links to Media page, Analytics page (all states including success render and non-paid gate). Added `← Home` back links to Terms, Privacy, and FAQ pages.
+**Task 4: Wizard Save as Draft** — Added "Save as Draft" button on launch step that calls `POST /api/setup/complete` with `{ draft: true }`. API sets `setup_completed = true` but skips `is_published = true`, so the profile remains unpublished. User goes to dashboard and can publish later from the editor.
+- **Files modified:** `profile.css`, `legal.css`, `faq.css`, `media/page.tsx`, `analytics/page.tsx`, `analytics/AnalyticsClient.tsx`, `terms/page.tsx`, `privacy/page.tsx`, `faq/page.tsx`, `SetupWizard.tsx`, `api/setup/complete/route.ts`, `CONTEXT.md`
+
+### March 6, 2026 (Session 17) — UX Improvements: Editor, Tiers, Resume, Layout
+**Task 1: Admin User Editor** — Added `setupCompleted` to admin PATCH endpoint. Replaced read-only detail grid with inline editable form (first name, last name, email, plan, setup completed).
+**Task 2: Company as Display Name** — Wired existing `use_company_as_display` column into IdentitySection (toggle UI when company entered), SetupWizard preview, ProfileTab preview. Made first name required, last name optional in registration and IdentitySection.
+**Task 3: Content Block Tier Limits** — Free: 2 blocks (was 3), Paid: 10 blocks (was 20). Pod count now counts TOTAL across profile + personal pages (was per-context). Updated both `/api/pods` and `/api/protected-pages/pods` routes.
+**Task 4: Resume Link in Wizard** — Added dedicated resume URL input card in wizard step 3 (links) above LinksSection. Auto-creates resume link type via POST /api/links on step save.
+**Task 5: Mobile Editor Photo Live Preview** — Added inline preview thumbnail in VisualsSection below Photo Settings that reflects current size, shape, radius, position, zoom, and mode in real-time.
+**Task 6: Link Box Inline Preview** — Added "Style Preview" card in LinksSection between button color picker and link list showing 3 sample buttons with current display/size/shape/color settings.
+**Task 7: Reorganize Editor Sections** — Reordered ProfileTab sections: Identity → Template & Theme → Visuals → Contact Card → Links → Content Boxes (was Identity → Visuals → Links → Template → Contact → Content → Sharing). Moved Sharing & Privacy section from ProfileTab to AccountClient (loads settings via client-side GET /api/profile, saves via existing PUT /api/profile section endpoints).
+- **Files modified:** `AdminUsersTab.tsx`, `IdentitySection.tsx`, `constants.ts`, `VisualsSection.tsx`, `LinksSection.tsx`, `ProfileTab.tsx`, `AccountClient.tsx`, `SetupWizard.tsx`, `register/page.tsx`, `tiers.ts`, `/api/pods/route.ts`, `/api/protected-pages/pods/route.ts`, `/api/admin/users/[userId]/route.ts`, `CONTEXT.md`
+
 ### February 25, 2026 — Context Rebuild + Project Governance Setup
 - **What happened:** Previous conversation history was lost (both Claude.ai and Claude Code sessions). Full context rebuilt by reading codebase, docs, and handoff files.
 - **State found:** App is functional and well past MVP. Admin/Command Center consolidation appears largely complete. Setup wizard v2 rewrite is in early stages (placeholder file created). Staged fixes from Feb 12 may or may not have been applied.
@@ -209,7 +237,7 @@ docker compose up --build
 - Migration 060: Moved portfolio pods to main profile, made portfolio links visible, converted resume URLs, soft-deleted portfolio pages.
 - Migration 061: Added `featured` boolean column to links table.
 - Resume link type with document icon. "Display as content block" toggle (`featured` column) renders resume as card after pods.
-- Content block tiers: `src/lib/tiers.ts` — Free: 3 blocks (text, text+image, CTA, link preview), Paid: 20 blocks. Enforced client + server. Block counter + locked type labels.
+- Content block tiers: `src/lib/tiers.ts` — Free: 2 blocks (text, text+image, CTA, link preview), Paid: 10 blocks. Total counted across profile + personal pages. Enforced client + server. Block counter + locked type labels.
 - Removed PortfolioTab from PageEditor. Editor tabs: Profile, Personal only.
 - Removed PORTFOLIO visibility toggle from LinksSection. Renamed BIZ → PROFILE.
 - Removed portfolio step from SetupWizard. Wizard: 6 steps.

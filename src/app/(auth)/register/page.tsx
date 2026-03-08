@@ -99,11 +99,12 @@ function RegisterForm() {
               type="text"
               value={formData.firstName}
               onChange={(e) => updateField('firstName', e.target.value)}
+              required
               className="auth-input"
             />
           </div>
           <div className="auth-field">
-            <label className="auth-label">Last name</label>
+            <label className="auth-label">Last name <span style={{ fontWeight: 400, color: 'var(--text-muted, #5d6370)' }}>(optional)</span></label>
             <input
               type="text"
               value={formData.lastName}

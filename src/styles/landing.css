@@ -1886,3 +1886,31 @@
   text-align: center;
   margin-top: 0.25rem;
 }
+
+/* ── Narrow screen mobile overrides ── */
+@media (max-width: 480px) {
+  .lp-hero {
+    padding: 5rem 1rem 3rem;
+  }
+
+  .lp-nav {
+    padding: 0.75rem 1rem;
+  }
+
+  .lp-value,
+  .lp-pricing,
+  .lp-nfc-section,
+  .lp-demo-section,
+  .lp-how-section,
+  .lp-trust-section,
+  .lp-templates-section,
+  .lp-cta-section,
+  .lp-footer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .lp-pr {
+    padding: 1.5rem 1.25rem;
+  }
+}

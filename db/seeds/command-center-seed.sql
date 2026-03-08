@@ -75,6 +75,21 @@ INSERT INTO cc_changelog (title, body, version, entry_date, tags) VALUES
   ('v0.12.0: Bug Fixes + Portfolio Simplification', 'Part A: Fixed resume link type (missing from API validation). Fixed media manager (user_media table + delete error feedback). Fixed photo zoom (CSS custom properties). Cover logo position-specific defaults (above=60/20, beside=40/50). Fixed remembered page auto-load. Scrollbar kill. Wizard audit. Part B: Removed portfolio page. Resume "feature on profile" toggle (featured column + card render). Content tiers (free: 3, paid: 20). Wizard 6 steps. Live edit roadmap.', '0.12.0', '2026-03-01', '{bugfix,portfolio,simplification,tiers,resume,media,architecture}')
 ON CONFLICT DO NOTHING;
 
+-- v0.13.0: UX Improvements (Editor, Tiers, Resume, Layout)
+INSERT INTO cc_features (name, description, category, status, release_phase, priority) VALUES
+  ('Admin User Editor', 'Inline editing of user details (name, email, plan, setup status) from admin console.', 'admin', 'shipped', 'v1', 25),
+  ('Company as Display Name', 'Toggle to show company/band name instead of personal name on profile. First name required, last name optional.', 'profile', 'shipped', 'v1', 26),
+  ('Content Block Tier Update', 'Free: 2 blocks (was 3). Paid: 10 blocks (was 20). Total counted across profile + personal pages.', 'monetization', 'shipped', 'v1', 27),
+  ('Resume Link in Wizard', 'Dedicated resume URL input in onboarding wizard step 3.', 'onboarding', 'shipped', 'v1', 28),
+  ('Photo Live Preview', 'Inline photo preview in editor reflects size, shape, radius changes in real-time.', 'editor', 'shipped', 'v1', 29),
+  ('Link Style Preview', 'Mini preview card in link settings showing current display/size/shape/color.', 'editor', 'shipped', 'v1', 30),
+  ('Editor Section Reorg', 'Reordered editor sections. Moved Sharing & Privacy to Account page.', 'editor', 'shipped', 'v1', 31)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO cc_changelog (title, body, version, entry_date, tags) VALUES
+  ('v0.13.0: UX Improvements', 'Admin user editor with inline editing. Company-as-display-name toggle. Content block limits reduced (free: 2, paid: 10) with total count across all pages. Resume URL input in wizard. Photo live preview in editor. Link style inline preview. Editor sections reordered (identity > template > visuals > contact > links > content). Sharing & Privacy moved to Account page.', '0.13.0', '2026-03-06', '{ux,editor,admin,tiers,onboarding}')
+ON CONFLICT DO NOTHING;
+
 -- Docs
 INSERT INTO cc_docs (title, body, doc_type, visibility, is_pinned, tags) VALUES
   ('V1 MVP Specification', 'The full product spec is maintained in the project repository as sygnet-mvp-spec.md. This document covers: product summary, target audience, value propositions, feature specifications, pricing tiers, technical architecture, sourcing/fulfillment, and success metrics.', 'design_spec', 'advisory', true, '{product,spec,v1}'),

@@ -41,8 +41,22 @@ body {
   --max-w: 680px;
   --pad: 1.5rem;
 }
+@media (max-width: 400px) {
+  .profile-page { --pad: 1rem; }
+}
 @media (min-width: 768px) {
   .profile-page { --pad: 2.5rem; }
+}
+
+/* ── Mobile profile optimizations ── */
+@media (max-width: 400px) {
+  .pod {
+    padding: 1.25rem var(--pad);
+  }
+
+  .hero {
+    padding-top: 2rem;
+  }
 }
 
 /* ═══════════════════════════════════════════
@@ -179,6 +193,7 @@ body {
   display: flex;
   justify-content: center;
   padding: 0.375rem 0 0.75rem;
+  margin-top: 0.5rem;
 }
 
 .status-tags-list {
@@ -237,23 +252,36 @@ body {
 
 /* When cover is in logo mode + above, hero layout stacks vertically and centers */
 [data-cover-mode="logo"] .hero-top {
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
 }
 
 [data-cover-mode="logo"] .hero-identity {
-  text-align: center;
+  text-align: center !important;
 }
 
 /* When cover logo is "beside", hero-top stays row and identity keeps left alignment */
 [data-cover-mode="logo"][data-cover-logo-pos="beside"] .hero-top {
-  flex-direction: row;
-  text-align: left;
+  flex-direction: row !important;
+  text-align: left !important;
 }
 
 [data-cover-mode="logo"][data-cover-logo-pos="beside"] .hero-identity {
-  text-align: left;
+  text-align: left !important;
+}
+
+/* Narrow-screen safety net — always stack on very small screens */
+@media (max-width: 400px) {
+  .hero-top {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 0.75rem !important;
+  }
+  .hero-identity {
+    text-align: center !important;
+  }
 }
 
 /* hero rule — decorative line under hero */
@@ -450,6 +478,7 @@ body {
   flex-wrap: wrap;
   gap: 0.5rem;
   justify-content: center;
+  margin-top: 0.5rem;
   margin-bottom: 1.5rem;
 }
 .link-icon-btn {
@@ -1667,6 +1696,7 @@ a.pod-event-address:hover {
 [data-contained="true"] .profile-bg-image,
 [data-page-type="protected"] .profile-bg-image {
   position: absolute;
+  z-index: 0;
 }
 
 

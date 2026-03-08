@@ -87,6 +87,7 @@ interface PreviewState {
   title: string;
   company: string;
   tagline: string;
+  useCompanyAsDisplay?: boolean;
   template: string;
   accentColor: string;
   fontPair: string;
@@ -173,6 +174,7 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
   const [finishing, setFinishing] = useState(false);
   const [error, setError] = useState('');
   const [showMobilePreview, setShowMobilePreview] = useState(false);
+  const [resumeUrl, setResumeUrl] = useState('');
 
   // ── Launch state ───────────────────────────────────
   const [published, setPublished] = useState(false);
@@ -243,6 +245,9 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
       pods: [],
     });
     setProfileSlug(d.profile.slug);
+    // Pre-populate resume URL if one exists
+    const existingResume = d.links.find((l: LinkItem) => l.linkType === 'resume');
+    if (existingResume) setResumeUrl(existingResume.url || '');
   }, [profileData]);
 
   // ── Section onChange callbacks ──────────────────────
@@ -322,7 +327,9 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
   const effectiveAccent = preview.accentColor || getTheme(preview.template).colors.accent;
 
   // ── Derived ────────────────────────────────────────
-  const fullName = [preview.firstName, preview.lastName].filter(Boolean).join(' ') || 'Your Name';
+  const fullName = preview.useCompanyAsDisplay && preview.company
+    ? preview.company
+    : [preview.firstName, preview.lastName].filter(Boolean).join(' ') || 'Your Name';
   const currentTheme = THEMES[preview.template];
   const initials = `${(preview.firstName?.[0] || '').toUpperCase()}${(preview.lastName?.[0] || '').toUpperCase()}`;
 
@@ -340,6 +347,26 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
       await visualsRef.current?.save();
     } else if (stepId === 'links') {
       await linksRef.current?.save();
+      // Save resume link if provided (skip if one already exists)
+      if (resumeUrl.trim()) {
+        const existingResume = linksRef.current?.getState().links.find(l => l.linkType === 'resume');
+        if (!existingResume) {
+          try {
+            await fetch('/api/links', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                linkType: 'resume',
+                label: 'Resume',
+                url: resumeUrl.trim(),
+                showBusiness: true,
+                showPersonal: false,
+                showShowcase: false,
+              }),
+            });
+          } catch { /* non-critical */ }
+        }
+      }
     } else if (stepId === 'content') {
       // PodEditor auto-saves, no explicit save needed
     }
@@ -393,6 +420,27 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
     } catch { /* ignore */ }
     router.push('/dashboard');
     router.refresh();
+  }
+
+  async function handleSaveDraft() {
+    setFinishing(true);
+    setError('');
+    try {
+      const res = await fetch('/api/setup/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft: true }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to save draft');
+      }
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save draft');
+      setFinishing(false);
+    }
   }
 
   async function handlePublish() {
@@ -479,13 +527,14 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
   // ── Build initial states from loaded profile data ──
 
   function getIdentityInitial(): IdentityState {
-    if (!profileData) return { firstName: '', lastName: '', title: '', company: '', tagline: '' };
+    if (!profileData) return { firstName: '', lastName: '', title: '', company: '', tagline: '', useCompanyAsDisplay: false };
     return {
       firstName: profileData.user.firstName,
       lastName: profileData.user.lastName,
       title: profileData.profile.title,
       company: profileData.profile.company,
       tagline: profileData.profile.tagline,
+      useCompanyAsDisplay: profileData.user.useCompanyAsDisplay || false,
     };
   }
 
@@ -613,6 +662,7 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
         bgImagePositionY={preview.bgImagePositionY}
         bgImageOpacity={preview.bgImageOpacity}
         bgImageZoom={preview.bgImageZoom}
+        useCompanyAsDisplay={preview.useCompanyAsDisplay}
       />
     );
   }
@@ -671,15 +721,54 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
 
       case 'links':
         return (
-          <LinksSection
-            ref={linksRef}
-            initial={getLinksInitial()}
-            isPaid={isPaid}
-            accentColor={effectiveAccent}
-            onChange={handleLinksChange}
-            onError={handleError}
-            showVisibilityToggles={false}
-          />
+          <>
+            <div style={{
+              padding: '1rem',
+              borderRadius: '0.75rem',
+              border: '1px solid var(--border, #1e2535)',
+              marginBottom: '1.5rem',
+              background: 'var(--surface, #161c28)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text, #eceef2)' }}>Resume</h4>
+                <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted, #5d6370)' }}>Optional</span>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', marginBottom: '0.75rem' }}>
+                Add a link to your resume so visitors can view it directly from your profile.
+              </p>
+              <input
+                className="setup-input"
+                type="url"
+                placeholder="https://drive.google.com/your-resume"
+                value={resumeUrl}
+                onChange={e => setResumeUrl(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  background: 'var(--bg, #0c1017)',
+                  border: '1px solid var(--border-light, #283042)',
+                  borderRadius: '0.5rem',
+                  color: 'var(--text, #eceef2)',
+                  fontSize: '0.875rem',
+                  fontFamily: 'inherit',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            <LinksSection
+              ref={linksRef}
+              initial={getLinksInitial()}
+              isPaid={isPaid}
+              accentColor={effectiveAccent}
+              onChange={handleLinksChange}
+              onError={handleError}
+              showVisibilityToggles={false}
+            />
+          </>
         );
 
       case 'content':
@@ -1031,9 +1120,14 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
               ) : <div />}
 
               {currentStep.id === 'launch' ? (
-                <button onClick={handlePublish} disabled={finishing} className="setup-btn-primary">
-                  {finishing ? 'Publishing...' : 'Publish Profile'}
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={handleSaveDraft} className="setup-btn-ghost" style={{ fontSize: '0.875rem' }}>
+                    Save as Draft
+                  </button>
+                  <button onClick={handlePublish} disabled={finishing} className="setup-btn-primary">
+                    {finishing ? 'Publishing...' : 'Publish Profile'}
+                  </button>
+                </div>
               ) : currentStep.id === 'content' || currentStep.id === 'personal' ? (
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button onClick={handleSkipStep} className="setup-btn-ghost" style={{ fontSize: '0.875rem' }}>

@@ -113,7 +113,7 @@ export interface LinkItem {
 }
 
 export interface ProfileData {
-  user: { firstName: string; lastName: string; plan: string };
+  user: { firstName: string; lastName: string; plan: string; useCompanyAsDisplay?: boolean };
   profile: {
     id: string;
     slug: string;

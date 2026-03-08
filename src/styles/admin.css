@@ -313,14 +313,32 @@
 
   .admin-table {
     font-size: 0.75rem;
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .admin-table th,
   .admin-table td {
     padding: 0.5rem;
+    white-space: nowrap;
   }
 
   .admin-detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-search {
+    flex-direction: column;
+  }
+
+  .admin-search .admin-input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .admin-section {
+    padding: 1rem 0.75rem;
+    border-radius: 0.75rem;
   }
 }
