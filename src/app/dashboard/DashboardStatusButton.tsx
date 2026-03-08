@@ -16,7 +16,7 @@ export default function DashboardStatusButton({ initialTags, initialColor, isPai
 
   return (
     <>
-      <button className="dash-top-btn dash-top-btn--filled" onClick={() => setShowModal(true)}>
+      <button className="dash-top-btn dash-top-btn--status" onClick={() => setShowModal(true)}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: dotColor, display: 'inline-block' }} />
         Status
       </button>

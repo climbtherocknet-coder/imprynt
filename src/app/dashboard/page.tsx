@@ -195,7 +195,7 @@ export default async function DashboardPage({
                     href={`/${profile.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="dash-top-btn dash-top-btn--outline"
+                    className="dash-top-btn"
                   >
                     View Profile &rarr;
                   </a>
