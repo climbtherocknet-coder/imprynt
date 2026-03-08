@@ -2004,8 +2004,8 @@ a.pod-event-address:hover {
 }
 
 .photo-lightbox-img {
-  width: 280px;
-  height: 280px;
+  width: min(240px, calc(100vw - 8rem));
+  aspect-ratio: 1;
   border-radius: 50%;
   object-fit: cover;
   margin: 0 auto 1rem;
@@ -2053,6 +2053,10 @@ a.pod-event-address:hover {
 
 .photo-expandable {
   cursor: pointer;
+}
+
+@media (max-width: 400px) {
+  .photo-lightbox-card { padding: 1.25rem 1rem 1rem; }
 }
 
 /* ═══════════════════════════════════════════

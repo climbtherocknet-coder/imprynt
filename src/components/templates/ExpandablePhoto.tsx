@@ -20,7 +20,7 @@ export default function ExpandablePhoto({
   photoUrl,
   fullName,
   customPhotoStyle,
-  positionStyle: _positionStyle,
+  positionStyle,
   initials,
   title,
   company,
@@ -65,19 +65,20 @@ export default function ExpandablePhoto({
               onClick={() => setLightboxOpen(false)}
               aria-label="Close"
             >
-              ✕
+              {'\u2715'}
             </button>
 
             <img
               src={photoUrl}
               alt={fullName}
               className="photo-lightbox-img"
+              style={positionStyle}
             />
 
             <h3 className="photo-lightbox-name">{fullName}</h3>
             {(title || company) && (
               <p className="photo-lightbox-info">
-                {title}{title && company ? ' · ' : ''}{company}
+                {title}{title && company ? ' \u00B7 ' : ''}{company}
               </p>
             )}
 

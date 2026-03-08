@@ -5,7 +5,7 @@ import { getPlanStatus } from '@/lib/plan';
 import { getAccessLevel } from '@/lib/access';
 import SignOutButton from './SignOutButton';
 import DashboardOnAir from './DashboardOnAir';
-import MyUrlsCard from './MyUrlsCard';
+import DashboardStatusButton from './DashboardStatusButton';
 import ThemeToggle from '@/components/ThemeToggle';
 import CheckoutToast from './CheckoutToast';
 import VerificationBanner from './VerificationBanner';
@@ -183,31 +183,33 @@ export default async function DashboardPage({
             </div>
 
             <div className="dash-grid-2col">
-              {/* Row 1: On Air | My Links + View Profile */}
+              {/* Status + View Profile buttons */}
+              {profile?.slug && (
+                <div className="dash-top-actions">
+                  <DashboardStatusButton
+                    initialTags={profile?.status_tags || []}
+                    initialColor={profile?.status_tag_color}
+                    isPaid={planStatus.isPaid}
+                  />
+                  <a
+                    href={`/${profile.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="dash-top-btn dash-top-btn--outline"
+                  >
+                    View Profile &rarr;
+                  </a>
+                </div>
+              )}
+
               <DashboardOnAir
                 initialPublished={profile?.is_published ?? false}
                 slug={profile?.slug}
+                redirectId={profile?.redirect_id}
                 initialTags={profile?.status_tags || []}
                 initialColor={profile?.status_tag_color}
                 isPaid={planStatus.isPaid}
               />
-
-              <div className="dash-card">
-                <span className="dash-card-label">MY LINKS</span>
-                {profile ? (
-                  <MyUrlsCard slug={profile.slug} redirectId={profile.redirect_id} />
-                ) : (
-                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted, #5d6370)', margin: 0 }}>
-                    Set up your profile to get your links.
-                  </p>
-                )}
-                {profile?.slug && (
-                  <a href={`/${profile.slug}`} target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'block', marginTop: '0.75rem', fontSize: '0.8125rem', color: 'var(--accent, #e8a849)', textDecoration: 'none', fontWeight: 500 }}>
-                    View Profile &rarr;
-                  </a>
-                )}
-              </div>
 
               {/* Row 2: My Page | Account */}
               <a href="/dashboard/page-editor" className="dash-nav-card">
