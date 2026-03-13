@@ -5,7 +5,7 @@ import React from 'react';
 // Everything else is stripped. No external dependency needed.
 
 const ALLOWED_TAGS = new Set([
-  'p', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'br',
+  'p', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'br', 'img',
 ]);
 
 const SAFE_HREF = /^(https?:\/\/|mailto:)/i;
@@ -21,7 +21,7 @@ function sanitizeHtml(html: string): string {
     // Closing tags — allow if tag is in whitelist
     if (match.startsWith('</')) return `</${t}>`;
 
-    // Opening tags — strip all attributes except href on <a>
+    // Opening tags — strip all attributes except href on <a> and src on <img>
     if (t === 'a') {
       const hrefMatch = attrs.match(/href\s*=\s*"([^"]*?)"/i) ||
                          attrs.match(/href\s*=\s*'([^']*?)'/i);
@@ -29,6 +29,18 @@ function sanitizeHtml(html: string): string {
         return `<a href="${hrefMatch[1]}" target="_blank" rel="noopener noreferrer">`;
       }
       return '<a href="#" target="_blank" rel="noopener noreferrer">';
+    }
+
+    if (t === 'img') {
+      const srcMatch = attrs.match(/src\s*=\s*"([^"]*?)"/i) ||
+                        attrs.match(/src\s*=\s*'([^']*?)'/i);
+      if (srcMatch && (SAFE_HREF.test(srcMatch[1]) || srcMatch[1].startsWith('/uploads/'))) {
+        const altMatch = attrs.match(/alt\s*=\s*"([^"]*?)"/i) ||
+                          attrs.match(/alt\s*=\s*'([^']*?)'/i);
+        const alt = altMatch ? altMatch[1] : '';
+        return `<img src="${srcMatch[1]}" alt="${alt}" style="max-width:100%;border-radius:0.375rem" />`;
+      }
+      return '';
     }
 
     return `<${t}>`;

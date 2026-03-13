@@ -135,18 +135,18 @@ body {
   text-align: center !important;
 }
 
-/* Logo mode: always column/centered layout */
-[data-photo-mode="logo"] .hero-top {
+/* Logo mode: default to column/centered, but allow photo-align overrides */
+[data-photo-mode="logo"]:not([data-photo-align="left"]):not([data-photo-align="right"]) .hero-top {
   flex-direction: column !important;
   align-items: center !important;
   text-align: center !important;
 }
 
-[data-photo-mode="logo"] .hero-identity {
+[data-photo-mode="logo"]:not([data-photo-align="left"]):not([data-photo-align="right"]) .hero-identity {
   text-align: center !important;
 }
 
-[data-photo-mode="logo"] .profile-logo {
+[data-photo-mode="logo"]:not([data-photo-align="left"]):not([data-photo-align="right"]) .profile-logo {
   justify-content: center !important;
 }
 
@@ -250,14 +250,38 @@ body {
   object-fit: contain;
 }
 
-/* When cover is in logo mode + above, hero layout stacks vertically and centers */
-[data-cover-mode="logo"] .hero-top {
+/* When cover is in logo mode + above, default to column/centered layout.
+   These rules have lower specificity than the photo-align overrides below,
+   so explicit photo alignment still takes effect. */
+[data-cover-mode="logo"][data-cover-logo-pos="above"] .hero-top {
   flex-direction: column !important;
   align-items: center !important;
   text-align: center !important;
 }
+[data-cover-mode="logo"][data-cover-logo-pos="above"] .hero-identity {
+  text-align: center !important;
+}
 
-[data-cover-mode="logo"] .hero-identity {
+/* Respect explicit photo alignment even in cover-logo mode */
+[data-cover-mode="logo"][data-photo-align="left"] .hero-top {
+  flex-direction: row !important;
+  align-items: center !important;
+}
+[data-cover-mode="logo"][data-photo-align="left"] .hero-identity {
+  text-align: left !important;
+}
+[data-cover-mode="logo"][data-photo-align="right"] .hero-top {
+  flex-direction: row-reverse !important;
+  align-items: center !important;
+}
+[data-cover-mode="logo"][data-photo-align="right"] .hero-identity {
+  text-align: right !important;
+}
+[data-cover-mode="logo"][data-photo-align="center"] .hero-top {
+  flex-direction: column !important;
+  align-items: center !important;
+}
+[data-cover-mode="logo"][data-photo-align="center"] .hero-identity {
   text-align: center !important;
 }
 
@@ -266,7 +290,6 @@ body {
   flex-direction: row !important;
   text-align: left !important;
 }
-
 [data-cover-mode="logo"][data-cover-logo-pos="beside"] .hero-identity {
   text-align: left !important;
 }

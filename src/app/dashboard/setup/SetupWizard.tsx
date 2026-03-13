@@ -528,13 +528,15 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
 
   function getIdentityInitial(): IdentityState {
     if (!profileData) return { firstName: '', lastName: '', title: '', company: '', tagline: '', useCompanyAsDisplay: false };
+    // Use preview state (which stays up-to-date via onChange) so that values
+    // survive step navigation (IdentitySection unmounts/remounts between steps).
     return {
-      firstName: profileData.user.firstName,
-      lastName: profileData.user.lastName,
-      title: profileData.profile.title,
-      company: profileData.profile.company,
-      tagline: profileData.profile.tagline,
-      useCompanyAsDisplay: profileData.user.useCompanyAsDisplay || false,
+      firstName: preview.firstName,
+      lastName: preview.lastName,
+      title: preview.title,
+      company: preview.company,
+      tagline: preview.tagline,
+      useCompanyAsDisplay: (preview as Record<string, unknown>).useCompanyAsDisplay as boolean ?? profileData.user.useCompanyAsDisplay ?? false,
     };
   }
 
