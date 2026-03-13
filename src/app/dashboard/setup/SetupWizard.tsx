@@ -536,7 +536,7 @@ export default function SetupWizard({ isPaid, initialStep }: SetupWizardProps) {
       title: preview.title,
       company: preview.company,
       tagline: preview.tagline,
-      useCompanyAsDisplay: (preview as Record<string, unknown>).useCompanyAsDisplay as boolean ?? profileData.user.useCompanyAsDisplay ?? false,
+      useCompanyAsDisplay: preview.useCompanyAsDisplay ?? profileData.user.useCompanyAsDisplay ?? false,
     };
   }
 
