@@ -9,7 +9,7 @@ export const TIER_LIMITS = {
   },
   paid: {
     maxPods: 10,
-    allowedPodTypes: ['text', 'text_image', 'stats', 'cta', 'link_preview', 'project', 'listing', 'event', 'music'],
+    allowedPodTypes: ['text', 'text_image', 'stats', 'cta', 'link_preview', 'project', 'listing', 'event', 'music', 'youtube_channel', 'spotify_embed'],
     maxLinks: 50,
     resumeLink: true,
   },

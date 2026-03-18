@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
 
-const VALID_POD_TYPES = ['text', 'text_image', 'stats', 'cta', 'link_preview', 'project', 'listing', 'event', 'music'] as const;
+const VALID_POD_TYPES = ['text', 'text_image', 'stats', 'cta', 'link_preview', 'project', 'listing', 'event', 'music', 'youtube_channel', 'spotify_embed'] as const;
 const MAX_PODS = 6;
 
 // GET - Load pods for a protected page (dashboard editor)

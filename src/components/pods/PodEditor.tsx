@@ -63,6 +63,8 @@ const POD_TYPE_DEFS = [
   { type: 'listing', label: 'Listing', icon: '\u{1F3E0}' },
   { type: 'event', label: 'Event', icon: '\u{1F4C5}' },
   { type: 'music', label: 'Music', icon: '\u{1F3B5}' },
+  { type: 'youtube_channel', label: 'YouTube', icon: '\u25B6', premium: true },
+  { type: 'spotify_embed', label: 'Spotify', icon: '\u{1F3A7}', premium: true },
 ];
 
 const LISTING_STATUSES = [
@@ -1752,6 +1754,80 @@ export default function PodEditor({ parentType, parentId, isPaid, visibilityMode
                             style={inputStyle}
                           />
                         </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* YouTube Channel: channel URL, video count, layout */}
+                  {pod.podType === 'youtube_channel' && (
+                    <>
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>YouTube Channel URL</label>
+                        <input
+                          type="text"
+                          value={pod.ctaUrl}
+                          onChange={e => updatePodField(pod.id, 'ctaUrl', e.target.value.slice(0, 500))}
+                          placeholder="https://www.youtube.com/@channelname"
+                          style={inputStyle}
+                        />
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0.25rem 0 0' }}>
+                          Paste your channel URL. Videos update automatically.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.625rem' }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={labelStyle}>Videos to show</label>
+                          <select
+                            value={pod.title || '3'}
+                            onChange={e => updatePodField(pod.id, 'title', e.target.value)}
+                            style={inputStyle}
+                          >
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="6">6</option>
+                          </select>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={labelStyle}>Layout</label>
+                          <select
+                            value={pod.body || 'grid'}
+                            onChange={e => updatePodField(pod.id, 'body', e.target.value)}
+                            style={inputStyle}
+                          >
+                            <option value="grid">Grid</option>
+                            <option value="list">List</option>
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Spotify Embed: URL, player size */}
+                  {pod.podType === 'spotify_embed' && (
+                    <>
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Spotify URL</label>
+                        <input
+                          type="text"
+                          value={pod.ctaUrl}
+                          onChange={e => updatePodField(pod.id, 'ctaUrl', e.target.value.slice(0, 500))}
+                          placeholder="https://open.spotify.com/artist/... or /album/... or /playlist/... or /track/..."
+                          style={inputStyle}
+                        />
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #5d6370)', margin: '0.25rem 0 0' }}>
+                          Paste any Spotify link — artist page, album, playlist, or track.
+                        </p>
+                      </div>
+                      <div style={{ marginBottom: '0.625rem' }}>
+                        <label style={labelStyle}>Player size</label>
+                        <select
+                          value={pod.body || 'full'}
+                          onChange={e => updatePodField(pod.id, 'body', e.target.value)}
+                          style={inputStyle}
+                        >
+                          <option value="full">Full</option>
+                          <option value="compact">Compact</option>
+                        </select>
                       </div>
                     </>
                   )}

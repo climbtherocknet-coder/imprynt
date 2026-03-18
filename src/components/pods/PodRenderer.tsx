@@ -1,4 +1,5 @@
 import { renderMarkdown } from '@/lib/markdown';
+import YouTubeChannelPod from '@/components/pods/YouTubeChannelPod';
 
 export interface PodData {
   id: string;
@@ -446,6 +447,45 @@ export default function PodRenderer({ pod, delay }: { pod: PodData; delay: numbe
             {pod.body && <div className="pod-body pod-body-md pod-event-desc">{renderMarkdown(pod.body)}</div>}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (pod.podType === 'youtube_channel') {
+    return (
+      <div className={`pod fade-in ${delayClass}`}>
+        {pod.label && <p className="pod-label">{pod.label}</p>}
+        <YouTubeChannelPod pod={pod} />
+      </div>
+    );
+  }
+
+  if (pod.podType === 'spotify_embed') {
+    if (!pod.ctaUrl) {
+      return (
+        <div className={`pod fade-in ${delayClass}`}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+            Add a Spotify link in the editor to display your music.
+          </p>
+        </div>
+      );
+    }
+    const embedUrl = pod.ctaUrl
+      .replace('open.spotify.com/', 'open.spotify.com/embed/')
+      .split('?')[0];
+    const height = pod.body === 'compact' ? '152' : '380';
+    return (
+      <div className={`pod fade-in ${delayClass}`}>
+        {pod.label && <p className="pod-label">{pod.label}</p>}
+        <iframe
+          src={embedUrl}
+          width="100%"
+          height={height}
+          frameBorder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy"
+          style={{ borderRadius: '0.75rem', display: 'block' }}
+        />
       </div>
     );
   }

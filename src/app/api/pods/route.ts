@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { query } from '@/lib/db';
 import { TIER_LIMITS } from '@/lib/tiers';
 
-const VALID_POD_TYPES = ['text', 'text_image', 'stats', 'cta', 'link_preview', 'project', 'listing', 'event', 'music'] as const;
+const VALID_POD_TYPES = ['text', 'text_image', 'stats', 'cta', 'link_preview', 'project', 'listing', 'event', 'music', 'youtube_channel', 'spotify_embed'] as const;
 
 // GET - Load all pods for the current user's profile
 export async function GET() {
