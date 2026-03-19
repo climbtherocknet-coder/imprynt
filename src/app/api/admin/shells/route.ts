@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     let sql = `
       SELECT s.id, s.nfc_id, s.invite_code, s.status, s.claimed_at, s.disabled_at, s.created_at,
              u.email as claimed_email, u.first_name as claimed_first_name, u.last_name as claimed_last_name,
-             p.slug as profile_slug
+             p.slug as profile_slug, p.redirect_id as profile_redirect_id
       FROM shells s
       LEFT JOIN users u ON u.id = s.claimed_by
       LEFT JOIN profiles p ON p.id = s.profile_id
@@ -78,6 +78,7 @@ export async function GET(req: NextRequest) {
         claimedEmail: s.claimed_email || null,
         claimedName: [s.claimed_first_name, s.claimed_last_name].filter(Boolean).join(' ') || null,
         profileSlug: s.profile_slug || null,
+        redirectId: s.profile_redirect_id || null,
       })),
     });
   }

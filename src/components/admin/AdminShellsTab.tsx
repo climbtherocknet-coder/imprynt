@@ -25,6 +25,7 @@ interface Shell {
   claimedEmail: string | null;
   claimedName: string | null;
   profileSlug: string | null;
+  redirectId: string | null;
 }
 
 function fmtDate(d: string) {
@@ -262,7 +263,7 @@ export default function AdminShellsTab() {
                   <th>Invite Code</th>
                   <th>Status</th>
                   <th>Claimed By</th>
-                  <th>Profile</th>
+                  <th>NFC</th>
                   <th></th>
                 </tr>
               </thead>
@@ -306,15 +307,16 @@ export default function AdminShellsTab() {
                       )}
                     </td>
                     <td>
-                      {s.profileSlug ? (
-                        <a
-                          href={`/${s.profileSlug}`}
-                          target="_blank"
-                          rel="noopener"
-                          style={{ color: 'var(--accent)', fontSize: '0.8125rem' }}
+                      {s.redirectId ? (
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn--ghost admin-btn--small"
+                          style={{ fontSize: '0.6875rem', padding: '0.1875rem 0.5rem', color: copied === `nfc-${s.id}` ? '#22c55e' : 'var(--accent)', borderColor: copied === `nfc-${s.id}` ? 'rgba(34,197,94,0.3)' : 'rgba(232,168,73,0.3)', whiteSpace: 'nowrap' }}
+                          title={`${window.location.origin}/go/${s.redirectId}`}
+                          onClick={() => copyText(`${window.location.origin}/go/${s.redirectId}`, `nfc-${s.id}`)}
                         >
-                          /{s.profileSlug}
-                        </a>
+                          {copied === `nfc-${s.id}` ? 'Copied!' : 'Copy NFC'}
+                        </button>
                       ) : (
                         <span style={{ color: 'var(--text-muted)' }}>--</span>
                       )}
