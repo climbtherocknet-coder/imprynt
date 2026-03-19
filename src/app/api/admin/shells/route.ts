@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
              p.slug as profile_slug, p.redirect_id as profile_redirect_id
       FROM shells s
       LEFT JOIN users u ON u.id = s.claimed_by
-      LEFT JOIN profiles p ON p.id = s.profile_id
+      LEFT JOIN profiles p ON p.user_id = u.id
       WHERE s.batch_id = $1
     `;
     const params: (string | null)[] = [batchId];
