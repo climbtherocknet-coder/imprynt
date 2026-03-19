@@ -20,7 +20,7 @@ export async function GET(
     `SELECT u.id, u.email, u.first_name, u.last_name, u.plan,
             u.stripe_customer_id, u.stripe_subscription_id,
             u.setup_completed, u.invite_code_id, u.created_at, u.account_status,
-            p.slug, p.is_published, p.template, p.title as profile_title, p.company,
+            p.slug, p.redirect_id, p.is_published, p.template, p.title as profile_title, p.company,
             ic.code as invite_code_used
      FROM users u
      LEFT JOIN profiles p ON p.user_id = u.id
@@ -60,6 +60,7 @@ export async function GET(
       inviteCodeUsed: u.invite_code_used || '',
       createdAt: u.created_at,
       slug: u.slug || '',
+      redirectId: u.redirect_id || '',
       isPublished: u.is_published || false,
       template: u.template || '',
       profileTitle: u.profile_title || '',

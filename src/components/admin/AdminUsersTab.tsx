@@ -13,6 +13,7 @@ interface UserRow {
   hasStripe: boolean;
   setupCompleted: boolean;
   slug: string;
+  redirectId: string;
   isPublished: boolean;
   createdAt: string;
   accountStatus: string;
@@ -31,6 +32,7 @@ interface UserDetail {
   inviteCodeUsed: string;
   createdAt: string;
   slug: string;
+  redirectId: string;
   isPublished: boolean;
   template: string;
   profileTitle: string;
@@ -52,6 +54,28 @@ function planLabel(plan: string) {
 function planBadgeClass(plan: string) {
   if (plan === 'advisory') return 'admin-badge admin-badge--advisory';
   return plan === 'free' ? 'admin-badge admin-badge--free' : 'admin-badge admin-badge--premium';
+}
+
+function NfcCopyBtn({ redirectId }: { redirectId: string }) {
+  const [copied, setCopied] = useState(false);
+  const url = typeof window !== 'undefined' ? `${window.location.origin}/go/${redirectId}` : `/go/${redirectId}`;
+  async function copy(e: React.MouseEvent) {
+    e.stopPropagation();
+    try { await navigator.clipboard.writeText(url); } catch { return; }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      title={url}
+      className="admin-btn admin-btn--ghost admin-btn--small"
+      style={{ fontSize: '0.6875rem', padding: '0.1875rem 0.5rem', color: copied ? '#22c55e' : 'var(--accent)', borderColor: copied ? 'rgba(34,197,94,0.3)' : 'rgba(232,168,73,0.3)', whiteSpace: 'nowrap' }}
+    >
+      {copied ? 'Copied!' : 'Copy NFC'}
+    </button>
+  );
 }
 
 export default function AdminUsersTab() {
@@ -247,6 +271,7 @@ export default function AdminUsersTab() {
               <th>Plan</th>
               <th>Status</th>
               <th>Profile</th>
+              <th>NFC</th>
               <th>Joined</th>
             </tr>
           </thead>
@@ -270,11 +295,16 @@ export default function AdminUsersTab() {
                       <a href={`/${u.slug}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: '0.8125rem' }}>/{u.slug}</a>
                     ) : <span style={{ color: 'var(--text-muted)' }}>&mdash;</span>}
                   </td>
+                  <td>
+                    {u.redirectId ? (
+                      <NfcCopyBtn redirectId={u.redirectId} />
+                    ) : <span style={{ color: 'var(--text-muted)' }}>&mdash;</span>}
+                  </td>
                   <td>{fmtDate(u.createdAt)}</td>
                 </tr>
                 {expandedId === u.id && (
                   <tr key={`${u.id}-detail`}>
-                    <td colSpan={6} style={{ padding: 0 }}>
+                    <td colSpan={7} style={{ padding: 0 }}>
                       <div className="admin-detail">
                         {!detail ? (
                           <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Loading...</p>

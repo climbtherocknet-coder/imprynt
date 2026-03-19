@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   const usersResult = await query(
     `SELECT u.id, u.email, u.first_name, u.last_name, u.plan,
             u.stripe_customer_id, u.setup_completed, u.created_at, u.account_status,
-            p.slug, p.is_published
+            p.slug, p.redirect_id, p.is_published
      FROM users u
      LEFT JOIN profiles p ON p.user_id = u.id
      WHERE ($1::text IS NULL OR u.email ILIKE '%' || $1 || '%'
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     users: usersResult.rows.map((u: Record<string, unknown>) => ({
       id: u.id, email: u.email, firstName: u.first_name || '', lastName: u.last_name || '',
       plan: u.plan, hasStripe: !!u.stripe_customer_id, setupCompleted: u.setup_completed,
-      slug: u.slug || '', isPublished: u.is_published || false, createdAt: u.created_at,
+      slug: u.slug || '', redirectId: u.redirect_id || '', isPublished: u.is_published || false, createdAt: u.created_at,
       accountStatus: (u.account_status as string) || 'active',
       isLocked: isRateLimited(`login:${u.email}`, 5, 15 * 60 * 1000),
     })),
